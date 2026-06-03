@@ -1,0 +1,3 @@
+rootProject.name = 'olo-mono'
+
+include 'olo-definition'
