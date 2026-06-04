@@ -11,8 +11,12 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Workflow-scoped variable declaration (inputs, secrets references, defaults).
+ * Legacy workflow-scoped variable list. Prefer {@link io.olo.definition.input.WorkflowInputDefinition}
+ * under {@code inputs} on {@link io.olo.definition.workflow.WorkflowDefinition}.
+ *
+ * @deprecated use {@code inputs} map with {@link io.olo.definition.input.WorkflowInputDefinition}
  */
+@Deprecated
 @JsonDeserialize(builder = VariableDefinition.Builder.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)

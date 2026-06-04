@@ -1,6 +1,7 @@
 package io.olo.definition.node;
 
 import io.olo.definition.serializer.JsonWorkflowSerializer;
+import io.olo.definition.validation.ValidationTestFixtures;
 import io.olo.definition.validation.WorkflowValidator;
 import io.olo.definition.workflow.WorkflowBuilder;
 import io.olo.definition.workflow.WorkflowDefinition;
@@ -16,6 +17,7 @@ class NodeDefinitionSerializationTest {
     void roundTripsVersionAndRoutersOnNode() throws Exception {
         WorkflowDefinition workflow = WorkflowBuilder.create("Router Test")
                 .id("router-test")
+                .capability(ValidationTestFixtures.minimalCapability())
                 .inputNode("input")
                 .addNode(NodeDefinition.builder()
                         .id("router")

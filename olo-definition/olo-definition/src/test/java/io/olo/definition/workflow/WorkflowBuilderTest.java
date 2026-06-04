@@ -1,8 +1,13 @@
 package io.olo.definition.workflow;
 
+import io.olo.definition.human.HumanApprovalDefinition;
 import io.olo.definition.node.NodeDefinition;
 import io.olo.definition.node.NodeType;
+import io.olo.definition.validation.ValidationTestFixtures;
 import io.olo.definition.validation.WorkflowValidator;
+import io.olo.definition.workflow.WorkflowReferenceDefinition;
+
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,6 +20,7 @@ class WorkflowBuilderTest {
         WorkflowDefinition workflow = WorkflowBuilder.create("Stock Workflow")
                 .id("stock-analysis")
                 .version("1.0.0")
+                .capability(ValidationTestFixtures.minimalCapability())
                 .inputNode("request")
                 .modelNode("analysis", "CHAT")
                 .toolNode("screener")
@@ -35,6 +41,7 @@ class WorkflowBuilderTest {
     void extendsExistingWorkflow() {
         WorkflowDefinition base = WorkflowBuilder.create("Analysis")
                 .id("analysis")
+                .capability(ValidationTestFixtures.minimalCapability())
                 .inputNode("input")
                 .modelNode("llm1", "CHAT")
                 .outputNode("output")
@@ -56,6 +63,58 @@ class WorkflowBuilderTest {
         assertThat(enhanced.getNodes()).hasSize(4);
         assertThat(enhanced.getEdges()).hasSize(4);
         assertThat(enhanced.getId()).isEqualTo("analysis");
+    }
+
+    @Test
+    void buildsHumanApprovalTradeWorkflow() {
+        WorkflowDefinition workflow = WorkflowBuilder.create("Trade Approval")
+                .id("human-approval-trade")
+                .capability(ValidationTestFixtures.minimalCapability())
+                .inputNode("input")
+                .modelNode("recommendation", "CHAT")
+                .humanNode(
+                        "trade-approval",
+                        HumanApprovalDefinition.builder()
+                                .title("Approve trade execution?")
+                                .approvers(List.of("trading-desk"))
+                                .build())
+                .toolNode("execute-trade")
+                .outputNode("output")
+                .connect("input", "recommendation")
+                .connect("recommendation", "trade-approval")
+                .connect("trade-approval", "execute-trade")
+                .connect("execute-trade", "output")
+                .build();
+
+        assertThat(workflow.getNodes()).anyMatch(
+                n -> "trade-approval".equals(n.getId()) && NodeType.HUMAN.value().equals(n.getType()));
+        assertThat(WorkflowValidator.validate(workflow).valid()).isTrue();
+    }
+
+    @Test
+    void buildsAgentWorkflow() {
+        WorkflowDefinition workflow = WorkflowBuilder.create("Agent Handoff")
+                .id("agent-handoff")
+                .capability(ValidationTestFixtures.minimalCapability())
+                .inputNode("input")
+                .agentNode(
+                        "support-agent",
+                        "HANDOFF",
+                        WorkflowReferenceDefinition.builder().workflowId("support-agent").build())
+                .outputNode("output")
+                .connect("input", "support-agent")
+                .connect("support-agent", "output")
+                .build();
+
+        assertThat(workflow.getNodes()).anyMatch(
+                n -> "support-agent".equals(n.getId()) && NodeType.AGENT.value().equals(n.getType()));
+        assertThat(workflow.getNodes().stream()
+                        .filter(n -> "support-agent".equals(n.getId()))
+                        .findFirst()
+                        .orElseThrow()
+                        .getSubtype())
+                .isEqualTo("HANDOFF");
+        assertThat(WorkflowValidator.validate(workflow).valid()).isTrue();
     }
 
     @Test

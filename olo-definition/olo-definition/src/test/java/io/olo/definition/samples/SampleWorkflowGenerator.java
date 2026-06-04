@@ -29,6 +29,18 @@ public final class SampleWorkflowGenerator {
         writeSample(samplesRoot.resolve("stock-analysis"), "workflow", SampleWorkflowDefinitions::stockAnalysis);
         writeSample(samplesRoot.resolve("rag-chat"), "workflow", SampleWorkflowDefinitions::ragChat);
         writeSample(samplesRoot.resolve("condition-branch"), "workflow", SampleWorkflowDefinitions::conditionBranch);
+        writeSample(samplesRoot.resolve("human-approval-trade"), "workflow", SampleWorkflowDefinitions::humanApprovalTrade);
+        writeSample(
+                samplesRoot.resolve("multi-agent-orchestration"),
+                "workflow",
+                SampleWorkflowDefinitions::multiAgentOrchestration);
+        writeSample(
+                samplesRoot.resolve("parallel-agent-fan-out"), "workflow", SampleWorkflowDefinitions::parallelAgentFanOut);
+        writeSample(samplesRoot.resolve("research-agent"), "workflow", SampleWorkflowDefinitions::researchAgent);
+        writeSample(
+                samplesRoot.resolve("technical-analysis-agent"),
+                "workflow",
+                SampleWorkflowDefinitions::technicalAnalysisAgent);
         writeSample(
                 samplesRoot.resolve("analysis-with-rag-extension"),
                 "workflow-base",

@@ -21,10 +21,15 @@ gradlew.bat build
 | Folder | Description |
 |--------|-------------|
 | [minimal-echo](minimal-echo/) | Smallest valid graph: INPUT → OUTPUT |
-| [stock-analysis](stock-analysis/) | Stock workflow: INPUT → MODEL → TOOL → OUTPUT |
+| [stock-analysis](stock-analysis/) | Stock workflow with typed ports and `onFailure` retry + fallback model |
 | [rag-chat](rag-chat/) | RAG pipeline with vector search, model providers, and extensions |
 | [analysis-with-rag-extension](analysis-with-rag-extension/) | Base analysis workflow extended with a retriever node |
-| [condition-branch](condition-branch/) | CONDITION node with port-aware edges (`true` / `false`) |
+| [condition-branch](condition-branch/) | CONDITION routing to `AGENT` nodes (`true` / `false` ports) |
+| [human-approval-trade](human-approval-trade/) | AI recommendation → `HUMAN` approval → trade execution |
+| [multi-agent-orchestration](multi-agent-orchestration/) | Multi-agent handoff via mandatory `workflow` on each `AGENT` |
+| [parallel-agent-fan-out](parallel-agent-fan-out/) | `PARALLEL` with `join: ALL` and child agent workflows |
+| [research-agent](research-agent/) | Planner-readable `capability` contract (tags, examples, cost/latency) |
+| [technical-analysis-agent](technical-analysis-agent/) | Agent with `workflowRef` + `runtimeBinding.implementationId` |
 
 ## Load in Java
 

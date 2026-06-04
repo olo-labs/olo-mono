@@ -67,6 +67,9 @@ class SampleWorkflowSerializationE2ETest {
         verifyRoundTrip(generatedRoot.resolve("rag-chat/workflow.json"), SampleWorkflowDefinitions::ragChat);
         verifyRoundTrip(generatedRoot.resolve("condition-branch/workflow.json"), SampleWorkflowDefinitions::conditionBranch);
         verifyRoundTrip(
+                generatedRoot.resolve("human-approval-trade/workflow.json"),
+                SampleWorkflowDefinitions::humanApprovalTrade);
+        verifyRoundTrip(
                 generatedRoot.resolve("analysis-with-rag-extension/workflow-base.json"),
                 SampleWorkflowDefinitions::analysisBase);
         verifyRoundTrip(
@@ -147,6 +150,9 @@ class SampleWorkflowSerializationE2ETest {
                         (Supplier<WorkflowDefinition>) SampleWorkflowDefinitions::analysisExtended),
                 Arguments.of(
                         "condition-branch",
-                        (Supplier<WorkflowDefinition>) SampleWorkflowDefinitions::conditionBranch));
+                        (Supplier<WorkflowDefinition>) SampleWorkflowDefinitions::conditionBranch),
+                Arguments.of(
+                        "human-approval-trade",
+                        (Supplier<WorkflowDefinition>) SampleWorkflowDefinitions::humanApprovalTrade));
     }
 }

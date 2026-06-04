@@ -1,11 +1,19 @@
 package io.olo.definition.workflow;
 
+import io.olo.definition.agent.AgentDefinition;
+import io.olo.definition.capability.CapabilityDefinition;
 import io.olo.definition.edge.EdgeDefinition;
 import io.olo.definition.extension.ExtensionDefinition;
+import io.olo.definition.runtime.RuntimeBindingDefinition;
+import io.olo.definition.tool.ToolDefinition;
 import io.olo.definition.model.ModelProviderDefinition;
 import io.olo.definition.model.ModelRoutingDefinition;
+import io.olo.definition.human.HumanApprovalDefinition;
+import io.olo.definition.input.WorkflowInputDefinition;
 import io.olo.definition.node.NodeDefinition;
 import io.olo.definition.node.NodeType;
+import io.olo.definition.parameter.WorkflowParameterDefinition;
+import io.olo.definition.state.StateFieldDefinition;
 import io.olo.definition.variable.VariableDefinition;
 
 import java.util.ArrayList;
@@ -23,10 +31,15 @@ public final class WorkflowBuilder {
     private final WorkflowDefinition.Builder delegate = WorkflowDefinition.builder();
     private final List<NodeDefinition> nodes = new ArrayList<>();
     private final List<EdgeDefinition> edges = new ArrayList<>();
+    private final Map<String, WorkflowInputDefinition> inputs = new LinkedHashMap<>();
+    private final Map<String, StateFieldDefinition> state = new LinkedHashMap<>();
+    private final Map<String, WorkflowParameterDefinition> parameters = new LinkedHashMap<>();
     private final List<VariableDefinition> variables = new ArrayList<>();
     private final List<ModelProviderDefinition> modelProviders = new ArrayList<>();
     private final List<ModelRoutingDefinition> modelRouting = new ArrayList<>();
     private final List<ExtensionDefinition> extensions = new ArrayList<>();
+    private final List<ToolDefinition> tools = new ArrayList<>();
+    private final List<AgentDefinition> agents = new ArrayList<>();
     private final Map<String, Object> metadata = new LinkedHashMap<>();
 
     private WorkflowBuilder() {
@@ -54,11 +67,22 @@ public final class WorkflowBuilder {
         builder.delegate.version(existing.getVersion());
         builder.nodes.addAll(existing.getNodes());
         builder.edges.addAll(existing.getEdges());
+        builder.inputs.putAll(existing.getInputs());
+        builder.state.putAll(existing.getState());
+        builder.parameters.putAll(existing.getParameters());
         builder.variables.addAll(existing.getVariables());
         builder.modelProviders.addAll(existing.getModelProviders());
         builder.modelRouting.addAll(existing.getModelRouting());
         builder.extensions.addAll(existing.getExtensions());
+        builder.tools.addAll(existing.getTools());
+        builder.agents.addAll(existing.getAgents());
         builder.metadata.putAll(existing.getMetadata());
+        if (existing.getCapability() != null) {
+            builder.delegate.capability(existing.getCapability());
+        }
+        if (existing.getRuntimeBinding() != null) {
+            builder.delegate.runtimeBinding(existing.getRuntimeBinding());
+        }
         return builder;
     }
 
@@ -105,6 +129,40 @@ public final class WorkflowBuilder {
         return addNode(NodeDefinition.builder().id(id).type(NodeType.VECTOR_SEARCH).build());
     }
 
+    public WorkflowBuilder agentNode(String id, WorkflowReferenceDefinition workflow) {
+        return agentNode(id, null, workflow);
+    }
+
+    /**
+     * Agent node: requires {@code workflow} (agent = workflow artifact). Optional subtype.
+     */
+    public WorkflowBuilder agentNode(String id, String subtype, WorkflowReferenceDefinition workflow) {
+        Objects.requireNonNull(workflow, "workflow is required for AGENT nodes");
+        NodeDefinition.Builder node =
+                NodeDefinition.builder().id(id).type(NodeType.AGENT).workflow(workflow);
+        if (subtype != null) {
+            node.subtype(subtype);
+        }
+        return addNode(node.build());
+    }
+
+    public WorkflowBuilder humanNode(String id, HumanApprovalDefinition approval) {
+        return humanNode(id, "APPROVAL", approval);
+    }
+
+    /**
+     * Human-in-the-loop node with structured approval metadata (e.g. trading desk sign-off).
+     */
+    public WorkflowBuilder humanNode(String id, String subtype, HumanApprovalDefinition approval) {
+        Objects.requireNonNull(approval, "approval is required");
+        NodeDefinition.Builder node =
+                NodeDefinition.builder().id(id).type(NodeType.HUMAN).approval(approval);
+        if (subtype != null) {
+            node.subtype(subtype);
+        }
+        return addNode(node.build());
+    }
+
     public WorkflowBuilder addNode(NodeDefinition node) {
         Objects.requireNonNull(node, "node is required");
         ensureUniqueNodeId(node.getId());
@@ -135,6 +193,29 @@ public final class WorkflowBuilder {
                 .build());
     }
 
+    public WorkflowBuilder input(String name, WorkflowInputDefinition input) {
+        Objects.requireNonNull(name, "input name is required");
+        Objects.requireNonNull(input, "input is required");
+        inputs.put(name, input);
+        return this;
+    }
+
+    public WorkflowBuilder stateField(String name, StateFieldDefinition field) {
+        Objects.requireNonNull(name, "state field name is required");
+        Objects.requireNonNull(field, "state field is required");
+        state.put(name, field);
+        return this;
+    }
+
+    public WorkflowBuilder parameter(String name, WorkflowParameterDefinition parameter) {
+        Objects.requireNonNull(name, "parameter name is required");
+        Objects.requireNonNull(parameter, "parameter is required");
+        parameters.put(name, parameter);
+        return this;
+    }
+
+    /** @deprecated use {@link #input(String, WorkflowInputDefinition)} */
+    @Deprecated
     public WorkflowBuilder variable(VariableDefinition variable) {
         Objects.requireNonNull(variable, "variable is required");
         variables.add(variable);
@@ -169,13 +250,44 @@ public final class WorkflowBuilder {
         return this;
     }
 
+    /**
+     * Planner-readable contract for this workflow (required for valid workflows).
+     */
+    public WorkflowBuilder capability(CapabilityDefinition capability) {
+        Objects.requireNonNull(capability, "capability is required");
+        delegate.capability(capability);
+        return this;
+    }
+
+    public WorkflowBuilder runtimeBinding(RuntimeBindingDefinition runtimeBinding) {
+        delegate.runtimeBinding(runtimeBinding);
+        return this;
+    }
+
+    public WorkflowBuilder tool(ToolDefinition tool) {
+        Objects.requireNonNull(tool, "tool is required");
+        tools.add(tool);
+        return this;
+    }
+
+    public WorkflowBuilder agent(AgentDefinition agent) {
+        Objects.requireNonNull(agent, "agent is required");
+        agents.add(agent);
+        return this;
+    }
+
     public WorkflowDefinition build() {
         delegate.nodes(List.copyOf(nodes));
         delegate.edges(List.copyOf(edges));
+        delegate.inputs(Map.copyOf(inputs));
+        delegate.state(Map.copyOf(state));
+        delegate.parameters(Map.copyOf(parameters));
         delegate.variables(List.copyOf(variables));
         delegate.modelProviders(List.copyOf(modelProviders));
         delegate.modelRouting(List.copyOf(modelRouting));
         delegate.extensions(List.copyOf(extensions));
+        delegate.tools(List.copyOf(tools));
+        delegate.agents(List.copyOf(agents));
         delegate.metadata(Map.copyOf(metadata));
         return delegate.build();
     }

@@ -2,6 +2,7 @@ package io.olo.definition.serializer;
 
 import io.olo.definition.node.NodeDefinition;
 import io.olo.definition.node.NodeType;
+import io.olo.definition.validation.ValidationTestFixtures;
 import io.olo.definition.workflow.WorkflowBuilder;
 import io.olo.definition.workflow.WorkflowDefinition;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ class JsonWorkflowSerializerTest {
     WorkflowDefinition original =
         WorkflowBuilder.create("StockAnalysis")
             .id("stock-analysis")
+            .capability(ValidationTestFixtures.minimalCapability())
             .addNode(
                 NodeDefinition.builder()
                     .id("llm1")

@@ -70,6 +70,9 @@ class SampleWorkflowsTest {
                         "stock-analysis/workflow." + extension,
                         "rag-chat/workflow." + extension,
                         "condition-branch/workflow." + extension,
+                        "human-approval-trade/workflow." + extension,
+                        "multi-agent-orchestration/workflow." + extension,
+                        "parallel-agent-fan-out/workflow." + extension,
                         "analysis-with-rag-extension/workflow-base." + extension,
                         "analysis-with-rag-extension/workflow-extended." + extension)
                 .map(relative -> samplesRoot.resolve(relative))
