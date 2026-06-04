@@ -29,7 +29,18 @@ jar {
     }
 }
 
+tasks.register('generateSamples', JavaExec) {
+    group = 'build'
+    description = 'Write workflow JSON/YAML samples under samples/'
+    dependsOn compileTestJava
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'io.olo.definition.samples.SampleWorkflowGenerator'
+    workingDir = rootProject.projectDir
+    args rootProject.file('samples').absolutePath
+}
+
 tasks.test {
+    dependsOn generateSamples
     workingDir = rootProject.projectDir
     systemProperty 'olo.samples.dir', rootProject.file('samples').absolutePath
 }

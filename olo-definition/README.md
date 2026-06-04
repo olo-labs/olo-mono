@@ -33,6 +33,8 @@ Windows:
 gradlew.bat build
 ```
 
+The build generates workflow samples under `samples/` (see `gradlew generateSamples`).
+
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE).

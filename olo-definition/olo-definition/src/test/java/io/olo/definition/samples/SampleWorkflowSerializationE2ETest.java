@@ -13,7 +13,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -61,37 +60,27 @@ class SampleWorkflowSerializationE2ETest {
     @Test
     void buildSerializeToFilesAndDeserialize() throws IOException {
         String samplesDir = System.getProperty("olo.samples.dir", "samples");
-        Path samplesRoot = Path.of(samplesDir);
-        Path generatedRoot = samplesRoot.resolve("generated");
-        Files.createDirectories(generatedRoot);
-
-        Map<String, Supplier<WorkflowDefinition>> extras = Map.of(
-                "analysis-with-rag-extension/workflow-base", SampleWorkflowDefinitions::analysisBase,
-                "analysis-with-rag-extension/workflow-extended", SampleWorkflowDefinitions::analysisExtended);
-
-        for (Arguments args : sampleWorkflows().toList()) {
-            String sampleName = (String) args.get()[0];
-            @SuppressWarnings("unchecked")
-            Supplier<WorkflowDefinition> factory = (Supplier<WorkflowDefinition>) args.get()[1];
-            writeAndVerify(generatedRoot.resolve(sampleName), factory);
-        }
-        for (Map.Entry<String, Supplier<WorkflowDefinition>> entry : extras.entrySet()) {
-            writeAndVerify(generatedRoot.resolve(entry.getKey()), entry.getValue());
-        }
+        Path generatedRoot = Path.of(samplesDir).resolve("generated");
+        new SampleWorkflowGenerator().generate(generatedRoot);
+        verifyRoundTrip(generatedRoot.resolve("minimal-echo/workflow.json"), SampleWorkflowDefinitions::minimalEcho);
+        verifyRoundTrip(generatedRoot.resolve("stock-analysis/workflow.json"), SampleWorkflowDefinitions::stockAnalysis);
+        verifyRoundTrip(generatedRoot.resolve("rag-chat/workflow.json"), SampleWorkflowDefinitions::ragChat);
+        verifyRoundTrip(generatedRoot.resolve("condition-branch/workflow.json"), SampleWorkflowDefinitions::conditionBranch);
+        verifyRoundTrip(
+                generatedRoot.resolve("analysis-with-rag-extension/workflow-base.json"),
+                SampleWorkflowDefinitions::analysisBase);
+        verifyRoundTrip(
+                generatedRoot.resolve("analysis-with-rag-extension/workflow-extended.json"),
+                SampleWorkflowDefinitions::analysisExtended);
     }
 
-    private void writeAndVerify(Path sampleDir, Supplier<WorkflowDefinition> factory) throws IOException {
+    private void verifyRoundTrip(Path jsonFile, Supplier<WorkflowDefinition> factory) throws IOException {
         WorkflowDefinition built = factory.get();
         WorkflowValidator.validateOrThrow(built);
 
-        Files.createDirectories(sampleDir);
-        Path jsonFile = sampleDir.resolve("workflow.json");
-        Path yamlFile = sampleDir.resolve("workflow.yaml");
-
-        Files.writeString(jsonFile, jsonSerializer.serialize(built));
-        Files.writeString(yamlFile, yamlSerializer.serialize(built));
-
         WorkflowDefinition fromJson = jsonSerializer.deserialize(Files.readString(jsonFile));
+        Path yamlFile = jsonFile.getParent().resolve(
+                jsonFile.getFileName().toString().replace(".json", ".yaml"));
         WorkflowDefinition fromYaml = yamlSerializer.deserialize(Files.readString(yamlFile));
 
         assertThat(fromJson).isEqualTo(built);

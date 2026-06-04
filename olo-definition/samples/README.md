@@ -1,6 +1,20 @@
 # Workflow samples
 
-Example `WorkflowDefinition` artifacts in JSON and YAML. These files are **declarative only**—no secrets, no runtime configuration.
+Example `WorkflowDefinition` artifacts in JSON and YAML under this directory. These files are **declarative only**—no secrets, no runtime configuration.
+
+## Regenerate
+
+Samples are generated from `SampleWorkflowDefinitions` before tests run:
+
+```bat
+gradlew.bat generateSamples
+```
+
+Or as part of a full build:
+
+```bat
+gradlew.bat build
+```
 
 ## Samples
 
@@ -16,7 +30,6 @@ Example `WorkflowDefinition` artifacts in JSON and YAML. These files are **decla
 
 ```java
 import io.olo.definition.serializer.JsonWorkflowSerializer;
-import io.olo.definition.serializer.YamlWorkflowSerializer;
 import io.olo.definition.validation.WorkflowValidator;
 import io.olo.definition.workflow.WorkflowDefinition;
 
@@ -27,25 +40,4 @@ WorkflowDefinition workflow =
 WorkflowValidator.validateOrThrow(workflow);
 ```
 
-YAML:
-
-```java
-WorkflowDefinition workflow = new YamlWorkflowSerializer()
-    .deserialize(Files.readString(Path.of("samples/stock-analysis/workflow.yaml")));
-```
-
-## Tests
-
-**End-to-end (build in code → serialize → deserialize → write files):**
-
-```bat
-gradlew.bat :olo-definition:test --tests "io.olo.definition.samples.SampleWorkflowSerializationE2ETest"
-```
-
-This also writes serialized workflows to `samples/generated/` (gitignored). Each folder contains `workflow.json` and `workflow.yaml`.
-
-**On-disk sample files (JSON/YAML under `samples/`):**
-
-```bat
-gradlew.bat :olo-definition:test --tests "io.olo.definition.samples.SampleWorkflowsTest"
-```
+Optional scratch output from E2E tests: `samples/generated/` (gitignored).
