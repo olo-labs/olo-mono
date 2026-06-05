@@ -101,6 +101,7 @@ WorkflowDefinition
 ├── modelProviders[] → ModelProviderDefinition
 ├── modelRouting[]   → ModelRoutingDefinition
 ├── extensions[]     → ExtensionDefinition
+├── hooks[]          → HookDefinition (PRE / ON_ERROR / FINALLY)
 └── metadata         → Map<String, Object>
 ```
 
@@ -263,7 +264,7 @@ Node `reads` / `writes`, future overrides, and mappings use a single **path lang
 - Redundant `inputs.symbol` + `state.symbol` when `populateState` is true fails validation.
 - Typos fail early: `state.analysys` when only `analysis` exists → `writes unknown state field: state.analysys (no state field 'analysys')`.
 
-Types in `io.olo.definition.path`: `DataPath`, `PathRoot`, `PathSegment`, `DataPathParser`.
+Types in `org.olo.definition.path`: `DataPath`, `PathRoot`, `PathSegment`, `DataPathParser`.
 
 `variables[]` (`VariableDefinition`) is **deprecated** — migrate to `inputs` with `WorkflowInputDefinition` (`schema` replaces legacy `type`).
 
@@ -790,8 +791,61 @@ Untyped workflows (empty `inputs` / `outputs`) remain valid for backward compati
 | `ModelProviderDefinition` | Declarative LLM provider (`id`, `provider`, `model`, `configuration`) |
 | `ModelRoutingDefinition` | Rules to select a provider by context |
 | `ExtensionDefinition` | External capabilities (MCP server, vector store, tool registry) |
+| `HookDefinition` | Cross-cutting lifecycle hooks matched by node id pattern |
 
 Runtime resolves these references; the definition layer only stores **what** is wired, not **how** calls are made.
+
+#### Workflow hooks
+
+Hooks attach observability and policy around node execution without duplicating nodes in the graph. Each hook declares a **pattern** (glob on node id) and one or more phases:
+
+| Phase | JSON key | When it runs |
+|-------|----------|--------------|
+| `PRE` | `pre` | Before matched nodes execute |
+| `ON_ERROR` | `onError` | When a matched node fails |
+| `FINALLY` | `finally` | After matched nodes complete |
+
+```yaml
+hooks:
+  - id: tracing
+    pattern: "analysis.*"
+    pre:
+      implementationId: tracing-start
+    finally:
+      implementationId: tracing-end
+
+  - id: metrics
+    pattern: "**"
+    pre:
+      implementationId: metrics-start
+    finally:
+      implementationId: metrics-stop
+
+  - id: audit
+    pattern: "trading.*"
+    onError:
+      implementationId: audit-error
+```
+
+Each phase binds to a runtime registry entry via `implementationId` (`HookActionDefinition`). Pattern matching semantics are enforced in `olo-runtime`; the definition layer validates structure only.
+
+#### Node-specific hooks
+
+Nodes may opt into workflow-registered hook implementations explicitly. Every `implementationId` on a node must appear on at least one workflow-level hook (the **catalog**). Pattern-based workflow hooks still auto-apply at runtime; node `hooks` add or override bindings for that node.
+
+```yaml
+id: llm1
+type: MODEL
+hooks:
+  pre:
+    - implementationId: prompt-validator
+  onError:
+    - implementationId: model-failure-alert
+  finally:
+    - implementationId: cleanup
+```
+
+`NodeHooksDefinition` holds a list per phase (`pre`, `onError`, `finally`). Validation rejects unknown `implementationId` values and node hooks when no workflow-level hooks are declared.
 
 ### 4.4 Failure handling
 
@@ -906,6 +960,16 @@ WorkflowDefinition enhanced = WorkflowBuilder.from(baseWorkflow)
 
 Think of `from()` as *git branch for workflows*: load a base definition, add nodes/edges, produce a new immutable artifact.
 
+**Immutable copy (no changes):**
+
+```java
+WorkflowDefinition snapshot = workflow.copy();
+// or: WorkflowDefinition.copyOf(workflow);
+// or: workflow.toBuilder().build();
+```
+
+Use `copy()` / `copyOf()` when you need a separate immutable instance with the same content. Use `toBuilder()` (or `WorkflowBuilder.from()`) when you will modify before `build()`.
+
 ### 5.2 Low-level builder (`WorkflowDefinition.builder()`)
 
 For deserialization-aligned construction or fine-grained control (ports, `onFailure`, `approval`):
@@ -961,7 +1025,7 @@ Runtime engines may add further checks (e.g. exactly one INPUT, acyclic graph, s
 ## 8. Package layout (`olo-definition`)
 
 ```
-io.olo.definition
+org.olo.definition
 ├── capability/     CapabilityDefinition, CapabilityValidator
 ├── tool/           ToolDefinition
 ├── agent/          AgentDefinition
@@ -982,6 +1046,7 @@ io.olo.definition
 ├── variable/       VariableDefinition (deprecated)
 ├── model/          ModelProviderDefinition, ModelRoutingDefinition
 ├── extension/      ExtensionDefinition
+├── hook/           HookDefinition, NodeHooksDefinition, HookActionDefinition, HookPhase, HookCatalog, HookValidator
 ├── serializer/     WorkflowSerializer, Json/Yaml implementations
 └── validation/     WorkflowValidator, SchemaCompatibility, ValidationResult
 ```

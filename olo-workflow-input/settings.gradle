@@ -1,0 +1,10 @@
+rootProject.name = 'olo-workflow-input'
+
+def definitionBuild = file('../olo-definition')
+if (definitionBuild.exists()) {
+    includeBuild(definitionBuild) {
+        dependencySubstitution {
+            substitute module('org.olo:olo-definition') using project(':olo-definition')
+        }
+    }
+}

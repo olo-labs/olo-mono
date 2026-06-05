@@ -1,5 +1,5 @@
 allprojects {
-    group = 'io.olo'
+    group = 'org.olo'
     version = '0.1.0-SNAPSHOT'
 }
 

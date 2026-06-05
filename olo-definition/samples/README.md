@@ -34,9 +34,9 @@ gradlew.bat build
 ## Load in Java
 
 ```java
-import io.olo.definition.serializer.JsonWorkflowSerializer;
-import io.olo.definition.validation.WorkflowValidator;
-import io.olo.definition.workflow.WorkflowDefinition;
+import org.olo.definition.serializer.JsonWorkflowSerializer;
+import org.olo.definition.validation.WorkflowValidator;
+import org.olo.definition.workflow.WorkflowDefinition;
 
 Path path = Path.of("samples/stock-analysis/workflow.json");
 WorkflowDefinition workflow =
@@ -46,3 +46,5 @@ WorkflowValidator.validateOrThrow(workflow);
 ```
 
 Optional scratch output from E2E tests: `samples/generated/` (gitignored).
+
+`SampleWorkflowCopyTest` writes `workflow-copy.json` / `workflow-copy.yaml` beside each sample (via `WorkflowDefinition.copy()`) and asserts they are byte-identical to the originals. Copy sidecars are gitignored.

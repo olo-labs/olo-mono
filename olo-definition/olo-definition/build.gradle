@@ -34,7 +34,7 @@ tasks.register('generateSamples', JavaExec) {
     description = 'Write workflow JSON/YAML samples under samples/'
     dependsOn compileTestJava
     classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'io.olo.definition.samples.SampleWorkflowGenerator'
+    mainClass = 'org.olo.definition.samples.SampleWorkflowGenerator'
     workingDir = rootProject.projectDir
     args rootProject.file('samples').absolutePath
 }

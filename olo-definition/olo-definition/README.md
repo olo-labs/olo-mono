@@ -60,11 +60,11 @@ YamlWorkflowSerializer yaml = new YamlWorkflowSerializer();
 
 ## Package layout
 
-- `io.olo.definition.workflow` — `WorkflowDefinition`, `WorkflowBuilder`
-- `io.olo.definition.node` — `NodeDefinition`, `NodeRouterDefinition`, `NodeType`
-- `io.olo.definition.edge` — `EdgeDefinition`
-- `io.olo.definition.variable` — `VariableDefinition`
-- `io.olo.definition.model` — `ModelProviderDefinition`, `ModelRoutingDefinition`
-- `io.olo.definition.extension` — `ExtensionDefinition`
-- `io.olo.definition.serializer` — JSON/YAML serializers
-- `io.olo.definition.validation` — `WorkflowValidator`
+- `org.olo.definition.workflow` — `WorkflowDefinition`, `WorkflowBuilder`
+- `org.olo.definition.node` — `NodeDefinition`, `NodeRouterDefinition`, `NodeType`
+- `org.olo.definition.edge` — `EdgeDefinition`
+- `org.olo.definition.variable` — `VariableDefinition`
+- `org.olo.definition.model` — `ModelProviderDefinition`, `ModelRoutingDefinition`
+- `org.olo.definition.extension` — `ExtensionDefinition`
+- `org.olo.definition.serializer` — JSON/YAML serializers
+- `org.olo.definition.validation` — `WorkflowValidator`
