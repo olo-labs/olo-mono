@@ -2,6 +2,7 @@ package org.olo.definition.port;
 
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
+import org.olo.definition.port.PortDirection;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.validation.ValidationTestFixtures;
@@ -34,9 +35,17 @@ class PortDefinitionSerializationTest {
         NodeDefinition tool = restored.getNodes().get(0);
 
         assertThat(tool.getPorts()).hasSize(4);
-        assertThat(tool.getInputs()).extracting(PortDefinition::getId).contains("stocks", "in");
-        assertThat(tool.getOutputs()).extracting(PortDefinition::getId).contains("stockList", "out");
-        assertThat(tool.getInputs().stream().filter(p -> "stocks".equals(p.getId())).findFirst())
+        assertThat(tool.getPorts().stream()
+                        .filter(port -> port.getDirection() == PortDirection.INPUT)
+                        .map(PortDefinition::getId))
+                .containsExactlyInAnyOrder("in", "stocks");
+        assertThat(tool.getPorts().stream()
+                        .filter(port -> port.getDirection() == PortDirection.OUTPUT)
+                        .map(PortDefinition::getId))
+                .containsExactlyInAnyOrder("out", "stockList");
+        assertThat(tool.getPorts().stream()
+                        .filter(port -> "stocks".equals(port.getId()))
+                        .findFirst())
                 .isPresent()
                 .get()
                 .extracting(PortDefinition::getSchema)

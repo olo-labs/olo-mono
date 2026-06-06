@@ -768,11 +768,11 @@ Edges reference port names; `WorkflowValidator` (via `SchemaCompatibility`) chec
 
 ```text
 EdgeDefinition
-├── sourceNodeId, sourcePort (optional)
-└── targetNodeId, targetPort (optional)
+├── sourceNodeId, sourcePortId (optional)
+└── targetNodeId, targetPortId (optional)
 ```
 
-When a node declares multiple ports in one direction, `sourcePort` / `targetPort` is required on the edge. With exactly one declared port, the name may be omitted.
+When a node declares multiple ports in one direction, `sourcePortId` / `targetPortId` is required on the edge. With exactly one declared port, the id may be omitted.
 
 **Why this matters:**
 

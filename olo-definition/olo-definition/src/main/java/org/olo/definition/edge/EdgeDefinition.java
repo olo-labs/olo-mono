@@ -1,7 +1,5 @@
 package org.olo.definition.edge;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -41,25 +39,11 @@ public final class EdgeDefinition {
         return sourcePortId;
     }
 
-    /** @deprecated use {@link #getSourcePortId()} */
-    @Deprecated
-    @JsonIgnore
-    public String getSourcePort() {
-        return sourcePortId;
-    }
-
     public String getTargetNodeId() {
         return targetNodeId;
     }
 
     public String getTargetPortId() {
-        return targetPortId;
-    }
-
-    /** @deprecated use {@link #getTargetPortId()} */
-    @Deprecated
-    @JsonIgnore
-    public String getTargetPort() {
         return targetPortId;
     }
 
@@ -97,10 +81,8 @@ public final class EdgeDefinition {
     public static final class Builder {
 
         private String sourceNodeId;
-        @JsonAlias("sourcePort")
         private String sourcePortId;
         private String targetNodeId;
-        @JsonAlias("targetPort")
         private String targetPortId;
 
         public Builder sourceNodeId(String sourceNodeId) {
@@ -113,12 +95,6 @@ public final class EdgeDefinition {
             return this;
         }
 
-        /** @deprecated use {@link #sourcePortId(String)} */
-        @Deprecated
-        public Builder sourcePort(String sourcePort) {
-            return sourcePortId(sourcePort);
-        }
-
         public Builder targetNodeId(String targetNodeId) {
             this.targetNodeId = targetNodeId;
             return this;
@@ -127,12 +103,6 @@ public final class EdgeDefinition {
         public Builder targetPortId(String targetPortId) {
             this.targetPortId = targetPortId;
             return this;
-        }
-
-        /** @deprecated use {@link #targetPortId(String)} */
-        @Deprecated
-        public Builder targetPort(String targetPort) {
-            return targetPortId(targetPort);
         }
 
         public EdgeDefinition build() {

@@ -506,7 +506,7 @@ public final class WorkflowValidator {
 
         PortResolution sourcePort = resolvePort(
                 edge.getSourcePortId(),
-                source.getOutputs(),
+                outputPorts(source),
                 PortDirection.OUTPUT,
                 "output",
                 source.getId(),
@@ -519,7 +519,7 @@ public final class WorkflowValidator {
 
         PortResolution targetPort = resolvePort(
                 edge.getTargetPortId(),
-                target.getInputs(),
+                inputPorts(target),
                 PortDirection.INPUT,
                 "input",
                 target.getId(),
@@ -549,6 +549,18 @@ public final class WorkflowValidator {
     }
 
     private record EdgePortValidation(PortResolution source, PortResolution target) {
+    }
+
+    private static List<PortDefinition> inputPorts(NodeDefinition node) {
+        return node.getPorts().stream()
+                .filter(port -> port.getDirection() == PortDirection.INPUT)
+                .toList();
+    }
+
+    private static List<PortDefinition> outputPorts(NodeDefinition node) {
+        return node.getPorts().stream()
+                .filter(port -> port.getDirection() == PortDirection.OUTPUT)
+                .toList();
     }
 
     private static PortResolution resolvePort(

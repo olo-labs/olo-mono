@@ -1,7 +1,6 @@
 package org.olo.definition.node;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -13,7 +12,6 @@ import org.olo.definition.hook.NodeHooksDefinition;
 import org.olo.definition.human.HumanApprovalDefinition;
 import org.olo.definition.parallel.JoinDefinition;
 import org.olo.definition.port.PortDefinition;
-import org.olo.definition.port.PortDirection;
 import org.olo.definition.runtime.RuntimeBindingDefinition;
 import org.olo.definition.workflow.WorkflowReferenceDefinition;
 
@@ -49,7 +47,7 @@ public final class NodeDefinition {
         this.id = builder.id;
         this.type = builder.type;
         this.capability = builder.capability;
-        this.ports = mergePorts(builder);
+        this.ports = builder.ports == null ? List.of() : List.copyOf(builder.ports);
         this.execution = builder.execution;
         this.reads = builder.reads == null ? List.of() : List.copyOf(builder.reads);
         this.writes = builder.writes == null ? List.of() : List.copyOf(builder.writes);
@@ -77,16 +75,6 @@ public final class NodeDefinition {
 
     public List<PortDefinition> getPorts() {
         return ports;
-    }
-
-    @JsonIgnore
-    public List<PortDefinition> getInputs() {
-        return ports.stream().filter(port -> port.getDirection() == PortDirection.INPUT).toList();
-    }
-
-    @JsonIgnore
-    public List<PortDefinition> getOutputs() {
-        return ports.stream().filter(port -> port.getDirection() == PortDirection.OUTPUT).toList();
     }
 
     public NodeExecutionDefinition getExecution() {
@@ -204,8 +192,6 @@ public final class NodeDefinition {
         private String type;
         private CapabilityDefinition capability;
         private List<PortDefinition> ports;
-        private List<PortDefinition> inputs;
-        private List<PortDefinition> outputs;
         private NodeExecutionDefinition execution;
         private List<String> reads;
         private List<String> writes;
@@ -273,32 +259,6 @@ public final class NodeDefinition {
                 this.ports = new java.util.ArrayList<>();
             }
             this.ports.add(port);
-            return this;
-        }
-
-        public Builder inputs(List<PortDefinition> inputs) {
-            this.inputs = inputs;
-            return this;
-        }
-
-        public Builder addInput(PortDefinition input) {
-            if (this.inputs == null) {
-                this.inputs = new java.util.ArrayList<>();
-            }
-            this.inputs.add(input);
-            return this;
-        }
-
-        public Builder outputs(List<PortDefinition> outputs) {
-            this.outputs = outputs;
-            return this;
-        }
-
-        public Builder addOutput(PortDefinition output) {
-            if (this.outputs == null) {
-                this.outputs = new java.util.ArrayList<>();
-            }
-            this.outputs.add(output);
             return this;
         }
 
@@ -387,25 +347,5 @@ public final class NodeDefinition {
             }
             return executionBuilder;
         }
-    }
-
-    private static List<PortDefinition> mergePorts(Builder builder) {
-        java.util.ArrayList<PortDefinition> merged = new java.util.ArrayList<>();
-        if (builder.ports != null) {
-            for (PortDefinition port : builder.ports) {
-                merged.add(port);
-            }
-        }
-        if (builder.inputs != null) {
-            for (PortDefinition port : builder.inputs) {
-                merged.add(PortDefinition.normalize(port, PortDirection.INPUT));
-            }
-        }
-        if (builder.outputs != null) {
-            for (PortDefinition port : builder.outputs) {
-                merged.add(PortDefinition.normalize(port, PortDirection.OUTPUT));
-            }
-        }
-        return List.copyOf(merged);
     }
 }

@@ -74,23 +74,6 @@ public final class PortDefinition {
         return maxConnections;
     }
 
-    /**
-     * Returns a copy with {@code direction} set when absent. Defaults {@code id} to {@code name} when absent.
-     */
-    public static PortDefinition normalize(PortDefinition port, PortDirection defaultDirection) {
-        Objects.requireNonNull(port, "port is required");
-        Objects.requireNonNull(defaultDirection, "defaultDirection is required");
-        return builder()
-                .id(port.getId() != null ? port.getId() : port.getName())
-                .name(port.getName())
-                .schema(port.getSchema())
-                .direction(port.getDirection() != null ? port.getDirection() : defaultDirection)
-                .required(port.isRequired())
-                .minConnections(port.getMinConnections())
-                .maxConnections(port.getMaxConnections())
-                .build();
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
