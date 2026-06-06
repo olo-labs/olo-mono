@@ -1,7 +1,6 @@
 package org.olo.definition.state;
 
 import org.olo.definition.input.WorkflowInputDefinition;
-import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.parameter.WorkflowParameterDefinition;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
@@ -27,9 +26,7 @@ class WorkflowStateTest {
                         .schema("number")
                         .defaultValue(0.2)
                         .build())
-                .addNode(NodeDefinition.builder()
-                        .id("research")
-                        .type(NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("research", NodeType.TOOL)
                         .addRead("state.symbol")
                         .addWrite("state.analysis")
                         .build())
@@ -53,9 +50,7 @@ class WorkflowStateTest {
                 .id("bad-state")
                 .capability(ValidationTestFixtures.minimalCapability())
                 .putState("symbol", StateFieldDefinition.builder().schema("String").build())
-                .addNode(NodeDefinition.builder()
-                        .id("n1")
-                        .type(NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("n1", NodeType.TOOL)
                         .addRead("state.missing")
                         .build())
                 .build();
@@ -73,9 +68,7 @@ class WorkflowStateTest {
                 .putInput("symbol", WorkflowInputDefinition.builder().schema("String").required(true).build())
                 .putState("analysis", StateFieldDefinition.builder().schema("Analysis").build())
                 .putState("news", StateFieldDefinition.builder().schema("News[]").build())
-                .addNode(NodeDefinition.builder()
-                        .id("research")
-                        .type(NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("research", NodeType.TOOL)
                         .addRead("state.symbol")
                         .addWrite("state.analysis")
                         .build())
@@ -108,9 +101,7 @@ class WorkflowStateTest {
                         .schema("String")
                         .populateState(false)
                         .build())
-                .addNode(NodeDefinition.builder()
-                        .id("n1")
-                        .type(NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("n1", NodeType.TOOL)
                         .addRead("state.symbol")
                         .build())
                 .build();
@@ -124,9 +115,7 @@ class WorkflowStateTest {
                 .id("typo-write")
                 .capability(ValidationTestFixtures.minimalCapability())
                 .putState("analysis", StateFieldDefinition.builder().schema("Analysis").build())
-                .addNode(NodeDefinition.builder()
-                        .id("research")
-                        .type(NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("research", NodeType.TOOL)
                         .addWrite("state.analysys")
                         .build())
                 .build();

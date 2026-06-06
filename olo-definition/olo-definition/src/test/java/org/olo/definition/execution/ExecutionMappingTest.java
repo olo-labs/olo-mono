@@ -20,9 +20,7 @@ class ExecutionMappingTest {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("parent")
                 .capability(ValidationTestFixtures.minimalCapability())
-                .addNode(NodeDefinition.builder()
-                        .id("technical-agent")
-                        .type(NodeType.AGENT)
+                .addNode(ValidationTestFixtures.node("technical-agent", NodeType.AGENT)
                         .executionKind(ExecutionKind.SUBWORKFLOW)
                         .workflow(WorkflowReferenceDefinition.builder()
                                 .workflowId("technical-analysis")
@@ -48,7 +46,7 @@ class ExecutionMappingTest {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("bad")
                 .capability(ValidationTestFixtures.minimalCapability())
-                .addNode(NodeDefinition.builder().id("agent").type(NodeType.AGENT).build())
+                .addNode(ValidationTestFixtures.node("agent", NodeType.AGENT).build())
                 .build();
 
         assertThat(WorkflowValidator.validate(workflow).valid()).isFalse();
@@ -61,9 +59,7 @@ class ExecutionMappingTest {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("bad")
                 .capability(ValidationTestFixtures.minimalCapability())
-                .addNode(NodeDefinition.builder()
-                        .id("tool")
-                        .type(NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("tool", NodeType.TOOL)
                         .workflow(WorkflowReferenceDefinition.builder().workflowId("x").build())
                         .build())
                 .build();

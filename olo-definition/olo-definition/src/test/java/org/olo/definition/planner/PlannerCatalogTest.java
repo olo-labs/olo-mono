@@ -3,6 +3,7 @@ package org.olo.definition.planner;
 import org.olo.definition.agent.AgentDefinition;
 import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.tool.ToolDefinition;
+import org.olo.definition.validation.ValidationTestFixtures;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
@@ -108,9 +109,7 @@ class PlannerCatalogTest {
                         .addInput("q")
                         .addOutput("a")
                         .build())
-                .addNode(org.olo.definition.node.NodeDefinition.builder()
-                        .id("llm")
-                        .type(org.olo.definition.node.NodeType.MODEL)
+                .addNode(ValidationTestFixtures.node("llm", org.olo.definition.node.NodeType.MODEL)
                         .capability(CapabilityDefinition.builder()
                                 .name("Duplicate Model Capability")
                                 .description("Should not appear in planner catalog V1")

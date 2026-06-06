@@ -8,24 +8,45 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.Objects;
 
 /**
- * Declares a named input or output on a node with a schema type (e.g. {@code Stock[]}, {@code String}).
- * Used by {@link org.olo.definition.validation.WorkflowValidator} to check edge wiring before runtime.
+ * Declares a typed connection point on a node. Edges reference ports by {@link #getId()}.
  */
 @JsonDeserialize(builder = PortDefinition.Builder.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class PortDefinition {
 
+    private final String id;
     private final String name;
     private final String schema;
+    private final PortDirection direction;
+    private final boolean required;
+    private final int minConnections;
+    private final Integer maxConnections;
 
     private PortDefinition(Builder builder) {
+        this.id = builder.id;
         this.name = builder.name;
         this.schema = builder.schema;
+        this.direction = builder.direction;
+        this.required = builder.required;
+        this.minConnections = builder.minConnections;
+        this.maxConnections = builder.maxConnections;
     }
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public static PortDefinition inputPort(String id, String schema) {
+        return builder().id(id).name(id).schema(schema).direction(PortDirection.INPUT).build();
+    }
+
+    public static PortDefinition outputPort(String id, String schema) {
+        return builder().id(id).name(id).schema(schema).direction(PortDirection.OUTPUT).build();
+    }
+
+    public String getId() {
+        return id;
     }
 
     public String getName() {
@@ -36,6 +57,40 @@ public final class PortDefinition {
         return schema;
     }
 
+    public PortDirection getDirection() {
+        return direction;
+    }
+
+    public boolean isRequired() {
+        return required;
+    }
+
+    public int getMinConnections() {
+        return minConnections;
+    }
+
+    /** {@code null} means no upper bound. */
+    public Integer getMaxConnections() {
+        return maxConnections;
+    }
+
+    /**
+     * Returns a copy with {@code direction} set when absent. Defaults {@code id} to {@code name} when absent.
+     */
+    public static PortDefinition normalize(PortDefinition port, PortDirection defaultDirection) {
+        Objects.requireNonNull(port, "port is required");
+        Objects.requireNonNull(defaultDirection, "defaultDirection is required");
+        return builder()
+                .id(port.getId() != null ? port.getId() : port.getName())
+                .name(port.getName())
+                .schema(port.getSchema())
+                .direction(port.getDirection() != null ? port.getDirection() : defaultDirection)
+                .required(port.isRequired())
+                .minConnections(port.getMinConnections())
+                .maxConnections(port.getMaxConnections())
+                .build();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -44,24 +99,40 @@ public final class PortDefinition {
         if (!(o instanceof PortDefinition that)) {
             return false;
         }
-        return Objects.equals(name, that.name) && Objects.equals(schema, that.schema);
+        return required == that.required
+                && minConnections == that.minConnections
+                && Objects.equals(id, that.id)
+                && Objects.equals(name, that.name)
+                && Objects.equals(schema, that.schema)
+                && direction == that.direction
+                && Objects.equals(maxConnections, that.maxConnections);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, schema);
+        return Objects.hash(id, name, schema, direction, required, minConnections, maxConnections);
     }
 
     @Override
     public String toString() {
-        return "PortDefinition{name='" + name + "', schema='" + schema + "'}";
+        return "PortDefinition{id='" + id + "', name='" + name + "', direction=" + direction + ", schema='" + schema + "'}";
     }
 
     @JsonPOJOBuilder(withPrefix = "")
     public static final class Builder {
 
+        private String id;
         private String name;
         private String schema;
+        private PortDirection direction;
+        private boolean required;
+        private int minConnections;
+        private Integer maxConnections;
+
+        public Builder id(String id) {
+            this.id = id;
+            return this;
+        }
 
         public Builder name(String name) {
             this.name = name;
@@ -73,9 +144,39 @@ public final class PortDefinition {
             return this;
         }
 
+        public Builder direction(PortDirection direction) {
+            this.direction = direction;
+            return this;
+        }
+
+        public Builder required(boolean required) {
+            this.required = required;
+            return this;
+        }
+
+        public Builder minConnections(int minConnections) {
+            this.minConnections = minConnections;
+            return this;
+        }
+
+        public Builder maxConnections(Integer maxConnections) {
+            this.maxConnections = maxConnections;
+            return this;
+        }
+
         public PortDefinition build() {
             Objects.requireNonNull(name, "port name is required");
             Objects.requireNonNull(schema, "port schema is required");
+            Objects.requireNonNull(direction, "port direction is required");
+            if (id == null) {
+                id = name;
+            }
+            if (minConnections < 0) {
+                throw new IllegalArgumentException("minConnections must be >= 0");
+            }
+            if (maxConnections != null && maxConnections < minConnections) {
+                throw new IllegalArgumentException("maxConnections must be >= minConnections");
+            }
             return new PortDefinition(this);
         }
     }

@@ -1,5 +1,7 @@
 package org.olo.definition.edge;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -16,15 +18,15 @@ import java.util.Objects;
 public final class EdgeDefinition {
 
     private final String sourceNodeId;
-    private final String sourcePort;
+    private final String sourcePortId;
     private final String targetNodeId;
-    private final String targetPort;
+    private final String targetPortId;
 
     private EdgeDefinition(Builder builder) {
         this.sourceNodeId = builder.sourceNodeId;
-        this.sourcePort = builder.sourcePort;
+        this.sourcePortId = builder.sourcePortId;
         this.targetNodeId = builder.targetNodeId;
-        this.targetPort = builder.targetPort;
+        this.targetPortId = builder.targetPortId;
     }
 
     public static Builder builder() {
@@ -35,16 +37,30 @@ public final class EdgeDefinition {
         return sourceNodeId;
     }
 
+    public String getSourcePortId() {
+        return sourcePortId;
+    }
+
+    /** @deprecated use {@link #getSourcePortId()} */
+    @Deprecated
+    @JsonIgnore
     public String getSourcePort() {
-        return sourcePort;
+        return sourcePortId;
     }
 
     public String getTargetNodeId() {
         return targetNodeId;
     }
 
+    public String getTargetPortId() {
+        return targetPortId;
+    }
+
+    /** @deprecated use {@link #getTargetPortId()} */
+    @Deprecated
+    @JsonIgnore
     public String getTargetPort() {
-        return targetPort;
+        return targetPortId;
     }
 
     @Override
@@ -56,24 +72,24 @@ public final class EdgeDefinition {
             return false;
         }
         return Objects.equals(sourceNodeId, that.sourceNodeId)
-                && Objects.equals(sourcePort, that.sourcePort)
+                && Objects.equals(sourcePortId, that.sourcePortId)
                 && Objects.equals(targetNodeId, that.targetNodeId)
-                && Objects.equals(targetPort, that.targetPort);
+                && Objects.equals(targetPortId, that.targetPortId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sourceNodeId, sourcePort, targetNodeId, targetPort);
+        return Objects.hash(sourceNodeId, sourcePortId, targetNodeId, targetPortId);
     }
 
     @Override
     public String toString() {
         return "EdgeDefinition{"
                 + sourceNodeId
-                + (sourcePort != null ? ":" + sourcePort : "")
+                + (sourcePortId != null ? ":" + sourcePortId : "")
                 + " -> "
                 + targetNodeId
-                + (targetPort != null ? ":" + targetPort : "")
+                + (targetPortId != null ? ":" + targetPortId : "")
                 + "}";
     }
 
@@ -81,18 +97,26 @@ public final class EdgeDefinition {
     public static final class Builder {
 
         private String sourceNodeId;
-        private String sourcePort;
+        @JsonAlias("sourcePort")
+        private String sourcePortId;
         private String targetNodeId;
-        private String targetPort;
+        @JsonAlias("targetPort")
+        private String targetPortId;
 
         public Builder sourceNodeId(String sourceNodeId) {
             this.sourceNodeId = sourceNodeId;
             return this;
         }
 
-        public Builder sourcePort(String sourcePort) {
-            this.sourcePort = sourcePort;
+        public Builder sourcePortId(String sourcePortId) {
+            this.sourcePortId = sourcePortId;
             return this;
+        }
+
+        /** @deprecated use {@link #sourcePortId(String)} */
+        @Deprecated
+        public Builder sourcePort(String sourcePort) {
+            return sourcePortId(sourcePort);
         }
 
         public Builder targetNodeId(String targetNodeId) {
@@ -100,9 +124,15 @@ public final class EdgeDefinition {
             return this;
         }
 
-        public Builder targetPort(String targetPort) {
-            this.targetPort = targetPort;
+        public Builder targetPortId(String targetPortId) {
+            this.targetPortId = targetPortId;
             return this;
+        }
+
+        /** @deprecated use {@link #targetPortId(String)} */
+        @Deprecated
+        public Builder targetPort(String targetPort) {
+            return targetPortId(targetPort);
         }
 
         public EdgeDefinition build() {

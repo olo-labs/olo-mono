@@ -19,18 +19,13 @@ class OnFailureSerializationTest {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("retry-fallback")
                 .capability(ValidationTestFixtures.minimalCapability())
-                .addNode(NodeDefinition.builder()
-                        .id("openai")
-                        .type(NodeType.MODEL)
+                .addNode(ValidationTestFixtures.node("openai", NodeType.MODEL)
                         .onFailure(OnFailureDefinition.builder()
                                 .retry(RetryPolicy.builder().attempts(3).build())
                                 .route(ErrorRoute.builder().targetNodeId("fallback-model").build())
                                 .build())
                         .build())
-                .addNode(NodeDefinition.builder()
-                        .id("fallback-model")
-                        .type(NodeType.MODEL)
-                        .build())
+                .addNode(ValidationTestFixtures.node("fallback-model", NodeType.MODEL).build())
                 .build();
 
         WorkflowValidator.validateOrThrow(workflow);

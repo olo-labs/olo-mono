@@ -55,6 +55,7 @@ class WorkflowBuilderTest {
 
         assertThat(copied).isEqualTo(original).isNotSameAs(original);
         assertThat(copiedViaStatic).isEqualTo(original).isNotSameAs(original);
+        assertThat(copied.getRole()).isEqualTo(original.getRole());
 
         WorkflowDefinition modified = original.toBuilder().id("stock-analysis-v2").build();
         assertThat(original.getId()).isEqualTo("stock-analysis");

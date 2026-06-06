@@ -19,6 +19,7 @@ import org.olo.definition.model.ModelRoutingDefinition;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeRouterDefinition;
 import org.olo.definition.port.PortDefinition;
+import org.olo.definition.port.PortDirection;
 import org.olo.definition.input.WorkflowInputDefinition;
 import org.olo.definition.path.DataPath;
 import org.olo.definition.path.DataPathParseResult;
@@ -216,6 +217,8 @@ public final class WorkflowValidator {
         }
 
         int edgeIndex = 0;
+        Map<String, Map<String, Integer>> outgoingCounts = new HashMap<>();
+        Map<String, Map<String, Integer>> incomingCounts = new HashMap<>();
         for (EdgeDefinition edge : workflow.getEdges()) {
             if (edge == null) {
                 errors.add("edge entry must not be null");
@@ -237,8 +240,20 @@ public final class WorkflowValidator {
                     && edge.getSourceNodeId().equals(edge.getTargetNodeId())) {
                 errors.add(prefix + "self-loop on node: " + edge.getSourceNodeId());
             }
-            validateEdgePorts(edge, nodesById, prefix, errors);
+            EdgePortValidation edgePorts = validateEdgePorts(edge, nodesById, prefix, errors);
+            if (edgePorts.source().port != null && edge.getSourceNodeId() != null) {
+                incrementCount(outgoingCounts, edge.getSourceNodeId(), edgePorts.source().port.getId());
+            }
+            if (edgePorts.target().port != null && edge.getTargetNodeId() != null) {
+                incrementCount(incomingCounts, edge.getTargetNodeId(), edgePorts.target().port.getId());
+            }
             edgeIndex++;
+        }
+
+        for (NodeDefinition node : workflow.getNodes()) {
+            if (node != null) {
+                validatePortConnectionCounts(node, outgoingCounts, incomingCounts, errors);
+            }
         }
 
         return errors.isEmpty() ? ValidationResult.ok() : ValidationResult.failure(errors);
@@ -398,63 +413,131 @@ public final class WorkflowValidator {
     }
 
     private static void validatePorts(NodeDefinition node, List<String> errors) {
-        validatePortList(node.getId(), "input", node.getInputs(), errors);
-        validatePortList(node.getId(), "output", node.getOutputs(), errors);
-    }
-
-    private static void validatePortList(
-            String nodeId, String kind, List<PortDefinition> ports, List<String> errors) {
-        Set<String> names = new HashSet<>();
-        for (PortDefinition port : ports) {
+        if (node.getPorts().isEmpty()) {
+            errors.add("node " + node.getId() + " requires at least one port");
+            return;
+        }
+        Set<String> ids = new HashSet<>();
+        for (PortDefinition port : node.getPorts()) {
             if (port == null) {
-                errors.add("null " + kind + " port on node: " + nodeId);
+                errors.add("null port on node: " + node.getId());
                 continue;
             }
+            if (isBlank(port.getId())) {
+                errors.add("port id is required on node: " + node.getId());
+            } else if (!ids.add(port.getId())) {
+                errors.add("duplicate port id '" + port.getId() + "' on node: " + node.getId());
+            }
             if (isBlank(port.getName())) {
-                errors.add(kind + " port name is required on node: " + nodeId);
-            } else if (!names.add(port.getName())) {
-                errors.add("duplicate " + kind + " port '" + port.getName() + "' on node: " + nodeId);
+                errors.add("port name is required on node: " + node.getId());
+            }
+            if (port.getDirection() == null) {
+                errors.add("port direction is required on node " + node.getId() + " port: " + port.getId());
             }
             if (isBlank(port.getSchema())) {
-                errors.add(
-                        kind
-                                + " port '"
-                                + port.getName()
-                                + "' on node "
-                                + nodeId
-                                + " requires a schema");
+                errors.add("port '" + port.getId() + "' on node " + node.getId() + " requires a schema");
+            }
+            if (port.getMinConnections() < 0) {
+                errors.add("port '" + port.getId() + "' on node " + node.getId() + " minConnections must be >= 0");
+            }
+            if (port.getMaxConnections() != null && port.getMaxConnections() < port.getMinConnections()) {
+                errors.add("port '" + port.getId() + "' on node " + node.getId() + " maxConnections must be >= minConnections");
             }
         }
     }
 
-    private static void validateEdgePorts(
+    private static void validatePortConnectionCounts(
+            NodeDefinition node,
+            Map<String, Map<String, Integer>> outgoingCounts,
+            Map<String, Map<String, Integer>> incomingCounts,
+            List<String> errors) {
+        for (PortDefinition port : node.getPorts()) {
+            if (port == null || isBlank(port.getId())) {
+                continue;
+            }
+            int count = port.getDirection() == PortDirection.OUTPUT
+                    ? outgoingCounts.getOrDefault(node.getId(), Map.of()).getOrDefault(port.getId(), 0)
+                    : incomingCounts.getOrDefault(node.getId(), Map.of()).getOrDefault(port.getId(), 0);
+            if (port.isRequired() && count == 0) {
+                errors.add("required port '" + port.getId() + "' on node " + node.getId() + " has no connections");
+            }
+            if (count < port.getMinConnections()) {
+                errors.add(
+                        "port '"
+                                + port.getId()
+                                + "' on node "
+                                + node.getId()
+                                + " has "
+                                + count
+                                + " connections but requires at least "
+                                + port.getMinConnections());
+            }
+            if (port.getMaxConnections() != null && count > port.getMaxConnections()) {
+                errors.add(
+                        "port '"
+                                + port.getId()
+                                + "' on node "
+                                + node.getId()
+                                + " has "
+                                + count
+                                + " connections but allows at most "
+                                + port.getMaxConnections());
+            }
+        }
+    }
+
+    private static void incrementCount(Map<String, Map<String, Integer>> counts, String nodeId, String portId) {
+        counts.computeIfAbsent(nodeId, ignored -> new HashMap<>())
+                .merge(portId, 1, Integer::sum);
+    }
+
+    private static EdgePortValidation validateEdgePorts(
             EdgeDefinition edge,
             Map<String, NodeDefinition> nodesById,
             String prefix,
             List<String> errors) {
         NodeDefinition source = nodesById.get(edge.getSourceNodeId());
         NodeDefinition target = nodesById.get(edge.getTargetNodeId());
-        if (source == null || target == null) {
-            return;
+        if (source == null) {
+            return new EdgePortValidation(
+                    PortResolution.unresolved(edge.getSourcePortId()),
+                    PortResolution.unresolved(edge.getTargetPortId()));
         }
 
-        PortResolution sourcePort =
-                resolvePort(edge.getSourcePort(), source.getOutputs(), "output", source.getId(), prefix, errors);
-        PortResolution targetPort =
-                resolvePort(edge.getTargetPort(), target.getInputs(), "input", target.getId(), prefix, errors);
+        PortResolution sourcePort = resolvePort(
+                edge.getSourcePortId(),
+                source.getOutputs(),
+                PortDirection.OUTPUT,
+                "output",
+                source.getId(),
+                prefix,
+                errors);
+
+        if (target == null) {
+            return new EdgePortValidation(sourcePort, PortResolution.unresolved(edge.getTargetPortId()));
+        }
+
+        PortResolution targetPort = resolvePort(
+                edge.getTargetPortId(),
+                target.getInputs(),
+                PortDirection.INPUT,
+                "input",
+                target.getId(),
+                prefix,
+                errors);
 
         if (sourcePort.port != null && targetPort.port != null) {
             if (!SchemaCompatibility.compatible(sourcePort.port.getSchema(), targetPort.port.getSchema())) {
                 errors.add(
                         prefix
                                 + "schema mismatch: output port '"
-                                + sourcePort.port.getName()
+                                + sourcePort.port.getId()
                                 + "' on node "
                                 + source.getId()
                                 + " ("
                                 + sourcePort.port.getSchema()
                                 + ") is not compatible with input port '"
-                                + targetPort.port.getName()
+                                + targetPort.port.getId()
                                 + "' on node "
                                 + target.getId()
                                 + " ("
@@ -462,28 +545,32 @@ public final class WorkflowValidator {
                                 + ")");
             }
         }
+        return new EdgePortValidation(sourcePort, targetPort);
+    }
+
+    private record EdgePortValidation(PortResolution source, PortResolution target) {
     }
 
     private static PortResolution resolvePort(
-            String portName,
+            String portId,
             List<PortDefinition> ports,
+            PortDirection expectedDirection,
             String kind,
             String nodeId,
             String prefix,
             List<String> errors) {
         if (ports.isEmpty()) {
-            return PortResolution.unresolved(portName);
+            return PortResolution.unresolved(portId);
         }
 
-        String resolvedName = portName;
-        if (isBlank(resolvedName)) {
+        String resolvedId = portId;
+        if (isBlank(resolvedId)) {
             if (ports.size() == 1) {
-                resolvedName = ports.get(0).getName();
+                resolvedId = ports.get(0).getId();
             } else {
                 errors.add(
                         prefix
-                                + kind
-                                + "Port is required on node "
+                                + "sourcePortId/targetPortId is required on node "
                                 + nodeId
                                 + " (declares "
                                 + ports.size()
@@ -495,8 +582,18 @@ public final class WorkflowValidator {
         }
 
         for (PortDefinition port : ports) {
-            if (port != null && resolvedName.equals(port.getName())) {
-                return new PortResolution(resolvedName, port);
+            if (port != null && resolvedId.equals(port.getId())) {
+                if (port.getDirection() != expectedDirection) {
+                    errors.add(
+                            prefix
+                                    + "port '"
+                                    + resolvedId
+                                    + "' on node "
+                                    + nodeId
+                                    + " must be "
+                                    + expectedDirection.value());
+                }
+                return new PortResolution(resolvedId, port);
             }
         }
         errors.add(
@@ -504,16 +601,16 @@ public final class WorkflowValidator {
                         + "unknown "
                         + kind
                         + " port '"
-                        + resolvedName
+                        + resolvedId
                         + "' on node "
                         + nodeId);
-        return PortResolution.unresolved(resolvedName);
+        return PortResolution.unresolved(resolvedId);
     }
 
-    private record PortResolution(String name, PortDefinition port) {
+    private record PortResolution(String id, PortDefinition port) {
 
-        static PortResolution unresolved(String name) {
-            return new PortResolution(name, null);
+        static PortResolution unresolved(String id) {
+            return new PortResolution(id, null);
         }
     }
 

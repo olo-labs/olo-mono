@@ -6,6 +6,7 @@ import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.serializer.YamlWorkflowSerializer;
+import org.olo.definition.validation.ValidationTestFixtures;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
@@ -90,9 +91,7 @@ class HookDefinitionSerializationTest {
                         .pattern("**")
                         .pre(HookActionDefinition.builder().implementationId("metrics-start").build())
                         .build())
-                .addNode(NodeDefinition.builder()
-                        .id("llm1")
-                        .type(NodeType.MODEL)
+                .addNode(ValidationTestFixtures.node("llm1", NodeType.MODEL)
                         .hooks(NodeHooksDefinition.builder()
                                 .addPre(HookActionDefinition.builder().implementationId("unknown-hook").build())
                                 .build())
@@ -147,9 +146,7 @@ class HookDefinitionSerializationTest {
                         .pattern("llm1")
                         .onFinally(HookActionDefinition.builder().implementationId("cleanup").build())
                         .build())
-                .addNode(NodeDefinition.builder()
-                        .id("llm1")
-                        .type(NodeType.MODEL)
+                .addNode(ValidationTestFixtures.node("llm1", NodeType.MODEL)
                         .hooks(NodeHooksDefinition.builder()
                                 .addPre(HookActionDefinition.builder().implementationId("prompt-validator").build())
                                 .addOnError(HookActionDefinition.builder().implementationId("model-failure-alert").build())
@@ -184,10 +181,7 @@ class HookDefinitionSerializationTest {
                         .pattern("trading.*")
                         .onError(HookActionDefinition.builder().implementationId("audit-error").build())
                         .build())
-                .addNode(org.olo.definition.node.NodeDefinition.builder()
-                        .id("analysis-step")
-                        .type(NodeType.MODEL)
-                        .build())
+                .addNode(ValidationTestFixtures.node("analysis-step", NodeType.MODEL).build())
                 .inputNode("input")
                 .outputNode("output")
                 .connect("input", "analysis-step")

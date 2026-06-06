@@ -4,6 +4,7 @@ import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.capability.CapabilityDefinition;
+import org.olo.definition.validation.ValidationTestFixtures;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,7 @@ class PortDefinitionSerializationTest {
     private final JsonWorkflowSerializer json = new JsonWorkflowSerializer();
 
     @Test
-    void roundTripsInputsAndOutputsOnNode() throws Exception {
+    void roundTripsPortsOnNode() throws Exception {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("ports")
                 .capability(CapabilityDefinition.builder()
@@ -23,21 +24,22 @@ class PortDefinitionSerializationTest {
                         .addInput("stocks")
                         .addOutput("stockList")
                         .build())
-                .addNode(NodeDefinition.builder()
-                        .id("tool-b")
-                        .type(NodeType.TOOL)
-                        .addInput(PortDefinition.builder().name("stocks").schema("Stock[]").build())
-                        .addOutput(PortDefinition.builder().name("stockList").schema("Stock[]").build())
+                .addNode(ValidationTestFixtures.node("tool-b", NodeType.TOOL)
+                        .addPort(PortDefinition.inputPort("stocks", "Stock[]"))
+                        .addPort(PortDefinition.outputPort("stockList", "Stock[]"))
                         .build())
                 .build();
 
         WorkflowDefinition restored = json.deserialize(json.serialize(workflow));
         NodeDefinition tool = restored.getNodes().get(0);
 
-        assertThat(tool.getInputs()).hasSize(1);
-        assertThat(tool.getInputs().get(0).getName()).isEqualTo("stocks");
-        assertThat(tool.getInputs().get(0).getSchema()).isEqualTo("Stock[]");
-        assertThat(tool.getOutputs()).hasSize(1);
-        assertThat(tool.getOutputs().get(0).getName()).isEqualTo("stockList");
+        assertThat(tool.getPorts()).hasSize(4);
+        assertThat(tool.getInputs()).extracting(PortDefinition::getId).contains("stocks", "in");
+        assertThat(tool.getOutputs()).extracting(PortDefinition::getId).contains("stockList", "out");
+        assertThat(tool.getInputs().stream().filter(p -> "stocks".equals(p.getId())).findFirst())
+                .isPresent()
+                .get()
+                .extracting(PortDefinition::getSchema)
+                .isEqualTo("Stock[]");
     }
 }

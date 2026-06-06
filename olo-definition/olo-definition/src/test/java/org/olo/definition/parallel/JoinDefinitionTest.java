@@ -1,6 +1,5 @@
 package org.olo.definition.parallel;
 
-import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.validation.ValidationTestFixtures;
@@ -19,9 +18,7 @@ class JoinDefinitionTest {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("parallel")
                 .capability(ValidationTestFixtures.minimalCapability())
-                .addNode(NodeDefinition.builder()
-                        .id("fan-out")
-                        .type(NodeType.PARALLEL)
+                .addNode(ValidationTestFixtures.node("fan-out", NodeType.PARALLEL)
                         .join(JoinDefinition.builder().strategy(JoinStrategy.ALL).build())
                         .build())
                 .build();
@@ -36,7 +33,7 @@ class JoinDefinitionTest {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("bad")
                 .capability(ValidationTestFixtures.minimalCapability())
-                .addNode(NodeDefinition.builder().id("fan-out").type(NodeType.PARALLEL).build())
+                .addNode(ValidationTestFixtures.node("fan-out", NodeType.PARALLEL).build())
                 .build();
 
         assertThat(WorkflowValidator.validate(workflow).valid()).isFalse();

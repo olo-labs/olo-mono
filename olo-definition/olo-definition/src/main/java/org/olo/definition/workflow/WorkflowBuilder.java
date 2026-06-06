@@ -13,6 +13,8 @@ import org.olo.definition.human.HumanApprovalDefinition;
 import org.olo.definition.input.WorkflowInputDefinition;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
+import org.olo.definition.port.PortDefinition;
+import org.olo.definition.port.PortDirection;
 import org.olo.definition.parameter.WorkflowParameterDefinition;
 import org.olo.definition.state.StateFieldDefinition;
 import org.olo.definition.variable.VariableDefinition;
@@ -66,6 +68,9 @@ public final class WorkflowBuilder {
         WorkflowBuilder builder = new WorkflowBuilder();
         builder.delegate.id(existing.getId());
         builder.delegate.name(existing.getName());
+        builder.delegate.role(existing.getRole());
+        builder.delegate.shortDescription(existing.getShortDescription());
+        builder.delegate.longDescription(existing.getLongDescription());
         builder.delegate.version(existing.getVersion());
         builder.nodes.addAll(existing.getNodes());
         builder.edges.addAll(existing.getEdges());
@@ -99,17 +104,40 @@ public final class WorkflowBuilder {
         return this;
     }
 
+    public WorkflowBuilder role(String role) {
+        delegate.role(role);
+        return this;
+    }
+
+    public WorkflowBuilder shortDescription(String shortDescription) {
+        delegate.shortDescription(shortDescription);
+        return this;
+    }
+
+    public WorkflowBuilder longDescription(String longDescription) {
+        delegate.longDescription(longDescription);
+        return this;
+    }
+
     public WorkflowBuilder version(String version) {
         delegate.version(version);
         return this;
     }
 
     public WorkflowBuilder inputNode(String id) {
-        return addNode(NodeDefinition.builder().id(id).type(NodeType.INPUT).build());
+        return addNode(NodeDefinition.builder()
+                .id(id)
+                .type(NodeType.INPUT)
+                .addPort(defaultPort("out", "out", PortDirection.OUTPUT))
+                .build());
     }
 
     public WorkflowBuilder outputNode(String id) {
-        return addNode(NodeDefinition.builder().id(id).type(NodeType.OUTPUT).build());
+        return addNode(NodeDefinition.builder()
+                .id(id)
+                .type(NodeType.OUTPUT)
+                .addPort(defaultPort("in", "in", PortDirection.INPUT))
+                .build());
     }
 
     public WorkflowBuilder modelNode(String id) {
@@ -117,7 +145,11 @@ public final class WorkflowBuilder {
     }
 
     public WorkflowBuilder modelNode(String id, String subtype) {
-        NodeDefinition.Builder node = NodeDefinition.builder().id(id).type(NodeType.MODEL);
+        NodeDefinition.Builder node = NodeDefinition.builder()
+                .id(id)
+                .type(NodeType.MODEL)
+                .addPort(defaultPort("in", "in", PortDirection.INPUT))
+                .addPort(defaultPort("out", "out", PortDirection.OUTPUT));
         if (subtype != null) {
             node.subtype(subtype);
         }
@@ -125,11 +157,21 @@ public final class WorkflowBuilder {
     }
 
     public WorkflowBuilder toolNode(String id) {
-        return addNode(NodeDefinition.builder().id(id).type(NodeType.TOOL).build());
+        return addNode(NodeDefinition.builder()
+                .id(id)
+                .type(NodeType.TOOL)
+                .addPort(defaultPort("in", "in", PortDirection.INPUT))
+                .addPort(defaultPort("out", "out", PortDirection.OUTPUT))
+                .build());
     }
 
     public WorkflowBuilder vectorSearchNode(String id) {
-        return addNode(NodeDefinition.builder().id(id).type(NodeType.VECTOR_SEARCH).build());
+        return addNode(NodeDefinition.builder()
+                .id(id)
+                .type(NodeType.VECTOR_SEARCH)
+                .addPort(defaultPort("in", "in", PortDirection.INPUT))
+                .addPort(defaultPort("out", "out", PortDirection.OUTPUT))
+                .build());
     }
 
     public WorkflowBuilder agentNode(String id, WorkflowReferenceDefinition workflow) {
@@ -141,8 +183,12 @@ public final class WorkflowBuilder {
      */
     public WorkflowBuilder agentNode(String id, String subtype, WorkflowReferenceDefinition workflow) {
         Objects.requireNonNull(workflow, "workflow is required for AGENT nodes");
-        NodeDefinition.Builder node =
-                NodeDefinition.builder().id(id).type(NodeType.AGENT).workflow(workflow);
+        NodeDefinition.Builder node = NodeDefinition.builder()
+                .id(id)
+                .type(NodeType.AGENT)
+                .workflow(workflow)
+                .addPort(defaultPort("in", "in", PortDirection.INPUT))
+                .addPort(defaultPort("out", "out", PortDirection.OUTPUT));
         if (subtype != null) {
             node.subtype(subtype);
         }
@@ -158,8 +204,12 @@ public final class WorkflowBuilder {
      */
     public WorkflowBuilder humanNode(String id, String subtype, HumanApprovalDefinition approval) {
         Objects.requireNonNull(approval, "approval is required");
-        NodeDefinition.Builder node =
-                NodeDefinition.builder().id(id).type(NodeType.HUMAN).approval(approval);
+        NodeDefinition.Builder node = NodeDefinition.builder()
+                .id(id)
+                .type(NodeType.HUMAN)
+                .approval(approval)
+                .addPort(defaultPort("in", "in", PortDirection.INPUT))
+                .addPort(defaultPort("out", "out", PortDirection.OUTPUT));
         if (subtype != null) {
             node.subtype(subtype);
         }
@@ -185,14 +235,14 @@ public final class WorkflowBuilder {
 
     public WorkflowBuilder connect(
             String sourceNodeId,
-            String sourcePort,
+            String sourcePortId,
             String targetNodeId,
-            String targetPort) {
+            String targetPortId) {
         return addEdge(EdgeDefinition.builder()
                 .sourceNodeId(sourceNodeId)
-                .sourcePort(sourcePort)
+                .sourcePortId(sourcePortId)
                 .targetNodeId(targetNodeId)
-                .targetPort(targetPort)
+                .targetPortId(targetPortId)
                 .build());
     }
 
@@ -315,5 +365,14 @@ public final class WorkflowBuilder {
                 .toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-|-$", "");
+    }
+
+    private static PortDefinition defaultPort(String id, String name, PortDirection direction) {
+        return PortDefinition.builder()
+                .id(id)
+                .name(name)
+                .schema("any")
+                .direction(direction)
+                .build();
     }
 }

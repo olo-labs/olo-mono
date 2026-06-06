@@ -88,12 +88,12 @@ Everything is rooted in **`WorkflowDefinition`**: the single aggregate that can 
 
 ```
 WorkflowDefinition
-├── id, name, version
+├── id, name, role, shortDescription, longDescription, version
 ├── capability       → CapabilityDefinition (planner-readable contract)
 ├── inputs           → Map<String, WorkflowInputDefinition>  (invocation inputs)
 ├── state            → Map<String, StateFieldDefinition>       (shared workflow state schema)
 ├── parameters       → Map<String, WorkflowParameterDefinition> (runtime tuning)
-├── nodes[]          → NodeDefinition
+├── nodes[]          → NodeDefinition (each with ports[])
 ├── edges[]          → EdgeDefinition
 ├── variables[]      → VariableDefinition (deprecated; use inputs)
 ├── tools[]          → ToolDefinition
@@ -117,6 +117,12 @@ Every workflow **must** declare `capability` so planners and orchestrators under
 
 ```yaml
 id: research-agent
+name: Research Agent
+role: agent
+shortDescription: Web and document research with citations
+longDescription: >
+  Performs web, news and document research,
+  summarizes findings and produces citations.
 version: "2.1.0"
 capability:
   name: Research Agent

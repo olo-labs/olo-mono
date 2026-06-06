@@ -2,6 +2,7 @@ package org.olo.definition.workflow;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import org.olo.definition.agent.AgentDefinition;
@@ -32,10 +33,36 @@ import java.util.Objects;
 @JsonDeserialize(builder = WorkflowDefinition.Builder.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonPropertyOrder({
+    "id",
+    "name",
+    "role",
+    "shortDescription",
+    "longDescription",
+    "version",
+    "capability",
+    "runtimeBinding",
+    "inputs",
+    "state",
+    "parameters",
+    "nodes",
+    "edges",
+    "variables",
+    "tools",
+    "agents",
+    "hooks",
+    "modelProviders",
+    "modelRouting",
+    "extensions",
+    "metadata"
+})
 public final class WorkflowDefinition {
 
     private final String id;
     private final String name;
+    private final String role;
+    private final String shortDescription;
+    private final String longDescription;
     private final String version;
     private final List<NodeDefinition> nodes;
     private final List<EdgeDefinition> edges;
@@ -56,6 +83,9 @@ public final class WorkflowDefinition {
     private WorkflowDefinition(Builder builder) {
         this.id = builder.id;
         this.name = builder.name;
+        this.role = builder.role;
+        this.shortDescription = builder.shortDescription;
+        this.longDescription = builder.longDescription;
         this.version = builder.version;
         this.capability = builder.capability;
         this.runtimeBinding = builder.runtimeBinding;
@@ -86,6 +116,21 @@ public final class WorkflowDefinition {
 
     public String getName() {
         return name;
+    }
+
+    /** Optional workflow role (e.g. orchestrator, agent, sub-workflow). */
+    public String getRole() {
+        return role;
+    }
+
+    /** Brief human-readable summary for catalogs and UI lists. */
+    public String getShortDescription() {
+        return shortDescription;
+    }
+
+    /** Extended human-readable description with full context. */
+    public String getLongDescription() {
+        return longDescription;
     }
 
     public String getVersion() {
@@ -194,6 +239,9 @@ public final class WorkflowDefinition {
         }
         return Objects.equals(id, that.id)
                 && Objects.equals(name, that.name)
+                && Objects.equals(role, that.role)
+                && Objects.equals(shortDescription, that.shortDescription)
+                && Objects.equals(longDescription, that.longDescription)
                 && Objects.equals(version, that.version)
                 && Objects.equals(nodes, that.nodes)
                 && Objects.equals(edges, that.edges)
@@ -217,6 +265,9 @@ public final class WorkflowDefinition {
         return Objects.hash(
                 id,
                 name,
+                role,
+                shortDescription,
+                longDescription,
                 version,
                 nodes,
                 edges,
@@ -237,7 +288,7 @@ public final class WorkflowDefinition {
 
     @Override
     public String toString() {
-        return "WorkflowDefinition{id='" + id + "', name='" + name + "', nodes=" + nodes.size() + "}";
+        return "WorkflowDefinition{id='" + id + "', name='" + name + "', role='" + role + "', nodes=" + nodes.size() + "}";
     }
 
     @JsonPOJOBuilder(withPrefix = "")
@@ -245,6 +296,9 @@ public final class WorkflowDefinition {
 
         private String id;
         private String name;
+        private String role;
+        private String shortDescription;
+        private String longDescription;
         private String version;
         private List<NodeDefinition> nodes;
         private List<EdgeDefinition> edges;
@@ -269,6 +323,21 @@ public final class WorkflowDefinition {
 
         public Builder name(String name) {
             this.name = name;
+            return this;
+        }
+
+        public Builder role(String role) {
+            this.role = role;
+            return this;
+        }
+
+        public Builder shortDescription(String shortDescription) {
+            this.shortDescription = shortDescription;
+            return this;
+        }
+
+        public Builder longDescription(String longDescription) {
+            this.longDescription = longDescription;
             return this;
         }
 
