@@ -21,6 +21,7 @@ import org.olo.definition.variable.VariableDefinition;
 import org.olo.definition.execution.ExecutionKind;
 import org.olo.definition.parallel.JoinDefinition;
 import org.olo.definition.parallel.JoinStrategy;
+import org.olo.definition.workflow.ChildWorkflowDefinition;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.agent.AgentDefinition;
 import org.olo.definition.capability.CapabilityDefinition;
@@ -431,6 +432,18 @@ final class SampleWorkflowDefinitions {
         return WorkflowBuilder.create("Multi-Agent Orchestration")
                 .id("multi-agent-orchestration")
                 .version("1.0.0")
+                .childWorkflow(ChildWorkflowDefinition.builder()
+                        .workflowId("research-agent")
+                        .workflowVersion("1.0.0")
+                        .build())
+                .childWorkflow(ChildWorkflowDefinition.builder()
+                        .workflowId("risk-agent")
+                        .workflowVersion("1.0.0")
+                        .build())
+                .childWorkflow(ChildWorkflowDefinition.builder()
+                        .workflowId("execution-agent")
+                        .workflowVersion("1.0.0")
+                        .build())
                 .capability(CapabilityDefinition.builder()
                         .name("Multi-Agent Orchestration")
                         .description("Composes planner and specialized agent workflows in sequence.")
@@ -607,6 +620,7 @@ final class SampleWorkflowDefinitions {
                 .shortDescription("Web and document research with citations")
                 .longDescription(
                         "Performs web, news and document research, summarizes findings and produces citations.")
+                .isChildWorkflow(true)
                 .version("2.1.0")
                 .capability(CapabilityDefinition.builder()
                         .id("research-agent")

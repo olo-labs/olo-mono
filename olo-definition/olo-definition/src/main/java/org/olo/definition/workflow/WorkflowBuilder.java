@@ -44,6 +44,7 @@ public final class WorkflowBuilder {
     private final List<ToolDefinition> tools = new ArrayList<>();
     private final List<AgentDefinition> agents = new ArrayList<>();
     private final List<HookDefinition> hooks = new ArrayList<>();
+    private final List<ChildWorkflowDefinition> childWorkflows = new ArrayList<>();
     private final Map<String, Object> metadata = new LinkedHashMap<>();
 
     private WorkflowBuilder() {
@@ -71,6 +72,9 @@ public final class WorkflowBuilder {
         builder.delegate.role(existing.getRole());
         builder.delegate.shortDescription(existing.getShortDescription());
         builder.delegate.longDescription(existing.getLongDescription());
+        builder.delegate.isExternalWorkflow(existing.isExternalWorkflow());
+        builder.delegate.isChildWorkflow(existing.isChildWorkflow());
+        builder.childWorkflows.addAll(existing.getChildWorkflows());
         builder.delegate.version(existing.getVersion());
         builder.nodes.addAll(existing.getNodes());
         builder.edges.addAll(existing.getEdges());
@@ -116,6 +120,22 @@ public final class WorkflowBuilder {
 
     public WorkflowBuilder longDescription(String longDescription) {
         delegate.longDescription(longDescription);
+        return this;
+    }
+
+    public WorkflowBuilder isExternalWorkflow(Boolean isExternalWorkflow) {
+        delegate.isExternalWorkflow(isExternalWorkflow);
+        return this;
+    }
+
+    public WorkflowBuilder isChildWorkflow(Boolean isChildWorkflow) {
+        delegate.isChildWorkflow(isChildWorkflow);
+        return this;
+    }
+
+    public WorkflowBuilder childWorkflow(ChildWorkflowDefinition childWorkflow) {
+        Objects.requireNonNull(childWorkflow, "childWorkflow is required");
+        childWorkflows.add(childWorkflow);
         return this;
     }
 
@@ -348,6 +368,7 @@ public final class WorkflowBuilder {
         delegate.tools(List.copyOf(tools));
         delegate.agents(List.copyOf(agents));
         delegate.hooks(List.copyOf(hooks));
+        delegate.childWorkflows(List.copyOf(childWorkflows));
         delegate.metadata(Map.copyOf(metadata));
         return delegate.build();
     }

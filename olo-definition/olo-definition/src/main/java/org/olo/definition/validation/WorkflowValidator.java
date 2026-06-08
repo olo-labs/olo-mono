@@ -9,6 +9,7 @@ import org.olo.definition.execution.ExecutionKind;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.parallel.JoinDefinition;
 import org.olo.definition.parallel.JoinStrategy;
+import org.olo.definition.workflow.ChildWorkflowDefinition;
 import org.olo.definition.workflow.WorkflowReferenceDefinition;
 import org.olo.definition.extension.ExtensionDefinition;
 import org.olo.definition.hook.HookCatalog;
@@ -59,6 +60,7 @@ public final class WorkflowValidator {
             errors.add("workflow id is required");
         }
         validateCapability(workflow, errors);
+        validateChildWorkflows(workflow, errors);
         RuntimeBindingValidator.validate("workflow " + workflow.getId(), workflow.getRuntimeBinding(), errors);
 
         Set<String> hookImplementationIds = HookCatalog.implementationIds(workflow);
@@ -623,6 +625,21 @@ public final class WorkflowValidator {
 
         static PortResolution unresolved(String id) {
             return new PortResolution(id, null);
+        }
+    }
+
+    private static void validateChildWorkflows(WorkflowDefinition workflow, List<String> errors) {
+        Set<String> childIds = new HashSet<>();
+        for (ChildWorkflowDefinition child : workflow.getChildWorkflows()) {
+            if (child == null) {
+                errors.add("child workflow entry must not be null");
+                continue;
+            }
+            if (isBlank(child.getWorkflowId())) {
+                errors.add("child workflow workflowId is required");
+            } else if (!childIds.add(child.getWorkflowId())) {
+                errors.add("duplicate child workflow id: " + child.getWorkflowId());
+            }
         }
     }
 

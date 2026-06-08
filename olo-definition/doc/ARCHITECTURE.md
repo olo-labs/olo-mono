@@ -88,7 +88,7 @@ Everything is rooted in **`WorkflowDefinition`**: the single aggregate that can 
 
 ```
 WorkflowDefinition
-├── id, name, role, shortDescription, longDescription, version
+├── id, name, role, shortDescription, longDescription, isExternalWorkflow, isChildWorkflow, childWorkflows[], version
 ├── capability       → CapabilityDefinition (planner-readable contract)
 ├── inputs           → Map<String, WorkflowInputDefinition>  (invocation inputs)
 ├── state            → Map<String, StateFieldDefinition>       (shared workflow state schema)

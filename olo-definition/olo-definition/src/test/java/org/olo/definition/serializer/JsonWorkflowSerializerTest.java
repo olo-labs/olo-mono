@@ -2,6 +2,7 @@ package org.olo.definition.serializer;
 
 import org.olo.definition.node.NodeType;
 import org.olo.definition.validation.ValidationTestFixtures;
+import org.olo.definition.workflow.ChildWorkflowDefinition;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,62 @@ class JsonWorkflowSerializerTest {
     assertThat(restored.getShortDescription()).isEqualTo("Web and document research with citations");
     assertThat(restored.getLongDescription())
         .isEqualTo("Performs web, news and document research, summarizes findings and produces citations.");
+    assertThat(restored).isEqualTo(original);
+  }
+
+  @Test
+  void roundTripsWorkflowClassificationFlags() throws Exception {
+    WorkflowDefinition original =
+        WorkflowBuilder.create("External Child Workflow")
+            .id("external-child")
+            .isExternalWorkflow(true)
+            .isChildWorkflow(true)
+            .capability(ValidationTestFixtures.minimalCapability())
+            .inputNode("input")
+            .outputNode("output")
+            .connect("input", "output")
+            .build();
+
+    String json = serializer.serialize(original);
+    assertThat(json).contains("\"isExternalWorkflow\" : true");
+    assertThat(json).contains("\"isChildWorkflow\" : true");
+
+    WorkflowDefinition restored = serializer.deserialize(json);
+    assertThat(restored.isExternalWorkflow()).isTrue();
+    assertThat(restored.isChildWorkflow()).isTrue();
+    assertThat(restored).isEqualTo(original);
+  }
+
+  @Test
+  void roundTripsChildWorkflows() throws Exception {
+    WorkflowDefinition original =
+        WorkflowBuilder.create("Parent Orchestration")
+            .id("parent-orchestration")
+            .childWorkflow(
+                ChildWorkflowDefinition.builder()
+                    .workflowId("research-agent")
+                    .workflowVersion("2.1.0")
+                    .build())
+            .childWorkflow(
+                ChildWorkflowDefinition.builder()
+                    .workflowId("risk-agent")
+                    .workflowVersion("1.0.0")
+                    .build())
+            .capability(ValidationTestFixtures.minimalCapability())
+            .inputNode("input")
+            .outputNode("output")
+            .connect("input", "output")
+            .build();
+
+    String json = serializer.serialize(original);
+    assertThat(json).contains("\"childWorkflows\"");
+    assertThat(json).contains("\"workflowId\" : \"research-agent\"");
+    assertThat(json).contains("\"workflowVersion\" : \"2.1.0\"");
+
+    WorkflowDefinition restored = serializer.deserialize(json);
+    assertThat(restored.getChildWorkflows()).hasSize(2);
+    assertThat(restored.getChildWorkflows().get(0).getWorkflowId()).isEqualTo("research-agent");
+    assertThat(restored.getChildWorkflows().get(0).getWorkflowVersion()).isEqualTo("2.1.0");
     assertThat(restored).isEqualTo(original);
   }
 }

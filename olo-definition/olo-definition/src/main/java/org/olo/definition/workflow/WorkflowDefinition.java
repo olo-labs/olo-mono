@@ -2,6 +2,7 @@ package org.olo.definition.workflow;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
@@ -39,6 +40,9 @@ import java.util.Objects;
     "role",
     "shortDescription",
     "longDescription",
+    "isExternalWorkflow",
+    "isChildWorkflow",
+    "childWorkflows",
     "version",
     "capability",
     "runtimeBinding",
@@ -63,6 +67,9 @@ public final class WorkflowDefinition {
     private final String role;
     private final String shortDescription;
     private final String longDescription;
+    private final Boolean isExternalWorkflow;
+    private final Boolean isChildWorkflow;
+    private final List<ChildWorkflowDefinition> childWorkflows;
     private final String version;
     private final List<NodeDefinition> nodes;
     private final List<EdgeDefinition> edges;
@@ -86,6 +93,9 @@ public final class WorkflowDefinition {
         this.role = builder.role;
         this.shortDescription = builder.shortDescription;
         this.longDescription = builder.longDescription;
+        this.isExternalWorkflow = builder.isExternalWorkflow;
+        this.isChildWorkflow = builder.isChildWorkflow;
+        this.childWorkflows = builder.childWorkflows == null ? List.of() : List.copyOf(builder.childWorkflows);
         this.version = builder.version;
         this.capability = builder.capability;
         this.runtimeBinding = builder.runtimeBinding;
@@ -131,6 +141,23 @@ public final class WorkflowDefinition {
     /** Extended human-readable description with full context. */
     public String getLongDescription() {
         return longDescription;
+    }
+
+    /** When true, the workflow artifact is owned or resolved outside the local registry. */
+    @JsonProperty("isExternalWorkflow")
+    public Boolean isExternalWorkflow() {
+        return isExternalWorkflow;
+    }
+
+    /** When true, the workflow is invoked as a child/sub-workflow of a parent orchestration. */
+    @JsonProperty("isChildWorkflow")
+    public Boolean isChildWorkflow() {
+        return isChildWorkflow;
+    }
+
+    /** Child workflow artifacts composed or invoked by this workflow. */
+    public List<ChildWorkflowDefinition> getChildWorkflows() {
+        return childWorkflows;
     }
 
     public String getVersion() {
@@ -242,6 +269,9 @@ public final class WorkflowDefinition {
                 && Objects.equals(role, that.role)
                 && Objects.equals(shortDescription, that.shortDescription)
                 && Objects.equals(longDescription, that.longDescription)
+                && Objects.equals(isExternalWorkflow, that.isExternalWorkflow)
+                && Objects.equals(isChildWorkflow, that.isChildWorkflow)
+                && Objects.equals(childWorkflows, that.childWorkflows)
                 && Objects.equals(version, that.version)
                 && Objects.equals(nodes, that.nodes)
                 && Objects.equals(edges, that.edges)
@@ -268,6 +298,9 @@ public final class WorkflowDefinition {
                 role,
                 shortDescription,
                 longDescription,
+                isExternalWorkflow,
+                isChildWorkflow,
+                childWorkflows,
                 version,
                 nodes,
                 edges,
@@ -299,6 +332,11 @@ public final class WorkflowDefinition {
         private String role;
         private String shortDescription;
         private String longDescription;
+        @JsonProperty("isExternalWorkflow")
+        private Boolean isExternalWorkflow;
+        @JsonProperty("isChildWorkflow")
+        private Boolean isChildWorkflow;
+        private List<ChildWorkflowDefinition> childWorkflows;
         private String version;
         private List<NodeDefinition> nodes;
         private List<EdgeDefinition> edges;
@@ -338,6 +376,29 @@ public final class WorkflowDefinition {
 
         public Builder longDescription(String longDescription) {
             this.longDescription = longDescription;
+            return this;
+        }
+
+        public Builder isExternalWorkflow(Boolean isExternalWorkflow) {
+            this.isExternalWorkflow = isExternalWorkflow;
+            return this;
+        }
+
+        public Builder isChildWorkflow(Boolean isChildWorkflow) {
+            this.isChildWorkflow = isChildWorkflow;
+            return this;
+        }
+
+        public Builder childWorkflows(List<ChildWorkflowDefinition> childWorkflows) {
+            this.childWorkflows = childWorkflows;
+            return this;
+        }
+
+        public Builder addChildWorkflow(ChildWorkflowDefinition childWorkflow) {
+            if (this.childWorkflows == null) {
+                this.childWorkflows = new java.util.ArrayList<>();
+            }
+            this.childWorkflows.add(childWorkflow);
             return this;
         }
 
