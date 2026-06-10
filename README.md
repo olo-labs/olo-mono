@@ -2,6 +2,8 @@
 
 Monorepo for **OLO** — declarative AI workflow orchestration. Workflow graphs, deployment settings, and runtime execution are split into separate modules so each layer can evolve independently.
 
+**Architecture docs:** [docs/README.md](docs/README.md) — [system architecture](docs/ARCHITECTURE.md), [module reference](docs/MODULES.md).
+
 ## What this repo contains
 
 OLO treats a workflow as a **portable artifact** (JSON/YAML graph definition), separate from:
@@ -84,16 +86,17 @@ See [olo-worker/README.md](olo-worker/README.md) for run instructions.
 
 ## Build order (local)
 
-Publish library modules to Maven local before building dependents:
+**Worker development:** `olo-worker` uses Gradle composite builds — run directly without publishing:
+
+```bash
+cd olo-worker && ./gradlew run
+```
+
+**Standalone modules:** publish to Maven local in dependency order (see [docs/MODULES.md](docs/MODULES.md)):
 
 ```bash
 cd olo-definition && ./gradlew publishToMavenLocal
-cd ../olo-workflow-input && ./gradlew publishToMavenLocal
-cd ../olo-worker-configuration && ./gradlew publishToMavenLocal
-cd ../olo-bootstrap && ./gradlew publishToMavenLocal
-cd ../olo-kernel-context && ./gradlew publishToMavenLocal
-cd ../olo-kernel && ./gradlew publishToMavenLocal
-cd ../olo-worker && ./gradlew run
+# … olo-workflow-input → olo-worker-configuration → olo-bootstrap → olo-kernel-context → olo-kernel
 ```
 
 Windows: use `gradlew.bat` instead of `./gradlew`.
