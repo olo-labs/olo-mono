@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "olo-worker (local debug, olo-docker)",
+      "request": "launch",
+      "mainClass": "org.olo.worker.WorkerApplication",
+      "projectName": "olo-worker",
+      "cwd": "${workspaceFolder}/olo-mono/olo-worker",
+      "args": [
+        "../olo-worker-configuration/samples/worker-config.local-debug.yaml"
+      ],
+      "env": {
+        "OLO_WORKER_CONFIG_PATH": "../olo-worker-configuration/samples/worker-config.local-debug.yaml"
+      }
+    }
+  ]
+}

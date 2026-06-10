@@ -2,3 +2,5 @@
 */samples/*/*.json
 */samples/*/*.yaml
 build
+.gradle
+.gradle

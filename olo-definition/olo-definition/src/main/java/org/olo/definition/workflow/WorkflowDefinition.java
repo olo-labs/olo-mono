@@ -39,6 +39,10 @@ import java.util.Objects;
     "name",
     "role",
     "shortDescription",
+    "emoji",
+    "queue",
+    "workflowType",
+    "runAgain",
     "longDescription",
     "isExternalWorkflow",
     "isChildWorkflow",
@@ -66,6 +70,10 @@ public final class WorkflowDefinition {
     private final String name;
     private final String role;
     private final String shortDescription;
+    private final String emoji;
+    private final String queue;
+    private final String workflowType;
+    private final Boolean runAgain;
     private final String longDescription;
     private final Boolean isExternalWorkflow;
     private final Boolean isChildWorkflow;
@@ -92,6 +100,10 @@ public final class WorkflowDefinition {
         this.name = builder.name;
         this.role = builder.role;
         this.shortDescription = builder.shortDescription;
+        this.emoji = builder.emoji;
+        this.queue = builder.queue;
+        this.workflowType = builder.workflowType;
+        this.runAgain = builder.runAgain;
         this.longDescription = builder.longDescription;
         this.isExternalWorkflow = builder.isExternalWorkflow;
         this.isChildWorkflow = builder.isChildWorkflow;
@@ -128,14 +140,35 @@ public final class WorkflowDefinition {
         return name;
     }
 
-    /** Optional workflow role (e.g. orchestrator, agent, sub-workflow). */
+    /** Chat UI display name for this workflow preset ({@code display_name} in legacy profiles). */
     public String getRole() {
         return role;
     }
 
-    /** Brief human-readable summary for catalogs and UI lists. */
+    /** Chat UI short summary / tooltip ({@code display_summary} in legacy profiles). */
     public String getShortDescription() {
         return shortDescription;
+    }
+
+    /** Optional emoji shown beside the preset in the chat UI. */
+    public String getEmoji() {
+        return emoji;
+    }
+
+    /** Temporal task queue name for routing runs of this workflow. */
+    public String getQueue() {
+        return queue;
+    }
+
+    /** Temporal workflow type name (e.g. {@code olo}). */
+    public String getWorkflowType() {
+        return workflowType;
+    }
+
+    /** When true, the chat UI offers this preset in per-message run-again menus. */
+    @JsonProperty("runAgain")
+    public Boolean isRunAgain() {
+        return runAgain;
     }
 
     /** Extended human-readable description with full context. */
@@ -268,6 +301,10 @@ public final class WorkflowDefinition {
                 && Objects.equals(name, that.name)
                 && Objects.equals(role, that.role)
                 && Objects.equals(shortDescription, that.shortDescription)
+                && Objects.equals(emoji, that.emoji)
+                && Objects.equals(queue, that.queue)
+                && Objects.equals(workflowType, that.workflowType)
+                && Objects.equals(runAgain, that.runAgain)
                 && Objects.equals(longDescription, that.longDescription)
                 && Objects.equals(isExternalWorkflow, that.isExternalWorkflow)
                 && Objects.equals(isChildWorkflow, that.isChildWorkflow)
@@ -297,6 +334,10 @@ public final class WorkflowDefinition {
                 name,
                 role,
                 shortDescription,
+                emoji,
+                queue,
+                workflowType,
+                runAgain,
                 longDescription,
                 isExternalWorkflow,
                 isChildWorkflow,
@@ -331,6 +372,10 @@ public final class WorkflowDefinition {
         private String name;
         private String role;
         private String shortDescription;
+        private String emoji;
+        private String queue;
+        private String workflowType;
+        private Boolean runAgain;
         private String longDescription;
         @JsonProperty("isExternalWorkflow")
         private Boolean isExternalWorkflow;
@@ -371,6 +416,26 @@ public final class WorkflowDefinition {
 
         public Builder shortDescription(String shortDescription) {
             this.shortDescription = shortDescription;
+            return this;
+        }
+
+        public Builder emoji(String emoji) {
+            this.emoji = emoji;
+            return this;
+        }
+
+        public Builder queue(String queue) {
+            this.queue = queue;
+            return this;
+        }
+
+        public Builder workflowType(String workflowType) {
+            this.workflowType = workflowType;
+            return this;
+        }
+
+        public Builder runAgain(Boolean runAgain) {
+            this.runAgain = runAgain;
             return this;
         }
 

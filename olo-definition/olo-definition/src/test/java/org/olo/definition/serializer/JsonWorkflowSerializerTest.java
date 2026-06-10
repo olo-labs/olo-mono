@@ -90,12 +90,12 @@ class JsonWorkflowSerializerTest {
             .id("parent-orchestration")
             .childWorkflow(
                 ChildWorkflowDefinition.builder()
-                    .workflowId("research-agent")
+                    .queue("research-agent")
                     .workflowVersion("2.1.0")
                     .build())
             .childWorkflow(
                 ChildWorkflowDefinition.builder()
-                    .workflowId("risk-agent")
+                    .queue("risk-agent")
                     .workflowVersion("1.0.0")
                     .build())
             .capability(ValidationTestFixtures.minimalCapability())
@@ -106,12 +106,12 @@ class JsonWorkflowSerializerTest {
 
     String json = serializer.serialize(original);
     assertThat(json).contains("\"childWorkflows\"");
-    assertThat(json).contains("\"workflowId\" : \"research-agent\"");
+    assertThat(json).contains("\"queue\" : \"research-agent\"");
     assertThat(json).contains("\"workflowVersion\" : \"2.1.0\"");
 
     WorkflowDefinition restored = serializer.deserialize(json);
     assertThat(restored.getChildWorkflows()).hasSize(2);
-    assertThat(restored.getChildWorkflows().get(0).getWorkflowId()).isEqualTo("research-agent");
+    assertThat(restored.getChildWorkflows().get(0).getQueue()).isEqualTo("research-agent");
     assertThat(restored.getChildWorkflows().get(0).getWorkflowVersion()).isEqualTo("2.1.0");
     assertThat(restored).isEqualTo(original);
   }

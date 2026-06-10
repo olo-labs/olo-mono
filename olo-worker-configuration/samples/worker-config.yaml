@@ -1,0 +1,19 @@
+id: "default-worker"
+name: "OLO Worker"
+server:
+  host: "0.0.0.0"
+  port: 8080
+workflowDefinitions:
+  scanFolder: "../../olo-configuration/default"
+  recursive: false
+temporal:
+  namespace: "default"
+  target: "localhost:47233"
+cache:
+  enabled: true
+  host: "localhost"
+  port: 46379
+input:
+  maxLocalMessageSize: 50
+metadata:
+  environment: "local"

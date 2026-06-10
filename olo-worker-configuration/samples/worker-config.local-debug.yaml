@@ -1,0 +1,35 @@
+# Local worker (IDE / gradlew run) against olo-docker dev stack.
+#
+# Prerequisites:
+#   - olo-docker dev stack up (Temporal, Redis, olo API, olo-chat)
+#   - docker-compose-olo.yml sets OLO_CHAT_CALLBACK_BASE_URL=http://localhost:47080
+#     so the API embeds a callback URL reachable from this host process
+#
+# Host ports (from olo-docker/dev):
+#   Temporal  localhost:47233
+#   Redis     localhost:46379
+#   OLO API   localhost:47080
+#   OLO Chat  localhost:43000
+
+id: "local-debug-worker"
+name: "OLO Worker (local debug)"
+server:
+  host: "127.0.0.1"
+  port: 8080
+workflowDefinitions:
+  # Same presets as olo-docker dev stack (dev/configuration/olo-configuration/default).
+  # Alternate: "../../../olo-docker/dev/configuration/olo-configuration/default"
+  scanFolder: "../../olo-configuration/default"
+  recursive: false
+temporal:
+  namespace: "default"
+  target: "localhost:47233"
+cache:
+  enabled: true
+  host: "localhost"
+  port: 46379
+input:
+  maxLocalMessageSize: 50
+metadata:
+  environment: "local-debug"
+  oloApiBaseUrl: "http://localhost:47080"

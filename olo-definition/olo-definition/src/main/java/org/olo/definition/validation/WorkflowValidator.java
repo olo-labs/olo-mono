@@ -635,10 +635,10 @@ public final class WorkflowValidator {
                 errors.add("child workflow entry must not be null");
                 continue;
             }
-            if (isBlank(child.getWorkflowId())) {
-                errors.add("child workflow workflowId is required");
-            } else if (!childIds.add(child.getWorkflowId())) {
-                errors.add("duplicate child workflow id: " + child.getWorkflowId());
+            if (isBlank(child.getQueue())) {
+                errors.add("child workflow queue is required");
+            } else if (!childIds.add(child.getQueue())) {
+                errors.add("duplicate child workflow queue: " + child.getQueue());
             }
         }
     }

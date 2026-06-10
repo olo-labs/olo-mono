@@ -1,0 +1,13 @@
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.9.0'
+}
+
+rootProject.name = 'olo-worker'
+
+// Use monorepo sources directly so kernel changes apply without publishToMavenLocal.
+includeBuild('../olo-workflow-input')
+includeBuild('../olo-definition')
+includeBuild('../olo-kernel-context')
+includeBuild('../olo-bootstrap')
+includeBuild('../olo-kernel')
+includeBuild('../olo-worker-configuration')
