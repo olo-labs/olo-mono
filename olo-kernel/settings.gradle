@@ -3,3 +3,9 @@ plugins {
 }
 
 rootProject.name = 'olo-kernel'
+
+includeBuild('../olo-core') {
+    dependencySubstitution {
+        substitute module('org.olo:olo-core') using project(':core')
+    }
+}

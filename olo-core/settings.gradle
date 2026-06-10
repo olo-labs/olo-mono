@@ -1,0 +1,15 @@
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.9.0'
+}
+
+rootProject.name = 'olo-core-build'
+
+includeBuild('../olo-spi')
+includeBuild('../olo-annotation')
+includeBuild('../olo-annotation-processor')
+
+include 'nodes'
+include 'tools'
+include 'hooks'
+include 'runtime'
+include 'core'

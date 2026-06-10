@@ -1,0 +1,103 @@
+plugins {
+    id 'base'
+}
+
+allprojects {
+    group = 'org.olo'
+    version = '0.1.0-SNAPSHOT'
+}
+
+subprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+        withJavadocJar()
+        withSourcesJar()
+    }
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+
+    dependencies {
+        api 'org.olo:olo-spi:0.1.0-SNAPSHOT'
+
+        testImplementation platform('org.junit:junit-bom:5.11.4')
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testImplementation 'org.assertj:assertj-core:3.27.3'
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+
+    tasks.named('javadoc').configure {
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+}
+
+configure(subprojects.findAll { it.name in ['nodes', 'tools', 'hooks'] }) {
+    dependencies {
+        compileOnly 'org.olo:olo-annotation:0.1.0-SNAPSHOT'
+        annotationProcessor 'org.olo:olo-annotation-processor:0.1.0-SNAPSHOT'
+        testImplementation 'org.olo:olo-annotation:0.1.0-SNAPSHOT'
+        testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs += [
+            "-Aolo.catalog.module=olo-core-${project.name}",
+            "-Aolo.catalog.provider=olo-core"
+        ]
+    }
+}
+
+def distDir = layout.projectDirectory.dir('dist')
+
+tasks.register('distLib', Copy) {
+    group = 'distribution'
+    description = 'Copy olo-core runtime JARs into dist/lib for kernel/worker classpath'
+    dependsOn ':core:jar', ':runtime:jar', ':nodes:jar', ':tools:jar', ':hooks:jar'
+    into distDir.dir('lib')
+    from(project(':core').tasks.named('jar'))
+    from(project(':runtime').tasks.named('jar'))
+    from(project(':nodes').tasks.named('jar'))
+    from(project(':tools').tasks.named('jar'))
+    from(project(':hooks').tasks.named('jar'))
+}
+
+tasks.register('exportStudioCatalog', JavaExec) {
+    group = 'distribution'
+    description = 'Export editor + runtime catalog JSON into dist/catalog/'
+    dependsOn ':core:classes', ':nodes:jar', ':tools:jar', ':hooks:jar', ':runtime:jar'
+    classpath = project(':core').sourceSets.main.runtimeClasspath
+    mainClass = 'org.olo.core.catalog.StudioCatalogExporter'
+    args distDir.dir('catalog').asFile.absolutePath
+}
+
+tasks.register('dist') {
+    group = 'distribution'
+    description = 'Runtime JARs (dist/lib) and editor catalog JSON (dist/catalog/)'
+    dependsOn 'distLib', 'exportStudioCatalog'
+}
+
+tasks.register('cleanDist', Delete) {
+    group = 'distribution'
+    description = 'Remove dist/lib and dist/catalog'
+    delete distDir
+}
+
+clean.dependsOn 'cleanDist'

@@ -43,6 +43,11 @@ flowchart TB
         OW[olo-worker]
     end
 
+    subgraph contracts [Runtime contracts]
+        SPI[olo-spi]
+        OC[olo-core]
+    end
+
     subgraph planned [Planned]
         OR[olo-runtime]
         OE[olo-extensions]
@@ -62,6 +67,9 @@ flowchart TB
     API --> TMP
     API --> UI
     OW -->|UI callback| API
+    SPI --> OC
+    OC -.-> OR
+    SPI -.-> OE
     OR -.-> OK
     OE -.-> OR
 ```
@@ -203,7 +211,7 @@ Worker config: `olo-worker-configuration/samples/worker-config.local-debug.yaml`
 |--------|------|
 | **olo-runtime** | Traverse and execute the workflow graph; write node outputs and `ReturnValue` |
 | **olo-extensions** | LLM providers, tools, vector stores, MCP |
-| **olo-annotation** / **olo-annotation-processor** | Reserved placeholders |
+| **olo-annotation** / **olo-annotation-processor** | Extension metadata annotations + compile-time catalog JSON for plug-and-play workflow editing UIs |
 
 The kernel and kernel-context APIs are shaped so runtime execution can plug in after context build without changing the Temporal contract (`WorkflowInput` in, `String` message out).
 

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "moduleId": "company-extension",
+  "tools": [
+    {
+      "kind": "TOOL",
+      "id": "CATALOG_ONLY_TOOL",
+      "name": "Catalog Only",
+      "implementationClass": "ext.CatalogOnlyTool"
+    }
+  ]
+}

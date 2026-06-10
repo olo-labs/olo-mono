@@ -56,8 +56,10 @@ flowchart TB
 | [`olo-kernel-context/`](olo-kernel-context/) | Gradle project | Builds `KernelRuntimeContext` — deserialized input + isolated graph copy + UI callback |
 | [`olo-kernel/`](olo-kernel/) | Gradle project | Temporal queue entry point (`OloKernelWorkflow`, `workflowType=olo`) |
 | [`olo-worker/`](olo-worker/) | Gradle application | Main Temporal worker process; wires configuration, bootstrap, and kernel |
-| `olo-annotation/` | Placeholder | Reserved for annotation APIs |
-| `olo-annotation-processor/` | Placeholder | Reserved for compile-time annotation processing |
+| [`olo-spi/`](olo-spi/) | Gradle library | Runtime SPI — `Node`, `Tool`, `Hook`, `ExecutionContext` (contracts only) |
+| [`olo-annotation/`](olo-annotation/) | Gradle library | `@OloNode` / `@OloTool` / `@OloHook` metadata + `ExtensionCatalogLoader` |
+| [`olo-annotation-processor/`](olo-annotation-processor/) | Gradle library | Generates `META-INF/olo/catalog/*.json` for workflow editor UIs |
+| [`olo-core/`](olo-core/) | Gradle multi-module | Default node/tool/hook implementations + `ExecutionEngine` (`org.olo:olo-core`) |
 
 Each Gradle module is **standalone** (own `settings.gradle`, wrapper, `publishToMavenLocal`). There is no single root Gradle build yet.
 

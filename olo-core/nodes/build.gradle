@@ -1,0 +1,26 @@
+description = 'Default OLO node implementations'
+
+
+
+dependencies {
+
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+
+}
+
+
+
+publishing {
+
+    publications {
+
+        maven(MavenPublication) {
+
+            artifactId = 'olo-core-nodes'
+
+        }
+
+    }
+
+}
+

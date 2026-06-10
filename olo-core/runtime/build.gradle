@@ -1,0 +1,16 @@
+description = 'OLO core runtime engine and registries'
+
+dependencies {
+    api project(':nodes')
+    api project(':tools')
+    api project(':hooks')
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = 'olo-core-runtime'
+        }
+    }
+}

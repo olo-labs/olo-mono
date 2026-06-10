@@ -13,9 +13,11 @@ Each row is a **standalone Gradle project** under `olo-mono/`. All publish as `o
 | `olo-kernel-context/` | `olo-kernel-context` | Library | `KernelRuntimeContext`, variables, UI callbacks |
 | `olo-kernel/` | `olo-kernel` | Library | `KernelEntryPoint`, Temporal `OloKernelWorkflow` |
 | `olo-worker/` | `olo-worker` | Application | Runnable Temporal worker (`WorkerApplication`) |
+| `olo-spi/` | `olo-spi` | Library | Runtime SPI contracts — nodes, tools, hooks (no implementations) |
+| `olo-annotation/` | `olo-annotation` | Library | `@OloNode` / `@OloTool` / `@OloHook` metadata annotations + catalog loader |
+| `olo-annotation-processor/` | `olo-annotation-processor` | Library | Compile-time processor → `META-INF/olo/catalog/*.json` |
+| `olo-core/` | `olo-core` | Multi-module library | Default implementations + `ExecutionEngine` (submodules: nodes, tools, hooks, runtime) |
 | `olo-configuration/` | — | Data | Preset workflow JSON (`default/*.json`) |
-| `olo-annotation/` | — | Placeholder | Future annotation APIs |
-| `olo-annotation-processor/` | — | Placeholder | Future annotation processing |
 
 ## Dependency graph
 
@@ -208,12 +210,16 @@ cd olo-worker
 When not using composite builds, publish in dependency order:
 
 1. `olo-definition`
-2. `olo-workflow-input`
-3. `olo-worker-configuration`
-4. `olo-bootstrap`
-5. `olo-kernel-context`
-6. `olo-kernel`
-7. `olo-worker` (application — `run` does not require publish if composite builds enabled)
+2. `olo-spi`
+3. `olo-annotation`
+4. `olo-annotation-processor`
+5. `olo-core` (nodes, tools, hooks, runtime, core)
+6. `olo-workflow-input`
+7. `olo-worker-configuration`
+8. `olo-bootstrap`
+9. `olo-kernel-context`
+10. `olo-kernel`
+11. `olo-worker` (application — `run` does not require publish if composite builds enabled)
 
 ## Java and Gradle
 
@@ -224,11 +230,88 @@ When not using composite builds, publish in dependency order:
 | Group ID | `org.olo` |
 | Version | `0.1.0-SNAPSHOT` |
 
+### olo-spi
+
+**Package root:** `org.olo.spi`
+
+Runtime **Service Provider Interface** — interfaces, request/response records, extension points, and annotations only. No dependency on other OLO modules.
+
+| Package | Key types |
+|---------|-----------|
+| `context` | `ExecutionContext` |
+| `node` | `Node`, `NodeRequest`, `NodeResult` |
+| `tool` | `Tool`, `ToolRequest`, `ToolResult` |
+| `hook` | `Hook`, `HookRequest`, `HookResult`, `HookPhase` |
+| `extension` | `NodeProvider`, `ToolProvider`, `HookProvider` |
+| `annotation` | `@NodeType`, `@ToolId`, `@ImplementationId`, `@OloExtension` |
+
+**Docs:** [olo-spi/docs/ARCHITECTURE.md](../olo-spi/docs/ARCHITECTURE.md)
+
+---
+
+### olo-annotation
+
+**Package root:** `org.olo.annotation`
+
+Compile-time annotations that describe extension metadata for workflow editor UIs.
+
+| Annotation | Purpose |
+|------------|---------|
+| `@OloNode` | Node type catalog entry (ports, config schema, capabilities) |
+| `@OloTool` | Tool catalog entry |
+| `@OloHook` | Hook catalog entry |
+| `@OloPort` / `@OloProperty` | Port and configuration field schema |
+
+**Runtime:** `org.olo.annotation.catalog.ExtensionCatalogLoader` merges `META-INF/olo/catalog/*.json` from the classpath.
+
+**Docs:** [olo-annotation/docs/V1.md](../olo-annotation/docs/V1.md), [ANNOTATIONS.md](../olo-annotation/docs/ANNOTATIONS.md), [EDITOR_CONVENTIONS.md](../olo-annotation/docs/EDITOR_CONVENTIONS.md)
+
+---
+
+### olo-annotation-processor
+
+**Package root:** `org.olo.annotation.processor`
+
+Annotation processor invoked at compile time on `@OloNode`, `@OloTool`, and `@OloHook`. Writes per-module catalogs:
+
+| Resource | Contents |
+|----------|----------|
+| `META-INF/olo/catalog/nodes.json` | Node descriptors for the module |
+| `META-INF/olo/catalog/tools.json` | Tool descriptors |
+| `META-INF/olo/catalog/hooks.json` | Hook descriptors |
+| `META-INF/olo/catalog/catalog.json` | Per-module convenience bundle (not merged by `ExtensionCatalogLoader`) |
+
+Compiler option: `-Aolo.catalog.module=<module-name>` (e.g. `olo-core-nodes`).
+
+**Docs:** [olo-annotation-processor/docs/ARCHITECTURE.md](../olo-annotation-processor/docs/ARCHITECTURE.md)
+
+---
+
+### olo-core
+
+**Package root:** `org.olo.core`
+
+Multi-module Gradle project publishing a single aggregator artifact `org.olo:olo-core`.
+
+| Subproject | Artifact | Contents |
+|------------|----------|----------|
+| `nodes` | `olo-core-nodes` | Six built-in `Node` implementations (annotated with `@OloNode`) |
+| `tools` | `olo-core-tools` | `HttpTool`, `CalculatorTool`, `WebSearchTool` (`@OloTool`) |
+| `hooks` | `olo-core-hooks` | `LoggingHook`, `MetricsHook`, `TracingHook` (`@OloHook`) |
+| `runtime` | `olo-core-runtime` | `ExecutionEngine`, registries, `DefaultExecutionContext` |
+| `core` | **`olo-core`** | `Core.defaultEngine()`, `CoreExtensionCatalog.loadMerged()` |
+
+Each implementation module uses `annotationProcessor olo-annotation-processor` so its JAR ships UI-ready catalog JSON. `CoreExtensionCatalog.loadMerged()` merges catalogs from nodes, tools, and hooks on the classpath.
+
+**Docs:** [olo-core/docs/ARCHITECTURE.md](../olo-core/docs/ARCHITECTURE.md)
+
+---
+
 ## Planned modules
 
 | Module | Will depend on | Purpose |
 |--------|----------------|---------|
-| `olo-runtime` | `olo-definition`, `olo-kernel-context` | Graph execution engine |
-| `olo-extensions` | `olo-runtime` | Provider adapters (OpenAI, Ollama, Qdrant, …) |
+| `olo-runtime` | `olo-definition`, `olo-kernel-context`, `olo-spi`, `olo-core` | Full graph traversal engine |
+| `olo-extensions` | `olo-spi` | Provider adapters (OpenAI, Ollama, Qdrant, …) |
 
 Kernel entry point is intended to call into `olo-runtime` after context build once execution exists.

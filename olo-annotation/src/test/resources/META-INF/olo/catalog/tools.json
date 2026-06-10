@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "moduleId": "olo-core",
+  "catalogType": "tools",
+  "tools": [
+    {
+      "kind": "TOOL",
+      "id": "HTTP",
+      "name": "HTTP",
+      "implementationClass": "core.HttpTool"
+    }
+  ]
+}

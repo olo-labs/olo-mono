@@ -19,6 +19,8 @@ Deeper design for individual Gradle projects:
 | olo-workflow-input | [olo-workflow-input/docs/ARCHITECTURE.md](../olo-workflow-input/docs/ARCHITECTURE.md) |
 | olo-worker-configuration | [olo-worker-configuration/docs/ARCHITECTURE.md](../olo-worker-configuration/docs/ARCHITECTURE.md) |
 | olo-worker | [olo-worker/README.md](../olo-worker/README.md) |
+| olo-spi | [olo-spi/README.md](../olo-spi/README.md), [docs/ARCHITECTURE.md](../olo-spi/docs/ARCHITECTURE.md) |
+| olo-core | [olo-core/README.md](../olo-core/README.md), [docs/ARCHITECTURE.md](../olo-core/docs/ARCHITECTURE.md) |
 | olo-kernel | [olo-kernel/README.md](../olo-kernel/README.md) |
 | olo-kernel-context | [olo-kernel-context/README.md](../olo-kernel-context/README.md) |
 | olo-bootstrap | [olo-bootstrap/README.md](../olo-bootstrap/README.md) |
