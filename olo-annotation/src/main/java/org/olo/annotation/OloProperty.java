@@ -20,7 +20,7 @@ public @interface OloProperty {
     /** Display label in the editor (falls back to {@link #name()} when blank). */
     String label() default "";
 
-    /** Editor control type; serialized in catalogs as the enum name (e.g. {@code "STRING"}). */
+    /** Editor control; emitted as JSON {@code type} + {@code ui.widget} in catalogs. */
     OloPropertyType type() default OloPropertyType.STRING;
 
     /** Developer/catalog-oriented field summary (tooling, docs, codegen). */
@@ -43,6 +43,21 @@ public @interface OloProperty {
 
     boolean required() default false;
 
+    /** Minimum string length; {@code -1} omits from catalog. */
+    int minLength() default -1;
+
+    /** Maximum string length; {@code -1} omits from catalog. */
+    int maxLength() default -1;
+
+    /** Minimum inclusive bound for numeric fields; {@code Double.NaN} omits from catalog. */
+    double minimum() default Double.NaN;
+
+    /** Maximum inclusive bound for numeric fields; {@code Double.NaN} omits from catalog. */
+    double maximum() default Double.NaN;
+
+    /** Step increment for numeric fields; {@code Double.NaN} omits from catalog. */
+    double step() default Double.NaN;
+
     String defaultValue() default "";
 
     String[] enumValues() default {};
@@ -55,4 +70,10 @@ public @interface OloProperty {
      * Not sample configuration text — use {@link #placeholder()} or {@link #defaultValue()}.
      */
     String[] examples() default {};
+
+    /**
+     * Show this field only when sibling configuration values match.
+     * Each entry is {@code key=value} (e.g. {@code "method=POST"}).
+     */
+    String[] visibleWhen() default {};
 }

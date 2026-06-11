@@ -7,7 +7,7 @@ OLO separates **what a workflow is** (a portable graph definition), **how a work
 1. **Definition vs invocation vs deployment** — `WorkflowDefinition`, `WorkflowInput`, and worker settings are three different artifacts with different lifecycles.
 2. **Standalone Gradle modules** — Each library has its own `settings.gradle`, wrapper, and `publishToMavenLocal` coordinates (`org.olo:*:0.1.0-SNAPSHOT`). There is no single root Gradle build yet.
 3. **Dependency direction** — Data flows inward: `olo-definition` has no knowledge of workers; `olo-kernel` orchestrates context building but does not own graph execution (planned in `olo-runtime`).
-4. **Configuration on disk** — Preset workflows live under `olo-configuration/<region>/*.json`. The API and worker both load the same JSON shape; Docker dev mounts a copy from `olo-docker/dev/configuration/olo-configuration`.
+4. **Configuration on disk** — Preset workflows live under `olo-definition/olo-configuration/<region>/*.json`. The API and worker both load the same JSON shape; Docker dev mounts a copy from `olo-docker/dev/configuration/olo-configuration`.
 
 ## Layer model
 
@@ -21,7 +21,7 @@ flowchart TB
     end
 
     subgraph data [Data — not Gradle modules]
-        CFG[olo-configuration/default/*.json]
+        CFG[olo-definition/olo-configuration/default/*.json]
     end
 
     subgraph definition [Definition layer]
@@ -155,7 +155,7 @@ flowchart LR
 | Step | Module | Output |
 |------|--------|--------|
 | 1 | olo-worker-configuration | `WorkerSettings` (Temporal target, scan path, cache, port) |
-| 2 | olo-worker | Absolute path to `olo-configuration/default` (or override) |
+| 2 | olo-worker | Absolute path to `olo-definition/olo-configuration/default` (or override) |
 | 3 | olo-bootstrap | `WorkflowDefinitionRegistry` (12 presets → 12 queues) |
 | 4–5 | olo-worker + olo-kernel | Temporal `Worker` per queue, `workflowType=olo` |
 
@@ -167,10 +167,10 @@ Two configuration trees serve different roles:
 
 | Path | Consumer | Purpose |
 |------|----------|---------|
-| `olo-configuration/default/*.json` | API (`OLO_CONFIGURATION_DIR`), worker (`scanFolder`) | `WorkflowDefinition` presets — chat profiles, task queues |
+| `olo-definition/olo-configuration/default/*.json` | API (`OLO_CONFIGURATION_DIR`), worker (`scanFolder`) | `WorkflowDefinition` presets — chat profiles, task queues |
 | `olo-worker-configuration/samples/*.yaml` | olo-worker only | Process settings — not workflow graphs |
 
-Keep `olo-configuration`, `olo/olo-configuration`, and `olo-docker/dev/configuration/olo-configuration` aligned when changing presets.
+Keep `olo-definition/olo-configuration`, `olo/olo-configuration`, and `olo-docker/dev/configuration/olo-configuration` aligned when changing presets.
 
 ## Build and local development
 

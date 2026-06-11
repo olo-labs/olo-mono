@@ -4,9 +4,8 @@
   "tools": [
     {
       "kind": "TOOL",
-      "id": "CATALOG_ONLY_TOOL",
-      "name": "Catalog Only",
-      "implementationClass": "ext.CatalogOnlyTool"
+      "id": "company-extension:catalog-only-tool",
+      "name": "Catalog Only"
     }
   ]
 }

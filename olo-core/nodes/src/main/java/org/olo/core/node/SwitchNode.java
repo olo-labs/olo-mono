@@ -1,5 +1,6 @@
 package org.olo.core.node;
 
+import org.olo.annotation.OloConnectionPolicy;
 import org.olo.annotation.OloNode;
 import org.olo.annotation.OloPort;
 import org.olo.annotation.OloProperty;
@@ -24,14 +25,13 @@ import java.util.Map;
             "Branch on API response status",
             "Select workflow path by category"
         },
+        connectionPolicy = @OloConnectionPolicy(maxInputs = 1, maxOutputs = -1),
         inputs = @OloPort(id = "in", schema = "any", required = true),
         outputs = @OloPort(id = "out", schema = "any"),
         configuration = @OloProperty(
                 name = "defaultBranch",
                 type = OloPropertyType.STRING,
-                defaultValue = "default"),
-        capabilityInputs = {"branch"},
-        capabilityOutputs = {"branch"})
+                defaultValue = "default"))
 @NodeType(CoreNodeTypes.SWITCH)
 public final class SwitchNode implements Node {
 

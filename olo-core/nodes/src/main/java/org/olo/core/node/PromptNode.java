@@ -27,7 +27,7 @@ import java.util.Map;
             "Translate text"
         },
         inputs = @OloPort(id = "in", name = "in", schema = "any", required = true),
-        outputs = @OloPort(id = "out", name = "out", schema = "any"),
+        outputs = @OloPort(id = "out", name = "out", schema = "string"),
         configuration = @OloProperty(
                 name = "prompt",
                 label = "Prompt Template",
@@ -37,9 +37,7 @@ import java.util.Map;
                 placeholder = "Summarize the following content",
                 group = "General",
                 order = 0,
-                examples = {"Summarize document", "Generate email"}),
-        capabilityInputs = {"input"},
-        capabilityOutputs = {"output"})
+                examples = {"Summarize document", "Generate email"}))
 @NodeType(CoreNodeTypes.PROMPT)
 public final class PromptNode implements Node {
 

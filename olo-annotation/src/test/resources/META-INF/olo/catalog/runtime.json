@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "moduleId": "olo-core",
+  "bindings": [
+    {
+      "kind": "TOOL",
+      "id": "olo-core:http-tool",
+      "implementationClass": "core.HttpTool",
+      "spiInterface": "org.olo.spi.tool.Tool"
+    }
+  ]
+}

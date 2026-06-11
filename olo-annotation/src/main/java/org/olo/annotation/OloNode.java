@@ -65,15 +65,82 @@ public @interface OloNode {
     @Deprecated
     boolean experimental() default false;
 
+    /** Studio palette, search, and canvas defaults. */
+    OloDesigner designer() default @OloDesigner;
+
+    /**
+     * @deprecated use {@link #designer()}
+     */
+    @Deprecated
+    OloNodeShape nodeShape() default OloNodeShape.STANDARD;
+
+    /**
+     * @deprecated use {@link #designer()}{@code .width()}
+     */
+    @Deprecated
+    int uiWidth() default 0;
+
+    /**
+     * @deprecated use {@link #designer()}{@code .height()}
+     */
+    @Deprecated
+    int uiHeight() default 0;
+
+    /** Canvas edge attachment rules for Studio. Omitted when both match platform defaults. */
+    OloConnectionPolicy connectionPolicy() default @OloConnectionPolicy;
+
     OloPort[] inputs() default {};
 
     OloPort[] outputs() default {};
 
     OloProperty[] configuration() default {};
 
-    /** Semantic capability required inputs for planners. */
-    String[] capabilityInputs() default {};
+    /**
+     * JSON Schema object (as a string) describing semantic inputs for machine-readable planners.
+     * Omitted from catalog when blank. Example:
+     * {@code {"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}}
+     */
+    String capabilityInputSchema() default "";
 
-    /** Semantic capability required outputs for planners. */
-    String[] capabilityOutputs() default {};
+    /**
+     * JSON Schema object (as a string) describing semantic outputs for machine-readable planners.
+     * Omitted from catalog when blank.
+     */
+    String capabilityOutputSchema() default "";
+
+    /**
+     * Runtime execution contract version emitted as {@code runtime.contractVersion} (e.g. {@code "1.0"}).
+     * Distinct from {@link #version()} — extension implementation semver.
+     */
+    String runtimeContractVersion() default "1.0";
+
+    /** How the orchestrator schedules this node. */
+    OloExecutionModel executionModel() default OloExecutionModel.INLINE;
+
+    /** Whether failed executions may be retried by the orchestrator. */
+    boolean retryable() default false;
+
+    /** Whether the orchestrator should apply timeout policies to this step. */
+    boolean timeoutAware() default false;
+
+    /** Default execution timeout as ISO-8601 duration (e.g. {@code PT30S}). Omitted when blank. */
+    String defaultTimeout() default "";
+
+    /** Default retry policy hint. Omitted from catalog when {@link OloRetryPolicy#NONE}. */
+    OloRetryPolicy defaultRetryPolicy() default OloRetryPolicy.NONE;
+
+    /** Whether the step may complete asynchronously (signal/callback). */
+    boolean supportsAsyncCompletion() default false;
+
+    /** Whether the orchestrator should expect activity heartbeats. */
+    boolean supportsHeartbeat() default false;
+
+    /** Studio debugger support for this node type. Emits {@code DEBUG} on {@code runtime.capabilities}. */
+    boolean supportsDebugging() default true;
+
+    /** Workflow replay support for executions involving this node type. Emits {@code REPLAY}. */
+    boolean supportsReplay() default true;
+
+    /** Checkpoint / time-travel support for this node type. Emits {@code CHECKPOINT} when {@code true}. */
+    boolean supportsCheckpointing() default false;
 }

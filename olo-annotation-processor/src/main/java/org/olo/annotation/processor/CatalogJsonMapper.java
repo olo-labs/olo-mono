@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  * Jackson settings for generated catalog JSON.
  * <p>
  * Omits unset optional strings ({@code null}); keeps empty arrays at descriptor level; omits empty
- * property {@code enumValues} / {@code examples}; omits boolean {@code false} (annotation defaults).
+ * parameter {@code values} / {@code examples}; omits boolean {@code false} (annotation defaults).
  */
 final class CatalogJsonMapper {
 

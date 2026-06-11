@@ -3,6 +3,7 @@ package org.olo.core.tool;
 import org.olo.annotation.OloProperty;
 import org.olo.annotation.OloPropertyType;
 import org.olo.annotation.OloStability;
+import org.olo.annotation.OloExecutionModel;
 import org.olo.annotation.OloTool;
 import org.olo.spi.annotation.ImplementationId;
 import org.olo.spi.annotation.ToolId;
@@ -28,8 +29,12 @@ import java.util.Map;
             "Research competitors before a pitch"
         },
         arguments = @OloProperty(name = "query", type = OloPropertyType.STRING, required = true),
-        capabilityInputs = {"query"},
-        capabilityOutputs = {"results"})
+        capabilityInputSchema =
+                "{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\",\"description\":\"Search query\"}},\"required\":[\"query\"]}",
+        capabilityOutputSchema =
+                "{\"type\":\"object\",\"properties\":{\"results\":{\"type\":\"array\",\"items\":{\"type\":\"object\"}}},\"required\":[\"results\"]}",
+        executionModel = OloExecutionModel.ACTIVITY,
+        timeoutAware = true)
 @ToolId(CoreToolIds.WEB_SEARCH)
 @ImplementationId(CoreToolIds.WEB_SEARCH)
 public final class WebSearchTool implements Tool {

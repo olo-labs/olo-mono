@@ -36,11 +36,27 @@ Nested annotations (`@OloPort`, `@OloProperty`) use `@Target(ANNOTATION_TYPE)` o
 | `deprecated` | `boolean` | no | `false` | ⚠ legacy marker |
 | `stability` | `OloStability` | no | `STABLE` | `stable`, `beta`, or `experimental` in catalog JSON |
 | `experimental` | `boolean` | no | `false` | **Deprecated** — use `stability = EXPERIMENTAL` |
+| `designer` | `OloDesigner` | no | `{}` | Studio palette/search/canvas — [conventions](EDITOR_CONVENTIONS.md#designer-metadata) |
+| `nodeShape` | `OloNodeShape` | no | `STANDARD` | **Deprecated** — use `designer.canvasShape` |
+| `uiWidth` | `int` | no | `0` | **Deprecated** — use `designer.width` → `nodeSize.width` |
+| `uiHeight` | `int` | no | `0` | **Deprecated** — use `designer.height` → `nodeSize.height` |
+| `connectionPolicy` | `OloConnectionPolicy` | no | `-1` / `-1` | Studio edge cardinality — [conventions](EDITOR_CONVENTIONS.md#connection-policy-node-level) |
 | `inputs` | `OloPort[]` | no | `{}` | Input ports |
 | `outputs` | `OloPort[]` | no | `{}` | Output ports |
 | `configuration` | `OloProperty[]` | no | `{}` | Config schema |
-| `capabilityInputs` | `String[]` | no | `{}` | Planner semantic inputs |
-| `capabilityOutputs` | `String[]` | no | `{}` | Planner semantic outputs |
+| `capabilityInputSchema` | `String` | no | `""` | JSON Schema → `contract.inputSchema` when set |
+| `capabilityOutputSchema` | `String` | no | `""` | JSON Schema → `contract.outputSchema` when set |
+| `runtimeContractVersion` | `String` | no | `"1.0"` | Runtime contract version → `runtime.contractVersion` (not extension semver) |
+| `executionModel` | `OloExecutionModel` | no | `INLINE` | Orchestrator scheduling model |
+| `retryable` | `boolean` | no | `false` | Emits `RETRY` on `runtime.capabilities` when `true` |
+| `timeoutAware` | `boolean` | no | `false` | Emits `TIMEOUT` on `runtime.capabilities` when `true` |
+| `defaultTimeout` | `String` | no | `""` | ISO-8601 duration (e.g. `PT30S`); omitted when blank |
+| `defaultRetryPolicy` | `OloRetryPolicy` | no | `NONE` | `STANDARD` / `AGGRESSIVE`; omitted when `NONE` |
+| `supportsAsyncCompletion` | `boolean` | no | `false` | Emits `ASYNC_COMPLETION` on `runtime.capabilities` when `true` |
+| `supportsHeartbeat` | `boolean` | no | `false` | Emits `HEARTBEAT` on `runtime.capabilities` when `true` |
+| `supportsDebugging` | `boolean` | no | `true` | Emits `DEBUG` on `runtime.capabilities` when `true` |
+| `supportsReplay` | `boolean` | no | `true` | Emits `REPLAY` on `runtime.capabilities` when `true` |
+| `supportsCheckpointing` | `boolean` | no | `false` | Emits `CHECKPOINT` as a deviation on `runtime.capabilities` when `true` |
 
 ```java
 @OloNode(
@@ -59,9 +75,7 @@ Nested annotations (`@OloPort`, `@OloProperty`) use `@Target(ANNOTATION_TYPE)` o
         label = "Prompt Template",
         type = OloPropertyType.TEXTAREA,
         description = "Template used by PromptNode",
-        help = "Use {{input}} to reference workflow input."),
-    capabilityInputs = {"input"},
-    capabilityOutputs = {"output"})
+        help = "Use {{input}} to reference workflow input.")
 @NodeType("PROMPT")
 public final class PromptNode implements Node { … }
 ```
@@ -90,8 +104,19 @@ public final class PromptNode implements Node { … }
 | `experimental` | `boolean` | no | `false` | **Deprecated** — use `stability = EXPERIMENTAL` |
 | `arguments` | `OloProperty[]` | no | `{}` | Per-invocation arguments |
 | `configuration` | `OloProperty[]` | no | `{}` | Persistent configuration |
-| `capabilityInputs` | `String[]` | no | `{}` | Planner semantic inputs |
-| `capabilityOutputs` | `String[]` | no | `{}` | Planner semantic outputs |
+| `capabilityInputSchema` | `String` | no | `""` | JSON Schema → `contract.inputSchema` when set |
+| `capabilityOutputSchema` | `String` | no | `""` | JSON Schema → `contract.outputSchema` when set |
+| `runtimeContractVersion` | `String` | no | `"1.0"` | Runtime contract version → `runtime.contractVersion` (not extension semver) |
+| `executionModel` | `OloExecutionModel` | no | `ACTIVITY` | Orchestrator scheduling model |
+| `retryable` | `boolean` | no | `false` | Emits `RETRY` on `runtime.capabilities` when `true` |
+| `timeoutAware` | `boolean` | no | `false` | Emits `TIMEOUT` on `runtime.capabilities` when `true` |
+| `defaultTimeout` | `String` | no | `""` | ISO-8601 duration (e.g. `PT30S`); omitted when blank |
+| `defaultRetryPolicy` | `OloRetryPolicy` | no | `NONE` | `STANDARD` / `AGGRESSIVE`; omitted when `NONE` |
+| `supportsAsyncCompletion` | `boolean` | no | `false` | Emits `ASYNC_COMPLETION` on `runtime.capabilities` when `true` |
+| `supportsHeartbeat` | `boolean` | no | `false` | Emits `HEARTBEAT` on `runtime.capabilities` when `true` |
+| `supportsDebugging` | `boolean` | no | `true` | Emits `DEBUG` on `runtime.capabilities` when `true` |
+| `supportsReplay` | `boolean` | no | `true` | Emits `REPLAY` on `runtime.capabilities` when `true` |
+| `supportsCheckpointing` | `boolean` | no | `false` | Emits `CHECKPOINT` as a deviation on `runtime.capabilities` when `true` |
 
 ```java
 @OloTool(
@@ -138,9 +163,10 @@ No `featured` or `examples` on hooks in v1.
 |-----------|------|----------|---------|-------------|
 | `id` | `String` | yes | — | Port id in graph edges |
 | `name` | `String` | no | `""` | Display label |
-| `schema` | `String` | no | `"any"` | Type hint |
+| `schema` | `String` | no | `"any"` | Port type for connection rules — [conventions](EDITOR_CONVENTIONS.md#connection-rules-port-schema) (`string`, `number`, `Stock[]`, `any`, …) |
 | `required` | `boolean` | no | `false` | Must be connected |
 | `description` | `String` | no | `""` | Help under port label |
+| `position` | `OloPortPosition` | no | `DEFAULT` | Canvas handle side — [conventions](EDITOR_CONVENTIONS.md#ports) |
 
 ---
 
@@ -150,19 +176,25 @@ No `featured` or `examples` on hooks in v1.
 
 | Attribute | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `name` | `String` | yes | — | Key in configuration JSON |
-| `label` | `String` | no | `""` | Display label |
-| `type` | `OloPropertyType` | no | `STRING` | Editor control type |
+| `name` | `String` | yes | — | Stable parameter `id` in catalog JSON |
+| `label` | `String` | no | `""` | Display `name` in catalog JSON |
+| `type` | `OloPropertyType` | no | `STRING` | Authoring control — maps to JSON `type` + `ui.widget` in catalog |
 | `description` | `String` | no | `""` | Developer/catalog summary |
 | `help` | `String` | no | `""` | End-user panel guidance |
 | `placeholder` | `String` | no | `""` | Sample text in empty input |
 | `group` | `String` | no | `"General"` | Panel section — [conventions](EDITOR_CONVENTIONS.md#property-groups-free-text) |
 | `order` | `int` | no | `Integer.MAX_VALUE` | Sort within group |
-| `required` | `boolean` | no | `false` | Validation hint |
+| `required` | `boolean` | no | `false` | Emitted as `required: true` when set |
+| `minLength` | `int` | no | `-1` | `validation.minLength` — omit when `-1` |
+| `maxLength` | `int` | no | `-1` | `validation.maxLength` — omit when `-1` |
+| `minimum` | `double` | no | `NaN` | `validation.minimum` for numeric fields |
+| `maximum` | `double` | no | `NaN` | `validation.maximum` for numeric fields |
+| `step` | `double` | no | `NaN` | `validation.step` for numeric fields |
 | `defaultValue` | `String` | no | `""` | Default when unset |
-| `enumValues` | `String[]` | no | `{}` | Dropdown values when `type = ENUM` |
+| `enumValues` | `String[]` | no | `{}` | Authoring only — catalog emits `type: enum` + `values` |
 | `secret` | `boolean` | no | `false` | Mask input |
 | `examples` | `String[]` | no | `{}` | **Use-case** bullets under field (not sample config — use `placeholder`) |
+| `visibleWhen` | `String[]` | no | `{}` | Conditional visibility — each entry `key=value` (e.g. `method=POST`) |
 
 ```java
 @OloProperty(
@@ -179,6 +211,19 @@ No `featured` or `examples` on hooks in v1.
 
 ---
 
+## `@OloConnectionPolicy`
+
+**Target:** `ANNOTATION_TYPE` (nested in `@OloNode`)
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `maxInputs` | `int` | `-1` | Maximum incoming edges; `-1` unlimited |
+| `maxOutputs` | `int` | `-1` | Maximum outgoing edges; `-1` unlimited |
+
+Omitted from catalog when both match platform defaults (`-1` / `-1`). Control nodes (Switch, Parallel, Loop) typically use `maxInputs = 1`, `maxOutputs = -1`.
+
+---
+
 ## `OloPropertyType`
 
 | Value | UI control |
@@ -187,7 +232,7 @@ No `featured` or `examples` on hooks in v1.
 | `TEXTAREA` | Multi-line text |
 | `NUMBER` | Numeric input |
 | `BOOLEAN` | Toggle |
-| `ENUM` | Dropdown (`enumValues`) |
+| `ENUM` | `type: enum` + `values` + `ui.widget: SELECT` |
 | `JSON` | JSON editor |
 | `SECRET` | Masked credential / API key |
 | `ARRAY` | List editor (JSON array) |
@@ -196,7 +241,7 @@ No `featured` or `examples` on hooks in v1.
 | `CRON` | Cron schedule picker |
 | `MODEL_SELECTOR` | LLM / embedding model picker |
 
-Serialized in catalog JSON as enum name (e.g. `"TEXTAREA"`).
+Emitted in catalog JSON as unified parameter schema — e.g. `TEXTAREA` → `"type": "string", "ui": { "widget": "TEXTAREA" }` via `ParameterSchemaMapping`.
 
 ---
 

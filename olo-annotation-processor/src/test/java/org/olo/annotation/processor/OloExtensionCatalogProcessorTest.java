@@ -52,9 +52,7 @@ class OloExtensionCatalogProcessorTest {
                         @OloProperty(
                             name = "maxIterations",
                             type = OloPropertyType.NUMBER)
-                    },
-                    capabilityInputs = {"input"},
-                    capabilityOutputs = {"output"})
+                    })
                 @NodeType("PROMPT")
                 public final class PromptNode {}
                 """);
@@ -70,32 +68,103 @@ class OloExtensionCatalogProcessorTest {
                 .orElseThrow()
                 .getCharContent(true)
                 .toString();
-        assertThat(catalog).contains("\"id\" : \"PROMPT\"");
+        assertThat(catalog).contains("\"id\" : \"test:PROMPT\"");
         assertThat(catalog).contains("\"version\" : \"1.0.0\"");
         assertThat(catalog).contains("\"provider\" : \"test\"");
         assertThat(catalog).contains("\"stability\" : \"stable\"");
-        assertThat(catalog).contains("\"implementationClass\" : \"sample.PromptNode\"");
+        assertThat(catalog).doesNotContain("implementationClass");
+        assertThat(catalog).doesNotContain("spiInterface");
+
+        String runtime = compilation
+                .generatedFile(StandardLocation.CLASS_OUTPUT, "META-INF/olo/catalog/runtime.json")
+                .orElseThrow()
+                .getCharContent(true)
+                .toString();
+        assertThat(runtime).contains("\"id\" : \"test:PROMPT\"");
+        assertThat(runtime).contains("\"implementationClass\" : \"sample.PromptNode\"");
+        assertThat(runtime).contains("\"spiInterface\" : \"org.olo.spi.node.Node\"");
         assertThat(catalog).contains("\"moduleId\" : \"test\"");
         assertThat(catalog).contains("\"schemaVersion\" : \"1.0\"");
         assertThat(catalog).contains("\"generatedBy\" : \"olo-annotation-processor\"");
         assertThat(catalog).contains("\"generatedByVersion\" : \"1.0.0\"");
+        assertThat(catalog).contains("\"generatedAt\" :");
         assertThat(catalog).contains("\"catalogType\" : \"nodes\"");
         assertThat(catalog).contains("\"examples\" : [ \"Summarize a document\", \"Generate release notes\" ]");
         assertThat(catalog).contains("\"featured\" : true");
         assertThat(catalog).doesNotContain("\"deprecated\"");
         assertThat(catalog).doesNotContain("\"experimental\"");
-        assertThat(catalog).contains("\"label\" : \"Prompt Template\"");
-        assertThat(catalog).contains("\"label\" : \"Max Iterations\"");
+        assertThat(catalog).contains("\"id\" : \"prompt\"");
+        assertThat(catalog).contains("\"name\" : \"Prompt Template\"");
+        assertThat(catalog).contains("\"id\" : \"maxIterations\"");
+        assertThat(catalog).contains("\"name\" : \"Max Iterations\"");
+        assertThat(catalog).contains("\"type\" : \"string\"");
+        assertThat(catalog).contains("\"type\" : \"number\"");
+        assertThat(catalog).contains("\"widget\" : \"STRING\"");
+        assertThat(catalog).contains("\"widget\" : \"NUMBER\"");
+        assertThat(catalog).contains("\"ui\" : {");
         assertThat(catalog).doesNotContain("\"group\" : \"General\"");
         assertThat(catalog).contains("\"order\" : 0");
         assertThat(catalog).doesNotContain("2147483647");
         assertThat(catalog).doesNotContain("\"enumValues\"");
+        assertThat(catalog).contains("\"parameters\"");
+        assertThat(catalog).doesNotContain("\"configuration\"");
         assertThat(catalog).doesNotContain("\"secret\"");
+        assertThat(catalog).doesNotContain("\"type\" : \"TEXTAREA\"");
         assertThat(catalog).contains("\"name\" : \"in\"");
-        assertThat(catalog).contains("\"inputs\" : [ \"input\" ]");
-        assertThat(catalog).contains("\"outputs\" : [ \"output\" ]");
+        assertThat(catalog).doesNotContain("\"capability\"");
+        assertThat(catalog).contains("\"contractVersion\" : \"1.0\"");
+        assertThat(catalog).doesNotContain("apiVersion");
+        assertThat(catalog).contains("\"executionModel\" : \"INLINE\"");
         assertThat(catalog).doesNotContain("null");
         assertThat(catalog).doesNotContain("required_inputs");
         assertThat(catalog).doesNotContain("required_outputs");
+    }
+
+    @Test
+    void emitsConnectionPolicyAndVisibleWhen() throws IOException {
+        JavaFileObject source = JavaFileObjects.forSourceString(
+                "sample.SwitchNode",
+                """
+                package sample;
+
+                import org.olo.annotation.OloConnectionPolicy;
+                import org.olo.annotation.OloNode;
+                import org.olo.annotation.OloPort;
+                import org.olo.annotation.OloProperty;
+                import org.olo.annotation.OloPropertyType;
+                import org.olo.spi.annotation.NodeType;
+
+                @OloNode(
+                    type = "SWITCH",
+                    name = "Switch",
+                    connectionPolicy = @OloConnectionPolicy(maxInputs = 1, maxOutputs = -1),
+                    inputs = @OloPort(id = "in", schema = "any", required = true),
+                    outputs = @OloPort(id = "out", schema = "any"),
+                    configuration = @OloProperty(
+                        name = "body",
+                        type = OloPropertyType.JSON,
+                        visibleWhen = {"method=POST"}))
+                @NodeType("SWITCH")
+                public final class SwitchNode {}
+                """);
+
+        Compilation compilation = Compiler.javac()
+                .withProcessors(new OloExtensionCatalogProcessor())
+                .withOptions("-Aolo.catalog.module=test")
+                .compile(source);
+
+        com.google.testing.compile.CompilationSubject.assertThat(compilation).succeeded();
+        String catalog = compilation
+                .generatedFile(StandardLocation.CLASS_OUTPUT, "META-INF/olo/catalog/nodes.json")
+                .orElseThrow()
+                .getCharContent(true)
+                .toString();
+        assertThat(catalog).contains("\"connectionPolicy\"");
+        assertThat(catalog).contains("\"maxInputs\" : 1");
+        assertThat(catalog).contains("\"maxOutputs\" : -1");
+        assertThat(catalog).contains("\"id\" : \"body\"");
+        assertThat(catalog).contains("\"name\" : \"Body\"");
+        assertThat(catalog).contains("\"visibleWhen\"");
+        assertThat(catalog).contains("\"method\" : \"POST\"");
     }
 }

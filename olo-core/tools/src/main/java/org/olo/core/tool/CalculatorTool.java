@@ -32,9 +32,7 @@ import java.util.Map;
                     type = OloPropertyType.ENUM,
                     defaultValue = "+",
                     enumValues = {"+", "-", "*", "/"})
-        },
-        capabilityInputs = {"a", "b"},
-        capabilityOutputs = {"result"})
+        })
 @ToolId(CoreToolIds.CALCULATOR)
 @ImplementationId(CoreToolIds.CALCULATOR)
 public final class CalculatorTool implements Tool {

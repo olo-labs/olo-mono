@@ -2,6 +2,8 @@ package org.olo.core.tool;
 
 import org.olo.annotation.OloProperty;
 import org.olo.annotation.OloPropertyType;
+import org.olo.annotation.OloExecutionModel;
+import org.olo.annotation.OloRetryPolicy;
 import org.olo.annotation.OloTool;
 import org.olo.spi.annotation.ImplementationId;
 import org.olo.spi.annotation.ToolId;
@@ -37,6 +39,8 @@ import java.util.Map;
                     description = "Request target URL",
                     help = "Full URL including https://",
                     required = true,
+                    minLength = 8,
+                    maxLength = 2048,
                     placeholder = "https://api.example.com/data",
                     group = "General",
                     order = 0),
@@ -56,10 +60,15 @@ import java.util.Map;
                     help = "JSON body for POST requests; leave empty for GET.",
                     placeholder = "{\"key\": \"value\"}",
                     group = "Advanced",
-                    order = 2)
+                    order = 2,
+                    visibleWhen = {"method=POST"})
         },
-        capabilityInputs = {"url"},
-        capabilityOutputs = {"body"})
+        executionModel = OloExecutionModel.ACTIVITY,
+        retryable = true,
+        timeoutAware = true,
+        supportsCheckpointing = true,
+        defaultTimeout = "PT30S",
+        defaultRetryPolicy = OloRetryPolicy.STANDARD)
 @ToolId(CoreToolIds.HTTP)
 @ImplementationId(CoreToolIds.HTTP)
 public final class HttpTool implements Tool {

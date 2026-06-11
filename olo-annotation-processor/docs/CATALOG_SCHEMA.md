@@ -29,6 +29,36 @@ Catalog files are generated at compile time and live under `META-INF/olo/catalog
 | `tools` | array | if catalogType=tools | Tool descriptors |
 | `hooks` | array | if catalogType=hooks | Hook descriptors |
 
+### Runtime registry (`runtime.json`)
+
+**Not Studio-facing.** JVM bindings are emitted separately so catalog JSON stays free of `implementationClass` / `spiInterface`:
+
+```json
+{
+  "schemaVersion": "1.0",
+  "moduleId": "olo-core-tools",
+  "generatedAt": "…",
+  "bindings": [
+    {
+      "kind": "TOOL",
+      "id": "olo-core:http-tool",
+      "implementationClass": "org.olo.core.tool.HttpTool",
+      "spiInterface": "org.olo.spi.tool.Tool"
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `bindings` | array | yes | One entry per extension in the module |
+| `bindings[].kind` | string | yes | `"NODE"`, `"TOOL"`, or `"HOOK"` |
+| `bindings[].id` | string | yes | Global extension id (same as catalog `id`) |
+| `bindings[].implementationClass` | string | yes | Annotated type FQCN |
+| `bindings[].spiInterface` | string | yes | SPI contract FQCN |
+
+`ExtensionRuntimeRegistryLoader` merges `runtime.json` from all JARs (first id wins, same dedup rules as catalog). `olo-be` does **not** serve this file — workers and JVM tooling load it from the classpath.
+
 ### Convenience bundle (`catalog.json`)
 
 **Not authoritative.** The processor emits `catalog.json` as a per-module snapshot for indexing, marketplace inspection, admin UIs, and CLIs. `ExtensionCatalogLoader` does **not** read this file — loading it alongside `nodes.json` / `tools.json` / `hooks.json` would duplicate every descriptor.
@@ -114,7 +144,7 @@ When two JARs define the same `id` within a kind (node, tool, or hook) — for e
 | Field | Type | Required | Source |
 |-------|------|----------|--------|
 | `kind` | string | yes | Always `"NODE"` |
-| `id` | string | yes | `@OloNode.type()` |
+| `id` | string | yes | Global id: `{provider}:{localType}` — materialized from `@OloNode.type()` and `provider` |
 | `version` | string | yes | `@OloNode.version()` — extension semver (default `1.0.0`) |
 | `provider` | string | yes | `@OloNode.provider()` or `-Aolo.catalog.provider` — owning plugin (`olo-core`, `acme-aws`, …) |
 | `stability` | string | yes | `@OloNode.stability()` — `stable`, `beta`, or `experimental` |
@@ -126,19 +156,18 @@ When two JARs define the same `id` within a kind (node, tool, or hook) — for e
 | `examples` | string[] | yes | Use-case lines — not config values ([conventions](../../olo-annotation/docs/EDITOR_CONVENTIONS.md#examples--use-cases-not-configuration-values)) |
 | `featured` | boolean | no | `@OloNode.featured()` — emitted only when `true` |
 | `deprecated` | boolean | no | `@OloNode.deprecated()` — emitted only when `true` |
-| `implementationClass` | string | yes | Annotated type FQCN |
-| `spiInterface` | string | yes | `"org.olo.spi.node.Node"` |
 | `inputs` | port[] | yes | `@OloNode.inputs()` |
 | `outputs` | port[] | yes | `@OloNode.outputs()` |
-| `configuration` | property[] | yes | `@OloNode.configuration()` |
-| `capability` | object | yes | See capability object |
+| `parameters` | parameter[] | yes | `@OloNode.configuration()` — emitted as `parameters` |
+| `contract` | object | no | Machine-readable JSON Schema — see [Contract object](#contract-object). Omitted when unset. |
+| `runtime` | object | yes (nodes/tools) | Orchestration hints — see [Runtime object (catalog)](#runtime-object-catalog). Omitted on hooks. |
 
 Example:
 
 ```json
 {
   "kind": "NODE",
-  "id": "PROMPT",
+  "id": "olo-core:PROMPT",
   "version": "1.0.0",
   "provider": "olo-core",
   "stability": "stable",
@@ -153,27 +182,32 @@ Example:
     "Translate text"
   ],
   "featured": true,
-  "implementationClass": "org.olo.core.node.PromptNode",
-  "spiInterface": "org.olo.spi.node.Node",
   "inputs": [{ "id": "in", "name": "in", "schema": "any", "required": true }],
   "outputs": [{ "id": "out", "name": "out", "schema": "any" }],
-  "configuration": [{
-    "name": "prompt",
+  "parameters": [{
+    "id": "prompt",
     "label": "Prompt Template",
-    "type": "TEXTAREA",
+    "type": "string",
     "description": "Template used by PromptNode",
-    "help": "Use {{input}} to reference workflow input.",
-    "placeholder": "Summarize the following content",
-    "order": 0,
+    "required": false,
+    "ui": {
+      "widget": "STRING",
+      "help": "Use {{input}} to reference workflow input.",
+      "placeholder": "Summarize the following content",
+      "order": 0
+    },
     "examples": ["Summarize document", "Generate email"]
   }, {
-    "name": "maxIterations",
+    "id": "maxIterations",
     "label": "Max Iterations",
-    "type": "NUMBER"
+    "type": "number",
+    "required": false,
+    "ui": { "widget": "NUMBER" }
   }],
-  "capability": {
-    "inputs": ["input"],
-    "outputs": ["output"]
+  "runtime": {
+    "contractVersion": "1.0",
+    "executionModel": "INLINE",
+    "capabilities": []
   }
 }
 ```
@@ -185,7 +219,7 @@ Example:
 | Field | Type | Required | Source |
 |-------|------|----------|--------|
 | `kind` | string | yes | Always `"TOOL"` |
-| `id` | string | yes | `@OloTool.id()` |
+| `id` | string | yes | Global id: `{provider}:{localId}` — materialized from `@OloTool.id()` and `provider` |
 | `version` | string | yes | `@OloTool.version()` |
 | `provider` | string | yes | `@OloTool.provider()` or `-Aolo.catalog.provider` |
 | `stability` | string | yes | `stable`, `beta`, or `experimental` |
@@ -197,11 +231,9 @@ Example:
 | `examples` | string[] | yes | `@OloTool.examples()` |
 | `featured` | boolean | no | Emitted only when `true` |
 | `deprecated` | boolean | no | Emitted only when `true` |
-| `implementationClass` | string | yes | Annotated type FQCN |
-| `spiInterface` | string | yes | `"org.olo.spi.tool.Tool"` |
-| `arguments` | property[] | yes | `@OloTool.arguments()` |
-| `configuration` | property[] | yes | `@OloTool.configuration()` |
-| `capability` | object | yes | See capability object |
+| `parameters` | parameter[] | yes | `@OloTool.arguments()` + `@OloTool.configuration()` merged |
+| `contract` | object | no | Machine-readable JSON Schema — see [Contract object](#contract-object). Omitted when unset. |
+| `runtime` | object | yes | Orchestration hints — see [Runtime object (catalog)](#runtime-object-catalog) |
 
 ---
 
@@ -210,7 +242,7 @@ Example:
 | Field | Type | Required | Source |
 |-------|------|----------|--------|
 | `kind` | string | yes | Always `"HOOK"` |
-| `id` | string | yes | `@OloHook.implementationId()` |
+| `id` | string | yes | Global id: `{provider}:{localId}` — materialized from `@OloHook.implementationId()` and `provider` |
 | `version` | string | yes | `@OloHook.version()` |
 | `provider` | string | yes | `@OloHook.provider()` or `-Aolo.catalog.provider` |
 | `stability` | string | yes | `stable`, `beta`, or `experimental` |
@@ -220,8 +252,6 @@ Example:
 | `emoji` | string \| null | no | `@OloHook.emoji()` |
 | `tags` | string[] | yes | `@OloHook.tags()` |
 | `deprecated` | boolean | no | Emitted only when `true` |
-| `implementationClass` | string | yes | Annotated type FQCN |
-| `spiInterface` | string | yes | `"org.olo.spi.hook.Hook"` |
 | `phases` | string[] | yes | `@OloHook.phases()` enum names (`PRE`, `ON_ERROR`, `FINALLY`) |
 
 Hooks do not have port or property arrays in the current schema.
@@ -240,42 +270,163 @@ Hooks do not have port or property arrays in the current schema.
 
 ---
 
-## Property object (`@OloProperty`)
+## Parameter object (`parameters[]`)
 
-Properties are sorted by `order` (ascending) in generated JSON.
+Parameters are sorted by `ui.order` (ascending) in generated JSON. Same shape on nodes, tools, and workflow presets.
 
 | Field | Type | Required | Default |
 |-------|------|----------|---------|
-| `name` | string | yes | — |
-| `label` | string \| null | no | `null` if blank |
-| `type` | string | yes | `OloPropertyType` name: `STRING`, `TEXTAREA`, `NUMBER`, `BOOLEAN`, `ENUM`, `JSON`, `SECRET`, `ARRAY`, `OBJECT`, `CODE`, `CRON`, `MODEL_SELECTOR` |
+| `id` | string | yes | Stable parameter key — from `@OloProperty.name()` / `@OloWorkflowParameter.name()` |
+| `label` | string | yes | Display label (`name` accepted on deserialize for older catalogs) |
+| `type` | string | yes | JSON value type via `ParameterSchemaMapping` — `string`, `number`, `boolean`, `object`, `array`, `enum`, … |
 | `description` | string \| null | no | Developer/catalog summary |
 | `help` | string \| null | no | End-user guidance in the property panel |
 | `placeholder` | string \| null | no | — |
 | `group` | string \| null | no | Omitted when default (`"General"`) — Studio treats missing as General. Use `Advanced`, `Security`, `Model Settings`, … when not General |
 | `order` | int | no | Omitted when unset — Studio sorts unspecified fields after explicit ones |
-| `required` | boolean | no | Emitted only when `true` |
+| `required` | boolean | yes | Always `true` or `false` — never omitted |
+| `validation` | object | no | Studio validation — omitted when unset |
+| `validation.minLength` | int | no | Minimum string length |
+| `validation.maxLength` | int | no | Maximum string length |
+| `validation.minimum` | number | no | Minimum inclusive numeric bound |
+| `validation.maximum` | number | no | Maximum inclusive numeric bound |
+| `validation.step` | number | no | Numeric step increment |
 | `defaultValue` | string \| null | no | — |
-| `enumValues` | string[] | no | Omitted when unset — emit only for `ENUM` fields with values |
+| `values` | string[] | no | Omitted when unset — emit only when `type` is `enum` |
 | `secret` | boolean | no | Emitted only when `true` — mask as `*********` in UI |
 | `examples` | string[] | no | Property use-case bullets — omitted when unset (use `placeholder` for sample config) |
 
-### Reserved (not in schema 1.0)
-
-Future validation attributes such as `min` and `max` for `NUMBER` fields may be added in a later catalog version. UIs should ignore unknown property fields.
+UIs should ignore unknown `validation` fields for forward compatibility.
 
 ---
 
-## Capability object
+## Contract object
 
-Planner semantic contract from `@OloNode` / `@OloTool` capability arrays. **Node-level `tags` are separate** — they are not duplicated here.
+Machine-readable semantic contract for AI planners and strict validators. Sourced from `@OloNode.capabilityInputSchema()` / `@OloTool.capabilityInputSchema()` (annotation names unchanged). **Omitted** when neither schema is set.
 
 | Field | Type | Required | Source |
 |-------|------|----------|--------|
-| `inputs` | string[] | yes | `@OloNode.capabilityInputs()` / `@OloTool.capabilityInputs()` — `[]` when unset |
-| `outputs` | string[] | yes | `@OloNode.capabilityOutputs()` / `@OloTool.capabilityOutputs()` — `[]` when unset |
+| `inputSchema` | object | no | JSON Schema object; omitted when unset |
+| `outputSchema` | object | no | JSON Schema object; omitted when unset |
 
-Used by planners and validators to express semantic contracts beyond port IDs.
+Example (`olo-core:web-search`):
+
+```json
+"contract": {
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string", "description": "Search query" }
+    },
+    "required": ["query"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "results": { "type": "array", "items": { "type": "object" } }
+    },
+    "required": ["results"]
+  }
+}
+```
+
+---
+
+## Catalog defaults (Studio inheritance)
+
+Merged Studio bundles (`catalog.json`, `nodes.json`, `tools.json` from `exportStudioCatalog`) declare inherited runtime and editor baselines:
+
+```json
+"defaults": {
+  "runtime": {
+    "capabilities": ["DEBUG", "REPLAY"]
+  },
+  "connectionRules": { "strategy": "schema_match" },
+  "connectionPolicy": {
+    "maxInputs": -1,
+    "maxOutputs": -1
+  },
+  "designer": {
+    "nodeSize": { "width": 200, "height": 80 },
+    "resizable": true,
+    "draggable": true
+  }
+}
+```
+
+Per-extension `runtime.capabilities` lists **deviations only** (extras beyond defaults, or a full replacement when opting out of defaults). Omitted when effective capabilities equal the defaults. Capability names are {@link org.olo.spi.runtime.RuntimeCapability} enum values; resolve with {@link org.olo.spi.runtime.RuntimeCapabilities}.
+
+Per-node `connectionPolicy` omits fields that match `defaults.connectionPolicy`.
+
+Per-entry `designer` omits `nodeSize`, `resizable`, and `draggable` when they match `defaults.designer`. Palette and search fields are always entry-specific.
+
+---
+
+## Catalog metadata (closed vocabularies)
+
+Schema definitions and closed enums — not per-extension inheritance defaults:
+
+```json
+"catalogMetadata": {
+  "parameterWidgets": ["STRING", "TEXTAREA", "NUMBER", "SLIDER", "..."]
+}
+```
+
+Widget values are {@link org.olo.spi.catalog.ParameterWidget} enum names. Legacy lowercase widgets normalize on deserialize.
+
+---
+
+## Runtime object (catalog)
+
+Orchestration scheduling hints on each node/tool descriptor. **Not** JVM classpath bindings — those are in [`runtime.json`](#runtime-registry-runtimejson) (`implementationClass`, `spiInterface`).
+
+| `executionModel` | Meaning |
+|------------------|---------|
+| `INLINE` | Execute inside the current workflow (in-process step) |
+| `ACTIVITY` | Execute as a Temporal Activity (or equivalent schedulable unit) |
+| `CHILD_WORKFLOW` | Execute as a child workflow boundary |
+| `EXTERNAL` | Delegate to an external system |
+
+Descriptor `version` is the **extension implementation semver** (e.g. `1.0.0`, `2.0.0`). `runtime.contractVersion` is the **runtime execution contract** version — they evolve independently.
+
+| Field | Type | Required | Source | Emission |
+|-------|------|----------|--------|----------|
+| `contractVersion` | string | yes | `@OloNode.runtimeContractVersion()` / `@OloTool.runtimeContractVersion()` | Always (default `"1.0"`). Legacy alias `apiVersion` accepted on read only. |
+| `executionModel` | string | yes | `@OloNode.executionModel()` / `@OloTool.executionModel()` | Always — Studio foundation for execution, replay, debugger, visualization, observability |
+| `capabilities` | string[] | no | Deviations from `defaults.runtime.capabilities` | Omitted when effective equals defaults |
+| `defaultTimeout` | string | no | `defaultTimeout()` | ISO-8601 duration (e.g. `PT30S`); omitted when blank |
+| `defaultRetryPolicy` | string | no | `defaultRetryPolicy()` | `STANDARD`, `AGGRESSIVE`; omitted when `NONE` |
+
+Inherited catalog defaults: `DEBUG`, `REPLAY`. Optional deviation tokens: `CHECKPOINT` (`supportsCheckpointing()`), `RETRY`, `TIMEOUT`, `ASYNC_COMPLETION`, `HEARTBEAT`. Workflow instances may also declare capabilities on `WorkflowDefinition.runtime` in olo-definition.
+
+Defaults: nodes → `INLINE`; tools → `ACTIVITY`. Hooks omit `runtime`.
+
+Examples:
+
+```json
+"runtime": {
+  "contractVersion": "1.0",
+  "executionModel": "INLINE"
+}
+```
+
+```json
+"runtime": {
+  "contractVersion": "1.0",
+  "executionModel": "ACTIVITY",
+  "capabilities": ["CHECKPOINT", "RETRY", "TIMEOUT"],
+  "defaultTimeout": "PT30S",
+  "defaultRetryPolicy": "STANDARD"
+}
+```
+
+```json
+"runtime": {
+  "contractVersion": "1.0",
+  "executionModel": "CHILD_WORKFLOW",
+  "capabilities": ["TIMEOUT"]
+}
+```
 
 ---
 
@@ -301,25 +452,28 @@ The processor **materializes annotation defaults** so consumers never reconstruc
 | **Property `label`** | Explicit label, or humanized `name` (`maxIterations` → `"Max Iterations"`) |
 | **Property `group`** | Omitted when annotation default / blank (`"General"`) — emit only for non-default sections |
 | **Property `order`** | Omitted when annotation default (`Integer.MAX_VALUE`) — emit only when explicitly set |
-| **Arrays** | Descriptor-level: never `null` — use `[]` for `tags`, `inputs`, `outputs`, `configuration`, node/tool `examples`, … Property-level `enumValues` and `examples` are **omitted** when empty |
+| **Arrays** | Descriptor-level: never `null` — use `[]` for `tags`, `inputs`, `outputs`, `parameters`, node/tool `examples`, … Parameter-level `values` and `examples` are **omitted** when empty |
 | **Ownership & version** | Always emit descriptor `version`, `provider`, and `stability` |
-| **Booleans (Option A)** | Emit only non-default `true` (`featured`, `deprecated`, `required`, `secret`) — omit `false`. Missing means `false` |
+| **Parameter `required`** | Always emit `true` or `false` on every `parameters[]` entry |
+| **Other booleans (Option A)** | Emit only non-default `true` (`featured`, `deprecated`, port `required`, …) — omit `false`. Missing means `false` |
 | **Optional strings** | Omitted when blank (`description`, `help`, `placeholder`, `defaultValue`) — not written as `null` |
-| **Capability** | Always `{ "inputs": [...], "outputs": [...] }` — no duplicate `tags` |
+| **Contract** | Emit `contract` object only when `inputSchema` and/or `outputSchema` set |
+| **Runtime** | Always emit `executionModel` and all scheduler booleans on nodes/tools |
 | **Provenance** | `generatedBy`, `generatedByVersion` on every catalog file header |
 
 Catalog consumers should read values as-is; see [ANNOTATIONS.md](../../olo-annotation/docs/ANNOTATIONS.md) for annotation source defaults.
 
 ### Extension id naming
 
-Extension `id` values must be **globally unique** and **self-describing**. Prefer lowercase kebab-case with a domain prefix over short uppercase tokens:
+Extension `id` values must be **globally unique** before 1.0. The processor materializes `{provider}:{localId}` when the annotation value does not already contain `:`.
 
 | Style | Example | Notes |
 |-------|---------|-------|
-| **Recommended** | `logging-hook`, `http-tool`, `company-logging-hook` | Collision-resistant; readable in marketplace and logs |
-| **Avoid for new plugins** | `LOGGING`, `HTTP` | Short tokens collide across community and core modules |
+| **Required format** | `olo-core:http-tool`, `olo-core:PROMPT`, `acme-slack:notify` | Provider prefix prevents community collisions |
+| **Annotation local id** | `http-tool` with `-Aolo.catalog.provider=olo-core` | Emitted as `olo-core:http-tool` in catalog and `runtime.json` |
+| **Explicit global id** | `olo-core:http-tool` in `@OloTool.id()` and `@ToolId` | Preferred for core constants (`CoreToolIds`, `CoreNodeTypes`, …) |
 
-`olo-core` uses mixed conventions today (nodes: `PROMPT`, `AGENT`; tools/hooks: `http-tool`, `logging-hook`). New community plugins should prefer **kebab-case** ids with an org/plugin prefix when needed (`acme-slack-tool`, `newrelic-tracing-hook`).
+SPI annotations (`@NodeType`, `@ToolId`, `@ImplementationId`) must match the **materialized global id** (local values are prefixed at validation time).
 
 ### Reserved (post-1.0, not emitted today)
 

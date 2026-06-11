@@ -7,6 +7,12 @@ dependencies {
     api project(':hooks')
     api 'org.olo:olo-annotation:0.1.0-SNAPSHOT'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+
+    testImplementation project(':nodes')
+}
+
+tasks.named('test') {
+    dependsOn rootProject.tasks.named('exportStudioCatalog')
 }
 
 publishing {

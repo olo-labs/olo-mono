@@ -62,7 +62,7 @@ class WorkerConfigurationValidatorTest {
                 .name("Worker")
                 .server(ServerSettings.builder().host("0.0.0.0").port(8080).build())
                 .workflowDefinitions(WorkflowDefinitionsSettings.builder()
-                        .scanFolder("../olo-configuration/default")
+                        .scanFolder("../olo-definition/olo-configuration/default")
                         .recursive(false)
                         .build())
                 .build();

@@ -1,5 +1,6 @@
 package org.olo.core.node;
 
+import org.olo.annotation.OloExecutionModel;
 import org.olo.annotation.OloNode;
 import org.olo.annotation.OloPort;
 import org.olo.annotation.OloProperty;
@@ -47,8 +48,7 @@ import java.util.Map;
                     group = "General",
                     order = 1)
         },
-        capabilityInputs = {"message"},
-        capabilityOutputs = {"approved"})
+        executionModel = OloExecutionModel.CHILD_WORKFLOW)
 @NodeType(CoreNodeTypes.APPROVAL)
 public final class ApprovalNode implements Node {
 

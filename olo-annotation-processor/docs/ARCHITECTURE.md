@@ -229,8 +229,7 @@ Example (from `olo-core`):
     outputs = @OloPort(id = "out", name = "out", schema = "any"),
         configuration = @OloProperty(name = "prompt", type = OloPropertyType.TEXTAREA,
         description = "Prompt template; use {{input}} for user text"),
-    capabilityInputs = {"input"},
-    capabilityOutputs = {"output"})
+    capabilityInputSchema = "{\"type\":\"object\",\"properties\":{\"input\":{\"type\":\"string\"}}}")
 @NodeType(CoreNodeTypes.PROMPT)
 public final class PromptNode implements Node { … }
 ```
@@ -256,7 +255,7 @@ Today the processor **does not** enforce these pairs — contributors must keep 
 | Hook `id` | `HookActionDefinition.implementationId` |
 | `configuration` / `arguments` | Editor property panels and validation hints |
 | `inputs` / `outputs` | Port wiring in the canvas |
-| `capability` | Planner hints (`inputs`, `outputs` semantic arrays) |
+| `contract` | Machine-readable JSON Schema for planners |
 
 ## Metadata philosophy
 
@@ -392,7 +391,7 @@ Full rule reference: **[VALIDATION_RULES.md](VALIDATION_RULES.md)**.
 | **OLO-AP-002** | `@OloTool.id()` ↔ `@ToolId` |
 | **OLO-AP-003** | `@OloHook.implementationId()` ↔ `@ImplementationId` |
 | **OLO-AP-004–006** | Duplicate node / tool / hook ids in the same module |
-| **OLO-AP-007–010** | Duplicate properties, ports, capability tokens; ENUM without values |
+| **OLO-AP-007–009, 012** | Duplicate properties, ports; ENUM without values; invalid contract JSON |
 
 Mismatches fail compilation (not a warning). Example:
 

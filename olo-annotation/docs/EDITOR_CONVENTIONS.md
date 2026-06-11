@@ -6,6 +6,17 @@ Runtime loading: typed [`ExtensionCatalog`](ARCHITECTURE.md#runtime-lifecycle) v
 
 ---
 
+## `defaults` vs `catalogMetadata`
+
+| Root key | Purpose | Examples |
+|----------|---------|----------|
+| `defaults` | Inherited baselines Studio merges with per-extension values | `runtime.capabilities`, `connectionRules`, `connectionPolicy`, `designer` |
+| `catalogMetadata` | Closed vocabularies and schema definitions | `parameterWidgets` |
+
+`parameterWidgets` is a catalog enum list — not a default value for extensions to inherit.
+
+---
+
 ## Catalog metadata is descriptive only
 
 Catalog fields exist for **editors**. Runtime execution must **not** branch on:
@@ -16,8 +27,10 @@ Catalog fields exist for **editors**. Runtime execution must **not** branch on:
 | `examples` (node/tool/property) | Discovery bullets |
 | `help` | Property panel guidance |
 | `placeholder` | Empty-input hint |
+| `visibleWhen` | Conditional field visibility |
 | `group` | Property section |
 | `order` | Property sort |
+| `connectionPolicy` | Canvas edge attachment rules |
 | `deprecated` / `stability` | Badges and warnings |
 | `label`, `secret` | Form rendering |
 
@@ -136,6 +149,7 @@ Use {{input}} to reference workflow input.
 | Field | UI use |
 |-------|--------|
 | `category`, `name`, `emoji` | Grouping and display |
+| `designer` | Reusable Studio metadata — see [Designer metadata](#designer-metadata) |
 | `tags` | Search / filter |
 | `examples` | “Used for” bullets (use-cases) |
 | `featured` | Optional ⭐ section (advisory) |
@@ -143,21 +157,167 @@ Use {{input}} to reference workflow input.
 
 Non-featured control nodes (Parallel, Loop, Switch) may live under “Advanced” by editor policy.
 
+### Designer metadata
+
+Reusable `designer` object on **workflows**, **workflow presets**, **nodes**, **tools**, and **hooks**:
+
+```json
+{
+  "designer": {
+    "paletteGroup": "Agents",
+    "searchKeywords": ["planning", "task"],
+    "nodeSize": {
+      "width": 300,
+      "height": 120
+    },
+    "resizable": true,
+    "draggable": true
+  }
+}
+```
+
+| Field | Use |
+|-------|-----|
+| `paletteGroup` | Palette section label (falls back to title-cased `category`) |
+| `searchKeywords` | Extra search terms (merged with `tags` when unset) |
+| `nodeSize.width` / `nodeSize.height` | Canvas rendering hints (`@OloDesigner.canvasShape` when unset) |
+| `resizable` / `draggable` | Canvas interaction hints (default `true`) |
+
+Catalog `defaults.designer` documents the inherited baseline (`200×80`, `resizable: true`, `draggable: true`). Per-entry `designer` omits fields that match — Agent emits only `nodeSize: {300, 120}` plus palette/search metadata.
+
+Declare via nested `@OloDesigner` on `@OloNode`, `@OloTool`, `@OloHook`, and `@OloWorkflowPreset`. Workflow JSON uses `designer` on the root workflow document.
+
+Canvas sizes when `width` / `height` are unset on `@OloDesigner` (authoring hints — catalog baseline remains `STANDARD`):
+
+| `canvasShape` | Default size |
+|---------------|--------------|
+| `STANDARD` | 200 × 80 |
+| `AGENT` | 300 × 120 |
+| `TOOL` | 160 × 72 |
+
 ### Tool picker
 
 Same discovery and visibility fields as nodes: `id`, `version`, `provider`, `stability`, `name`, `description`, `category`, `emoji`, `examples`, `featured`, `deprecated`.
 
 ### Properties form
 
-From `configuration` / `arguments` — see [ANNOTATIONS.md — `@OloProperty`](ANNOTATIONS.md#oloproperty) for the full attribute list. Key editor fields: `label`, `type`, `help`, `placeholder`, `group`, `order`, `required`, `defaultValue`, `enumValues`, `secret`, `examples` (use-cases only).
+Nodes, tools, and workflow presets all use the same `parameters` array:
+
+```json
+"parameters": [
+  {
+  "id": "prompt",
+  "label": "Prompt Template",
+  "type": "string",
+  "description": "Template used by PromptNode",
+  "ui": {
+    "widget": "TEXTAREA",
+    "help": "Use {{input}} to reference workflow input.",
+    "placeholder": "Summarize the following content",
+    "order": 0
+  }
+}
+]
+```
+
+- `parameters` — ordered array; each entry includes stable `id` and display `label`
+- `id` — stable parameter key for saved workflows, migration, and Studio state (never rename)
+- `label` — display text (may change without breaking stored values)
+- `type` — JSON Schema value type (`string`, `number`, `integer`, `boolean`, `object`, `array`, `enum`)
+- `values` — allowed options when `type` is `enum` (not `string` + `enumValues`)
+- `ui.widget` — closed enum `org.olo.spi.catalog.ParameterWidget` (`STRING`, `TEXTAREA`, `SLIDER`, …)
+- `ui.group`, `ui.help`, `ui.placeholder`, `ui.order` — presentation (same as workflow parameters)
+- `required` — always `true` or `false` on every parameter (never omitted); Studio validates before workflow submission
+- `validation` — bounds for client-side validation (`minLength`, `maxLength`, `minimum`, `maximum`, `step`)
+- `visibleWhen` — conditional visibility; show the field only when sibling values match (string equality in v1)
+- `@OloProperty.type` (`OloPropertyType`) is an authoring shortcut; catalogs emit the unified shape via `ParameterSchemaMapping`
+- `secret: true` on `@OloProperty` emits `ui.widget: SECRET` (not a top-level `secret` flag)
+
+Example — required string with length bounds:
+
+```json
+{
+  "id": "url",
+  "label": "URL",
+  "type": "string",
+  "required": true,
+  "validation": {
+    "minLength": 8,
+    "maxLength": 2048
+  }
+}
+```
+
+Example — HTTP tool body visible only for POST:
+
+```json
+{
+  "id": "body",
+  "label": "Request Body",
+  "type": "object",
+  "visibleWhen": {
+    "method": "POST"
+  },
+  "ui": {
+    "widget": "JSON"
+  }
+}
+```
+
+Studio evaluates `visibleWhen` against sibling parameter values keyed by `id`. All listed keys must match (AND semantics). Omit `visibleWhen` when the field is always shown.
+
+Catalog `catalogMetadata.parameterWidgets` lists all allowed widget values (closed enum — not an inheritance default). Legacy lowercase widgets (`slider`) normalize on deserialize.
 
 ### Ports
 
-`inputs` / `outputs`: `id`, `name`, `schema`, `required`, `description`.
+`inputs` / `outputs`: `id`, `name`, `schema`, `required`, `description`, `ui`.
+
+| Field | UI use |
+|-------|--------|
+| `schema` | **Connection rule** for drag-and-drop — compare output `schema` to input `schema` |
+| `ui.position` | Canvas side for the handle: `LEFT`, `RIGHT`, `TOP`, `BOTTOM` |
+
+Defaults when omitted in catalog generation: inputs → `LEFT`, outputs → `RIGHT`. Override with `@OloPort(position = …)` for multi-handle nodes (for example branch outputs on `BOTTOM`).
+
+### Connection rules (port `schema`)
+
+Studio validates edges while dragging using the same rules as `WorkflowValidator` at save time. Catalog `defaults.connectionRules` describes the strategy for clients.
+
+| Rule | Behavior |
+|------|----------|
+| Exact match | `string → string` ✓, `Stock[] → Stock[]` ✓ |
+| No coercion | `string → number` ✗ |
+| Wildcards | Input or output `any` / `*` accepts any counterpart |
+| Primitives | Case-insensitive aliases (`String`, `str` → `string`) |
+| Domain types | Case-sensitive (`Stock[]` ≠ `stock[]`) |
+| Arrays | Element types must match; `string` ≠ `string[]` |
+
+Java: `org.olo.spi.port.PortSchemaCompatibility` / `org.olo.annotation.catalog.PortConnectionRules`  
+TypeScript: `olo-ui/src/lib/portConnection.ts` (`arePortSchemasCompatible`)
+
+### Connection policy (node-level)
+
+Controls how many edges may attach to a node on the canvas. Declared per node type via `@OloConnectionPolicy` on `@OloNode`:
+
+```json
+{
+  "connectionPolicy": {
+    "maxInputs": 1,
+    "maxOutputs": -1
+  }
+}
+```
+
+| Field | Default | Use |
+|-------|---------|-----|
+| `maxInputs` | `-1` (unlimited) | `1` for single fan-in control nodes (Switch, Parallel, Loop) |
+| `maxOutputs` | `-1` (unlimited) | Positive integer to cap outgoing edges |
+
+`-1` means unlimited. Omitted from catalog when both match platform defaults (`-1` / `-1`). Catalog `defaults.connectionPolicy` documents the baseline.
 
 ### Hooks
 
-`phases`, `implementationClass`, `version`, `provider`, `stability`, `deprecated`.
+`phases`, `version`, `provider`, `stability`, `deprecated`. JVM bindings (`implementationClass`) are in `runtime.json`, not Studio catalog.
 
 ---
 

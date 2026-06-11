@@ -84,7 +84,8 @@ dist/
 │   ├── runtime-*.jar
 │   └── core-*.jar       # aggregator (olo-core)
 └── catalog/
-    ├── catalog.json     # merged editor bundle (olo-be default)
+    ├── catalog.json     # merged Studio bundle (no JVM bindings)
+    ├── runtime.json     # merged JVM bindings (workers / classpath)
     ├── nodes.json       # per-type debug slice
     ├── tools.json       # per-type debug slice
     └── hooks.json       # per-type debug slice
@@ -92,8 +93,9 @@ dist/
 
 | Consumer | Picks up | Uses |
 |----------|----------|------|
-| **olo-be** | `dist/catalog/catalog.json` | Serves `/api/v1/catalog` — no runtime JARs |
-| **debug / CI** | `dist/catalog/{nodes,tools,hooks}.json` | Inspect per-kind editor output without filtering the bundle |
+| **olo-be** | `dist/catalog/catalog.json` | Serves `/api/v1/catalog` — no runtime JARs, no JVM bindings |
+| **workers** | `META-INF/olo/catalog/runtime.json` (classpath) | Resolve `implementationClass` by global extension id |
+| **debug / CI** | `dist/catalog/{catalog,runtime,nodes,tools,hooks}.json` | Inspect editor vs runtime output |
 | **olo-ui** | via olo-be API or copied JSON | Metadata-driven Studio components |
 | **olo-kernel** | `org.olo:olo-core` Maven dep or `dist/lib` | Graph traversal + `ExecutionEngine` |
 

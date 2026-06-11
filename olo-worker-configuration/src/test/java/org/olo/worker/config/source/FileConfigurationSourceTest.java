@@ -29,7 +29,7 @@ class FileConfigurationSourceTest {
         assertThat(configuration.getServer().getPort()).isEqualTo(8080);
         assertThat(configuration.getServer().getHost()).isEqualTo("0.0.0.0");
         assertThat(configuration.getWorkflowDefinitions().getScanFolder())
-                .isEqualTo("../../olo-configuration/default");
+                .isEqualTo("../../olo-definition/olo-configuration/default");
         assertThat(configuration.getWorkflowDefinitions().getRecursive()).isFalse();
         assertThat(configuration.getInput().resolveMaxLocalMessageSize()).isEqualTo(50);
         assertThat(configuration.getCache().isEnabled()).isTrue();

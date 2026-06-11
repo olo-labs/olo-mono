@@ -16,7 +16,7 @@ class KernelContextBuilderWorkflowInputTest {
 
     @Test
     void buildsFromDeserializedWorkflowInputObject() throws Exception {
-        Path presets = Paths.get("../olo-configuration/default").toAbsolutePath().normalize();
+        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
         if (!Files.exists(presets)) {
             throw new org.opentest4j.TestAbortedException("olo-configuration presets not found");
         }

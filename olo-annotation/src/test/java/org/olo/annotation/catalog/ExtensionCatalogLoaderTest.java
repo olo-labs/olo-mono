@@ -29,9 +29,8 @@ class ExtensionCatalogLoaderTest {
 
         assertThat(catalog.schemaVersion()).isEqualTo("1.0");
         assertThat(catalog.tools()).hasSize(1);
-        assertThat(catalog.tools().getFirst().id).isEqualTo("HTTP");
+        assertThat(catalog.tools().getFirst().id).isEqualTo("olo-core:http-tool");
         assertThat(catalog.tools().getFirst().name).isEqualTo("HTTP");
-        assertThat(catalog.tools().getFirst().implementationClass).isEqualTo("core.HttpTool");
     }
 
     @Test
@@ -60,8 +59,7 @@ class ExtensionCatalogLoaderTest {
 
         ExtensionCatalog catalog = ExtensionCatalogLoader.loadMerged(loader);
 
-        assertThat(catalog.tools().stream().map(t -> t.id).filter("HTTP"::equals)).hasSize(1);
-        assertThat(catalog.tools().getFirst().implementationClass).isEqualTo("core.HttpTool");
+        assertThat(catalog.tools().stream().map(t -> t.id).filter("olo-core:http-tool"::equals)).hasSize(1);
     }
 
 }

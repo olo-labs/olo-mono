@@ -1,5 +1,6 @@
 package org.olo.core.node;
 
+import org.olo.annotation.OloConnectionPolicy;
 import org.olo.annotation.OloNode;
 import org.olo.annotation.OloPort;
 import org.olo.annotation.OloProperty;
@@ -25,6 +26,7 @@ import java.util.Map;
             "Run independent enrichment steps in parallel",
             "Fan out to several reviewers"
         },
+        connectionPolicy = @OloConnectionPolicy(maxInputs = 1, maxOutputs = -1),
         inputs = @OloPort(id = "in", schema = "any", required = true),
         outputs = @OloPort(id = "out", schema = "any"),
         configuration = @OloProperty(
@@ -32,9 +34,7 @@ import java.util.Map;
                 type = OloPropertyType.NUMBER,
                 defaultValue = "2",
                 description = "Parallel branch count for fan-out",
-                help = "How many branches to execute in parallel."),
-        capabilityInputs = {"input"},
-        capabilityOutputs = {"output"})
+                help = "How many branches to execute in parallel."))
 @NodeType(CoreNodeTypes.PARALLEL)
 public final class ParallelNode implements Node {
 

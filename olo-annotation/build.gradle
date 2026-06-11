@@ -17,10 +17,12 @@ java {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
+    api 'org.olo:olo-spi:0.1.0-SNAPSHOT'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
 
     testImplementation platform('org.junit:junit-bom:5.11.4')

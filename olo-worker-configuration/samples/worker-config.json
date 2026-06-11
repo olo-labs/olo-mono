@@ -6,7 +6,7 @@
     "port": 8080
   },
   "workflowDefinitions": {
-    "scanFolder": "../../olo-configuration/default",
+    "scanFolder": "../../olo-definition/olo-configuration/default",
     "recursive": false
   },
   "temporal": {

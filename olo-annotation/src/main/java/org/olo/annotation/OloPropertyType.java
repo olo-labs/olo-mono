@@ -1,9 +1,8 @@
 package org.olo.annotation;
 
 /**
- * Editor control type for {@link OloProperty} fields.
- * <p>
- * Serialized in extension catalogs as the enum name (e.g. {@code "STRING"}).
+ * Authoring token for {@link OloProperty} fields. Catalog emission maps to JSON {@code type} +
+ * {@code ui.widget} via {@link org.olo.spi.catalog.ParameterSchemaMapping} (same model as workflow parameters).
  */
 public enum OloPropertyType {
     STRING,

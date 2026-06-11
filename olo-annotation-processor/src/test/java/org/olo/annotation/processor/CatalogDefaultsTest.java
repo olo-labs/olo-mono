@@ -35,6 +35,34 @@ class CatalogDefaultsTest {
     }
 
     @Test
+    void parsesCapabilityJsonSchemas() {
+        assertThat(CatalogDefaults.parseJsonSchema(""))
+                .isNull();
+        assertThat(CatalogDefaults.parseJsonSchema("{\"type\":\"object\"}").get("type").asText())
+                .isEqualTo("object");
+    }
+
+    @Test
+    void materializesRuntimeApiVersion() {
+        assertThat(CatalogDefaults.materializeRuntimeContractVersion("2.1")).isEqualTo("2.1");
+        assertThat(CatalogDefaults.materializeRuntimeContractVersion("")).isEqualTo("1.0");
+    }
+
+    @Test
+    void materializesIsoDurations() {
+        assertThat(CatalogDefaults.materializeIsoDuration("")).isNull();
+        assertThat(CatalogDefaults.materializeIsoDuration("PT30S")).isEqualTo("PT30S");
+    }
+
+    @Test
+    void materializesGlobalIds() {
+        assertThat(CatalogDefaults.materializeGlobalId("http-tool", "olo-core")).isEqualTo("olo-core:http-tool");
+        assertThat(CatalogDefaults.materializeGlobalId("olo-core:http-tool", "olo-core"))
+                .isEqualTo("olo-core:http-tool");
+        assertThat(CatalogDefaults.materializeGlobalId("PROMPT", "olo-core")).isEqualTo("olo-core:PROMPT");
+    }
+
+    @Test
     void humanizesCamelCaseIdentifiers() {
         assertThat(CatalogDefaults.humanizeIdentifier("maxIterations")).isEqualTo("Max Iterations");
         assertThat(CatalogDefaults.humanizeIdentifier("prompt")).isEqualTo("Prompt");

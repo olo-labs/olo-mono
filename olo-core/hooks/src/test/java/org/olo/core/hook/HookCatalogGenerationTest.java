@@ -28,7 +28,12 @@ class HookCatalogGenerationTest {
 
       var hooks = StreamSupport.stream(root.get("hooks").spliterator(), false).toList();
       var ids = hooks.stream().map(n -> n.get("id").asText()).toList();
-      assertThat(ids).contains("logging-hook", "metrics-hook", "tracing-hook");
+      assertThat(ids).contains("olo-core:logging-hook", "olo-core:metrics-hook", "olo-core:tracing-hook");
+      hooks.forEach(
+          hook ->
+              assertThat(hook.has("implementationClass"))
+                  .as("catalog must not embed JVM bindings")
+                  .isFalse());
       hooks.forEach(
           hook ->
               assertThat(hook.get("emoji").asText())

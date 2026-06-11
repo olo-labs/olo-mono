@@ -94,6 +94,10 @@ tasks.register('dist') {
     dependsOn 'distLib', 'exportStudioCatalog'
 }
 
+tasks.named('check') {
+    dependsOn 'exportStudioCatalog'
+}
+
 tasks.register('cleanDist', Delete) {
     group = 'distribution'
     description = 'Remove dist/lib and dist/catalog'

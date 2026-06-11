@@ -1,7 +1,10 @@
 package org.olo.annotation.processor;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.olo.annotation.OloProperty;
 import org.olo.annotation.OloStability;
+import org.olo.annotation.OloWorkflowParameter;
 import org.olo.annotation.processor.model.ExtensionCatalogDocument;
 
 import java.util.ArrayList;
@@ -17,7 +20,26 @@ final class CatalogDefaults {
     static final String GENERATED_BY_VERSION = "1.0.0";
     static final String DEFAULT_PROPERTY_GROUP = "General";
 
+    private static final ObjectMapper JSON = new ObjectMapper();
+
     private CatalogDefaults() {
+    }
+
+    /** Parses a JSON Schema string; returns {@code null} when blank. */
+    static JsonNode parseJsonSchema(String json) throws IllegalArgumentException {
+        String value = blankToNull(json);
+        if (value == null) {
+            return null;
+        }
+        try {
+            JsonNode node = JSON.readTree(value);
+            if (!node.isObject()) {
+                throw new IllegalArgumentException("JSON Schema must be a JSON object");
+            }
+            return node;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid JSON Schema: " + e.getMessage(), e);
+        }
     }
 
     static List<String> stringArray(String[] values) {
@@ -37,6 +59,43 @@ final class CatalogDefaults {
     static String materializePropertyLabel(OloProperty property) {
         String label = blankToNull(property.label());
         return label != null ? label : humanizeIdentifier(property.name());
+    }
+
+    static String materializeWorkflowParameterLabel(OloWorkflowParameter parameter) {
+        String label = blankToNull(parameter.label());
+        return label != null ? label : humanizeIdentifier(parameter.name());
+    }
+
+    static Double optionalDouble(double value) {
+        return Double.isNaN(value) ? null : value;
+    }
+
+    static Object parseWorkflowParameterDefault(OloWorkflowParameter parameter) {
+        return parseParameterDefault(parameter.type(), parameter.defaultValue());
+    }
+
+    static Object parsePropertyDefault(String jsonType, String rawDefault) {
+        return parseParameterDefault(jsonType, rawDefault);
+    }
+
+    private static Object parseParameterDefault(String jsonType, String rawDefault) {
+        String raw = blankToNull(rawDefault);
+        if (raw == null || jsonType == null || jsonType.isBlank()) {
+            return null;
+        }
+        return switch (jsonType) {
+            case "integer" -> Integer.parseInt(raw);
+            case "number" -> parseNumberDefault(raw);
+            case "boolean" -> Boolean.parseBoolean(raw);
+            default -> raw;
+        };
+    }
+
+    private static Number parseNumberDefault(String raw) {
+        if (raw.indexOf('.') >= 0 || raw.indexOf('e') >= 0 || raw.indexOf('E') >= 0) {
+            return Double.parseDouble(raw);
+        }
+        return Integer.parseInt(raw);
     }
 
     /** Omitted from JSON when blank or the annotation default ({@code "General"}). */
@@ -80,6 +139,41 @@ final class CatalogDefaults {
     static String materializeVersion(String version) {
         String value = blankToNull(version);
         return value != null ? value : "1.0.0";
+    }
+
+    /** Materializes {@code runtime.contractVersion}; defaults to {@code "1.0"} when blank. */
+    static String materializeRuntimeContractVersion(String contractVersion) {
+        String value = blankToNull(contractVersion);
+        return value != null ? value : "1.0";
+    }
+
+    /** Parses ISO-8601 duration (e.g. {@code PT30S}); returns {@code null} when blank. */
+    static String materializeIsoDuration(String duration) throws IllegalArgumentException {
+        String value = blankToNull(duration);
+        if (value == null) {
+            return null;
+        }
+        try {
+            java.time.Duration.parse(value);
+            return value;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid ISO-8601 duration: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Prefixes {@code localId} with {@code provider} when the id is not already namespaced.
+     * Convention: {@code olo-core:http-tool}, {@code olo-core:PROMPT}.
+     */
+    static String materializeGlobalId(String localId, String provider) {
+        if (localId == null || localId.isBlank()) {
+            return localId;
+        }
+        if (localId.contains(":")) {
+            return localId;
+        }
+        String namespace = blankToNull(provider);
+        return namespace != null ? namespace + ":" + localId : localId;
     }
 
     static String materializeProvider(String annotationProvider, String catalogProvider, String catalogModule) {

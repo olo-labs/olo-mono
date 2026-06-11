@@ -25,4 +25,9 @@ public @interface OloPort {
 
     /** Help text shown under the port label in the workflow editor. */
     String description() default "";
+
+    /**
+     * Canvas side for the port handle. {@link OloPortPosition#DEFAULT} infers LEFT for inputs and RIGHT for outputs.
+     */
+    OloPortPosition position() default OloPortPosition.DEFAULT;
 }

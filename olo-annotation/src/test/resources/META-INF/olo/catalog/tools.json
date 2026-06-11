@@ -5,9 +5,8 @@
   "tools": [
     {
       "kind": "TOOL",
-      "id": "HTTP",
-      "name": "HTTP",
-      "implementationClass": "core.HttpTool"
+      "id": "olo-core:http-tool",
+      "name": "HTTP"
     }
   ]
 }

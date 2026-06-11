@@ -27,6 +27,8 @@ final class ExtensionCatalogValidator {
     private static final String IMPLEMENTATION_ID_ANNOTATION = "org.olo.spi.annotation.ImplementationId";
 
     private final Messager messager;
+    private final String catalogProvider;
+    private final String catalogModule;
     private final Map<String, String> nodeIds = new LinkedHashMap<>();
     private final Map<String, String> toolIds = new LinkedHashMap<>();
     private final Map<String, String> hookIds = new LinkedHashMap<>();
@@ -34,6 +36,9 @@ final class ExtensionCatalogValidator {
 
     ExtensionCatalogValidator(ProcessingEnvironment processingEnv) {
         this.messager = processingEnv.getMessager();
+        Map<String, String> options = processingEnv.getOptions();
+        catalogModule = options.getOrDefault("olo.catalog.module", "extensions");
+        catalogProvider = options.getOrDefault("olo.catalog.provider", catalogModule);
     }
 
     boolean hasErrors() {
@@ -43,71 +48,76 @@ final class ExtensionCatalogValidator {
     boolean validateNode(TypeElement typeElement, OloNode annotation) {
         boolean valid = true;
         valid &= requireVersion(typeElement, annotation.version());
+        String globalId = globalId(annotation.type(), annotation.provider());
         valid &= requireSpiMatch(
                 typeElement,
                 "OLO-AP-001",
                 "@OloNode.type",
-                annotation.type(),
+                globalId,
                 "@NodeType",
                 NODE_TYPE_ANNOTATION);
         valid &= requireUniqueId(
                 typeElement,
                 "OLO-AP-004",
                 "node type",
-                annotation.type(),
+                globalId,
                 nodeIds);
         valid &= validatePorts(typeElement, "inputs", annotation.inputs());
         valid &= validatePorts(typeElement, "outputs", annotation.outputs());
         valid &= validateProperties(
                 typeElement,
                 annotation.configuration());
-        valid &= validateCapability(
+        valid &= validateContractSchemas(
                 typeElement,
-                annotation.capabilityInputs(),
-                annotation.capabilityOutputs());
+                annotation.capabilityInputSchema(),
+                annotation.capabilityOutputSchema());
+        valid &= validateDefaultTimeout(typeElement, annotation.defaultTimeout());
         return valid;
     }
 
     boolean validateTool(TypeElement typeElement, OloTool annotation) {
         boolean valid = true;
         valid &= requireVersion(typeElement, annotation.version());
+        String globalId = globalId(annotation.id(), annotation.provider());
         valid &= requireSpiMatch(
                 typeElement,
                 "OLO-AP-002",
                 "@OloTool.id",
-                annotation.id(),
+                globalId,
                 "@ToolId",
                 TOOL_ID_ANNOTATION);
         valid &= requireUniqueId(
                 typeElement,
                 "OLO-AP-005",
                 "tool id",
-                annotation.id(),
+                globalId,
                 toolIds);
         valid &= validateProperties(
                 typeElement, annotation.arguments(), annotation.configuration());
-        valid &= validateCapability(
+        valid &= validateContractSchemas(
                 typeElement,
-                annotation.capabilityInputs(),
-                annotation.capabilityOutputs());
+                annotation.capabilityInputSchema(),
+                annotation.capabilityOutputSchema());
+        valid &= validateDefaultTimeout(typeElement, annotation.defaultTimeout());
         return valid;
     }
 
     boolean validateHook(TypeElement typeElement, OloHook annotation) {
         boolean valid = true;
         valid &= requireVersion(typeElement, annotation.version());
+        String globalId = globalId(annotation.implementationId(), annotation.provider());
         valid &= requireSpiMatch(
                 typeElement,
                 "OLO-AP-003",
                 "@OloHook.implementationId",
-                annotation.implementationId(),
+                globalId,
                 "@ImplementationId",
                 IMPLEMENTATION_ID_ANNOTATION);
         valid &= requireUniqueId(
                 typeElement,
                 "OLO-AP-006",
                 "hook implementation id",
-                annotation.implementationId(),
+                globalId,
                 hookIds);
         return valid;
     }
@@ -128,6 +138,9 @@ final class ExtensionCatalogValidator {
             String spiLabel,
             String spiAnnotationFqn) {
         String spiValue = readAnnotationValue(typeElement, spiAnnotationFqn, "value");
+        if (spiValue != null) {
+            spiValue = globalId(spiValue, null);
+        }
         if (spiValue == null) {
             fail(
                     typeElement,
@@ -283,45 +296,49 @@ final class ExtensionCatalogValidator {
         return valid;
     }
 
-    private boolean validateCapability(TypeElement typeElement, String[] inputs, String[] outputs) {
+    private boolean validateContractSchemas(
+            TypeElement typeElement, String inputSchema, String outputSchema) {
         boolean valid = true;
-        valid &= validateCapabilityTokens(typeElement, "input", inputs);
-        valid &= validateCapabilityTokens(typeElement, "output", outputs);
+        valid &= validateContractSchema(typeElement, "capabilityInputSchema", inputSchema);
+        valid &= validateContractSchema(typeElement, "capabilityOutputSchema", outputSchema);
         return valid;
     }
 
-    private boolean validateCapabilityTokens(TypeElement typeElement, String kindLabel, String[] tokens) {
-        if (tokens == null || tokens.length == 0) {
+    private boolean validateContractSchema(TypeElement typeElement, String fieldLabel, String json) {
+        if (json == null || json.isBlank()) {
             return true;
         }
-        boolean valid = true;
-        Set<String> seen = new HashSet<>();
-        for (String token : tokens) {
-            if (token == null || token.isBlank()) {
-                fail(
-                        typeElement,
-                        "OLO-AP-010",
-                        "Capability "
-                                + kindLabel
-                                + " must not be blank on "
-                                + typeElement.getQualifiedName());
-                valid = false;
-                continue;
-            }
-            if (!seen.add(token)) {
-                fail(
-                        typeElement,
-                        "OLO-AP-010",
-                        "Duplicate capability "
-                                + kindLabel
-                                + " \""
-                                + token
-                                + "\" on "
-                                + typeElement.getQualifiedName());
-                valid = false;
-            }
+        try {
+            CatalogDefaults.parseJsonSchema(json);
+            return true;
+        } catch (IllegalArgumentException e) {
+            fail(
+                    typeElement,
+                    "OLO-AP-012",
+                    fieldLabel + " must be a valid JSON object on " + typeElement.getQualifiedName());
+            return false;
         }
-        return valid;
+    }
+
+    private boolean validateDefaultTimeout(TypeElement typeElement, String duration) {
+        if (duration == null || duration.isBlank()) {
+            return true;
+        }
+        try {
+            CatalogDefaults.materializeIsoDuration(duration);
+            return true;
+        } catch (IllegalArgumentException e) {
+            fail(
+                    typeElement,
+                    "OLO-AP-013",
+                    "defaultTimeout must be a valid ISO-8601 duration on " + typeElement.getQualifiedName());
+            return false;
+        }
+    }
+
+    private String globalId(String localId, String annotationProvider) {
+        String provider = CatalogDefaults.materializeProvider(annotationProvider, catalogProvider, catalogModule);
+        return CatalogDefaults.materializeGlobalId(localId, provider);
     }
 
     private void fail(Element element, String code, String message) {

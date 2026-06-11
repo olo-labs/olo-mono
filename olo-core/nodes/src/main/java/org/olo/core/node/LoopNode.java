@@ -1,5 +1,6 @@
 package org.olo.core.node;
 
+import org.olo.annotation.OloConnectionPolicy;
 import org.olo.annotation.OloNode;
 import org.olo.annotation.OloPort;
 import org.olo.annotation.OloProperty;
@@ -24,14 +25,13 @@ import java.util.Map;
             "Process each item in a batch",
             "Poll status until complete"
         },
+        connectionPolicy = @OloConnectionPolicy(maxInputs = 1, maxOutputs = -1),
         inputs = @OloPort(id = "in", schema = "any", required = true),
         outputs = @OloPort(id = "out", schema = "any"),
         configuration = @OloProperty(
                 name = "maxIterations",
                 type = OloPropertyType.NUMBER,
-                defaultValue = "1"),
-        capabilityInputs = {"input"},
-        capabilityOutputs = {"output"})
+                defaultValue = "1"))
 @NodeType(CoreNodeTypes.LOOP)
 public final class LoopNode implements Node {
 

@@ -42,6 +42,9 @@ public @interface OloHook {
 
     OloStability stability() default OloStability.STABLE;
 
+    /** Studio palette, search, and canvas defaults. */
+    OloDesigner designer() default @OloDesigner;
+
     /**
      * @deprecated use {@link #stability()} = {@link OloStability#EXPERIMENTAL}
      */

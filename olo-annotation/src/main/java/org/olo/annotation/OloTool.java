@@ -48,6 +48,9 @@ public @interface OloTool {
 
     OloStability stability() default OloStability.STABLE;
 
+    /** Studio palette, search, and canvas defaults. */
+    OloDesigner designer() default @OloDesigner;
+
     /**
      * @deprecated use {@link #stability()} = {@link OloStability#EXPERIMENTAL}
      */
@@ -58,7 +61,51 @@ public @interface OloTool {
 
     OloProperty[] configuration() default {};
 
-    String[] capabilityInputs() default {};
+    /**
+     * JSON Schema object (as a string) describing semantic inputs for machine-readable planners.
+     * Omitted from catalog when blank.
+     */
+    String capabilityInputSchema() default "";
 
-    String[] capabilityOutputs() default {};
+    /**
+     * JSON Schema object (as a string) describing semantic outputs for machine-readable planners.
+     * Omitted from catalog when blank.
+     */
+    String capabilityOutputSchema() default "";
+
+    /**
+     * Runtime execution contract version emitted as {@code runtime.contractVersion} (e.g. {@code "1.0"}).
+     * Distinct from {@link #version()} — extension implementation semver.
+     */
+    String runtimeContractVersion() default "1.0";
+
+    /** How the orchestrator schedules this tool. */
+    OloExecutionModel executionModel() default OloExecutionModel.ACTIVITY;
+
+    /** Whether failed executions may be retried by the orchestrator. */
+    boolean retryable() default false;
+
+    /** Whether the orchestrator should apply timeout policies to this step. */
+    boolean timeoutAware() default false;
+
+    /** Default execution timeout as ISO-8601 duration (e.g. {@code PT30S}). Omitted when blank. */
+    String defaultTimeout() default "";
+
+    /** Default retry policy hint. Omitted from catalog when {@link OloRetryPolicy#NONE}. */
+    OloRetryPolicy defaultRetryPolicy() default OloRetryPolicy.NONE;
+
+    /** Whether the step may complete asynchronously (signal/callback). */
+    boolean supportsAsyncCompletion() default false;
+
+    /** Whether the orchestrator should expect activity heartbeats. */
+    boolean supportsHeartbeat() default false;
+
+    /** Studio debugger support for this tool type. Emits {@code DEBUG} on {@code runtime.capabilities}. */
+    boolean supportsDebugging() default true;
+
+    /** Workflow replay support for executions involving this tool type. Emits {@code REPLAY}. */
+    boolean supportsReplay() default true;
+
+    /** Checkpoint / time-travel support for this tool type. Emits {@code CHECKPOINT} when {@code true}. */
+    boolean supportsCheckpointing() default false;
 }

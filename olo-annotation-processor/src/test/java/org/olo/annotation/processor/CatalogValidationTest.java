@@ -125,26 +125,6 @@ class CatalogValidationTest {
     }
 
     @Test
-    void failsOnDuplicateCapabilityInput() {
-        assertFails(
-                "PromptNode",
-                """
-                package sample;
-
-                import org.olo.annotation.OloNode;
-                import org.olo.spi.annotation.NodeType;
-
-                @OloNode(
-                    type = "PROMPT",
-                    name = "Prompt",
-                    capabilityInputs = {"input", "input"})
-                @NodeType("PROMPT")
-                public final class PromptNode {}
-                """,
-                "OLO-AP-010");
-    }
-
-    @Test
     void failsOnToolIdMismatch() {
         assertFails(
                 "HttpTool",
@@ -159,6 +139,46 @@ class CatalogValidationTest {
                 public final class HttpTool {}
                 """,
                 "OLO-AP-002");
+    }
+
+    @Test
+    void failsOnInvalidDefaultTimeout() {
+        assertFails(
+                "BadTimeoutTool",
+                """
+                package sample;
+
+                import org.olo.annotation.OloTool;
+                import org.olo.spi.annotation.ToolId;
+
+                @OloTool(
+                    id = "bad-timeout",
+                    name = "Bad",
+                    defaultTimeout = "30s")
+                @ToolId("bad-timeout")
+                public final class BadTimeoutTool {}
+                """,
+                "OLO-AP-013");
+    }
+
+    @Test
+    void failsOnInvalidCapabilitySchema() {
+        assertFails(
+                "BadSchemaTool",
+                """
+                package sample;
+
+                import org.olo.annotation.OloTool;
+                import org.olo.spi.annotation.ToolId;
+
+                @OloTool(
+                    id = "bad-schema",
+                    name = "Bad",
+                    capabilityInputSchema = "not-json")
+                @ToolId("bad-schema")
+                public final class BadSchemaTool {}
+                """,
+                "OLO-AP-012");
     }
 
     @Test

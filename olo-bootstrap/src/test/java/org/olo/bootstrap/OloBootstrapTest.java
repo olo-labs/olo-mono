@@ -3,6 +3,7 @@ package org.olo.bootstrap;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.olo.bootstrap.registry.WorkflowDefinitionRegistry;
+import org.olo.definition.workflow.WorkflowDefinition;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,7 +19,7 @@ class OloBootstrapTest {
 
     @Test
     void loadsOloConfigurationPresets() {
-        Path presets = Paths.get("../olo-configuration/default").toAbsolutePath().normalize();
+        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
         if (!presets.toFile().exists()) {
             throw new org.opentest4j.TestAbortedException("olo-configuration presets not found at " + presets);
         }
@@ -28,11 +29,28 @@ class OloBootstrapTest {
         assertThat(registry.getWorkflows()).hasSize(12);
         assertThat(registry.findById("agent")).isPresent();
         assertThat(registry.findByQueue("agent")).isPresent();
+
+        WorkflowDefinition agent = registry.findById("agent").orElseThrow();
+        assertThat(agent.getParameters()).containsKeys(
+                "maxIterations", "systemPrompt", "model", "temperature");
+        assertThat(agent.getMetadata()).containsEntry("role", "agent")
+                .containsEntry("agentType", "autonomous")
+                .containsEntry("planningStrategy", "react")
+                .containsEntry("agentSelectionStrategy", "dynamic");
+        assertThat(agent.getChildWorkflows()).isEmpty();
+        assertThat(agent.getAvailableAgentIds()).containsExactly("planner", "reviewer", "architect");
+        assertThat(agent.getRuntime().getDelegation().getEnabled()).isTrue();
+        assertThat(agent.getRuntime().getDelegation().getParallelEnabled()).isTrue();
+        assertThat(agent.getRuntime().getDelegation().getMaxDepth()).isEqualTo(3);
+        assertThat(agent.getRuntime().getDelegation().getMaxDelegations()).isEqualTo(10);
+        assertThat(agent.getRuntime().getDelegation().getResultAggregation().name()).isEqualTo("MERGE");
+        assertThat(agent.getRuntime().getDelegation().getMemoryScope().name()).isEqualTo("SHARED");
+        assertThat(agent.getTools()).isEmpty();
     }
 
     @Test
     void cachesRegistryUntilRefreshRequested() {
-        Path presets = Paths.get("../olo-configuration/default").toAbsolutePath().normalize();
+        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
         if (!presets.toFile().exists()) {
             throw new org.opentest4j.TestAbortedException("olo-configuration presets not found at " + presets);
         }

@@ -5,9 +5,8 @@
   "tools": [
     {
       "kind": "TOOL",
-      "id": "HTTP",
-      "name": "HTTP Override",
-      "implementationClass": "ext.HttpTool"
+      "id": "olo-core:http-tool",
+      "name": "HTTP Override"
     }
   ]
 }

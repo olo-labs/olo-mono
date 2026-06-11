@@ -12,6 +12,13 @@ public final class OloCatalogLocations {
     public static final String NODES_CATALOG = CATALOG_DIR + "/nodes.json";
     public static final String TOOLS_CATALOG = CATALOG_DIR + "/tools.json";
     public static final String HOOKS_CATALOG = CATALOG_DIR + "/hooks.json";
+    public static final String WORKFLOW_PRESETS_CATALOG = CATALOG_DIR + "/workflow-presets.json";
+
+    /**
+     * Per-module JVM bindings ({@code implementationClass}, {@code spiInterface}) keyed by global extension id.
+     * Loaded by {@link org.olo.annotation.catalog.ExtensionRuntimeRegistryLoader}, not Studio catalog APIs.
+     */
+    public static final String RUNTIME_REGISTRY = CATALOG_DIR + "/runtime.json";
 
     /**
      * Per-type catalogs merged by {@link org.olo.annotation.catalog.ExtensionCatalogLoader}.

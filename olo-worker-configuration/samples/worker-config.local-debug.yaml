@@ -17,9 +17,10 @@ server:
   host: "127.0.0.1"
   port: 8080
 workflowDefinitions:
-  # Same presets as olo-docker dev stack (dev/configuration/olo-configuration/default).
+  # Same presets as olo-docker dev stack (dev/configuration/olo-configuration/default);
+  # source of truth in this repo: olo-definition/olo-configuration/default.
   # Alternate: "../../../olo-docker/dev/configuration/olo-configuration/default"
-  scanFolder: "../../olo-configuration/default"
+  scanFolder: "../../olo-definition/olo-configuration/default"
   recursive: false
 temporal:
   namespace: "default"

@@ -176,7 +176,7 @@ Annotations describe what editors write into `olo-definition` workflow JSON:
 | `@OloHook.implementationId()` | `HookActionDefinition.implementationId` |
 | `@OloPort` on node | Port wiring in the canvas |
 | `@OloProperty` | Node configuration / tool arguments in the properties panel |
-| `capabilityInputs` / `capabilityOutputs` | Planner validation hints |
+| `capabilityInputSchema` / `capabilityOutputSchema` | Machine-readable contract → descriptor `contract` |
 
 ## Gradle usage
 
@@ -244,6 +244,27 @@ Editor semantics (`featured` advisory rules, `examples` = use-cases not config v
 ## Typed catalog model (implemented)
 
 `ExtensionCatalogLoader.loadMerged()` returns **`ExtensionCatalog`** with `List<NodeDescriptor>`, `ToolDescriptor`, `HookDescriptor` — not `JsonNode`. This keeps Jackson internal to `olo-annotation` and gives UIs compile-time safety.
+
+### `CatalogComponent` hierarchy
+
+Every extension entry shares one base shape to prevent field drift across kinds:
+
+```
+CatalogComponent
+├── kind, id, version, provider, stability
+├── name, description, category, emoji, tags
+├── featured, examples
+├── deprecated
+└── runtime (orchestration: contractVersion, executionModel, retryable, timeoutAware, defaultTimeout, defaultRetryPolicy, async/heartbeat)
+
+NodeDescriptor   extends CatalogComponent  (+ inputs, outputs, parameters, contract)
+ToolDescriptor   extends CatalogComponent  (+ parameters, contract)
+HookDescriptor   extends CatalogComponent  (+ phases)
+```
+
+Descriptor **`runtime`** (orchestration scheduling) is Studio-facing catalog metadata. JVM bindings (`implementationClass`, `spiInterface`) live separately in **`runtime.json`** (`RuntimeBindingDescriptor`), loaded by `ExtensionRuntimeRegistryLoader`.
+
+These are **catalog** descriptors (implementation metadata), not workflow graph `NodeDefinition` / `ToolDefinition` / `HookDefinition` in `olo-definition`.
 
 The annotation model for v1 is effectively **complete**; further investment belongs in editor integration and the typed catalog API, not new annotation fields. See [V1.md](V1.md).
 

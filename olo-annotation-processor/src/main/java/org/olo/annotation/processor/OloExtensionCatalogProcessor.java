@@ -8,13 +8,13 @@ import org.olo.annotation.OloNode;
 import org.olo.annotation.OloPort;
 import org.olo.annotation.OloProperty;
 import org.olo.annotation.OloTool;
-import org.olo.annotation.processor.model.CapabilityDescriptor;
+import org.olo.annotation.catalog.HookDescriptor;
+import org.olo.annotation.catalog.NodeDescriptor;
+import org.olo.annotation.catalog.PortDescriptor;
+import org.olo.annotation.catalog.ParameterDescriptor;
+import org.olo.annotation.catalog.RuntimeBindingDescriptor;
+import org.olo.annotation.catalog.ToolDescriptor;
 import org.olo.annotation.processor.model.ExtensionCatalogDocument;
-import org.olo.annotation.processor.model.HookExtensionDescriptor;
-import org.olo.annotation.processor.model.NodeExtensionDescriptor;
-import org.olo.annotation.processor.model.PortDescriptor;
-import org.olo.annotation.processor.model.PropertyDescriptor;
-import org.olo.annotation.processor.model.ToolExtensionDescriptor;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -50,9 +50,10 @@ import java.util.Set;
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
 public class OloExtensionCatalogProcessor extends AbstractProcessor {
 
-    private final List<NodeExtensionDescriptor> nodes = new ArrayList<>();
-    private final List<ToolExtensionDescriptor> tools = new ArrayList<>();
-    private final List<HookExtensionDescriptor> hooks = new ArrayList<>();
+    private final List<NodeDescriptor> nodes = new ArrayList<>();
+    private final List<ToolDescriptor> tools = new ArrayList<>();
+    private final List<HookDescriptor> hooks = new ArrayList<>();
+    private final List<RuntimeBindingDescriptor> runtimeBindings = new ArrayList<>();
     private ExtensionCatalogValidator validator;
     private String catalogProvider;
     private String catalogModule;
@@ -73,7 +74,8 @@ public class OloExtensionCatalogProcessor extends AbstractProcessor {
             if (validator.hasErrors()) {
                 return false;
             }
-            if (!written && (!nodes.isEmpty() || !tools.isEmpty() || !hooks.isEmpty())) {
+            if (!written
+                    && (!nodes.isEmpty() || !tools.isEmpty() || !hooks.isEmpty() || !runtimeBindings.isEmpty())) {
                 writeCatalogs();
                 written = true;
             }
@@ -159,6 +161,13 @@ public class OloExtensionCatalogProcessor extends AbstractProcessor {
                 merged.put("hooks", hooks);
             }
             writeResource(mapper, OloCatalogLocations.MERGED_CATALOG, merged);
+
+            if (!runtimeBindings.isEmpty()) {
+                Map<String, Object> runtime = new LinkedHashMap<>();
+                CatalogDefaults.applyMergedHeader(runtime, module, generatedAt);
+                runtime.put("bindings", runtimeBindings);
+                writeResource(mapper, OloCatalogLocations.RUNTIME_REGISTRY, runtime);
+            }
         } catch (IOException e) {
             processingEnv
                     .getMessager()
@@ -171,13 +180,13 @@ public class OloExtensionCatalogProcessor extends AbstractProcessor {
         ExtensionCatalogDocument document = new ExtensionCatalogDocument();
         CatalogDefaults.applyDocumentHeader(document, module, catalogType, generatedAt);
         if (body.containsKey("nodes")) {
-            document.nodes = (List<NodeExtensionDescriptor>) body.get("nodes");
+            document.nodes = (List<NodeDescriptor>) body.get("nodes");
         }
         if (body.containsKey("tools")) {
-            document.tools = (List<ToolExtensionDescriptor>) body.get("tools");
+            document.tools = (List<ToolDescriptor>) body.get("tools");
         }
         if (body.containsKey("hooks")) {
-            document.hooks = (List<HookExtensionDescriptor>) body.get("hooks");
+            document.hooks = (List<HookDescriptor>) body.get("hooks");
         }
         return document;
     }
@@ -189,73 +198,137 @@ public class OloExtensionCatalogProcessor extends AbstractProcessor {
         }
     }
 
-    private NodeExtensionDescriptor toNodeDescriptor(TypeElement typeElement, OloNode annotation) {
-        NodeExtensionDescriptor descriptor = new NodeExtensionDescriptor();
-        descriptor.kind = "NODE";
-        descriptor.id = annotation.type();
-        descriptor.version = CatalogDefaults.materializeVersion(annotation.version());
-        descriptor.provider = CatalogDefaults.materializeProvider(annotation.provider(), catalogProvider, catalogModule);
-        descriptor.stability = CatalogDefaults.serializeStability(annotation.stability(), annotation.experimental());
-        descriptor.name = annotation.name();
-        descriptor.description = CatalogDefaults.blankToNull(annotation.description());
-        descriptor.category = annotation.category();
-        descriptor.emoji = CatalogDefaults.blankToNull(annotation.emoji());
-        descriptor.tags = CatalogDefaults.stringArray(annotation.tags());
-        descriptor.examples = CatalogDefaults.stringArray(annotation.examples());
-        descriptor.featured = annotation.featured();
-        descriptor.deprecated = annotation.deprecated();
-        descriptor.implementationClass = typeElement.getQualifiedName().toString();
-        descriptor.spiInterface = "org.olo.spi.node.Node";
-        descriptor.inputs = ports(annotation.inputs());
-        descriptor.outputs = ports(annotation.outputs());
-        descriptor.configuration = properties(annotation.configuration());
-        descriptor.capability = capability(annotation.capabilityInputs(), annotation.capabilityOutputs());
+    private NodeDescriptor toNodeDescriptor(TypeElement typeElement, OloNode annotation) {
+        NodeDescriptor descriptor = new NodeDescriptor();
+        CatalogComponentPopulator.apply(
+                descriptor,
+                "NODE",
+                annotation.type(),
+                typeElement,
+                annotation.name(),
+                annotation.description(),
+                annotation.category(),
+                annotation.emoji(),
+                annotation.tags(),
+                annotation.examples(),
+                annotation.featured(),
+                annotation.deprecated(),
+                annotation.stability(),
+                annotation.experimental(),
+                annotation.version(),
+                annotation.provider(),
+                catalogProvider,
+                catalogModule);
+        runtimeBindings.add(
+                RuntimeBindingBuilder.create(
+                        "NODE", descriptor.id, typeElement, "org.olo.spi.node.Node"));
+        descriptor.designer = DesignerPopulator.from(
+                annotation.designer(),
+                annotation.category(),
+                annotation.tags(),
+                annotation.nodeShape(),
+                annotation.uiWidth(),
+                annotation.uiHeight());
+        descriptor.connectionPolicy = ConnectionPolicyPopulator.from(annotation.connectionPolicy());
+        descriptor.inputs = ports(annotation.inputs(), false);
+        descriptor.outputs = ports(annotation.outputs(), true);
+        descriptor.parameters = parameters(annotation.configuration());
+        descriptor.contract =
+                CatalogContractPopulator.create(
+                        annotation.capabilityInputSchema(), annotation.capabilityOutputSchema());
+        descriptor.runtime =
+                CatalogRuntimePopulator.create(
+                        annotation.runtimeContractVersion(),
+                        annotation.executionModel(),
+                        annotation.retryable(),
+                        annotation.timeoutAware(),
+                        annotation.defaultTimeout(),
+                        annotation.defaultRetryPolicy(),
+                        annotation.supportsAsyncCompletion(),
+                        annotation.supportsHeartbeat(),
+                        annotation.supportsDebugging(),
+                        annotation.supportsReplay(),
+                        annotation.supportsCheckpointing());
         return descriptor;
     }
 
-    private ToolExtensionDescriptor toToolDescriptor(TypeElement typeElement, OloTool annotation) {
-        ToolExtensionDescriptor descriptor = new ToolExtensionDescriptor();
-        descriptor.kind = "TOOL";
-        descriptor.id = annotation.id();
-        descriptor.version = CatalogDefaults.materializeVersion(annotation.version());
-        descriptor.provider = CatalogDefaults.materializeProvider(annotation.provider(), catalogProvider, catalogModule);
-        descriptor.stability = CatalogDefaults.serializeStability(annotation.stability(), annotation.experimental());
-        descriptor.name = annotation.name();
-        descriptor.description = CatalogDefaults.blankToNull(annotation.description());
-        descriptor.category = annotation.category();
-        descriptor.emoji = CatalogDefaults.blankToNull(annotation.emoji());
-        descriptor.tags = CatalogDefaults.stringArray(annotation.tags());
-        descriptor.examples = CatalogDefaults.stringArray(annotation.examples());
-        descriptor.featured = annotation.featured();
-        descriptor.deprecated = annotation.deprecated();
-        descriptor.implementationClass = typeElement.getQualifiedName().toString();
-        descriptor.spiInterface = "org.olo.spi.tool.Tool";
-        descriptor.arguments = properties(annotation.arguments());
-        descriptor.configuration = properties(annotation.configuration());
-        descriptor.capability = capability(annotation.capabilityInputs(), annotation.capabilityOutputs());
+    private ToolDescriptor toToolDescriptor(TypeElement typeElement, OloTool annotation) {
+        ToolDescriptor descriptor = new ToolDescriptor();
+        CatalogComponentPopulator.apply(
+                descriptor,
+                "TOOL",
+                annotation.id(),
+                typeElement,
+                annotation.name(),
+                annotation.description(),
+                annotation.category(),
+                annotation.emoji(),
+                annotation.tags(),
+                annotation.examples(),
+                annotation.featured(),
+                annotation.deprecated(),
+                annotation.stability(),
+                annotation.experimental(),
+                annotation.version(),
+                annotation.provider(),
+                catalogProvider,
+                catalogModule);
+        runtimeBindings.add(
+                RuntimeBindingBuilder.create(
+                        "TOOL", descriptor.id, typeElement, "org.olo.spi.tool.Tool"));
+        descriptor.designer =
+                DesignerPopulator.from(annotation.designer(), annotation.category(), annotation.tags());
+        descriptor.parameters = mergeToolParameters(annotation.arguments(), annotation.configuration());
+        descriptor.contract =
+                CatalogContractPopulator.create(
+                        annotation.capabilityInputSchema(), annotation.capabilityOutputSchema());
+        descriptor.runtime =
+                CatalogRuntimePopulator.create(
+                        annotation.runtimeContractVersion(),
+                        annotation.executionModel(),
+                        annotation.retryable(),
+                        annotation.timeoutAware(),
+                        annotation.defaultTimeout(),
+                        annotation.defaultRetryPolicy(),
+                        annotation.supportsAsyncCompletion(),
+                        annotation.supportsHeartbeat(),
+                        annotation.supportsDebugging(),
+                        annotation.supportsReplay(),
+                        annotation.supportsCheckpointing());
         return descriptor;
     }
 
-    private HookExtensionDescriptor toHookDescriptor(TypeElement typeElement, OloHook annotation) {
-        HookExtensionDescriptor descriptor = new HookExtensionDescriptor();
-        descriptor.kind = "HOOK";
-        descriptor.id = annotation.implementationId();
-        descriptor.version = CatalogDefaults.materializeVersion(annotation.version());
-        descriptor.provider = CatalogDefaults.materializeProvider(annotation.provider(), catalogProvider, catalogModule);
-        descriptor.stability = CatalogDefaults.serializeStability(annotation.stability(), annotation.experimental());
-        descriptor.name = annotation.name();
-        descriptor.description = CatalogDefaults.blankToNull(annotation.description());
-        descriptor.category = annotation.category();
-        descriptor.emoji = CatalogDefaults.blankToNull(annotation.emoji());
-        descriptor.tags = CatalogDefaults.stringArray(annotation.tags());
-        descriptor.deprecated = annotation.deprecated();
-        descriptor.implementationClass = typeElement.getQualifiedName().toString();
-        descriptor.spiInterface = "org.olo.spi.hook.Hook";
+    private HookDescriptor toHookDescriptor(TypeElement typeElement, OloHook annotation) {
+        HookDescriptor descriptor = new HookDescriptor();
+        CatalogComponentPopulator.apply(
+                descriptor,
+                "HOOK",
+                annotation.implementationId(),
+                typeElement,
+                annotation.name(),
+                annotation.description(),
+                annotation.category(),
+                annotation.emoji(),
+                annotation.tags(),
+                new String[0],
+                false,
+                annotation.deprecated(),
+                annotation.stability(),
+                annotation.experimental(),
+                annotation.version(),
+                annotation.provider(),
+                catalogProvider,
+                catalogModule);
+        runtimeBindings.add(
+                RuntimeBindingBuilder.create(
+                        "HOOK", descriptor.id, typeElement, "org.olo.spi.hook.Hook"));
+        descriptor.designer =
+                DesignerPopulator.from(annotation.designer(), annotation.category(), annotation.tags());
         descriptor.phases = phases(annotation.phases());
         return descriptor;
     }
 
-    private static List<PortDescriptor> ports(OloPort[] ports) {
+    private static List<PortDescriptor> ports(OloPort[] ports, boolean output) {
         if (ports == null || ports.length == 0) {
             return List.of();
         }
@@ -267,42 +340,61 @@ public class OloExtensionCatalogProcessor extends AbstractProcessor {
             descriptor.schema = port.schema();
             descriptor.required = port.required();
             descriptor.description = CatalogDefaults.blankToNull(port.description());
+            descriptor.ui = portUi(port, output);
             out.add(descriptor);
         }
         return out;
     }
 
-    private static List<PropertyDescriptor> properties(OloProperty[] properties) {
+    private static org.olo.annotation.catalog.PortUiDescriptor portUi(OloPort port, boolean output) {
+        org.olo.annotation.catalog.PortUiDescriptor ui = new org.olo.annotation.catalog.PortUiDescriptor();
+        ui.position = resolvePortPosition(port.position(), output).name();
+        return ui;
+    }
+
+    private static org.olo.annotation.OloPortPosition resolvePortPosition(
+            org.olo.annotation.OloPortPosition position, boolean output) {
+        if (position != null && position != org.olo.annotation.OloPortPosition.DEFAULT) {
+            return position;
+        }
+        return output ? org.olo.annotation.OloPortPosition.RIGHT : org.olo.annotation.OloPortPosition.LEFT;
+    }
+
+    private static List<ParameterDescriptor> parameters(OloProperty[] properties) {
         if (properties == null || properties.length == 0) {
             return List.of();
         }
-        List<PropertyDescriptor> out = new ArrayList<>();
+        List<ParameterDescriptor> out = new ArrayList<>();
         for (OloProperty property : properties) {
-            PropertyDescriptor descriptor = new PropertyDescriptor();
-            descriptor.name = property.name();
-            descriptor.label = CatalogDefaults.materializePropertyLabel(property);
-            descriptor.type = property.type().name();
-            descriptor.description = CatalogDefaults.blankToNull(property.description());
-            descriptor.help = CatalogDefaults.blankToNull(property.help());
-            descriptor.placeholder = CatalogDefaults.blankToNull(property.placeholder());
-            descriptor.group = CatalogDefaults.optionalPropertyGroup(property.group());
-            descriptor.order = CatalogDefaults.materializePropertyOrder(property.order());
-            descriptor.required = property.required();
-            descriptor.defaultValue = CatalogDefaults.blankToNull(property.defaultValue());
-            descriptor.enumValues = CatalogDefaults.optionalStringArray(property.enumValues());
-            descriptor.secret = property.secret();
-            descriptor.examples = CatalogDefaults.optionalStringArray(property.examples());
-            out.add(descriptor);
+            out.add(ParameterCatalogPopulator.fromProperty(property));
         }
-        out.sort(Comparator.comparing(d -> d.order, Comparator.nullsLast(Comparator.naturalOrder())));
+        sortParameters(out);
         return out;
     }
 
-    private static CapabilityDescriptor capability(String[] inputs, String[] outputs) {
-        CapabilityDescriptor capability = new CapabilityDescriptor();
-        capability.inputs = CatalogDefaults.stringArray(inputs);
-        capability.outputs = CatalogDefaults.stringArray(outputs);
-        return capability;
+    private static List<ParameterDescriptor> mergeToolParameters(
+            OloProperty[] arguments, OloProperty[] configuration) {
+        List<ParameterDescriptor> out = new ArrayList<>();
+        if (arguments != null) {
+            for (OloProperty property : arguments) {
+                out.add(ParameterCatalogPopulator.fromProperty(property));
+            }
+        }
+        if (configuration != null) {
+            for (OloProperty property : configuration) {
+                out.add(ParameterCatalogPopulator.fromProperty(property));
+            }
+        }
+        if (out.isEmpty()) {
+            return List.of();
+        }
+        sortParameters(out);
+        return out;
+    }
+
+    private static void sortParameters(List<ParameterDescriptor> parameters) {
+        parameters.sort(Comparator.comparing(
+                d -> d.ui == null ? null : d.ui.order, Comparator.nullsLast(Comparator.naturalOrder())));
     }
 
     private static List<String> phases(OloHookPhase[] phases) {
