@@ -38,6 +38,20 @@ class WorkflowReturnResolverTest {
     }
 
     @Test
+    void resolvesReturnValueAfterGraphTraversal() throws Exception {
+        KernelRuntimeContext context = buildAgentContext(withUserQuery("hello agent"));
+        org.olo.kernel.traversal.factory.GraphTraverserFactory
+                .withLlmClient(new org.olo.kernel.agent.client.FakeLlmClient())
+                .traverse(context);
+
+        String result = WorkflowReturnResolver.resolve(context);
+
+        assertThat(result).startsWith("LLM response for:");
+        assertThat(context.getVariables().getString(WorkflowReturnVariable.DEFAULT_RETURN_VARIABLE_NAME))
+                .startsWith("LLM response for:");
+    }
+
+    @Test
     void usesAdminMessageWhenConfiguredReturnVariableAndInputAreMissing() throws Exception {
         KernelRuntimeContext context = buildAgentContext(new WorkflowInput("1.0", List.of(), null, null, null, null));
 
@@ -52,7 +66,6 @@ class WorkflowReturnResolverTest {
     void usesAdminMessageWhenConfiguredReturnVariableNotInRuntimeMap() {
         WorkflowDefinition graph = WorkflowDefinition.builder()
                 .id("misconfigured")
-                .name("Misconfigured")
                 .queue("misconfigured")
                 .metadata(Map.of(WorkflowReturnVariable.WORKFLOW_METADATA_KEY, "ReturnValue"))
                 .variables(List.of(VariableDefinition.builder().name("OtherValue").type("string").build()))

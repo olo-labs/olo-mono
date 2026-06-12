@@ -10,8 +10,11 @@ Path scanFolder = Path.of("../olo-definition/olo-configuration/default");
 // First call scans and caches; subsequent calls return the same registry.
 WorkflowDefinitionRegistry registry = OloBootstrap.load(scanFolder, false);
 
-registry.findById("agent");
+registry.findById("agent");              // isDefault version, else highest version
+registry.findByIdAndVersion("agent", "1.0.0");
+registry.findByIdAndVersion("agent", "9.9.9"); // falls back to isDefault workspace
 registry.findByQueue("agent");
+registry.getWorkflowsByIdAndVersion();   // all loaded id@version artifacts
 
 // Runtime refresh:
 WorkflowDefinitionRegistry refreshed = OloBootstrap.load(scanFolder, false, true);

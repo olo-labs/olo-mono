@@ -28,6 +28,7 @@ class KernelEntryPointTest {
 
         String result = KernelEntryPoint.execute("agent", payload, registry);
 
-        assertThat(result).isEqualTo(WorkflowInputMessages.MISSING_MESSAGE_RESPONSE);
+        assertThat(result).doesNotContain("child workflow dispatch pending");
+        assertThat(result).isNotEqualTo(WorkflowInputMessages.MISSING_MESSAGE_RESPONSE);
     }
 }

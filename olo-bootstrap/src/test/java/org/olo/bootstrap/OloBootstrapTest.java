@@ -31,13 +31,18 @@ class OloBootstrapTest {
         assertThat(registry.findByQueue("agent")).isPresent();
 
         WorkflowDefinition agent = registry.findById("agent").orElseThrow();
+        assertThat(agent.getVersion()).isEqualTo("1.0.0");
+        assertThat(agent.isDefault()).isTrue();
+        assertThat(registry.findByIdAndVersion("agent", "1.0.0")).contains(agent);
+        assertThat(registry.findByIdAndVersion("agent", "9.9.9")).contains(agent);
+        assertThat(registry.getWorkflowsByIdAndVersion()).containsKey("agent@1.0.0");
         assertThat(agent.getParameters()).containsKeys(
                 "maxIterations", "systemPrompt", "model", "temperature");
         assertThat(agent.getMetadata()).containsEntry("role", "agent")
                 .containsEntry("agentType", "autonomous")
                 .containsEntry("planningStrategy", "react")
                 .containsEntry("agentSelectionStrategy", "dynamic");
-        assertThat(agent.getChildWorkflows()).isEmpty();
+        assertThat(agent.getChildWorkflows()).hasSize(4);
         assertThat(agent.getAvailableAgentIds()).containsExactly("planner", "reviewer", "architect");
         assertThat(agent.getRuntime().getDelegation().getEnabled()).isTrue();
         assertThat(agent.getRuntime().getDelegation().getParallelEnabled()).isTrue();

@@ -10,6 +10,11 @@ import org.olo.kernel.context.callback.UiCallbackReporter;
 import org.olo.kernel.exception.KernelException;
 import org.olo.kernel.input.WorkflowReturnResolution;
 import org.olo.kernel.input.WorkflowReturnResolver;
+import org.olo.kernel.input.WorkflowInputMessages;
+import org.olo.kernel.traversal.GraphTraverser;
+import org.olo.kernel.traversal.TraversalResult;
+import org.olo.kernel.traversal.factory.GraphTraverserFactory;
+import org.olo.kernel.traversal.log.TraversalDiagnostics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +26,7 @@ import java.util.Objects;
 public final class KernelEntryPoint {
 
     private static final Logger log = LoggerFactory.getLogger(KernelEntryPoint.class);
+    private static final GraphTraverser GRAPH_TRAVERSER = GraphTraverserFactory.withDefaults();
 
     private KernelEntryPoint() {
     }
@@ -44,27 +50,7 @@ public final class KernelEntryPoint {
 
         KernelRuntimeContext context = KernelContextBuilder.build(
                 KernelContextBuildRequest.of(queue, input, sourceGraph));
-        if (!context.isGraphReady()) {
-            throw new KernelException("workflow graph is not ready for queue: " + queue);
-        }
-
-        UiCallbackReporter.reportContextReady(context);
-        WorkflowReturnResolution resolution = WorkflowReturnResolver.resolveDetails(context);
-        logReturnBeforeCallback(queue, context, resolution);
-        UiCallbackReporter.reportWorkflowResult(
-                context,
-                resolution.returnVariableName(),
-                resolution.returnVariableValue(),
-                resolution.message(),
-                resolution.usedAdminFallback());
-        log.info(
-                "Kernel entry complete: queue={}, returnVariable={}, returnValue={}, messageLen={}, message={}",
-                queue,
-                resolution.returnVariableName(),
-                formatLogValue(resolution.returnVariableValue()),
-                resolution.message().length(),
-                resolution.message());
-        return resolution.message();
+        return finish(queue, context);
     }
 
     /**
@@ -82,11 +68,28 @@ public final class KernelEntryPoint {
 
         KernelRuntimeContext context = KernelContextBuilder.build(
                 KernelContextBuildRequest.of(queue, inputPayload, sourceGraph));
+        return finish(queue, context);
+    }
+
+    private static String finish(String queue, KernelRuntimeContext context) {
         if (!context.isGraphReady()) {
             throw new KernelException("workflow graph is not ready for queue: " + queue);
         }
 
+        TraversalDiagnostics.logContextReady(context, WorkflowInputMessages.primaryMessage(context.getInput()));
         UiCallbackReporter.reportContextReady(context);
+        TraversalResult traversal = GRAPH_TRAVERSER.traverse(context);
+        log.info(
+                "Traversal finished: queue={}, completed={}, lastNodeId={}, lastNodeMessage={}",
+                queue,
+                traversal.completed(),
+                traversal.lastNodeId(),
+                TraversalDiagnostics.formatValue(traversal.message()));
+        if (!traversal.completed()) {
+            throw new KernelException("workflow graph traversal failed for queue: " + queue
+                    + (traversal.message() != null ? ": " + traversal.message() : ""));
+        }
+
         WorkflowReturnResolution resolution = WorkflowReturnResolver.resolveDetails(context);
         logReturnBeforeCallback(queue, context, resolution);
         UiCallbackReporter.reportWorkflowResult(
@@ -99,7 +102,7 @@ public final class KernelEntryPoint {
                 "Kernel entry complete: queue={}, returnVariable={}, returnValue={}, messageLen={}, message={}",
                 queue,
                 resolution.returnVariableName(),
-                formatLogValue(resolution.returnVariableValue()),
+                TraversalDiagnostics.formatValue(resolution.returnVariableValue()),
                 resolution.message().length(),
                 resolution.message());
         return resolution.message();
@@ -111,19 +114,8 @@ public final class KernelEntryPoint {
                 "Workflow return before callback: queue={}, returnVariable={}, returnValue={}, variables={}, message={}",
                 queue,
                 resolution.returnVariableName(),
-                formatLogValue(resolution.returnVariableValue()),
+                TraversalDiagnostics.formatValue(resolution.returnVariableValue()),
                 context.getVariableMap(),
                 resolution.message());
-    }
-
-    private static String formatLogValue(Object value) {
-        if (value == null) {
-            return "null";
-        }
-        String text = String.valueOf(value);
-        if (text.length() <= 120) {
-            return text;
-        }
-        return text.substring(0, 120) + "...";
     }
 }

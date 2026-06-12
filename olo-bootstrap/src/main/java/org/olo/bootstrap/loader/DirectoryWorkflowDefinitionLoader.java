@@ -2,6 +2,7 @@ package org.olo.bootstrap.loader;
 
 import org.olo.bootstrap.exception.BootstrapException;
 import org.olo.bootstrap.model.CachedWorkflowDefinition;
+import org.olo.bootstrap.registry.WorkflowDefinitionKey;
 import org.olo.bootstrap.registry.WorkflowDefinitionRegistry;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.serializer.WorkflowSerializer;
@@ -50,14 +51,15 @@ public final class DirectoryWorkflowDefinitionLoader {
         }
         try {
             List<CachedWorkflowDefinition> workflows = new ArrayList<>();
-            Map<String, String> idLocations = new HashMap<>();
+            Map<String, String> idVersionLocations = new HashMap<>();
+            Map<String, String> defaultLocations = new HashMap<>();
             Map<String, String> queueLocations = new HashMap<>();
 
             try (Stream<Path> paths = listWorkflowFiles(scanFolder, recursive)) {
                 List<Path> files = paths.sorted(Comparator.comparing(p -> p.getFileName().toString())).toList();
                 for (Path file : files) {
                     CachedWorkflowDefinition cached = loadFile(file);
-                    validateUniqueIndexes(cached, idLocations, queueLocations);
+                    validateUniqueIndexes(cached, idVersionLocations, defaultLocations, queueLocations);
                     workflows.add(cached);
                 }
             }
@@ -109,24 +111,42 @@ public final class DirectoryWorkflowDefinitionLoader {
 
     private static void validateUniqueIndexes(
             CachedWorkflowDefinition cached,
-            Map<String, String> idLocations,
+            Map<String, String> idVersionLocations,
+            Map<String, String> defaultLocations,
             Map<String, String> queueLocations) {
         WorkflowDefinition definition = cached.getDefinition();
         String location = cached.getSourcePath();
 
         if (definition.getId() != null && !definition.getId().isBlank()) {
-            String previous = idLocations.put(definition.getId(), location);
+            WorkflowDefinitionKey key = WorkflowDefinitionKey.from(definition);
+            String previous = idVersionLocations.put(key.compositeKey(), location);
             if (previous != null) {
-                throw new BootstrapException("duplicate workflow id '" + definition.getId()
+                throw new BootstrapException("duplicate workflow id+version '" + key.compositeKey()
                         + "' at " + location + " and " + previous);
+            }
+            if (Boolean.TRUE.equals(definition.isDefault())) {
+                String previousDefault = defaultLocations.put(definition.getId(), location);
+                if (previousDefault != null) {
+                    throw new BootstrapException("duplicate default workflow for id '" + definition.getId()
+                            + "' at " + location + " and " + previousDefault);
+                }
             }
         }
 
         if (definition.getQueue() != null && !definition.getQueue().isBlank()) {
-            String previous = queueLocations.put(definition.getQueue(), location);
-            if (previous != null) {
-                throw new BootstrapException("duplicate workflow queue '" + definition.getQueue()
-                        + "' at " + location + " and " + previous);
+            String queue = definition.getQueue();
+            String workflowId = definition.getId();
+            String previousOwnerId = queueLocations.get(queue);
+            if (previousOwnerId != null
+                    && workflowId != null
+                    && !workflowId.isBlank()
+                    && !workflowId.equals(previousOwnerId)) {
+                throw new BootstrapException("duplicate workflow queue '" + queue
+                        + "' for workflow ids '" + workflowId + "' and '" + previousOwnerId
+                        + "' at " + location);
+            }
+            if (workflowId != null && !workflowId.isBlank()) {
+                queueLocations.put(queue, workflowId);
             }
         }
     }
