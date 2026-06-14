@@ -1,5 +1,6 @@
 package org.olo.kernel.agent;
 
+import org.olo.definition.node.NodeDefinition;
 import org.olo.kernel.context.KernelRuntimeContext;
 
 /**
@@ -7,5 +8,5 @@ import org.olo.kernel.context.KernelRuntimeContext;
  */
 public interface LlmInvocationService {
 
-    LlmInvocationResult invoke(KernelRuntimeContext context);
+    LlmInvocationResult invoke(KernelRuntimeContext context, NodeDefinition node);
 }

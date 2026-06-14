@@ -11,8 +11,9 @@ import org.olo.kernel.exception.KernelException;
 import org.olo.kernel.input.WorkflowReturnResolution;
 import org.olo.kernel.input.WorkflowReturnResolver;
 import org.olo.kernel.input.WorkflowInputMessages;
-import org.olo.kernel.traversal.GraphTraverser;
+import org.olo.kernel.traversal.KernelExecutionSnapshot;
 import org.olo.kernel.traversal.TraversalResult;
+import org.olo.kernel.traversal.engine.GraphTraversalEngine;
 import org.olo.kernel.traversal.factory.GraphTraverserFactory;
 import org.olo.kernel.traversal.log.TraversalDiagnostics;
 import org.slf4j.Logger;
@@ -21,12 +22,12 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 
 /**
- * Synchronous kernel entry point for queue execution: builds runtime context and notifies the UI.
+ * Kernel entry point for queue execution: context build, graph traversal, and UI callbacks.
  */
 public final class KernelEntryPoint {
 
     private static final Logger log = LoggerFactory.getLogger(KernelEntryPoint.class);
-    private static final GraphTraverser GRAPH_TRAVERSER = GraphTraverserFactory.withDefaults();
+    private static final GraphTraversalEngine TRAVERSAL_ENGINE = GraphTraverserFactory.defaultEngine();
 
     private KernelEntryPoint() {
     }
@@ -45,18 +46,13 @@ public final class KernelEntryPoint {
                 ? input.getRouting().getTransactionId()
                 : null);
 
-        WorkflowDefinition sourceGraph = registry.findByQueue(queue)
-                .orElseThrow(() -> new KernelException("no workflow definition registered for queue: " + queue));
-
-        KernelRuntimeContext context = KernelContextBuilder.build(
-                KernelContextBuildRequest.of(queue, input, sourceGraph));
-        return finish(queue, context);
+        KernelExecutionSnapshot snapshot = buildContextAndNotifyUi(queue, input, registry);
+        snapshot = traverse(snapshot);
+        return reportWorkflowResult(snapshot);
     }
 
     /**
      * Builds kernel runtime context from a JSON payload string (file-based tests and legacy callers).
-     *
-     * @return the primary user message from the workflow input
      */
     public static String execute(String queue, String inputPayload, WorkflowDefinitionRegistry registry) {
         Objects.requireNonNull(queue, "queue");
@@ -68,30 +64,71 @@ public final class KernelEntryPoint {
 
         KernelRuntimeContext context = KernelContextBuilder.build(
                 KernelContextBuildRequest.of(queue, inputPayload, sourceGraph));
-        return finish(queue, context);
+        return finishFromContext(queue, context);
     }
 
-    private static String finish(String queue, KernelRuntimeContext context) {
+    /**
+     * Builds runtime context, validates graph readiness, and notifies the UI that execution started.
+     * Does not traverse the graph.
+     */
+    public static KernelExecutionSnapshot buildContextAndNotifyUi(
+            String queue, WorkflowInput input, WorkflowDefinitionRegistry registry) {
+        Objects.requireNonNull(queue, "queue");
+        Objects.requireNonNull(input, "input");
+        Objects.requireNonNull(registry, "registry");
+
+        WorkflowDefinition sourceGraph = registry.findByQueue(queue)
+                .orElseThrow(() -> new KernelException("no workflow definition registered for queue: " + queue));
+
+        KernelRuntimeContext context = KernelContextBuilder.build(
+                KernelContextBuildRequest.of(queue, input, sourceGraph));
         if (!context.isGraphReady()) {
             throw new KernelException("workflow graph is not ready for queue: " + queue);
         }
 
         TraversalDiagnostics.logContextReady(context, WorkflowInputMessages.primaryMessage(context.getInput()));
         UiCallbackReporter.reportContextReady(context);
-        TraversalResult traversal = GRAPH_TRAVERSER.traverse(context);
-        log.info(
-                "Traversal finished: queue={}, completed={}, lastNodeId={}, lastNodeMessage={}",
-                queue,
-                traversal.completed(),
-                traversal.lastNodeId(),
-                TraversalDiagnostics.formatValue(traversal.message()));
-        if (!traversal.completed()) {
-            throw new KernelException("workflow graph traversal failed for queue: " + queue
-                    + (traversal.message() != null ? ": " + traversal.message() : ""));
+        return KernelExecutionSnapshot.fromContext(context);
+    }
+
+    /**
+     * Executes one graph node scheduled as a dedicated Temporal activity.
+     */
+    public static KernelExecutionSnapshot executeTraversalStep(KernelExecutionSnapshot snapshot) {
+        Objects.requireNonNull(snapshot, "snapshot");
+        requireRunning(snapshot);
+        return TRAVERSAL_ENGINE.executeSingleStep(snapshot);
+    }
+
+    /**
+     * Runs graph traversal to completion: dedicated activity per node, INLINE nodes in-process.
+     */
+    public static KernelExecutionSnapshot traverse(KernelExecutionSnapshot snapshot) {
+        Objects.requireNonNull(snapshot, "snapshot");
+        KernelExecutionSnapshot current = snapshot;
+        while (!current.isTerminal()) {
+            current = executeTraversalStep(current);
+        }
+        logTraversalFinished(current);
+        return current;
+    }
+
+    /**
+     * Resolves the workflow return value and notifies the UI. Requires a terminal snapshot.
+     */
+    public static String reportWorkflowResult(KernelExecutionSnapshot snapshot) {
+        Objects.requireNonNull(snapshot, "snapshot");
+        if (snapshot.getStatus() == KernelExecutionSnapshot.Status.FAILED) {
+            throw new KernelException("workflow graph traversal failed for queue: " + snapshot.getQueue()
+                    + (snapshot.getMessage() != null ? ": " + snapshot.getMessage() : ""));
+        }
+        if (snapshot.getStatus() != KernelExecutionSnapshot.Status.COMPLETED) {
+            throw new KernelException("workflow graph traversal did not complete for queue: " + snapshot.getQueue());
         }
 
+        KernelRuntimeContext context = snapshot.toContext();
         WorkflowReturnResolution resolution = WorkflowReturnResolver.resolveDetails(context);
-        logReturnBeforeCallback(queue, context, resolution);
+        logReturnBeforeCallback(snapshot.getQueue(), context, resolution);
         UiCallbackReporter.reportWorkflowResult(
                 context,
                 resolution.returnVariableName(),
@@ -100,12 +137,47 @@ public final class KernelEntryPoint {
                 resolution.usedAdminFallback());
         log.info(
                 "Kernel entry complete: queue={}, returnVariable={}, returnValue={}, messageLen={}, message={}",
-                queue,
+                snapshot.getQueue(),
                 resolution.returnVariableName(),
                 TraversalDiagnostics.formatValue(resolution.returnVariableValue()),
                 resolution.message().length(),
                 resolution.message());
         return resolution.message();
+    }
+
+    private static String finishFromContext(String queue, KernelRuntimeContext context) {
+        KernelExecutionSnapshot snapshot = buildContextAndNotifyUiFromContext(queue, context);
+        snapshot = traverse(snapshot);
+        return reportWorkflowResult(snapshot);
+    }
+
+    private static KernelExecutionSnapshot buildContextAndNotifyUiFromContext(String queue, KernelRuntimeContext context) {
+        if (!context.isGraphReady()) {
+            throw new KernelException("workflow graph is not ready for queue: " + queue);
+        }
+        TraversalDiagnostics.logContextReady(context, WorkflowInputMessages.primaryMessage(context.getInput()));
+        UiCallbackReporter.reportContextReady(context);
+        return KernelExecutionSnapshot.fromContext(context);
+    }
+
+    private static void requireRunning(KernelExecutionSnapshot snapshot) {
+        if (snapshot.isTerminal()) {
+            throw new KernelException("traversal snapshot is already terminal for queue: " + snapshot.getQueue());
+        }
+    }
+
+    private static void logTraversalFinished(KernelExecutionSnapshot snapshot) {
+        TraversalResult traversal = snapshot.toTraversalResult();
+        log.info(
+                "Traversal finished: queue={}, completed={}, lastNodeId={}, lastNodeMessage={}",
+                snapshot.getQueue(),
+                traversal.completed(),
+                traversal.lastNodeId(),
+                TraversalDiagnostics.formatValue(traversal.message()));
+        if (!traversal.completed()) {
+            throw new KernelException("workflow graph traversal failed for queue: " + snapshot.getQueue()
+                    + (traversal.message() != null ? ": " + traversal.message() : ""));
+        }
     }
 
     private static void logReturnBeforeCallback(

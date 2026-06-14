@@ -28,7 +28,7 @@ server:
   host: "0.0.0.0"
   port: 8080
 workflowDefinitions:
-  scanFolder: "../olo-definition/olo-configuration/default"
+  scanFolder: "../olo-definition/olo-configuration/current-active"
   recursive: false
 temporal:
   namespace: "default"

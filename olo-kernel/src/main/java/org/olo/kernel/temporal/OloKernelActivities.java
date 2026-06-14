@@ -3,6 +3,7 @@ package org.olo.kernel.temporal;
 import io.temporal.activity.ActivityInterface;
 import io.temporal.activity.ActivityMethod;
 import org.olo.input.model.WorkflowInput;
+import org.olo.kernel.traversal.KernelExecutionSnapshot;
 
 /**
  * Non-deterministic kernel work executed outside the Temporal workflow sandbox.
@@ -11,5 +12,11 @@ import org.olo.input.model.WorkflowInput;
 public interface OloKernelActivities {
 
     @ActivityMethod
-    String buildContextAndNotifyUi(String queue, WorkflowInput input);
+    KernelExecutionSnapshot buildContextAndNotifyUi(String queue, WorkflowInput input);
+
+    @ActivityMethod
+    KernelExecutionSnapshot executeTraversalStep(KernelExecutionSnapshot snapshot);
+
+    @ActivityMethod
+    String reportWorkflowResult(KernelExecutionSnapshot snapshot);
 }

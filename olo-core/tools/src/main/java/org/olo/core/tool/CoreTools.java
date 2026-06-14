@@ -16,6 +16,11 @@ public final class CoreTools {
         return List.of(
                 new HttpTool(),
                 new CalculatorTool(),
-                new WebSearchTool());
+                new WebSearchTool(),
+                new LogReaderTool(),
+                new CpuUsageTool(),
+                new MemoryUsageTool(),
+                new NumericMetricTool(),
+                new RecentlyChangedCodeTool());
     }
 }

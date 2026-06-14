@@ -1,5 +1,6 @@
 package org.olo.kernel.context.output;
 
+import org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
 
@@ -45,6 +46,9 @@ public final class WorkflowReturnOutput {
     public static boolean shouldMirrorToReturnVariable(
             WorkflowDefinition graph, NodeDefinition node, String returnVariableName) {
         if (returnVariableName == null || returnVariableName.isBlank()) {
+            return false;
+        }
+        if (DynamicGraphPlannerSupport.isDynamicGraphPlanner(node)) {
             return false;
         }
         String configuredReturnKey = readReturnOutputKey(graph);

@@ -12,7 +12,8 @@
         "../olo-worker-configuration/samples/worker-config.local-debug.yaml"
       ],
       "env": {
-        "OLO_WORKER_CONFIG_PATH": "../olo-worker-configuration/samples/worker-config.local-debug.yaml"
+        "OLO_WORKER_CONFIG_PATH": "../olo-worker-configuration/samples/worker-config.local-debug.yaml",
+        "OLO_LLM_BASE_URL": "http://localhost:11435"
       }
     }
   ]

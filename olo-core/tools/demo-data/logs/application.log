@@ -1,0 +1,14 @@
+2026-06-14T14:20:00.000Z INFO  [payment-service] Health check passed — upstream latency 42ms
+2026-06-14T14:22:15.112Z INFO  [payment-service] Processed charge id=chg_1001 amount=49.99 status=approved
+2026-06-14T14:24:30.445Z INFO  [payment-service] Processed charge id=chg_1002 amount=12.50 status=approved
+2026-06-14T14:29:58.901Z WARN  [payment-service] Upstream payment-gateway latency elevated: 820ms (threshold 500ms)
+2026-06-14T14:30:01.234Z ERROR [payment-service] ConnectionTimeout: upstream payment-gateway unreachable after 3000ms
+2026-06-14T14:30:01.235Z ERROR [payment-service] Failed charge id=chg_1003 amount=199.00 reason=GATEWAY_TIMEOUT
+2026-06-14T14:30:02.118Z ERROR [payment-service] CircuitBreaker OPEN for payment-gateway — failure rate 62%
+2026-06-14T14:30:05.667Z ERROR [payment-service] Retry exhausted for charge id=chg_1004 attempts=3 lastError=GATEWAY_TIMEOUT
+2026-06-14T14:30:12.004Z WARN  [payment-service] Thread pool queue depth critical: 128 (max 64)
+2026-06-14T14:30:18.551Z ERROR [payment-service] OutOfMemoryError avoided — heap usage 94% triggering emergency GC
+2026-06-14T14:31:40.220Z WARN  [payment-service] Upstream payment-gateway responding slowly: 910ms
+2026-06-14T14:33:05.880Z INFO  [payment-service] CircuitBreaker HALF_OPEN — probing payment-gateway
+2026-06-14T14:34:22.004Z INFO  [payment-service] CircuitBreaker CLOSED — gateway recovered, latency 78ms
+2026-06-14T14:36:10.331Z INFO  [payment-service] Processed charge id=chg_1005 amount=25.00 status=approved

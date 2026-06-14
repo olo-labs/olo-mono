@@ -1,26 +1,53 @@
 package org.olo.kernel.temporal;
 
 import io.temporal.activity.ActivityOptions;
+import io.temporal.workflow.ActivityStub;
 import io.temporal.workflow.Workflow;
 import org.olo.input.model.WorkflowInput;
+import org.olo.kernel.traversal.KernelExecutionSnapshot;
+import org.olo.kernel.traversal.scheduling.NodeActivityNaming;
 
 import java.time.Duration;
 
 /**
- * Temporal workflow that delegates queue execution to {@link org.olo.kernel.KernelEntryPoint}
- * via {@link OloKernelActivities}.
+ * Temporal workflow that orchestrates queue execution: one activity per node by default,
+ * with explicitly INLINE nodes executed synchronously inside this workflow loop.
  */
 public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
 
-    private final OloKernelActivities activities = Workflow.newActivityStub(
-            OloKernelActivities.class,
-            ActivityOptions.newBuilder()
-                    .setStartToCloseTimeout(Duration.ofMinutes(5))
-                    .build());
+    private static final Duration CONTEXT_BUILD_TIMEOUT = Duration.ofMinutes(1);
+    private static final Duration NODE_STEP_TIMEOUT = Duration.ofMinutes(10);
+    private static final Duration RESULT_TIMEOUT = Duration.ofMinutes(1);
+
+    private static ActivityStub activityStub(Duration timeout) {
+        return Workflow.newUntypedActivityStub(
+                ActivityOptions.newBuilder().setStartToCloseTimeout(timeout).build());
+    }
 
     @Override
     public String execute(WorkflowInput input) {
         String queue = Workflow.getInfo().getTaskQueue();
-        return activities.buildContextAndNotifyUi(queue, input);
+        KernelExecutionSnapshot snapshot = activityStub(CONTEXT_BUILD_TIMEOUT)
+                .execute(
+                        NodeActivityNaming.formatQueue(queue),
+                        KernelExecutionSnapshot.class,
+                        queue,
+                        input);
+
+        while (!snapshot.isTerminal()) {
+            if (snapshot.isNextRequiresDedicatedActivity()) {
+                snapshot = activityStub(NODE_STEP_TIMEOUT)
+                        .execute(
+                                snapshot.getNextActivityName(),
+                                KernelExecutionSnapshot.class,
+                                snapshot,
+                                KernelActivityOperations.STEP);
+            } else {
+                snapshot = WorkflowInlineTraversal.executeStep(snapshot);
+            }
+        }
+
+        return activityStub(RESULT_TIMEOUT)
+                .execute(snapshot.getWorkflowActivityName(), String.class, snapshot);
     }
 }

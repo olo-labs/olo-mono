@@ -1,5 +1,6 @@
 package org.olo.kernel.agent.prompt;
 
+import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.context.variables.WorkflowRuntimeVariables;
 
@@ -9,4 +10,6 @@ import org.olo.kernel.context.variables.WorkflowRuntimeVariables;
 public interface PromptRenderer {
 
     String render(WorkflowDefinition graph, WorkflowRuntimeVariables variables);
+
+    String renderForNode(WorkflowDefinition graph, NodeDefinition node, WorkflowRuntimeVariables variables);
 }

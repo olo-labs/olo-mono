@@ -53,4 +53,11 @@ class UiCallbackReporterTest {
         assertThat(UiCallbackReporter.resolveEventPostUrl(input, "run-1"))
                 .isEqualTo("http://localhost:47080/api/runs/run-1/events");
     }
+
+    @Test
+    void treatsDuplicateEventSequenceAsSuccessfulCallback() {
+        assertThat(UiCallbackReporter.isSuccessfulCallbackStatus(200)).isTrue();
+        assertThat(UiCallbackReporter.isSuccessfulCallbackStatus(409)).isTrue();
+        assertThat(UiCallbackReporter.isSuccessfulCallbackStatus(500)).isFalse();
+    }
 }

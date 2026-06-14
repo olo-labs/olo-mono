@@ -48,4 +48,12 @@ public final class ExecutionOutputs {
     public Map<String, ExecutionOutput> toMap() {
         return Collections.unmodifiableMap(new LinkedHashMap<>(byKey));
     }
+
+    public static ExecutionOutputs fromMap(Map<String, ExecutionOutput> outputs) {
+        ExecutionOutputs copy = new ExecutionOutputs();
+        if (outputs != null) {
+            outputs.forEach(copy::put);
+        }
+        return copy;
+    }
 }

@@ -1,5 +1,6 @@
 package org.olo.kernel.agent.executor.impl;
 
+import org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.kernel.agent.LlmInvocationResult;
@@ -39,7 +40,7 @@ public final class LocalLlmAgentExecutor implements AgentExecutor {
     @Override
     public NodeResult execute(KernelRuntimeContext context, NodeDefinition node) {
         try {
-            LlmInvocationResult invocation = llmInvocationService.invoke(context);
+            LlmInvocationResult invocation = llmInvocationService.invoke(context, node);
             TraversalDiagnostics.logLlmInvocation(node.getId(), invocation);
 
             Map<String, Object> output = new LinkedHashMap<>();
@@ -51,6 +52,10 @@ public final class LocalLlmAgentExecutor implements AgentExecutor {
             output.put("agentMode", EXECUTOR_ID);
 
             context.getVariables().set("agentStatus", EXECUTOR_ID);
+            if (DynamicGraphPlannerSupport.isDynamicGraphPlanner(node)) {
+                context.getVariables().set(
+                        DynamicGraphPlannerSupport.outputVariable(node), invocation.response());
+            }
             return NodeResult.completed(invocation.response(), output);
         } catch (RuntimeException e) {
             TraversalDiagnostics.logLlmFailure(node.getId(), e.getMessage());

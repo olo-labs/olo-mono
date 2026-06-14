@@ -88,10 +88,17 @@ public final class UiCallbackReporter {
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new KernelContextException(
-                        "UI callback failed with status " + response.statusCode() + " for " + eventPostUrl);
+            if (isSuccessfulCallbackStatus(response.statusCode())) {
+                if (response.statusCode() == 409) {
+                    log.debug(
+                            "UI callback duplicate ignored (idempotent retry): url={}, sequenceNumber={}",
+                            eventPostUrl,
+                            payload.getSequenceNumber());
+                }
+                return;
             }
+            throw new KernelContextException(
+                    "UI callback failed with status " + response.statusCode() + " for " + eventPostUrl);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new KernelContextException("failed to deliver UI callback to " + eventPostUrl, e);
@@ -160,6 +167,10 @@ public final class UiCallbackReporter {
                 message);
 
         postPayload(eventPostUrl, payload);
+    }
+
+    static boolean isSuccessfulCallbackStatus(int statusCode) {
+        return (statusCode >= 200 && statusCode < 300) || statusCode == 409;
     }
 
     private static String formatLogValue(Object value) {

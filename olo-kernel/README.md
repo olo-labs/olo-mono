@@ -22,19 +22,29 @@ Temporal queue execution entry point. Each task queue registers `OloKernelWorkfl
 
 ```
 Temporal queue task (WorkflowInput JSON object)
-  → OloKernelWorkflowImpl
-    → OloKernelActivitiesImpl
-      → KernelEntryPoint
-        → KernelContextBuilder (olo-kernel-context)
-          → deserialize WorkflowInput
-          → WorkflowDefinition.copy() for queue graph
-          → GraphIsolation.prepare()
-          → UiCallbackReporter → execution.callbackUrl / context.callbackBaseUrl
-        → GraphTraverser (START → AGENT[prompt+model] → END)
-        → workflow defaultPromptId + modelRouting/modelProviders → local Ollama /api/chat
-        → ReturnValue → queue return + UI callback
-        → WorkflowReturnResolver: metadata.returnVariable (or role=return), or userQuery / fallback when null
+    → OloKernelWorkflowImpl
+    → buildContextAndNotifyUi activity (context + UI "started" callback only)
+    → loop until traversal completes:
+        → executeTraversalStep activity per node ({@code id:label}, default)
+        → INLINE nodes without ACTIVITY kind run in the workflow loop
+    → reportWorkflowResult activity (return value + UI callback)
 ```
+
+`execution.executionModel` / `execution.executionKind` on each node control scheduling:
+
+| Model / kind | Temporal behavior |
+|--------------|-------------------|
+| unset or `ACTIVITY` | Dedicated `executeTraversalStep` activity per node |
+| `INLINE` + `executionKind: ACTIVITY` | Dedicated activity (e.g. dynamic graph planner LLM step) |
+| `INLINE` without `ACTIVITY` kind | Executed synchronously inside the workflow loop |
+
+Legacy synchronous entry (tests, direct API):
+
+```java
+String message = KernelEntryPoint.execute(queue, workflowInput, workflowRegistry);
+```
+
+This runs the same step engine in-process without separate Temporal activities.
 
 ## API
 

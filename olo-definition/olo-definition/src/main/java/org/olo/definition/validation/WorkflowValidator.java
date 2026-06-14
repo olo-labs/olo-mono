@@ -310,7 +310,9 @@ public final class WorkflowValidator {
         String type = node.getType();
         WorkflowReferenceDefinition workflow = node.getWorkflow();
 
-        if (NodeType.AGENT.value().equals(type) && workflow == null) {
+        if (NodeType.AGENT.value().equals(type)
+                && workflow == null
+                && !org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport.isDynamicGraphPlanner(node)) {
             errors.add("AGENT node " + nodeId + " requires a workflow reference (agent = workflow)");
         }
         if (NodeType.WORKFLOW_REF.value().equals(type) && workflow == null) {
@@ -381,6 +383,15 @@ public final class WorkflowValidator {
             return;
         }
         String nodeId = node.getId();
+        if (org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport.isDynamicGraphPlanner(node)) {
+            if (node.getExecutionModel() != ExecutionModel.INLINE) {
+                errors.add("dynamic graph planner AGENT node " + nodeId + " requires execution.executionModel INLINE");
+            }
+            if (node.getExecutionKind() != ExecutionKind.ACTIVITY) {
+                errors.add("dynamic graph planner AGENT node " + nodeId + " requires execution.executionKind ACTIVITY");
+            }
+            return;
+        }
         if (node.getExecutionModel() != ExecutionModel.CHILD_WORKFLOW) {
             errors.add("AGENT node " + nodeId + " requires execution.executionModel CHILD_WORKFLOW");
         }

@@ -1,0 +1,26 @@
+From: payment-service/src/main/java/com/olo/payment/PaymentRetryExecutor.java
+Merged-At: 2026-06-13T18:22:00Z
+Pull-Request: #839
+Title: Scale payment retry thread pool for peak traffic
+Author: dev-alice
+
+--- a/src/main/java/com/olo/payment/PaymentRetryExecutor.java
++++ b/src/main/java/com/olo/payment/PaymentRetryExecutor.java
+@@ -18,8 +18,8 @@ public class PaymentRetryExecutor {
+     private final PaymentGatewayClient gatewayClient;
+-    private static final int RETRY_POOL_SIZE = 16;
+-    private static final int RETRY_QUEUE_CAPACITY = 64;
++    private static final int RETRY_POOL_SIZE = 128;
++    private static final int RETRY_QUEUE_CAPACITY = 256;
+ 
+     public PaymentRetryExecutor(PaymentGatewayClient gatewayClient) {
+         this.gatewayClient = gatewayClient;
+@@ -41,6 +41,7 @@ public class PaymentRetryExecutor {
+         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+             try {
+                 return gatewayClient.charge(request);
++            } catch (ConnectionTimeoutException ex) {
++                log.warn("Gateway timeout on attempt {} for charge {}", attempt, request.id());
+             } catch (Exception ex) {
+                 lastError = ex;
+             }

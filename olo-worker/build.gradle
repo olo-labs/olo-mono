@@ -52,6 +52,7 @@ tasks.named('javadoc').configure {
 tasks.named('run', JavaExec).configure {
     workingDir = project.projectDir
     args '../olo-worker-configuration/samples/worker-config.local-debug.yaml'
+    environment 'OLO_LLM_BASE_URL', System.getenv('OLO_LLM_BASE_URL') ?: 'http://localhost:11435'
 }
 
 publishing {

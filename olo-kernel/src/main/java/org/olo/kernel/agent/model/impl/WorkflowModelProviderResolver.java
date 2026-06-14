@@ -44,6 +44,10 @@ public final class WorkflowModelProviderResolver implements ModelProviderResolve
     }
 
     private static String readBaseUrl(ModelProviderDefinition provider) {
+        String override = System.getenv("OLO_LLM_BASE_URL");
+        if (override != null && !override.isBlank()) {
+            return override.trim();
+        }
         Map<String, Object> configuration = provider.getConfiguration();
         if (configuration == null || configuration.isEmpty()) {
             return DEFAULT_BASE_URL;

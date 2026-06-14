@@ -17,10 +17,8 @@ server:
   host: "127.0.0.1"
   port: 8080
 workflowDefinitions:
-  # Same presets as olo-docker dev stack (dev/configuration/olo-configuration/default);
-  # source of truth in this repo: olo-definition/olo-configuration/default.
-  # Alternate: "../../../olo-docker/dev/configuration/olo-configuration/default"
-  scanFolder: "../../olo-definition/olo-configuration/default"
+  # Active pipeline JSON (same folder as olo backend OLO_CONFIGURATION_DIR and chat UI).
+  scanFolder: "../../olo-definition/olo-configuration/current-active"
   recursive: false
 temporal:
   namespace: "default"

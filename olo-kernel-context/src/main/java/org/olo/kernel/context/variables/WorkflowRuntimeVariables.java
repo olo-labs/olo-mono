@@ -31,6 +31,11 @@ public final class WorkflowRuntimeVariables {
         return new WorkflowRuntimeVariables(initial);
     }
 
+    public static WorkflowRuntimeVariables fromMap(Map<String, Object> values) {
+        Objects.requireNonNull(values, "values");
+        return new WorkflowRuntimeVariables(new LinkedHashMap<>(values));
+    }
+
     public boolean has(String name) {
         return values.containsKey(name);
     }

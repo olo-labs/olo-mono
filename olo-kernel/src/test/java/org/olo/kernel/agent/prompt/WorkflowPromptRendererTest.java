@@ -37,4 +37,30 @@ class WorkflowPromptRendererTest {
                         "Hello {message}", Map.of("message", "world")))
                 .isEqualTo("Hello world");
     }
+
+    @Test
+    void renderForNodeUsesInlineAgentPromptForNonPlannerAgents() {
+        WorkflowDefinition graph = WorkflowDefinition.builder()
+                .id("dynamic-graph-creation")
+                .defaultPromptId(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID)
+                .prompts(List.of(WorkflowPlannerPromptDefinition.builder()
+                        .id(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID)
+                        .name("planner")
+                        .promptTemplate("JSON ONLY {message}")
+                        .build()))
+                .build();
+        WorkflowRuntimeVariables variables = WorkflowRuntimeVariables.fromDefinition(graph);
+        variables.set("message", "Hello");
+
+        var agentNode = org.olo.definition.node.NodeDefinition.builder()
+                .id("greet")
+                .type("AGENT")
+                .build();
+
+        String rendered = renderer.renderForNode(graph, agentNode, variables);
+
+        assertThat(rendered).contains("Hello");
+        assertThat(rendered).contains("helpful assistant");
+        assertThat(rendered).doesNotContain("JSON ONLY");
+    }
 }

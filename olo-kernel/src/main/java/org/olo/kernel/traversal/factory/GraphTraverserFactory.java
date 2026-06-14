@@ -8,6 +8,7 @@ import org.olo.kernel.graph.validate.impl.DefaultGraphReadinessValidator;
 import org.olo.kernel.traversal.strategy.ExecutionStrategyRegistry;
 import org.olo.kernel.traversal.strategy.impl.ChildWorkflowExecutionStrategy;
 import org.olo.kernel.traversal.strategy.impl.ConditionalExecutionStrategy;
+import org.olo.kernel.traversal.strategy.impl.DynamicGraphExpansionExecutionStrategy;
 import org.olo.kernel.traversal.strategy.impl.LinearExecutionStrategy;
 import org.olo.kernel.traversal.strategy.impl.ParallelExecutionStrategy;
 import org.olo.kernel.agent.LlmInvocationService;
@@ -27,6 +28,7 @@ import org.olo.kernel.agent.prompt.impl.WorkflowPromptRenderer;
 import org.olo.kernel.traversal.GraphTraverser;
 import org.olo.kernel.traversal.context.ExecutionContextFactory;
 import org.olo.kernel.traversal.context.impl.KernelExecutionContextFactory;
+import org.olo.kernel.traversal.engine.GraphTraversalEngine;
 import org.olo.kernel.traversal.impl.DefaultGraphTraverser;
 import org.olo.kernel.traversal.input.WorkflowInputBinder;
 import org.olo.kernel.traversal.input.impl.MessageVariableInputBinder;
@@ -43,6 +45,7 @@ import org.olo.kernel.traversal.step.handler.impl.EndNodeTypeHandler;
 import org.olo.kernel.traversal.step.handler.impl.NodeTypeHandlerRegistry;
 import org.olo.kernel.traversal.step.handler.impl.SpiNodeTypeHandler;
 import org.olo.kernel.traversal.step.handler.impl.StartNodeTypeHandler;
+import org.olo.kernel.traversal.step.handler.impl.ToolNodeTypeHandler;
 import org.olo.kernel.traversal.step.impl.DefaultTraversalStepExecutor;
 
 import java.util.List;
@@ -56,15 +59,27 @@ public final class GraphTraverserFactory {
         return withLlmClient(new OllamaLlmClient());
     }
 
+    public static GraphTraversalEngine defaultEngine() {
+        return withLlmClientEngine(new OllamaLlmClient());
+    }
+
     public static GraphTraverser withLlmClient(LlmClient llmClient) {
+        return new DefaultGraphTraverser(withLlmClientEngine(llmClient));
+    }
+
+    private static GraphTraversalEngine withLlmClientEngine(LlmClient llmClient) {
         PromptRenderer promptRenderer = new WorkflowPromptRenderer();
         ModelProviderResolver modelProviderResolver = new WorkflowModelProviderResolver();
         LlmInvocationService llmInvocationService =
                 new DefaultLlmInvocationService(promptRenderer, modelProviderResolver, llmClient);
-        return build(llmInvocationService);
+        return buildEngine(llmInvocationService);
     }
 
     private static GraphTraverser build(LlmInvocationService llmInvocationService) {
+        return new DefaultGraphTraverser(buildEngine(llmInvocationService));
+    }
+
+    private static GraphTraversalEngine buildEngine(LlmInvocationService llmInvocationService) {
         ExecutionEngine executionEngine = ExecutionEngine.withDefaults();
         WorkflowInputBinder inputBinder = new MessageVariableInputBinder();
         StartNodeResolver startNodeResolver = new TypeStartNodeResolver();
@@ -72,6 +87,7 @@ public final class GraphTraverserFactory {
         ExecutionStrategyRegistry executionStrategyRegistry = new ExecutionStrategyRegistry(List.of(
                 new ParallelExecutionStrategy(),
                 new ConditionalExecutionStrategy(),
+                new DynamicGraphExpansionExecutionStrategy(),
                 new ChildWorkflowExecutionStrategy(),
                 new LinearExecutionStrategy()));
         ExecutionContextFactory executionContextFactory = new KernelExecutionContextFactory();
@@ -83,6 +99,7 @@ public final class GraphTraverserFactory {
         List<NodeTypeHandler> handlers = List.of(
                 new StartNodeTypeHandler(inputBinder),
                 new AgentNodeTypeHandler(agentExecutorRegistry),
+                new ToolNodeTypeHandler(executionEngine, executionContextFactory),
                 new EndNodeTypeHandler(),
                 new SpiNodeTypeHandler(
                         executionEngine,
@@ -92,7 +109,7 @@ public final class GraphTraverserFactory {
         NodeTypeHandlerRegistry handlerRegistry = new NodeTypeHandlerRegistry(handlers);
         TraversalStepExecutor stepExecutor = new DefaultTraversalStepExecutor(handlerRegistry, outputApplier);
 
-        return new DefaultGraphTraverser(
+        return new GraphTraversalEngine(
                 startNodeResolver,
                 readinessValidator,
                 stepExecutor,

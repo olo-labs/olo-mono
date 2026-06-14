@@ -1,0 +1,24 @@
+From: payment-service/src/main/java/com/olo/payment/PaymentGatewayClient.java
+Merged-At: 2026-06-13T22:05:00Z
+Pull-Request: #842
+Title: Reduce payment gateway connect timeout
+Author: dev-bob
+
+--- a/src/main/java/com/olo/payment/PaymentGatewayClient.java
++++ b/src/main/java/com/olo/payment/PaymentGatewayClient.java
+@@ -12,7 +12,7 @@ public class PaymentGatewayClient {
+ 
+-    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+-    private static final Duration READ_TIMEOUT = Duration.ofSeconds(10);
++    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(1);
++    private static final Duration READ_TIMEOUT = Duration.ofSeconds(3);
+ 
+     public ChargeResult charge(ChargeRequest request) {
+         HttpRequest httpRequest = HttpRequest.newBuilder()
+@@ -24,7 +24,6 @@ public class PaymentGatewayClient {
+                 .build();
+ 
+-        // TODO: add circuit breaker once gateway SLO dashboard is wired
+         HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+         return parseChargeResponse(response);
+     }

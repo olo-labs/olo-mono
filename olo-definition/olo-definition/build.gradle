@@ -39,6 +39,7 @@ jar {
 
 def samplesDir = rootProject.layout.projectDirectory.dir('samples')
 def configurationDir = rootProject.layout.projectDirectory.dir('olo-configuration/default')
+def dynamicGraphCreationDir = rootProject.layout.projectDirectory.dir('olo-configuration/dynamic-graph-creation')
 
 tasks.register('generateSamples', Test) {
     group = 'build'
@@ -66,14 +67,29 @@ tasks.register('generateConfiguration', Test) {
     }
 }
 
+tasks.register('generateDynamicGraphCreation', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/dynamic-graph-creation preset via DynamicGraphCreationRegenerationTest'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.dynamicGraphCreation.configuration.dir', dynamicGraphCreationDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.dynamicgraphcreation.DynamicGraphCreationRegenerationTest'
+    }
+}
+
 tasks.named('test', Test) {
     dependsOn generateSamples, generateConfiguration
     workingDir = rootProject.projectDir
     systemProperty 'olo.samples.dir', samplesDir.asFile.absolutePath
     systemProperty 'olo.configuration.dir', configurationDir.asFile.absolutePath
+    systemProperty 'olo.dynamicGraphCreation.configuration.dir', dynamicGraphCreationDir.asFile.absolutePath
     filter {
         excludeTestsMatching 'org.olo.definition.samples.SampleWorkflowRegenerationTest'
         excludeTestsMatching 'org.olo.definition.configuration.DefaultConfigurationRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.dynamicgraphcreation.DynamicGraphCreationRegenerationTest'
     }
 }
 

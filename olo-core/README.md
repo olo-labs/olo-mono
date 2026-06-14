@@ -22,7 +22,7 @@ ExecutionEngine engine = Core.defaultEngine();
 | Gradle project | Published artifact | Contents |
 |----------------|-------------------|----------|
 | `nodes` | `olo-core-nodes` | `PromptNode`, `AgentNode`, `ParallelNode`, `LoopNode`, `SwitchNode`, `ApprovalNode` |
-| `tools` | `olo-core-tools` | `HttpTool`, `CalculatorTool`, `WebSearchTool` |
+| `tools` | `olo-core-tools` | `HttpTool`, `CalculatorTool`, `WebSearchTool`, `LogReaderTool`, `CpuUsageTool`, `MemoryUsageTool`, `NumericMetricTool`, `RecentlyChangedCodeTool` |
 | `hooks` | `olo-core-hooks` | `LoggingHook`, `MetricsHook`, `TracingHook` |
 | `runtime` | `olo-core-runtime` | `ExecutionEngine`, `NodeRegistry`, `ToolRegistry`, `HookRegistry` |
 | `core` | **`olo-core`** | Aggregator — depend on this for everything |

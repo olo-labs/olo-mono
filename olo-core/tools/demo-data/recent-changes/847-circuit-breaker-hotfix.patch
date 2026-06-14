@@ -1,0 +1,46 @@
+From: payment-service/src/main/java/com/olo/payment/CircuitBreakerRegistry.java
+Merged-At: 2026-06-14T15:10:00Z
+Pull-Request: #847
+Title: Hotfix — add circuit breaker for payment gateway
+Author: dev-carol
+
+--- /dev/null
++++ b/src/main/java/com/olo/payment/CircuitBreakerRegistry.java
+@@ -0,0 +1,38 @@
++package com.olo.payment;
++
++import java.time.Duration;
++
++public final class CircuitBreakerRegistry {
++
++    private static final int FAILURE_THRESHOLD = 5;
++    private static final Duration OPEN_WINDOW = Duration.ofSeconds(30);
++
++    private int consecutiveFailures;
++    private long openedAtEpochMs;
++    private State state = State.CLOSED;
++
++    public enum State { CLOSED, OPEN, HALF_OPEN }
++
++    public synchronized State recordFailure() {
++        consecutiveFailures++;
++        if (consecutiveFailures >= FAILURE_THRESHOLD) {
++            state = State.OPEN;
++            openedAtEpochMs = System.currentTimeMillis();
++        }
++        return state;
++    }
++
++    public synchronized State recordSuccess() {
++        consecutiveFailures = 0;
++        state = State.CLOSED;
++        return state;
++    }
++
++    public synchronized boolean allowsCall() {
++        if (state != State.OPEN) {
++            return true;
++        }
++        return System.currentTimeMillis() - openedAtEpochMs > OPEN_WINDOW.toMillis();
++    }
++}

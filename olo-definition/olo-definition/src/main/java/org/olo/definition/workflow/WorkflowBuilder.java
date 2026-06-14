@@ -352,6 +352,15 @@ public final class WorkflowBuilder {
         return this;
     }
 
+    /** Replaces the working edge list (used when dynamically rewriting graph connectivity). */
+    public WorkflowBuilder replaceEdges(List<EdgeDefinition> replacementEdges) {
+        edges.clear();
+        if (replacementEdges != null) {
+            edges.addAll(replacementEdges);
+        }
+        return this;
+    }
+
     public WorkflowBuilder connect(String sourceNodeId, String targetNodeId) {
         return connect(sourceNodeId, null, targetNodeId, null);
     }

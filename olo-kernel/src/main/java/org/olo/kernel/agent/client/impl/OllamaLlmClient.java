@@ -78,8 +78,15 @@ public final class OllamaLlmClient implements LlmClient {
             Thread.currentThread().interrupt();
             throw new KernelException("LLM request interrupted for model " + modelCall.model(), e);
         } catch (Exception e) {
+            String detail = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
             throw new KernelException(
-                    "LLM request failed for model " + modelCall.model() + " at " + modelCall.baseUrl(),
+                    "LLM request failed for model "
+                            + modelCall.model()
+                            + " at "
+                            + modelCall.baseUrl()
+                            + ": "
+                            + detail
+                            + " (is Ollama running? try: ollama serve)",
                     e);
         }
     }

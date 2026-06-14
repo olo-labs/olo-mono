@@ -1,5 +1,6 @@
 package org.olo.kernel.agent.impl;
 
+import org.olo.definition.node.NodeDefinition;
 import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.agent.LlmInvocationResult;
 import org.olo.kernel.agent.LlmInvocationService;
@@ -26,10 +27,11 @@ public final class DefaultLlmInvocationService implements LlmInvocationService {
     }
 
     @Override
-    public LlmInvocationResult invoke(KernelRuntimeContext context) {
+    public LlmInvocationResult invoke(KernelRuntimeContext context, NodeDefinition node) {
         Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(node, "node");
         ResolvedModelCall modelCall = modelProviderResolver.resolve(context.getGraph());
-        String renderedPrompt = promptRenderer.render(context.getGraph(), context.getVariables());
+        String renderedPrompt = promptRenderer.renderForNode(context.getGraph(), node, context.getVariables());
         String response = llmClient.complete(modelCall, renderedPrompt);
         return new LlmInvocationResult(modelCall, renderedPrompt, response);
     }
