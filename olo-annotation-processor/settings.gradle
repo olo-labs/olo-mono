@@ -4,5 +4,9 @@ plugins {
 
 rootProject.name = 'olo-annotation-processor'
 
-includeBuild('../olo-annotation')
-includeBuild('../olo-spi')
+gradle.beforeProject { p ->
+    def publishDir = gradle.startParameter.projectProperties['oloPublishBuildDir']
+    if (publishDir != null && p.path == ':') {
+        p.layout.buildDirectory.set(p.layout.projectDirectory.dir(publishDir))
+    }
+}

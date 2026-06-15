@@ -2,6 +2,8 @@ plugins {
     id 'base'
 }
 
+apply from: rootProject.file('../gradle/olo-mono-repo.gradle')
+
 allprojects {
     group = 'org.olo'
     version = '0.1.0-SNAPSHOT'
@@ -20,6 +22,7 @@ subprojects {
     }
 
     repositories {
+        configureOloMonoRepositories(repositories)
         mavenCentral()
         mavenLocal()
     }

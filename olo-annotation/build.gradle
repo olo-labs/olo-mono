@@ -21,6 +21,9 @@ repositories {
     mavenCentral()
 }
 
+apply from: rootProject.file('../gradle/olo-mono-repo.gradle')
+configureOloMonoPublishing(project)
+
 dependencies {
     api 'org.olo:olo-spi:0.1.0-SNAPSHOT'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'

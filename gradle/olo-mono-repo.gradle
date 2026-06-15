@@ -1,0 +1,51 @@
+// Shared local Maven repo for olo-spi, olo-annotation, olo-annotation-processor.
+// Libraries publish here; consumers resolve from here instead of includeBuild (avoids Windows jar locks).
+
+ext.resolveOloMonoRoot = { File startDir ->
+    def dir = startDir
+    while (dir != null) {
+        if (new File(dir, 'olo-spi').isDirectory() && new File(dir, 'olo-annotation').isDirectory()) {
+            return dir
+        }
+        def nested = new File(dir, 'olo-mono')
+        if (nested.isDirectory()
+                && new File(nested, 'olo-spi').isDirectory()
+                && new File(nested, 'olo-annotation').isDirectory()) {
+            return nested
+        }
+        dir = dir.parentFile
+    }
+    return null
+}
+
+if (!rootProject.ext.has('oloMonoRoot')) {
+    rootProject.ext.oloMonoRoot = resolveOloMonoRoot(rootProject.projectDir)
+    rootProject.ext.oloMonoMavenRepo = rootProject.ext.oloMonoRoot != null
+            ? new File(rootProject.ext.oloMonoRoot, 'build/repo')
+            : null
+}
+
+ext.configureOloMonoPublishing = { Project p ->
+    def repo = rootProject.ext.oloMonoMavenRepo
+    if (repo == null) {
+        return
+    }
+    p.publishing {
+        repositories {
+            maven {
+                name = 'oloMono'
+                url = repo
+            }
+        }
+    }
+}
+
+ext.configureOloMonoRepositories = { RepositoryHandler repos ->
+    def repo = rootProject.ext.oloMonoMavenRepo
+    if (repo != null) {
+        repos.maven {
+            name = 'oloMono'
+            url = repo
+        }
+    }
+}

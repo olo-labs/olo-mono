@@ -24,6 +24,12 @@ if errorlevel 1 (
     exit /b 1
 )
 
+call "%~dp0..\publish-libs.bat"
+if errorlevel 1 (
+    pause
+    exit /b 1
+)
+
 call gradlew.bat run
 pause
 exit /b %ERRORLEVEL%

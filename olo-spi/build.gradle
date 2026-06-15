@@ -20,6 +20,9 @@ repositories {
     mavenCentral()
 }
 
+apply from: rootProject.file('../gradle/olo-mono-repo.gradle')
+configureOloMonoPublishing(project)
+
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.11.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'

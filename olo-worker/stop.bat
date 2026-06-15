@@ -3,6 +3,8 @@ REM Copyright (c) 2026 Olo Labs
 REM SPDX-License-Identifier: Apache-2.0
 setlocal enabledelayedexpansion
 
+cd /d "%~dp0"
+
 echo.
 echo Stopping OLO Temporal worker (port 8080)...
 set FOUND=0
@@ -16,6 +18,10 @@ if !FOUND!==0 (
 ) else (
   echo Worker stopped.
 )
+
+echo Stopping worker Gradle daemons...
+if exist gradlew.bat call gradlew.bat --stop >nul 2>&1
+
 echo.
 if not defined NONINTERACTIVE pause
 endlocal

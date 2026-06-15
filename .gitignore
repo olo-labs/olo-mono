@@ -1,6 +1,7 @@
 .idea
 */samples/*/*.json
 */samples/*/*.yaml
+.build
 build
 .gradle
 .gradle

@@ -3,3 +3,10 @@ plugins {
 }
 
 rootProject.name = 'olo-annotation'
+
+gradle.beforeProject { p ->
+    def publishDir = gradle.startParameter.projectProperties['oloPublishBuildDir']
+    if (publishDir != null && p.path == ':') {
+        p.layout.buildDirectory.set(p.layout.projectDirectory.dir(publishDir))
+    }
+}

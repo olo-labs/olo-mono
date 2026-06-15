@@ -10,6 +10,9 @@ repositories {
     mavenCentral()
 }
 
+apply from: rootProject.file('../gradle/olo-mono-repo.gradle')
+configureOloMonoRepositories(repositories)
+
 dependencies {
     api 'org.olo:olo-spi:0.1.0-SNAPSHOT'
     api 'org.olo:olo-annotation:0.1.0-SNAPSHOT'

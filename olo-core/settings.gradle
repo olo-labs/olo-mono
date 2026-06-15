@@ -4,10 +4,6 @@ plugins {
 
 rootProject.name = 'olo-core-build'
 
-includeBuild('../olo-spi')
-includeBuild('../olo-annotation')
-includeBuild('../olo-annotation-processor')
-
 include 'nodes'
 include 'tools'
 include 'hooks'

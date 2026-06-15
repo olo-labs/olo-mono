@@ -64,6 +64,29 @@ export OLO_WORKER_CONFIG_PATH=../olo-worker-configuration/samples/worker-config.
 
 When the worker runs **inside Docker** on `olo-net`, set `OLO_CHAT_CALLBACK_BASE_URL=http://olo:7080` on the `olo` service and use Temporal target `temporal:7233` in worker config.
 
+### Windows: `Unable to delete ... olo-annotation.jar` / `olo-spi.jar`
+
+Composite builds share the same `olo-spi` and `olo-annotation` jar outputs. On Windows, a running **olo backend** (`bootRun` on port 7080), **olo-worker**, or their Gradle daemons can lock those jars and block IDE or Gradle rebuilds.
+
+1. Stop services: `stop.bat` (worker) and `..\..\olo\stop.bat` (backend), or run `Restart.Bat` from the repo root.
+2. Release daemon locks: `unlock-build.bat` in this directory (stops Gradle daemons for worker, olo, and olo-ui `olo-be`).
+3. Retry the build or IDE run.
+
+`stop.bat` now runs `gradlew --stop` automatically after killing the worker on port 8080.
+
+### Shared library jars (`olo-spi`, `olo-annotation`, `olo-annotation-processor`)
+
+These modules publish to **`olo-mono/build/repo`** (local Maven layout). Downstream projects (`olo-core`, `olo-definition`, `olo` backend) consume from that repo instead of composite `includeBuild`, so concurrent Gradle runs no longer fight over the same `build/libs/*.jar` on Windows.
+
+After changing library sources:
+
+```bash
+cd olo-mono
+./publish-libs.sh   # or publish-libs.bat on Windows
+```
+
+`start.bat` runs `publish-libs.bat` before `gradlew run`. For IDE runs, publish once (or after lib edits). Later this repo can be replaced with `mavenLocal()` or a remote Maven repository without changing consumer coordinates.
+
 ## Logging
 
 Bootstrap logs each step (`Step 1/4` … `Step 4/4`). On failure, the log includes what failed and how to fix it (config path, scan folder, Temporal target). Set `org.slf4j.simpleLogger.defaultLogLevel=debug` for more detail.

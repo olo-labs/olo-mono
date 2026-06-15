@@ -21,6 +21,10 @@ repositories {
     mavenLocal()
 }
 
+apply from: rootProject.file('../gradle/olo-mono-repo.gradle')
+configureOloMonoPublishing(project)
+configureOloMonoRepositories(repositories)
+
 dependencies {
     implementation 'org.olo:olo-annotation:0.1.0-SNAPSHOT'
     compileOnly 'org.olo:olo-spi:0.1.0-SNAPSHOT'
