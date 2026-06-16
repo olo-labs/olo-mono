@@ -3,6 +3,9 @@ package org.olo.worker;
 import io.temporal.worker.WorkerFactory;
 import org.olo.bootstrap.OloBootstrap;
 import org.olo.bootstrap.registry.WorkflowDefinitionRegistry;
+import org.olo.definition.node.NodeDefinition;
+import org.olo.definition.workflow.WorkflowDefinition;
+import org.olo.kernel.traversal.scheduling.NodeActivityNaming;
 import org.olo.worker.config.WorkerConfigurationProvider;
 import org.olo.worker.config.WorkerSettings;
 import org.olo.worker.temporal.TemporalWorkerFactory;
@@ -83,6 +86,7 @@ public final class WorkerBootstrap {
     public static void shutdown() {
         synchronized (WorkerBootstrap.class) {
             log.info("Shutting down OLO worker");
+            WorkerRefreshMonitor.stop();
             stopTemporalWorkers();
             context = null;
             WorkerConfigurationProvider.reset();
@@ -141,6 +145,7 @@ public final class WorkerBootstrap {
                     "Step 3/4 complete: loaded {} workflow(s) across {} queue(s)",
                     registry.getWorkflows().size(),
                     registry.getWorkflowsByQueue().size());
+            logLoadedNodeActivityNames(registry);
             return registry;
         } catch (RuntimeException e) {
             log.error(WorkerBootstrapStep.WORKFLOW_REGISTRY.failureMessage() + " scanFolder=" + scanFolder, e);
@@ -183,6 +188,26 @@ public final class WorkerBootstrap {
             log.info("Stopping existing Temporal worker factory");
             workerFactory.shutdown();
             workerFactory = null;
+        }
+    }
+
+    private static void logLoadedNodeActivityNames(WorkflowDefinitionRegistry registry) {
+        for (WorkflowDefinition workflow : registry.getWorkflowsByQueue().values()) {
+            if (workflow.getNodes() == null || workflow.getNodes().isEmpty()) {
+                continue;
+            }
+            StringBuilder names = new StringBuilder();
+            for (NodeDefinition node : workflow.getNodes()) {
+                if (!names.isEmpty()) {
+                    names.append(", ");
+                }
+                names.append(NodeActivityNaming.formatNode(node));
+            }
+            log.info(
+                    "Loaded workflow queue={} id={} nodeActivities=[{}]",
+                    workflow.getQueue(),
+                    workflow.getId(),
+                    names);
         }
     }
 }

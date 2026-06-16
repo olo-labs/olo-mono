@@ -91,7 +91,7 @@ public final class GraphTraversalEngine {
 
         NodeDefinition node = index.findNode(currentNodeId)
                 .orElseThrow(() -> new KernelException("workflow graph node not found: " + currentNodeId));
-        TraversalDiagnostics.logStepEnter(step, node.getId(), node.getType(), context.getVariableMap());
+        TraversalDiagnostics.logStepEnter(step, node, context.getVariableMap());
 
         NodeResult result = stepExecutor.execute(context, node, step);
         if (result.status() == NodeStatus.FAILED) {

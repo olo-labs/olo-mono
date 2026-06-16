@@ -43,6 +43,32 @@ class NodeActivityNamingTest {
     }
 
     @Test
+    void formatsNodeUsingNodeLabel() {
+        NodeDefinition node = NodeDefinition.builder()
+                .id("agent")
+                .type("AGENT")
+                .label("Architect Agent1")
+                .build();
+
+        assertThat(NodeActivityNaming.formatNode(node)).isEqualTo("agent:Architect Agent1");
+    }
+
+    @Test
+    void formatsNodeUsingNodeLabelOverCapabilityName() {
+        NodeDefinition node = NodeDefinition.builder()
+                .id("graph-planner")
+                .type("AGENT")
+                .label("Custom planner")
+                .capability(CapabilityDefinition.builder()
+                        .name("Graph Planner")
+                        .description("Plans workflow graphs")
+                        .build())
+                .build();
+
+        assertThat(NodeActivityNaming.formatNode(node)).isEqualTo("graph-planner:Custom planner");
+    }
+
+    @Test
     void formatsToolNodeUsingToolId() {
         NodeDefinition node = NodeDefinition.builder()
                 .id("read-logs")

@@ -37,6 +37,10 @@ public final class NodeActivityNaming {
     }
 
     static String resolveLabel(NodeDefinition node) {
+        if (node.getLabel() != null && !node.getLabel().isBlank()) {
+            return node.getLabel().trim();
+        }
+
         CapabilityDefinition capability = node.getCapability();
         if (capability != null && capability.getName() != null && !capability.getName().isBlank()) {
             return capability.getName().trim();

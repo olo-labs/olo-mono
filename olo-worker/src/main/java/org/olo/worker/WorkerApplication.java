@@ -21,6 +21,7 @@ public final class WorkerApplication {
         try {
             configureWorkerConfig(args);
             WorkerRuntimeContext context = WorkerBootstrap.start();
+            WorkerRefreshMonitor.start(context.settings());
             log.info(
                     "OLO worker running: id={}, workflows={}, temporal={}",
                     context.settings().id(),
@@ -31,6 +32,7 @@ public final class WorkerApplication {
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 log.info("Shutdown signal received");
+                WorkerRefreshMonitor.stop();
                 WorkerBootstrap.shutdown();
             }, "olo-worker-shutdown"));
             Thread.currentThread().join();

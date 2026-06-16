@@ -2,10 +2,10 @@
   "id" : "architect",
   "enabled" : false,
   "isDefault" : true,
-  "label" : "Architect",
+  "label" : "Architect Agent",
   "role" : "Architect",
   "shortDescription" : "System design and architecture guidance",
-  "emoji" : "🏗️",
+  "emoji" : "\uD83C\uDFD7️",
   "designer" : {
     "paletteGroup" : "Agents",
     "searchKeywords" : [ "architect" ],
@@ -97,7 +97,8 @@
     },
     "reads" : [ ],
     "writes" : [ ],
-    "configuration" : { }
+    "configuration" : { },
+    "label" : "Arcitect Agent1"
   }, {
     "id" : "end",
     "type" : "END",

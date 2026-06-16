@@ -36,6 +36,7 @@ public final class NodeDefinition {
 
     private final String id;
     private final String type;
+    private final String label;
     private final CapabilityDefinition capability;
     private final List<PortDefinition> ports;
     private final NodeExecutionDefinition execution;
@@ -47,6 +48,7 @@ public final class NodeDefinition {
     private NodeDefinition(Builder builder) {
         this.id = builder.id;
         this.type = builder.type;
+        this.label = builder.label;
         this.capability = builder.capability;
         this.ports = builder.ports == null ? List.of() : List.copyOf(builder.ports);
         this.execution = builder.execution;
@@ -68,6 +70,11 @@ public final class NodeDefinition {
 
     public String getType() {
         return type;
+    }
+
+    /** Canvas / studio display name for this node instance. */
+    public String getLabel() {
+        return label;
     }
 
     public CapabilityDefinition getCapability() {
@@ -173,6 +180,7 @@ public final class NodeDefinition {
         }
         return Objects.equals(id, that.id)
                 && Objects.equals(type, that.type)
+                && Objects.equals(label, that.label)
                 && Objects.equals(capability, that.capability)
                 && Objects.equals(ports, that.ports)
                 && Objects.equals(execution, that.execution)
@@ -184,7 +192,7 @@ public final class NodeDefinition {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, type, capability, ports, execution, reads, writes, configuration, hooks);
+        return Objects.hash(id, type, label, capability, ports, execution, reads, writes, configuration, hooks);
     }
 
     @Override
@@ -197,6 +205,7 @@ public final class NodeDefinition {
 
         private String id;
         private String type;
+        private String label;
         private CapabilityDefinition capability;
         private List<PortDefinition> ports;
         private NodeExecutionDefinition execution;
@@ -217,6 +226,11 @@ public final class NodeDefinition {
 
         public Builder type(NodeType type) {
             this.type = type == null ? null : type.value();
+            return this;
+        }
+
+        public Builder label(String label) {
+            this.label = label;
             return this;
         }
 

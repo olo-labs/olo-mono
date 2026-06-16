@@ -169,15 +169,15 @@
   "defaultPromptId" : "default-prompt",
   "extensions" : [ ],
   "metadata" : {
-    "description" : "Learn concepts step by step",
-    "returnVariable" : "ReturnValue",
     "role" : "teacher",
+    "returnVariable" : "ReturnValue",
+    "description" : "Learn concepts step by step",
     "plannerContext" : {
-      "selectedVariables" : [ "message" ],
-      "injectCapabilities" : false,
-      "injectAgents" : false,
+      "selectedTools" : [ ],
       "selectedAgents" : [ ],
-      "selectedTools" : [ ]
+      "injectAgents" : false,
+      "injectCapabilities" : false,
+      "selectedVariables" : [ "message" ]
     }
   }
 }

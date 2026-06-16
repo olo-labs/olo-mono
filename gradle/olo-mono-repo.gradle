@@ -19,7 +19,12 @@ ext.resolveOloMonoRoot = { File startDir ->
 }
 
 if (!rootProject.ext.has('oloMonoRoot')) {
-    rootProject.ext.oloMonoRoot = resolveOloMonoRoot(rootProject.projectDir)
+    def parentDir = rootProject.layout.projectDirectory.dir('..').asFile
+    if (new File(parentDir, 'olo-spi').isDirectory() && new File(parentDir, 'olo-annotation').isDirectory()) {
+        rootProject.ext.oloMonoRoot = parentDir
+    } else {
+        rootProject.ext.oloMonoRoot = resolveOloMonoRoot(rootProject.projectDir)
+    }
     rootProject.ext.oloMonoMavenRepo = rootProject.ext.oloMonoRoot != null
             ? new File(rootProject.ext.oloMonoRoot, 'build/repo')
             : null

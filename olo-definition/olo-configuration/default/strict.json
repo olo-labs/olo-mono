@@ -169,15 +169,15 @@
   "defaultPromptId" : "default-prompt",
   "extensions" : [ ],
   "metadata" : {
-    "description" : "Precise, rule-following responses",
-    "returnVariable" : "ReturnValue",
     "role" : "strict",
+    "returnVariable" : "ReturnValue",
+    "description" : "Precise, rule-following responses",
     "plannerContext" : {
-      "selectedVariables" : [ "message" ],
-      "injectCapabilities" : false,
-      "injectAgents" : false,
+      "selectedTools" : [ ],
       "selectedAgents" : [ ],
-      "selectedTools" : [ ]
+      "injectAgents" : false,
+      "injectCapabilities" : false,
+      "selectedVariables" : [ "message" ]
     }
   }
 }

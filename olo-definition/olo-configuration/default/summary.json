@@ -169,15 +169,15 @@
   "defaultPromptId" : "default-prompt",
   "extensions" : [ ],
   "metadata" : {
-    "description" : "Brief summaries and key points",
-    "returnVariable" : "ReturnValue",
     "role" : "summary",
+    "returnVariable" : "ReturnValue",
+    "description" : "Brief summaries and key points",
     "plannerContext" : {
-      "selectedVariables" : [ "message" ],
-      "injectCapabilities" : false,
-      "injectAgents" : false,
+      "selectedTools" : [ ],
       "selectedAgents" : [ ],
-      "selectedTools" : [ ]
+      "injectAgents" : false,
+      "injectCapabilities" : false,
+      "selectedVariables" : [ "message" ]
     }
   }
 }

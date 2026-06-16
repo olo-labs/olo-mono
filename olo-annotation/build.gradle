@@ -19,10 +19,14 @@ java {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url = rootProject.layout.projectDirectory.dir('../build/repo')
+    }
 }
 
 apply from: rootProject.file('../gradle/olo-mono-repo.gradle')
 configureOloMonoPublishing(project)
+configureOloMonoRepositories(repositories)
 
 dependencies {
     api 'org.olo:olo-spi:0.1.0-SNAPSHOT'

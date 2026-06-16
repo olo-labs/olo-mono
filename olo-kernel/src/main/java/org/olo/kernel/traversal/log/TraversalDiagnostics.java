@@ -1,11 +1,13 @@
 package org.olo.kernel.traversal.log;
 
+import org.olo.definition.node.NodeDefinition;
 import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.context.output.ExecutionOutput;
 import org.olo.kernel.agent.LlmInvocationResult;
 import org.olo.kernel.traversal.strategy.ExecutionDecision;
 import org.olo.spi.node.NodeResult;
 import org.olo.spi.node.NodeStatus;
+import org.olo.kernel.traversal.scheduling.NodeActivityNaming;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,16 +27,22 @@ public final class TraversalDiagnostics {
     private TraversalDiagnostics() {
     }
 
-    public static void logContextReady(KernelRuntimeContext context, String primaryInputMessage) {
+    public static void logContextReady(
+            KernelRuntimeContext context, String primaryInputMessage, String nextActivityName) {
         log.info(
                 "Traversal context ready: queue={}, workflowId={}, version={}, graphReady={}, "
-                        + "primaryInputMessage={}, variables={}",
+                        + "nextActivityName={}, primaryInputMessage={}, variables={}",
                 context.getQueue(),
                 context.getGraph().getId(),
                 context.getGraph().getVersion(),
                 context.isGraphReady(),
+                nextActivityName,
                 formatValue(primaryInputMessage),
                 context.getVariableMap());
+    }
+
+    public static void logContextReady(KernelRuntimeContext context, String primaryInputMessage) {
+        logContextReady(context, primaryInputMessage, null);
     }
 
     public static void logTraversalStart(
@@ -46,6 +54,24 @@ public final class TraversalDiagnostics {
                 nodeCount,
                 edgeCount,
                 startNodeId);
+    }
+
+    public static void logStepEnter(int step, NodeDefinition node, Map<String, Object> variables) {
+        log.info(
+                "Traversal step {} enter: nodeId={}, nodeType={}, nodeLabel={}, activityName={}, variables={}",
+                step,
+                node.getId(),
+                node.getType(),
+                resolveNodeLabel(node),
+                NodeActivityNaming.formatNode(node),
+                variables);
+    }
+
+    private static String resolveNodeLabel(NodeDefinition node) {
+        if (node.getLabel() != null && !node.getLabel().isBlank()) {
+            return node.getLabel().trim();
+        }
+        return null;
     }
 
     public static void logStepEnter(int step, String nodeId, String nodeType, Map<String, Object> variables) {

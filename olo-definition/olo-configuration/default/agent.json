@@ -73,36 +73,20 @@
   },
   "state" : { },
   "parameters" : {
-    "temperature" : {
-      "type" : "number",
-      "label" : "Temperature",
-      "description" : "Sampling temperature",
-      "defaultValue" : 0.2,
-      "required" : false,
+    "model" : {
+      "type" : "string",
+      "label" : "Model",
+      "description" : "Model identifier",
+      "defaultValue" : "",
+      "required" : true,
       "validation" : {
-        "minimum" : 0.0,
-        "maximum" : 2.0,
-        "step" : 0.1
+        "minLength" : 1
       },
       "ui" : {
-        "widget" : "SLIDER",
+        "widget" : "MODEL_SELECTOR",
         "group" : "Model Settings",
-        "help" : "Higher values increase response creativity.",
-        "order" : 3
-      }
-    },
-    "systemPrompt" : {
-      "type" : "string",
-      "label" : "System Prompt",
-      "description" : "System prompt for the agent",
-      "defaultValue" : "",
-      "required" : false,
-      "ui" : {
-        "widget" : "TEXTAREA",
-        "group" : "Model Settings",
-        "help" : "Optional instructions that shape agent behavior.",
-        "placeholder" : "You are a helpful assistant…",
-        "order" : 0
+        "help" : "LLM used for agent reasoning.",
+        "order" : 2
       }
     },
     "maxIterations" : {
@@ -123,20 +107,36 @@
         "order" : 1
       }
     },
-    "model" : {
+    "systemPrompt" : {
       "type" : "string",
-      "label" : "Model",
-      "description" : "Model identifier",
+      "label" : "System Prompt",
+      "description" : "System prompt for the agent",
       "defaultValue" : "",
-      "required" : true,
+      "required" : false,
+      "ui" : {
+        "widget" : "TEXTAREA",
+        "group" : "Model Settings",
+        "help" : "Optional instructions that shape agent behavior.",
+        "placeholder" : "You are a helpful assistant…",
+        "order" : 0
+      }
+    },
+    "temperature" : {
+      "type" : "number",
+      "label" : "Temperature",
+      "description" : "Sampling temperature",
+      "defaultValue" : 0.2,
+      "required" : false,
       "validation" : {
-        "minLength" : 1
+        "minimum" : 0.0,
+        "maximum" : 2.0,
+        "step" : 0.1
       },
       "ui" : {
-        "widget" : "MODEL_SELECTOR",
+        "widget" : "SLIDER",
         "group" : "Model Settings",
-        "help" : "LLM used for agent reasoning.",
-        "order" : 2
+        "help" : "Higher values increase response creativity.",
+        "order" : 3
       }
     }
   },
@@ -268,18 +268,18 @@
   "defaultPromptId" : "default-prompt",
   "extensions" : [ ],
   "metadata" : {
-    "role" : "agent",
-    "agentSelectionStrategy" : "dynamic",
-    "planningStrategy" : "react",
-    "plannerContext" : {
-      "selectedVariables" : [ "message" ],
-      "injectCapabilities" : false,
-      "injectAgents" : true,
-      "selectedAgents" : [ "planner", "reviewer", "architect" ],
-      "selectedTools" : [ ]
-    },
-    "description" : "Autonomous tool-using agent",
+    "returnVariable" : "ReturnValue",
     "agentType" : "autonomous",
-    "returnVariable" : "ReturnValue"
+    "description" : "Autonomous tool-using agent",
+    "plannerContext" : {
+      "selectedTools" : [ ],
+      "selectedAgents" : [ "planner", "reviewer", "architect" ],
+      "injectAgents" : true,
+      "injectCapabilities" : false,
+      "selectedVariables" : [ "message" ]
+    },
+    "planningStrategy" : "react",
+    "role" : "agent",
+    "agentSelectionStrategy" : "dynamic"
   }
 }

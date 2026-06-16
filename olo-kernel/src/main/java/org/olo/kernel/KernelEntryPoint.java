@@ -86,9 +86,13 @@ public final class KernelEntryPoint {
             throw new KernelException("workflow graph is not ready for queue: " + queue);
         }
 
-        TraversalDiagnostics.logContextReady(context, WorkflowInputMessages.primaryMessage(context.getInput()));
         UiCallbackReporter.reportContextReady(context);
-        return KernelExecutionSnapshot.fromContext(context);
+        KernelExecutionSnapshot snapshot = KernelExecutionSnapshot.fromContext(context);
+        TraversalDiagnostics.logContextReady(
+                context,
+                WorkflowInputMessages.primaryMessage(context.getInput()),
+                snapshot.getNextActivityName());
+        return snapshot;
     }
 
     /**
@@ -155,9 +159,13 @@ public final class KernelEntryPoint {
         if (!context.isGraphReady()) {
             throw new KernelException("workflow graph is not ready for queue: " + queue);
         }
-        TraversalDiagnostics.logContextReady(context, WorkflowInputMessages.primaryMessage(context.getInput()));
         UiCallbackReporter.reportContextReady(context);
-        return KernelExecutionSnapshot.fromContext(context);
+        KernelExecutionSnapshot snapshot = KernelExecutionSnapshot.fromContext(context);
+        TraversalDiagnostics.logContextReady(
+                context,
+                WorkflowInputMessages.primaryMessage(context.getInput()),
+                snapshot.getNextActivityName());
+        return snapshot;
     }
 
     private static void requireRunning(KernelExecutionSnapshot snapshot) {

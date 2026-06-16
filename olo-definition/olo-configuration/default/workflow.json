@@ -163,14 +163,14 @@
   "defaultPromptId" : "default-prompt",
   "extensions" : [ ],
   "metadata" : {
-    "plannerContext" : {
-      "selectedVariables" : [ "message" ],
-      "injectCapabilities" : false,
-      "injectAgents" : false,
-      "selectedAgents" : [ ],
-      "selectedTools" : [ ]
-    },
+    "description" : "Smallest valid OLO workflow: passes input through to output.",
     "returnVariable" : "ReturnValue",
-    "description" : "Smallest valid OLO workflow: passes input through to output."
+    "plannerContext" : {
+      "selectedTools" : [ ],
+      "selectedAgents" : [ ],
+      "injectAgents" : false,
+      "injectCapabilities" : false,
+      "selectedVariables" : [ "message" ]
+    }
   }
 }

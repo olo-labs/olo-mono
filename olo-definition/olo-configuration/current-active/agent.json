@@ -5,7 +5,7 @@
   "label" : "Agent",
   "role" : "Agent",
   "shortDescription" : "Autonomous tool-using agent",
-  "emoji" : "🤖",
+  "emoji" : "\uD83E\uDD16",
   "designer" : {
     "paletteGroup" : "Agents",
     "searchKeywords" : [ "planning", "task", "agent" ],
@@ -80,8 +80,8 @@
       "defaultValue" : 0.2,
       "required" : false,
       "validation" : {
-        "minimum" : 0.0,
-        "maximum" : 2.0,
+        "minimum" : 0,
+        "maximum" : 2,
         "step" : 0.1
       },
       "ui" : {
@@ -112,9 +112,9 @@
       "defaultValue" : 10,
       "required" : false,
       "validation" : {
-        "minimum" : 1.0,
-        "maximum" : 100.0,
-        "step" : 1.0
+        "minimum" : 1,
+        "maximum" : 100,
+        "step" : 1
       },
       "ui" : {
         "widget" : "NUMBER",
@@ -162,6 +162,7 @@
   }, {
     "id" : "agent",
     "type" : "AGENT",
+    "label" : "Agent3",
     "ports" : [ {
       "id" : "in",
       "name" : "in",

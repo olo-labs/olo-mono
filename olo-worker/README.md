@@ -96,3 +96,15 @@ Bootstrap logs each step (`Step 1/4` … `Step 4/4`). On failure, the log includ
 ```java
 WorkerRuntimeContext refreshed = WorkerBootstrap.start(true);
 ```
+
+### Studio UI refresh button (Redis)
+
+olo-ui **Refresh** in the workflow builder calls `POST /api/v1/worker/refresh` on **olo-be**, which writes a new token to Redis key **`olo:worker:refresh`** (override with `olo.worker.refresh-key` / `OLO_WORKER_REFRESH_KEY`).
+
+When `cache.enabled: true` in worker config, **olo-worker** polls that key every 2s (`OLO_WORKER_REFRESH_POLL_MS` to override). On value change it calls `WorkerBootstrap.start(true)` — reloading worker configuration, workflow definitions, and Temporal task queues without restarting the JVM.
+
+Requirements:
+
+- Redis reachable from **olo-be** (studio API) and **olo-worker**
+- Worker config `cache.enabled: true` with matching `host` / `port`
+- Same Redis key on both sides (default `olo:worker:refresh`)

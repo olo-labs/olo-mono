@@ -47,4 +47,26 @@ class NodeDefinitionSerializationTest {
         assertThat(router.getRouters()).hasSize(1);
         assertThat(router.getRouters().get(0).getTargetPort()).isEqualTo("a");
     }
+
+    @Test
+    void roundTripsNodeLabel() throws Exception {
+        WorkflowDefinition workflow = WorkflowBuilder.create("Label Test")
+                .id("label-test")
+                .capability(ValidationTestFixtures.minimalCapability())
+                .inputNode("input")
+                .addNode(ValidationTestFixtures.node("agent", NodeType.AGENT)
+                        .label("Reasoning agent")
+                        .build())
+                .outputNode("output")
+                .connect("input", "agent")
+                .connect("agent", "output")
+                .build();
+
+        WorkflowDefinition restored = json.deserialize(json.serialize(workflow));
+        NodeDefinition agent = restored.getNodes().stream()
+                .filter(n -> "agent".equals(n.getId()))
+                .findFirst()
+                .orElseThrow();
+        assertThat(agent.getLabel()).isEqualTo("Reasoning agent");
+    }
 }
