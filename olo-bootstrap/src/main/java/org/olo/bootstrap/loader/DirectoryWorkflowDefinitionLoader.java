@@ -53,13 +53,12 @@ public final class DirectoryWorkflowDefinitionLoader {
             List<CachedWorkflowDefinition> workflows = new ArrayList<>();
             Map<String, String> idVersionLocations = new HashMap<>();
             Map<String, String> defaultLocations = new HashMap<>();
-            Map<String, String> queueLocations = new HashMap<>();
 
             try (Stream<Path> paths = listWorkflowFiles(scanFolder, recursive)) {
                 List<Path> files = paths.sorted(Comparator.comparing(p -> p.getFileName().toString())).toList();
                 for (Path file : files) {
                     CachedWorkflowDefinition cached = loadFile(file);
-                    validateUniqueIndexes(cached, idVersionLocations, defaultLocations, queueLocations);
+                    validateUniqueIndexes(cached, idVersionLocations, defaultLocations);
                     workflows.add(cached);
                 }
             }
@@ -112,8 +111,7 @@ public final class DirectoryWorkflowDefinitionLoader {
     private static void validateUniqueIndexes(
             CachedWorkflowDefinition cached,
             Map<String, String> idVersionLocations,
-            Map<String, String> defaultLocations,
-            Map<String, String> queueLocations) {
+            Map<String, String> defaultLocations) {
         WorkflowDefinition definition = cached.getDefinition();
         String location = cached.getSourcePath();
 
@@ -130,23 +128,6 @@ public final class DirectoryWorkflowDefinitionLoader {
                     throw new BootstrapException("duplicate default workflow for id '" + definition.getId()
                             + "' at " + location + " and " + previousDefault);
                 }
-            }
-        }
-
-        if (definition.getQueue() != null && !definition.getQueue().isBlank()) {
-            String queue = definition.getQueue();
-            String workflowId = definition.getId();
-            String previousOwnerId = queueLocations.get(queue);
-            if (previousOwnerId != null
-                    && workflowId != null
-                    && !workflowId.isBlank()
-                    && !workflowId.equals(previousOwnerId)) {
-                throw new BootstrapException("duplicate workflow queue '" + queue
-                        + "' for workflow ids '" + workflowId + "' and '" + previousOwnerId
-                        + "' at " + location);
-            }
-            if (workflowId != null && !workflowId.isBlank()) {
-                queueLocations.put(queue, workflowId);
             }
         }
     }

@@ -1,5 +1,6 @@
 package org.olo.annotation.processor;
 
+import org.olo.annotation.OloCanvasPorts;
 import org.olo.annotation.OloHook;
 import org.olo.annotation.OloNode;
 import org.olo.annotation.OloPort;
@@ -92,6 +93,9 @@ final class ExtensionCatalogValidator {
                 "tool id",
                 globalId,
                 toolIds);
+        valid &= validatePorts(typeElement, "inputs", annotation.inputs());
+        valid &= validatePorts(typeElement, "outputs", annotation.outputs());
+        valid &= requireCanvasPorts(typeElement, annotation.canvasPorts(), annotation.inputs(), annotation.outputs());
         valid &= validateProperties(
                 typeElement, annotation.arguments(), annotation.configuration());
         valid &= validateContractSchemas(
@@ -119,6 +123,9 @@ final class ExtensionCatalogValidator {
                 "hook implementation id",
                 globalId,
                 hookIds);
+        valid &= validatePorts(typeElement, "inputs", annotation.inputs());
+        valid &= validatePorts(typeElement, "outputs", annotation.outputs());
+        valid &= requireCanvasPorts(typeElement, annotation.canvasPorts(), annotation.inputs(), annotation.outputs());
         return valid;
     }
 
@@ -250,6 +257,26 @@ final class ExtensionCatalogValidator {
             }
         }
         return valid;
+    }
+
+    private boolean requireCanvasPorts(
+            TypeElement typeElement,
+            OloCanvasPorts profile,
+            OloPort[] inputs,
+            OloPort[] outputs) {
+        boolean hasExplicit = (inputs != null && inputs.length > 0) || (outputs != null && outputs.length > 0);
+        if (hasExplicit) {
+            return true;
+        }
+        if (profile == null || profile == OloCanvasPorts.NONE) {
+            fail(
+                    typeElement,
+                    "OLO-AP-009",
+                    "Declare canvasPorts or explicit inputs/outputs for graph components on "
+                            + typeElement.getQualifiedName());
+            return false;
+        }
+        return true;
     }
 
     private boolean validateProperties(TypeElement typeElement, OloProperty[]... propertyLists) {

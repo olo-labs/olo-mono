@@ -12,5 +12,7 @@ public final class WorkflowPresetDescriptor {
 
     public String id;
     public DesignerDescriptor designer;
+    public List<PortDescriptor> inputs = new ArrayList<>();
+    public List<PortDescriptor> outputs = new ArrayList<>();
     public List<ParameterDescriptor> parameters = new ArrayList<>();
 }

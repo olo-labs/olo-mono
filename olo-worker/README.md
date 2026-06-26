@@ -64,19 +64,21 @@ export OLO_WORKER_CONFIG_PATH=../olo-worker-configuration/samples/worker-config.
 
 When the worker runs **inside Docker** on `olo-net`, set `OLO_CHAT_CALLBACK_BASE_URL=http://olo:7080` on the `olo` service and use Temporal target `temporal:7233` in worker config.
 
-### Windows: `Unable to delete ... olo-annotation.jar` / `olo-spi.jar`
+### Windows: `Unable to delete ... olo-definition.jar` / shared library jars
 
-Composite builds share the same `olo-spi` and `olo-annotation` jar outputs. On Windows, a running **olo backend** (`bootRun` on port 7080), **olo-worker**, or their Gradle daemons can lock those jars and block IDE or Gradle rebuilds.
+Composite builds used to share the same `olo-definition` and `olo-workflow-input` jar outputs between **olo-worker** and **olo backend**, which causes Windows file-lock failures. Those modules now publish to **`olo-mono/build/repo`** and are consumed as Maven dependencies (same pattern as `olo-spi` / `olo-annotation`).
+
+If a build still fails with “Unable to delete … jar”:
 
 1. Stop services: `stop.bat` (worker) and `..\..\olo\stop.bat` (backend), or run `Restart.Bat` from the repo root.
 2. Release daemon locks: `unlock-build.bat` in this directory (stops Gradle daemons for worker, olo, and olo-ui `olo-be`).
-3. Retry the build or IDE run.
+3. Run `..\publish-libs.bat`, then retry the build or IDE run.
 
-`stop.bat` now runs `gradlew --stop` automatically after killing the worker on port 8080.
+`stop.bat` runs `gradlew --stop` automatically after killing the worker on port 8080.
 
-### Shared library jars (`olo-spi`, `olo-annotation`, `olo-annotation-processor`)
+### Shared library jars (`olo-spi`, `olo-annotation`, `olo-annotation-processor`, `olo-definition`, `olo-workflow-input`)
 
-These modules publish to **`olo-mono/build/repo`** (local Maven layout). Downstream projects (`olo-core`, `olo-definition`, `olo` backend) consume from that repo instead of composite `includeBuild`, so concurrent Gradle runs no longer fight over the same `build/libs/*.jar` on Windows.
+These modules publish to **`olo-mono/build/repo`** (local Maven layout). Downstream projects (`olo-core`, `olo-worker`, `olo` backend) consume from that repo instead of composite `includeBuild`, so concurrent Gradle runs no longer fight over the same `build/libs/*.jar` on Windows.
 
 After changing library sources:
 

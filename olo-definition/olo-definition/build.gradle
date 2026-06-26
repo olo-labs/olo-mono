@@ -11,6 +11,7 @@ repositories {
 }
 
 apply from: rootProject.file('../gradle/olo-mono-repo.gradle')
+configureOloMonoPublishing(project)
 configureOloMonoRepositories(repositories)
 
 dependencies {

@@ -28,7 +28,7 @@ class OloBootstrapTest {
 
         assertThat(registry.getWorkflows()).hasSize(12);
         assertThat(registry.findById("agent")).isPresent();
-        assertThat(registry.findByQueue("agent")).isPresent();
+        assertThat(registry.findById("agent")).isPresent();
 
         WorkflowDefinition agent = registry.findById("agent").orElseThrow();
         assertThat(agent.getVersion()).isEqualTo("1.0.0");

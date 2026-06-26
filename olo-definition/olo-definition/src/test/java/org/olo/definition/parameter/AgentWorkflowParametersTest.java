@@ -3,6 +3,7 @@ package org.olo.definition.parameter;
 import org.olo.definition.runtime.AgentDelegationPolicy;
 import org.olo.definition.planner.AgentAvailableAgents;
 import org.olo.definition.planner.WorkflowPlannerMetadata;
+import org.olo.definition.planner.WorkflowPlannerPromptDefinition;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.validation.ValidationTestFixtures;
 import org.olo.definition.validation.WorkflowValidator;
@@ -37,7 +38,7 @@ class AgentWorkflowParametersTest {
         assertThat(workflow.getParameters().get(AgentWorkflowParameters.TEMPERATURE).getDefaultValue())
                 .isEqualTo(0.2);
         assertThat(workflow.getParameters().get(AgentWorkflowParameters.SYSTEM_PROMPT).getDefaultValue())
-                .isEqualTo("");
+                .isEqualTo(WorkflowPlannerPromptDefinition.forPreset("agent").getPromptTemplate());
 
         WorkflowParameterDefinition temperature =
                 workflow.getParameters().get(AgentWorkflowParameters.TEMPERATURE);

@@ -7,7 +7,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -23,6 +25,10 @@ public final class DesignerDefinition {
     private final NodeSizeDefinition nodeSize;
     private final Boolean resizable;
     private final Boolean draggable;
+    private final LayoutDesignerDefinition layout;
+    private final CanvasDesignerDefinition canvas;
+    private final Map<String, String> portColors;
+    private final Map<String, NodeTypeDesignerDefinition> nodeTypes;
 
     private DesignerDefinition(Builder builder) {
         this.paletteGroup = builder.paletteGroup;
@@ -32,6 +38,10 @@ public final class DesignerDefinition {
         this.nodeSize = builder.nodeSize;
         this.resizable = builder.resizable;
         this.draggable = builder.draggable;
+        this.layout = builder.layout;
+        this.canvas = builder.canvas;
+        this.portColors = builder.portColors == null ? Map.of() : Map.copyOf(builder.portColors);
+        this.nodeTypes = builder.nodeTypes == null ? Map.of() : Map.copyOf(builder.nodeTypes);
     }
 
     public static Builder builder() {
@@ -58,6 +68,22 @@ public final class DesignerDefinition {
         return draggable;
     }
 
+    public LayoutDesignerDefinition getLayout() {
+        return layout;
+    }
+
+    public CanvasDesignerDefinition getCanvas() {
+        return canvas;
+    }
+
+    public Map<String, String> getPortColors() {
+        return portColors;
+    }
+
+    public Map<String, NodeTypeDesignerDefinition> getNodeTypes() {
+        return nodeTypes;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -70,12 +96,25 @@ public final class DesignerDefinition {
                 && Objects.equals(searchKeywords, that.searchKeywords)
                 && Objects.equals(nodeSize, that.nodeSize)
                 && Objects.equals(resizable, that.resizable)
-                && Objects.equals(draggable, that.draggable);
+                && Objects.equals(draggable, that.draggable)
+                && Objects.equals(layout, that.layout)
+                && Objects.equals(canvas, that.canvas)
+                && Objects.equals(portColors, that.portColors)
+                && Objects.equals(nodeTypes, that.nodeTypes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(paletteGroup, searchKeywords, nodeSize, resizable, draggable);
+        return Objects.hash(
+                paletteGroup,
+                searchKeywords,
+                nodeSize,
+                resizable,
+                draggable,
+                layout,
+                canvas,
+                portColors,
+                nodeTypes);
     }
 
     @JsonPOJOBuilder(withPrefix = "")
@@ -86,6 +125,10 @@ public final class DesignerDefinition {
         private NodeSizeDefinition nodeSize;
         private Boolean resizable;
         private Boolean draggable;
+        private LayoutDesignerDefinition layout;
+        private CanvasDesignerDefinition canvas;
+        private Map<String, String> portColors;
+        private Map<String, NodeTypeDesignerDefinition> nodeTypes;
 
         public Builder paletteGroup(String paletteGroup) {
             this.paletteGroup = paletteGroup;
@@ -159,6 +202,26 @@ public final class DesignerDefinition {
 
         public Builder draggable(Boolean draggable) {
             this.draggable = draggable;
+            return this;
+        }
+
+        public Builder layout(LayoutDesignerDefinition layout) {
+            this.layout = layout;
+            return this;
+        }
+
+        public Builder canvas(CanvasDesignerDefinition canvas) {
+            this.canvas = canvas;
+            return this;
+        }
+
+        public Builder portColors(Map<String, String> portColors) {
+            this.portColors = portColors == null ? null : new LinkedHashMap<>(portColors);
+            return this;
+        }
+
+        public Builder nodeTypes(Map<String, NodeTypeDesignerDefinition> nodeTypes) {
+            this.nodeTypes = nodeTypes == null ? null : new LinkedHashMap<>(nodeTypes);
             return this;
         }
 

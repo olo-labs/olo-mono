@@ -32,9 +32,7 @@ class DirectoryWorkflowDefinitionLoaderTest {
         assertThat(registry.findById("fast")).get()
                 .extracting(definition -> definition.getVersion())
                 .isEqualTo("1.0.0");
-        assertThat(registry.findByQueue("fast")).get()
-                .extracting(definition -> definition.getVersion())
-                .isEqualTo("1.0.0");
+        assertThat(registry.findByQueue("oloQueue2")).isPresent();
         assertThat(registry.findByIdAndVersion("fast", "9.9.9")).get()
                 .extracting(definition -> definition.getVersion())
                 .isEqualTo("1.0.0");
@@ -52,16 +50,18 @@ class DirectoryWorkflowDefinitionLoaderTest {
     }
 
     @Test
-    void rejectsDuplicateQueueForDifferentWorkflowIds(@TempDir Path scanFolder) throws Exception {
+    void allowsSharedQueueForDifferentWorkflowIds(@TempDir Path scanFolder) throws Exception {
         String fastJson = readPreset("fast.json");
         Files.writeString(scanFolder.resolve("fast.json"), fastJson);
         Files.writeString(
                 scanFolder.resolve("planner.json"),
-                readPreset("planner.json").replaceFirst("\"queue\" : \"planner\"", "\"queue\" : \"fast\""));
+                readPreset("planner.json").replaceFirst("\"queue\" : \"oloQueue1\"", "\"queue\" : \"oloQueue2\""));
 
-        assertThatThrownBy(() -> loader.load(scanFolder, false))
-                .isInstanceOf(BootstrapException.class)
-                .hasMessageContaining("duplicate workflow queue 'fast'");
+        WorkflowDefinitionRegistry registry = loader.load(scanFolder, false);
+
+        assertThat(registry.findByQueue("oloQueue2")).isPresent();
+        assertThat(registry.resolve("oloQueue2", "fast")).isPresent();
+        assertThat(registry.resolve("oloQueue2", "planner")).isPresent();
     }
 
     private static String readPreset(String fileName) throws Exception {

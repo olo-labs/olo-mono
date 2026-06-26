@@ -143,6 +143,8 @@ public class OloWorkflowPresetProcessor extends AbstractProcessor {
         entry.id = preset.id();
 
         entry.designer = DesignerPopulator.from(preset.designer(), "", new String[0]);
+        entry.inputs = CatalogPortPopulator.resolveInputs(preset.inputs(), preset.canvasPorts());
+        entry.outputs = CatalogPortPopulator.resolveOutputs(preset.outputs(), preset.canvasPorts());
 
         for (OloWorkflowParameter parameter : preset.parameters()) {
 

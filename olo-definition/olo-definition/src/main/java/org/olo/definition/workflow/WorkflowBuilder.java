@@ -13,7 +13,6 @@ import org.olo.spi.runtime.RuntimeCapability;
 import org.olo.definition.runtime.WorkflowRuntimeDefinition;
 import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.model.ModelProviderDefinition;
-import org.olo.definition.planner.WorkflowPlannerPromptDefinition;
 import org.olo.definition.model.ModelRoutingDefinition;
 import org.olo.definition.human.HumanApprovalDefinition;
 import org.olo.definition.input.WorkflowInputDefinition;
@@ -22,6 +21,8 @@ import org.olo.definition.node.NodeType;
 import org.olo.definition.port.PortDefinition;
 import org.olo.definition.port.PortDirection;
 import org.olo.definition.port.PortUiDefinition;
+import org.olo.definition.port.PortUiPosition;
+import org.olo.definition.port.PortWireType;
 import org.olo.definition.parameter.AgentWorkflowParameters;
 import org.olo.definition.parameter.WorkflowParameterDefinition;
 import org.olo.definition.runtime.AgentDelegationPolicy;
@@ -45,6 +46,17 @@ import java.util.Objects;
  */
 public final class WorkflowBuilder {
 
+    private static final String MESSAGE_PORT_COLOR = "#ef4444";
+    private static final String CAPABILITIES_PORT_COLOR = "#22c55e";
+    private static final String AGENT_PLUG_PORT_COLOR = "#a855f7";
+    private static final String MESSAGE_INPUT_PORT_LABEL = "message in";
+    private static final String MESSAGE_OUTPUT_PORT_LABEL = "message out";
+    private static final String MESSAGE_INPUT_PORT_DESCRIPTION = "Incoming workflow message";
+    private static final String MESSAGE_OUTPUT_PORT_DESCRIPTION = "Outgoing workflow message";
+    private static final int CANVAS_LAYOUT_X = 80;
+    private static final int CANVAS_LAYOUT_Y = 80;
+    private static final int CANVAS_LAYOUT_COL_WIDTH = 360;
+
     public static final String RETURN_VARIABLE_METADATA_KEY = "returnVariable";
     public static final String RETURN_VARIABLE_NAME = "ReturnValue";
     public static final String RETURN_VARIABLE_ROLE = "return";
@@ -58,8 +70,6 @@ public final class WorkflowBuilder {
     private final List<VariableDefinition> variables = new ArrayList<>();
     private final List<ModelProviderDefinition> modelProviders = new ArrayList<>();
     private final List<ModelRoutingDefinition> modelRouting = new ArrayList<>();
-    private final List<WorkflowPlannerPromptDefinition> prompts = new ArrayList<>();
-    private String defaultPromptId;
     private final List<ExtensionDefinition> extensions = new ArrayList<>();
     private final List<ToolDefinition> tools = new ArrayList<>();
     private final List<AgentDefinition> agents = new ArrayList<>();
@@ -116,8 +126,6 @@ public final class WorkflowBuilder {
         builder.variables.addAll(existing.getVariables());
         builder.modelProviders.addAll(existing.getModelProviders());
         builder.modelRouting.addAll(existing.getModelRouting());
-        builder.prompts.addAll(existing.getPrompts());
-        builder.defaultPromptId = existing.getDefaultPromptId();
         builder.extensions.addAll(existing.getExtensions());
         builder.tools.addAll(existing.getTools());
         builder.agents.addAll(existing.getAgents());
@@ -283,6 +291,7 @@ public final class WorkflowBuilder {
                 .type(NodeType.TOOL)
                 .addPort(defaultPort("in", "in", PortDirection.INPUT))
                 .addPort(defaultPort("out", "out", PortDirection.OUTPUT))
+                .addPort(pluginPort("capabilities", PortWireType.CAPABILITIES, PortDirection.OUTPUT))
                 .build());
     }
 
@@ -311,6 +320,8 @@ public final class WorkflowBuilder {
                 .executionKind(ExecutionKind.SUBWORKFLOW)
                 .executionModel(ExecutionModel.CHILD_WORKFLOW)
                 .addPort(defaultPort("in", "in", PortDirection.INPUT))
+                .addPort(pluginPort("capabilities", PortWireType.CAPABILITIES, PortDirection.INPUT))
+                .addPort(pluginPort("agentPlug", PortWireType.AGENT_PLUG, PortDirection.INPUT))
                 .addPort(defaultPort("out", "out", PortDirection.OUTPUT));
         if (subtype != null) {
             node.subtype(subtype);
@@ -419,31 +430,6 @@ public final class WorkflowBuilder {
         return this;
     }
 
-    public WorkflowBuilder plannerPrompt(WorkflowPlannerPromptDefinition prompt) {
-        Objects.requireNonNull(prompt, "prompt is required");
-        prompts.add(prompt);
-        return this;
-    }
-
-    public WorkflowBuilder defaultPromptId(String defaultPromptId) {
-        this.defaultPromptId = defaultPromptId;
-        return this;
-    }
-
-    /** Default workflow-level planner prompts for the agent preset. */
-    public WorkflowBuilder agentPlannerPrompts() {
-        plannerPrompt(WorkflowPlannerPromptDefinition.agentDefault());
-        defaultPromptId(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID);
-        return this;
-    }
-
-    /** Default planner prompt for a workflow preset id. */
-    public WorkflowBuilder presetPlannerPrompts(String presetId) {
-        plannerPrompt(WorkflowPlannerPromptDefinition.forPreset(presetId));
-        defaultPromptId(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID);
-        return this;
-    }
-
     public WorkflowBuilder withMessageInput() {
         if (!inputs.containsKey(WorkflowPresetInfrastructure.MESSAGE_VARIABLE)) {
             input(
@@ -499,7 +485,33 @@ public final class WorkflowBuilder {
                                 .build())
                 .endNode("end")
                 .connect("start", "out", "agent", "in")
-                .connect("agent", "out", "end", "in");
+                .connect("agent", "out", "end", "in")
+                .nodeCanvasLayout("start", 0)
+                .nodeCanvasLayout("agent", 1)
+                .nodeCanvasLayout("end", 2);
+    }
+
+    /**
+     * Studio canvas position for a node already added to this builder ({@code configuration.designer.position}).
+     */
+    public WorkflowBuilder nodeCanvasLayout(String nodeId, int columnIndex) {
+        Objects.requireNonNull(nodeId, "nodeId is required");
+        for (int i = 0; i < nodes.size(); i++) {
+            NodeDefinition node = nodes.get(i);
+            if (!node.getId().equals(nodeId)) {
+                continue;
+            }
+            Map<String, Object> configuration = new LinkedHashMap<>(node.getConfiguration());
+            configuration.put("designer", designerLayout(columnIndex));
+            nodes.set(i, nodeWithConfiguration(node, configuration));
+            return this;
+        }
+        throw new IllegalArgumentException("unknown node id for canvas layout: " + nodeId);
+    }
+
+    /** Message wire port used by Studio presets (labels, color, cardinality). */
+    public static PortDefinition messagePort(String id, PortDirection direction) {
+        return defaultPort(id, id, direction);
     }
 
     public WorkflowBuilder extension(ExtensionDefinition extension) {
@@ -577,9 +589,20 @@ public final class WorkflowBuilder {
                 .defaultTimeout("PT10M");
     }
 
-    /** Agent tuning parameters ({@link AgentWorkflowParameters}). */
-    public WorkflowBuilder agentParameters() {
+    /** Agent tuning parameters with catalog defaults ({@code systemPrompt} = {@code {message}}). */
+    public WorkflowBuilder baselineAgentParameters() {
         AgentWorkflowParameters.defaults().forEach(this::parameter);
+        return this;
+    }
+
+    /** Agent tuning parameters for the {@code agent} preset. */
+    public WorkflowBuilder agentParameters() {
+        return agentParameters("agent");
+    }
+
+    /** Agent tuning parameters with a preset-specific system prompt default. */
+    public WorkflowBuilder agentParameters(String presetId) {
+        AgentWorkflowParameters.forPreset(presetId).forEach(this::parameter);
         return this;
     }
 
@@ -674,8 +697,6 @@ public final class WorkflowBuilder {
         delegate.variables(List.copyOf(variables));
         delegate.modelProviders(List.copyOf(modelProviders));
         delegate.modelRouting(List.copyOf(modelRouting));
-        delegate.prompts(List.copyOf(prompts));
-        delegate.defaultPromptId(defaultPromptId);
         delegate.extensions(List.copyOf(extensions));
         delegate.tools(List.copyOf(tools));
         delegate.agents(List.copyOf(agents));
@@ -712,12 +733,84 @@ public final class WorkflowBuilder {
     }
 
     private static PortDefinition defaultPort(String id, String name, PortDirection direction) {
-        return PortDefinition.builder()
+        String label = direction == PortDirection.INPUT ? MESSAGE_INPUT_PORT_LABEL : MESSAGE_OUTPUT_PORT_LABEL;
+        String wireType = PortWireType.MESSAGE.wireName();
+        PortDefinition.Builder builder = PortDefinition.builder()
                 .id(id)
-                .name(name)
-                .schema("any")
+                .label(label)
+                .shortDescription(direction == PortDirection.INPUT
+                        ? MESSAGE_INPUT_PORT_DESCRIPTION
+                        : MESSAGE_OUTPUT_PORT_DESCRIPTION)
+                .schema(wireType)
+                .type(wireType)
                 .direction(direction)
-                .ui(PortUiDefinition.forDirection(direction))
-                .build();
+                .ui(PortUiDefinition.builder()
+                        .position(PortUiPosition.defaultFor(direction))
+                        .color(MESSAGE_PORT_COLOR)
+                        .build());
+        if (direction == PortDirection.INPUT) {
+            builder.acceptType(wireType)
+                    .required(true)
+                    .minConnections(1)
+                    .maxConnections(1);
+        } else {
+            builder.required(false).minConnections(0);
+        }
+        return builder.build();
+    }
+
+    private static PortDefinition pluginPort(String id, PortWireType wireType, PortDirection direction) {
+        PortUiPosition position = switch (id) {
+            case "capabilities" -> direction == PortDirection.INPUT ? PortUiPosition.BOTTOM : PortUiPosition.TOP;
+            case "agentPlug" -> direction == PortDirection.INPUT ? PortUiPosition.BOTTOM : PortUiPosition.TOP;
+            default -> direction == PortDirection.INPUT ? PortUiPosition.BOTTOM : PortUiPosition.TOP;
+        };
+        String color = wireType == PortWireType.CAPABILITIES ? CAPABILITIES_PORT_COLOR : AGENT_PLUG_PORT_COLOR;
+        String label = wireType == PortWireType.CAPABILITIES ? "available tools" : "available agents";
+        String description = direction == PortDirection.INPUT
+                ? (wireType == PortWireType.CAPABILITIES
+                        ? "Tools and hooks registered for runtime prompt assembly (0 or more)"
+                        : "Child workflows registered for runtime prompt assembly (0 or more)")
+                : (wireType == PortWireType.CAPABILITIES
+                        ? "Capability indicator for runtime prompt assembly on a connected agent"
+                        : "Child workflow indicator for runtime prompt assembly on a connected agent");
+        PortDefinition.Builder builder = PortDefinition.builder()
+                .id(id)
+                .label(label)
+                .shortDescription(description)
+                .schema(wireType.wireName())
+                .type(wireType.wireName())
+                .direction(direction)
+                .ui(PortUiDefinition.builder().position(position).color(color).build())
+                .required(false)
+                .minConnections(0);
+        if (direction == PortDirection.INPUT) {
+            builder.acceptType(wireType.wireName());
+        }
+        return builder.build();
+    }
+
+    private static Map<String, Object> designerLayout(int columnIndex) {
+        return Map.of(
+                "position",
+                Map.of("x", CANVAS_LAYOUT_X + columnIndex * CANVAS_LAYOUT_COL_WIDTH, "y", CANVAS_LAYOUT_Y));
+    }
+
+    private static NodeDefinition nodeWithConfiguration(
+            NodeDefinition node, Map<String, Object> configuration) {
+        NodeDefinition.Builder builder = NodeDefinition.builder()
+                .id(node.getId())
+                .type(node.getType())
+                .label(node.getLabel())
+                .capability(node.getCapability())
+                .ports(node.getPorts())
+                .reads(node.getReads())
+                .writes(node.getWrites())
+                .configuration(configuration)
+                .hooks(node.getHooks());
+        if (node.getExecution() != null) {
+            builder.execution(node.getExecution());
+        }
+        return builder.build();
     }
 }

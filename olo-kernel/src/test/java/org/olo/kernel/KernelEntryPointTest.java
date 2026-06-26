@@ -5,6 +5,8 @@ import org.olo.bootstrap.OloBootstrap;
 import org.olo.bootstrap.registry.WorkflowDefinitionRegistry;
 import org.olo.kernel.input.WorkflowInputMessages;
 
+import org.olo.input.model.WorkflowInput;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,12 +23,19 @@ class KernelEntryPointTest {
         }
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false);
-        String payload = Files.readString(
+        WorkflowInput baseInput = WorkflowInput.fromJson(Files.readString(
                 Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
                         .toAbsolutePath()
-                        .normalize());
+                        .normalize()));
+        WorkflowInput input = baseInput.toBuilder()
+                .routing(new org.olo.input.model.Routing(
+                        "agent",
+                        baseInput.getRouting().getTransactionType(),
+                        baseInput.getRouting().getTransactionId(),
+                        baseInput.getRouting().getConfigVersion()))
+                .build();
 
-        String result = KernelEntryPoint.execute("agent", payload, registry);
+        String result = KernelEntryPoint.execute("oloQueue2", input, registry);
 
         assertThat(result).doesNotContain("child workflow dispatch pending");
         assertThat(result).isNotEqualTo(WorkflowInputMessages.MISSING_MESSAGE_RESPONSE);

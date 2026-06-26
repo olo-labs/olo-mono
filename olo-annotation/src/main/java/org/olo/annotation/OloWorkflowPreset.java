@@ -21,5 +21,17 @@ public @interface OloWorkflowPreset {
     /** Studio palette, search, and canvas defaults for this workflow preset. */
     OloDesigner designer() default @OloDesigner;
 
+    /**
+     * Ports for delegate-agent graph nodes created from this preset.
+     * Defaults to {@link OloCanvasPorts#AGENT_PLUGIN}.
+     */
+    OloCanvasPorts canvasPorts() default OloCanvasPorts.AGENT_PLUGIN;
+
+    /** Explicit canvas inputs; overrides {@link #canvasPorts()} when non-empty. */
+    OloPort[] inputs() default {};
+
+    /** Explicit canvas outputs; overrides {@link #canvasPorts()} when non-empty. */
+    OloPort[] outputs() default {};
+
     OloWorkflowParameter[] parameters() default {};
 }

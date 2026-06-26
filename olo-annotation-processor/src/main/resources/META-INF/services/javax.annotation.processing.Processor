@@ -1,2 +1,3 @@
 org.olo.annotation.processor.OloExtensionCatalogProcessor
 org.olo.annotation.processor.OloWorkflowPresetProcessor
+org.olo.annotation.processor.OloWorkflowTypeProcessor

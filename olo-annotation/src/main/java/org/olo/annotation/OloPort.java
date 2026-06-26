@@ -23,6 +23,14 @@ public @interface OloPort {
 
     boolean required() default false;
 
+    /** Minimum edges that must attach to this port (inputs only). */
+    int minConnections() default 0;
+
+    /**
+     * Maximum edges allowed ({@code -1} = unlimited). Planner host ports use {@code 0} / unlimited for plugins.
+     */
+    int maxConnections() default -1;
+
     /** Help text shown under the port label in the workflow editor. */
     String description() default "";
 

@@ -16,7 +16,10 @@ java {
     withSourcesJar()
 }
 
+apply from: rootProject.file('../gradle/olo-mono-repo.gradle')
+
 repositories {
+    configureOloMonoRepositories(repositories)
     mavenCentral()
     mavenLocal()
 }

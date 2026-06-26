@@ -8,8 +8,8 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import java.util.Objects;
 
 /**
- * Workflow-level planner prompt template referenced by agent nodes via {@code promptRef}.
- * Placeholders resolve against workflow {@code variables[]}, not embedded parameters.
+ * Role-specific default prompt templates for workflow presets.
+ * Persisted at runtime via {@code parameters.systemPrompt} or node {@code configuration.promptTemplate}.
  */
 @JsonDeserialize(builder = WorkflowPlannerPromptDefinition.Builder.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -17,15 +17,6 @@ import java.util.Objects;
 public final class WorkflowPlannerPromptDefinition {
 
     public static final String DEFAULT_PROMPT_ID = "default-prompt";
-
-    public static final String DEFAULT_PROMPT_TEMPLATE =
-            """
-            You are a research planner.
-
-            Investigate {message}.
-
-            Use available capabilities when needed.
-            Delegate work when another agent is more suitable.""";
 
     private final String id;
     private final String name;
@@ -45,6 +36,11 @@ public final class WorkflowPlannerPromptDefinition {
         return forPreset("agent");
     }
 
+    /** Maps on-disk preset file names to prompt preset ids (e.g. {@code workflow.json} → {@code minimal-echo}). */
+    public static String presetIdForFile(String fileName) {
+        return "workflow".equals(fileName) ? "minimal-echo" : fileName;
+    }
+
     /** Role-specific default prompt for a workflow preset id. */
     public static WorkflowPlannerPromptDefinition forPreset(String presetId) {
         return builder()
@@ -56,90 +52,123 @@ public final class WorkflowPlannerPromptDefinition {
 
     private static String promptName(String presetId) {
         return switch (presetId) {
-            case "agent" -> "Default planner prompt";
-            case "planner" -> "Default planner prompt";
-            case "architect" -> "Default architect prompt";
-            case "reviewer" -> "Default reviewer prompt";
-            case "ask" -> "Default ask prompt";
-            case "fast" -> "Default fast prompt";
-            case "detailed" -> "Default detailed prompt";
-            case "strict" -> "Default strict prompt";
-            case "summary" -> "Default summary prompt";
-            case "teacher" -> "Default teacher prompt";
-            case "debug" -> "Default debug prompt";
-            case "minimal-echo" -> "Default echo prompt";
+            case "agent" -> "Autonomous agent prompt";
+            case "planner" -> "Planning specialist prompt";
+            case "architect" -> "System architect prompt";
+            case "reviewer" -> "Technical reviewer prompt";
+            case "ask" -> "Direct Q&A prompt";
+            case "fast" -> "Fast response prompt";
+            case "detailed" -> "In-depth explanation prompt";
+            case "strict" -> "Strict reasoning prompt";
+            case "summary" -> "Summary prompt";
+            case "teacher" -> "Teaching prompt";
+            case "debug" -> "Debug diagnostics prompt";
+            case "minimal-echo" -> "Echo prompt";
             default -> "Default prompt";
         };
     }
 
     private static String promptTemplate(String presetId) {
         return switch (presetId) {
-            case "agent" -> DEFAULT_PROMPT_TEMPLATE;
+            case "agent" ->
+                    """
+                    You are an autonomous OLO agent that investigates requests, uses tools when they help, and delegates to specialist agents when they are a better fit.
+
+                    User request:
+                    {message}
+
+                    Respond clearly and actionably. Use capabilities when they add value. Prefer delegation when another agent is better suited.""";
             case "planner" ->
                     """
-                    You are a planning specialist.
+                    You are a planning specialist. Break complex work into ordered, actionable steps with clear outcomes.
 
-                    Create a structured plan for {message}.
+                    Task:
+                    {message}
 
-                    Break work into clear, actionable steps.""";
+                    Produce a structured plan with goals, steps, dependencies, and success criteria.""";
             case "architect" ->
                     """
-                    You are a system architect.
+                    You are a software system architect. Provide practical design guidance with trade-offs and rationale.
 
-                    Design architecture guidance for {message}.
+                    Design challenge:
+                    {message}
 
-                    Cover components, boundaries, and trade-offs.""";
+                    Cover context, components, interfaces, data flow, boundaries, risks, and recommended next steps.""";
             case "reviewer" ->
                     """
-                    You are a critical reviewer.
+                    You are a thorough technical reviewer. Critique the subject for correctness, clarity, security, and maintainability.
 
-                    Review {message} thoroughly.
+                    Material to review:
+                    {message}
 
-                    Highlight risks, gaps, and concrete improvements.""";
+                    Call out strengths, risks, gaps, and specific improvements ranked by impact.""";
             case "ask" ->
                     """
-                    You answer questions directly and clearly.
+                    You answer questions directly with accurate, easy-to-follow explanations.
 
-                    Question: {message}""";
+                    Question:
+                    {message}
+
+                    Answer concisely. Define terms when needed and avoid unnecessary filler.""";
             case "fast" ->
                     """
-                    You provide quick, concise responses.
+                    You give fast, high-signal answers. Be brief unless detail is essential.
 
-                    Address {message} in as few words as practical.""";
+                    Request:
+                    {message}
+
+                    Lead with the answer, then add only critical supporting detail.""";
             case "detailed" ->
                     """
-                    You provide thorough, in-depth explanations.
+                    You explain topics thoroughly with context, examples, and edge cases.
 
-                    Explain {message} with depth, context, and examples.""";
+                    Topic:
+                    {message}
+
+                    Structure the response for deep understanding: overview, details, examples, pitfalls, and summary.""";
             case "strict" ->
                     """
-                    You follow rules precisely and avoid speculation.
+                    You follow instructions precisely. Stay factual, cite uncertainty, and avoid speculation.
 
-                    Address {message} with exact, constraint-aware reasoning.""";
+                    Request:
+                    {message}
+
+                    State assumptions, apply constraints strictly, and separate facts from inference.""";
             case "summary" ->
                     """
-                    You summarize content into key points.
+                    You distill content into the most important points for a busy reader.
 
-                    Summarize {message} briefly.""";
+                    Content:
+                    {message}
+
+                    Return a tight summary: key takeaways, decisions, and open questions.""";
             case "teacher" ->
                     """
-                    You teach concepts step by step.
+                    You teach concepts step by step for someone learning the topic.
 
-                    Teach {message} to a learner with progressive explanations.""";
+                    Learning goal:
+                    {message}
+
+                    Use a progression: intuition, core ideas, worked example, common mistakes, and a short recap.""";
             case "debug" ->
                     """
-                    You provide verbose diagnostic output for troubleshooting.
+                    You troubleshoot problems with explicit, verbose reasoning suitable for debugging sessions.
 
-                    Investigate {message} and explain reasoning in detail.""";
+                    Issue:
+                    {message}
+
+                    Reproduce symptoms, list hypotheses, narrow causes, and recommend fixes with verification steps.""";
             case "minimal-echo" ->
                     """
-                    You echo the caller input.
+                    Echo the caller input verbatim.
 
-                    Return {message}.""";
+                    Input:
+                    {message}""";
             default ->
                     """
-                    Address the request.
+                    Address the request clearly and helpfully.
 
+                    Request:
                     {message}""";
         };
     }

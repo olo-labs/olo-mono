@@ -94,8 +94,8 @@ class WorkflowReturnResolverTest {
         }
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false);
-        WorkflowDefinition source = registry.findByQueue("agent").orElseThrow();
-        return KernelContextBuilder.build(KernelContextBuildRequest.of("agent", input, source));
+        WorkflowDefinition source = registry.findById("agent").orElseThrow();
+        return KernelContextBuilder.build(KernelContextBuildRequest.of("oloQueue2", input, source));
     }
 
     private static WorkflowInput withUserQuery(String message) {

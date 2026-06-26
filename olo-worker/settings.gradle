@@ -4,9 +4,8 @@ plugins {
 
 rootProject.name = 'olo-worker'
 
-// Use monorepo sources directly so kernel changes apply without publishToMavenLocal.
-includeBuild('../olo-workflow-input')
-includeBuild('../olo-definition')
+// olo-definition and olo-workflow-input are consumed from olo-mono/build/repo (see publish-libs.bat)
+// to avoid Windows jar locks when olo-worker and olo backend build the same composite outputs.
 includeBuild('../olo-kernel-context')
 includeBuild('../olo-bootstrap')
 includeBuild('../olo-kernel')

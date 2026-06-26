@@ -3,9 +3,9 @@ package org.olo.kernel.traversal;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.olo.definition.node.NodeDefinition;
-import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.input.model.WorkflowInput;
 import org.olo.kernel.context.KernelRuntimeContext;
@@ -13,14 +13,12 @@ import org.olo.kernel.context.output.ExecutionOutput;
 import org.olo.kernel.context.output.ExecutionOutputs;
 import org.olo.kernel.context.variables.WorkflowRuntimeVariables;
 import org.olo.kernel.dynamicgraph.MutableGraphSession;
-import org.olo.kernel.exception.KernelException;
 import org.olo.kernel.graph.index.GraphIndex;
 import org.olo.kernel.graph.index.impl.DefaultGraphIndex;
 import org.olo.kernel.traversal.scheduling.NodeActivityNaming;
 import org.olo.kernel.traversal.scheduling.NodeExecutionScheduling;
 import org.olo.spi.node.NodeStatus;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,13 +26,11 @@ import java.util.Objects;
 
 /**
  * Serializable traversal state passed between Temporal activities.
- * The workflow graph is stored as JSON to avoid Temporal's default Jackson mapper
- * deserializing {@link WorkflowDefinition} builder types incorrectly.
+ * The workflow graph is resolved from the worker registry when unchanged; {@code graphJson}
+ * is embedded only after inline dynamic graph expansion mutates the graph.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class KernelExecutionSnapshot {
-
-    private static final JsonWorkflowSerializer GRAPH_SERIALIZER = new JsonWorkflowSerializer();
 
     public enum Status {
         RUNNING,
@@ -44,6 +40,8 @@ public final class KernelExecutionSnapshot {
 
     private final String queue;
     private final WorkflowInput input;
+    @JsonIgnore
+    private final WorkflowDefinition graph;
     private final String graphJson;
     private final Map<String, Object> variables;
     private final Map<String, ExecutionOutput> outputs;
@@ -75,7 +73,8 @@ public final class KernelExecutionSnapshot {
             @JsonProperty("nextActivityName") String nextActivityName) {
         this.queue = Objects.requireNonNull(queue, "queue");
         this.input = Objects.requireNonNull(input, "input");
-        this.graphJson = Objects.requireNonNull(graphJson, "graphJson");
+        this.graph = GraphSnapshotPolicy.resolveGraph(queue, input, graphJson);
+        this.graphJson = graphJson;
         this.variables = copyMapAllowingNullValues(variables);
         this.outputs = copyMapAllowingNullValues(outputs);
         this.nextNodeId = nextNodeId;
@@ -84,16 +83,16 @@ public final class KernelExecutionSnapshot {
         this.lastNodeId = lastNodeId;
         this.lastStatus = lastStatus;
         this.message = message;
-        WorkflowDefinition graph = readGraph(this.graphJson);
+        WorkflowDefinition resolvedGraph = this.graph;
         this.nextRequiresDedicatedActivity = nextRequiresDedicatedActivity != null
                 ? nextRequiresDedicatedActivity
-                : computeNextRequiresDedicatedActivity(graph, nextNodeId, status);
+                : computeNextRequiresDedicatedActivity(resolvedGraph, nextNodeId, status);
         this.workflowActivityName = workflowActivityName != null && !workflowActivityName.isBlank()
                 ? workflowActivityName
-                : NodeActivityNaming.formatWorkflow(graph);
+                : NodeActivityNaming.formatWorkflow(resolvedGraph);
         this.nextActivityName = nextActivityName != null
                 ? nextActivityName
-                : computeNextActivityName(graph, nextNodeId, status);
+                : computeNextActivityName(resolvedGraph, nextNodeId, status);
     }
 
     public static KernelExecutionSnapshot fromContext(KernelRuntimeContext context) {
@@ -112,7 +111,7 @@ public final class KernelExecutionSnapshot {
         return new KernelExecutionSnapshot(
                 context.getQueue(),
                 context.getInput(),
-                serializeGraph(graph),
+                GraphSnapshotPolicy.maybeEmbedGraphJson(context.getQueue(), context.getInput(), graph),
                 context.getVariableMap(),
                 context.getOutputMap(),
                 nextNodeId,
@@ -136,9 +135,8 @@ public final class KernelExecutionSnapshot {
                 ExecutionOutputs.fromMap(outputs));
     }
 
-    @JsonIgnore
     public WorkflowDefinition getGraph() {
-        return readGraph(graphJson);
+        return graph;
     }
 
     public GraphIndex graphIndex() {
@@ -187,6 +185,8 @@ public final class KernelExecutionSnapshot {
         return input;
     }
 
+    @JsonProperty("graphJson")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String getGraphJson() {
         return graphJson;
     }
@@ -276,22 +276,6 @@ public final class KernelExecutionSnapshot {
         }
         final String lookupNodeId = resolvedNextNodeId;
         return index.findNode(lookupNodeId).map(NodeActivityNaming::formatNode).orElse(null);
-    }
-
-    private static String serializeGraph(WorkflowDefinition graph) {
-        try {
-            return GRAPH_SERIALIZER.serialize(graph);
-        } catch (IOException e) {
-            throw new KernelException("failed to serialize workflow graph for traversal snapshot", e);
-        }
-    }
-
-    private static WorkflowDefinition readGraph(String graphJson) {
-        try {
-            return GRAPH_SERIALIZER.deserialize(graphJson);
-        } catch (IOException e) {
-            throw new KernelException("failed to deserialize workflow graph from traversal snapshot", e);
-        }
     }
 
     private static <K, V> Map<K, V> copyMapAllowingNullValues(Map<K, V> source) {

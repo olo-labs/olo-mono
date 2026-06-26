@@ -39,6 +39,8 @@ public final class WorkflowPresetCatalogLoader {
                 if (designerNode != null && designerNode.isObject()) {
                     preset.designer = MAPPER.treeToValue(designerNode, DesignerDescriptor.class);
                 }
+                loadPortList(presetNode.get("inputs"), preset.inputs);
+                loadPortList(presetNode.get("outputs"), preset.outputs);
                 loadParameters(presetNode.get("parameters"), preset.parameters);
                 presets.add(preset);
             }
@@ -46,6 +48,15 @@ public final class WorkflowPresetCatalogLoader {
             throw new IllegalStateException("Failed to load workflow preset catalog", e);
         }
         return List.copyOf(presets);
+    }
+
+    private static void loadPortList(JsonNode portsNode, List<PortDescriptor> target) throws Exception {
+        if (portsNode == null || !portsNode.isArray()) {
+            return;
+        }
+        for (JsonNode portNode : portsNode) {
+            target.add(MAPPER.treeToValue(portNode, PortDescriptor.class));
+        }
     }
 
     private static void loadParameters(JsonNode parameters, List<ParameterDescriptor> target) throws Exception {

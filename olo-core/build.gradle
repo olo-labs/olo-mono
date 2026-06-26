@@ -82,11 +82,29 @@ tasks.register('distLib', Copy) {
     from(project(':hooks').tasks.named('jar'))
 }
 
+def kernelJar = layout.projectDirectory.file("../olo-kernel/build/libs/olo-kernel-${version}.jar").asFile
+
+tasks.register('buildKernelForCatalog', Exec) {
+    group = 'distribution'
+    description = 'Build olo-kernel JAR so workflow-type catalog annotations are on the export classpath'
+    workingDir layout.projectDirectory.dir('../olo-kernel').asFile
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'cmd', '/c', 'gradlew.bat', 'jar', '-q'
+    } else {
+        commandLine './gradlew', 'jar', '-q'
+    }
+}
+
 tasks.register('exportStudioCatalog', JavaExec) {
     group = 'distribution'
     description = 'Export editor + runtime catalog JSON into dist/catalog/'
-    dependsOn ':core:classes', ':nodes:jar', ':tools:jar', ':hooks:jar', ':runtime:jar'
-    classpath = project(':core').sourceSets.main.runtimeClasspath
+    dependsOn 'buildKernelForCatalog', ':core:classes', ':nodes:jar', ':tools:jar', ':hooks:jar', ':runtime:jar'
+    doFirst {
+        if (!kernelJar.isFile()) {
+            throw new GradleException("Missing olo-kernel JAR at ${kernelJar.absolutePath}")
+        }
+    }
+    classpath = project(':core').sourceSets.main.runtimeClasspath + files(kernelJar)
     mainClass = 'org.olo.core.catalog.StudioCatalogExporter'
     args distDir.dir('catalog').asFile.absolutePath
 }

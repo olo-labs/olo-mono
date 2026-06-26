@@ -7,4 +7,8 @@ for module in olo-spi olo-annotation olo-annotation-processor; do
   echo "Publishing $module to build/repo ..."
   (cd "$module" && ./gradlew "-PoloPublishBuildDir=../build/publish-work/$module" publishMavenPublicationToOloMonoRepository -x test)
 done
+echo "Publishing olo-definition to build/repo ..."
+(cd olo-definition && ./gradlew "-PoloPublishBuildDir=../build/publish-work/olo-definition" :olo-definition:publishMavenPublicationToOloMonoRepository -x test)
+echo "Publishing olo-workflow-input to build/repo ..."
+(cd olo-workflow-input && ./gradlew "-PoloPublishBuildDir=../build/publish-work/olo-workflow-input" publishMavenPublicationToOloMonoRepository -x test)
 echo "OLO libs published to $ROOT/build/repo"

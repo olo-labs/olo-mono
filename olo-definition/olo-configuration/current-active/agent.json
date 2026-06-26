@@ -14,9 +14,80 @@
       "height" : 120
     },
     "resizable" : true,
-    "draggable" : true
+    "draggable" : true,
+    "layout" : {
+      "originX" : 80,
+      "originY" : 80,
+      "columnGap" : 360,
+      "rowGap" : 200,
+      "columns" : 4
+    },
+    "canvas" : {
+      "backgroundColor" : "#3f3f46",
+      "gridGap" : 16,
+      "edgeStroke" : "#52525b",
+      "selectionBorder" : "#3b82f6",
+      "minimapNodeColor" : "#52525b"
+    },
+    "portColors" : {
+      "string" : "#a3e635",
+      "capabilities" : "#22c55e",
+      "integer" : "#38bdf8",
+      "boolean" : "#fb923c",
+      "message" : "#ef4444",
+      "any" : "#94a3b8",
+      "agent-plug" : "#a855f7",
+      "number" : "#38bdf8",
+      "array" : "#f472b6",
+      "object" : "#c084fc"
+    },
+    "nodeTypes" : {
+      "END" : {
+        "emoji" : "⏹",
+        "typeLabel" : "End",
+        "description" : "Workflow exit — maps a workflow variable to the caller result",
+        "palette" : {
+          "name" : "End",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "outputVariable",
+          "widget" : "VARIABLE_SELECT",
+          "label" : "Output variable",
+          "binding" : "outputVariableMapping"
+        } ]
+      },
+      "AGENT" : {
+        "emoji" : "\uD83E\uDD16",
+        "typeLabel" : "Agent",
+        "inlineProperties" : [ {
+          "id" : "parameters",
+          "widget" : "WORKFLOW_PARAMETERS",
+          "label" : "Parameters"
+        }, {
+          "id" : "model",
+          "widget" : "MODEL_SELECTOR",
+          "label" : "Model"
+        } ]
+      },
+      "START" : {
+        "emoji" : "▶",
+        "typeLabel" : "Start",
+        "description" : "Workflow entry — maps caller input to workflow variables",
+        "palette" : {
+          "name" : "Start",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "inputVariables",
+          "widget" : "VARIABLE_CHECKLIST",
+          "label" : "Input variables",
+          "binding" : "inputVariableMappings"
+        } ]
+      }
+    }
   },
-  "queue" : "agent",
+  "queue" : "oloQueue2",
   "workflowType" : "olo",
   "runAgain" : true,
   "childWorkflows" : [ {
@@ -38,6 +109,10 @@
     "id" : "reviewer"
   }, {
     "id" : "architect"
+  }, {
+    "id" : "agent"
+  }, {
+    "id" : "debug"
   } ],
   "version" : "1.0.0",
   "capability" : {
@@ -73,36 +148,17 @@
   },
   "state" : { },
   "parameters" : {
-    "temperature" : {
-      "type" : "number",
-      "label" : "Temperature",
-      "description" : "Sampling temperature",
-      "defaultValue" : 0.2,
-      "required" : false,
-      "validation" : {
-        "minimum" : 0,
-        "maximum" : 2,
-        "step" : 0.1
-      },
-      "ui" : {
-        "widget" : "SLIDER",
-        "group" : "Model Settings",
-        "help" : "Higher values increase response creativity.",
-        "order" : 3
-      }
-    },
-    "systemPrompt" : {
+    "model" : {
       "type" : "string",
-      "label" : "System Prompt",
-      "description" : "System prompt for the agent",
+      "label" : "Model",
+      "description" : "Default model identifier",
       "defaultValue" : "",
       "required" : false,
       "ui" : {
-        "widget" : "TEXTAREA",
+        "widget" : "MODEL_SELECTOR",
         "group" : "Model Settings",
-        "help" : "Optional instructions that shape agent behavior.",
-        "placeholder" : "You are a helpful assistant…",
-        "order" : 0
+        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
+        "order" : 2
       }
     },
     "maxIterations" : {
@@ -123,20 +179,36 @@
         "order" : 1
       }
     },
-    "model" : {
+    "systemPrompt" : {
       "type" : "string",
-      "label" : "Model",
-      "description" : "Model identifier",
-      "defaultValue" : "",
-      "required" : true,
+      "label" : "System Prompt",
+      "description" : "System prompt for the agent",
+      "defaultValue" : "You are an autonomous OLO agent that investigates requests, uses tools when they help, and delegates to specialist agents when they are a better fit.\n\nUser request:\n{message}\n\nRespond clearly and actionably. Use capabilities when they add value. Prefer delegation when another agent is better suited.",
+      "required" : false,
+      "ui" : {
+        "widget" : "TEXTAREA",
+        "group" : "Model Settings",
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
+        "order" : 0
+      }
+    },
+    "temperature" : {
+      "type" : "number",
+      "label" : "Temperature",
+      "description" : "Sampling temperature",
+      "defaultValue" : 0.2,
+      "required" : false,
       "validation" : {
-        "minLength" : 1
+        "minimum" : 0,
+        "maximum" : 2,
+        "step" : 0.1
       },
       "ui" : {
-        "widget" : "MODEL_SELECTOR",
+        "widget" : "SLIDER",
         "group" : "Model Settings",
-        "help" : "LLM used for agent reasoning.",
-        "order" : 2
+        "help" : "Higher values increase response creativity.",
+        "order" : 3
       }
     }
   },
@@ -145,43 +217,88 @@
     "type" : "START",
     "ports" : [ {
       "id" : "out",
-      "name" : "out",
-      "schema" : "any",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
       "direction" : "OUTPUT",
       "required" : false,
       "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
       "ui" : {
-        "position" : "RIGHT"
+        "position" : "RIGHT",
+        "color" : "#ef4444"
       }
     } ],
     "reads" : [ "input.message" ],
     "writes" : [ ],
     "configuration" : {
-      "inputVariableMappings" : [ "message" ]
-    }
+      "inputVariableMappings" : [ "message" ],
+      "designer" : {
+        "position" : {
+          "x" : 4,
+          "y" : -15
+        }
+      }
+    },
+    "label" : "start"
   }, {
     "id" : "agent",
     "type" : "AGENT",
-    "label" : "Agent3",
     "ports" : [ {
       "id" : "in",
-      "name" : "in",
-      "schema" : "any",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : true,
+      "minConnections" : 1,
+      "maxConnections" : 1,
+      "shortDescription" : "Incoming workflow message",
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "acceptType" : "capabilities",
       "direction" : "INPUT",
       "required" : false,
       "minConnections" : 0,
+      "shortDescription" : "Attach available tools and hooks (0 or more)",
       "ui" : {
-        "position" : "LEFT"
+        "position" : "BOTTOM",
+        "color" : "#22c55e"
+      }
+    }, {
+      "id" : "agentPlug",
+      "label" : "available agents",
+      "schema" : "agent-plug",
+      "type" : "agent-plug",
+      "acceptType" : "agent-plug",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Attach available delegate agents (0 or more)",
+      "ui" : {
+        "position" : "BOTTOM",
+        "color" : "#a855f7"
       }
     }, {
       "id" : "out",
-      "name" : "out",
-      "schema" : "any",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
       "direction" : "OUTPUT",
       "required" : false,
       "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
       "ui" : {
-        "position" : "RIGHT"
+        "position" : "RIGHT",
+        "color" : "#ef4444"
       }
     } ],
     "execution" : {
@@ -197,35 +314,188 @@
     },
     "reads" : [ ],
     "writes" : [ ],
-    "configuration" : { }
+      "configuration" : {
+      "designer" : {
+        "position" : {
+          "x" : 441,
+          "y" : -16
+        },
+        "size" : {
+          "width" : 369,
+          "height" : 538
+        }
+      }
+    },
+    "label" : "Agent"
   }, {
     "id" : "end",
     "type" : "END",
     "ports" : [ {
       "id" : "in",
-      "name" : "in",
-      "schema" : "any",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
       "direction" : "INPUT",
-      "required" : false,
-      "minConnections" : 0,
+      "required" : true,
+      "minConnections" : 1,
+      "maxConnections" : 1,
+      "shortDescription" : "Incoming workflow message",
       "ui" : {
-        "position" : "LEFT"
+        "position" : "LEFT",
+        "color" : "#ef4444"
       }
     } ],
     "reads" : [ ],
     "writes" : [ ],
-    "configuration" : { }
+    "configuration" : {
+      "designer" : {
+        "position" : {
+          "x" : 891,
+          "y" : -14
+        }
+      }
+    },
+    "label" : "end"
+  }, {
+    "id" : "calculator",
+    "type" : "TOOL",
+    "label" : "Calculator",
+    "ports" : [ {
+      "id" : "in",
+      "label" : "message in",
+      "name" : "in",
+      "shortDescription" : "Incoming message (routed by planner/agent at runtime)",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#71717a"
+      }
+    }, {
+      "id" : "out",
+      "label" : "message out",
+      "name" : "out",
+      "shortDescription" : "Outgoing message (routed by planner/agent at runtime)",
+      "schema" : "message",
+      "type" : "message",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "ui" : {
+        "position" : "RIGHT",
+        "color" : "#71717a"
+      }
+    }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "name" : "capabilities",
+      "shortDescription" : "Capability indicator for runtime prompt assembly on a connected agent",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "ui" : {
+        "position" : "TOP",
+        "color" : "#22c55e"
+      }
+    } ],
+    "reads" : [ ],
+    "writes" : [ ],
+    "configuration" : {
+      "toolId" : "olo-core:calculator",
+      "designer" : {
+        "position" : {
+          "x" : 209,
+          "y" : 553
+        }
+      }
+    }
+  }, {
+    "id" : "cpu-usage",
+    "type" : "TOOL",
+    "label" : "CPU Usage",
+    "ports" : [ {
+      "id" : "in",
+      "label" : "message in",
+      "name" : "in",
+      "shortDescription" : "Incoming message (routed by planner/agent at runtime)",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#71717a"
+      }
+    }, {
+      "id" : "out",
+      "label" : "message out",
+      "name" : "out",
+      "shortDescription" : "Outgoing message (routed by planner/agent at runtime)",
+      "schema" : "message",
+      "type" : "message",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "ui" : {
+        "position" : "RIGHT",
+        "color" : "#71717a"
+      }
+    }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "name" : "capabilities",
+      "shortDescription" : "Capability indicator for runtime prompt assembly on a connected agent",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "ui" : {
+        "position" : "TOP",
+        "color" : "#22c55e"
+      }
+    } ],
+    "reads" : [ ],
+    "writes" : [ ],
+    "configuration" : {
+      "toolId" : "olo-core:cpu-usage",
+      "designer" : {
+        "position" : {
+          "x" : 608,
+          "y" : 563
+        }
+      }
+    }
   } ],
   "edges" : [ {
     "sourceNodeId" : "start",
-    "sourcePortId" : "out",
     "targetNodeId" : "agent",
+    "sourcePortId" : "out",
     "targetPortId" : "in"
   }, {
     "sourceNodeId" : "agent",
-    "sourcePortId" : "out",
     "targetNodeId" : "end",
+    "sourcePortId" : "out",
     "targetPortId" : "in"
+  }, {
+    "sourceNodeId" : "calculator",
+    "targetNodeId" : "agent",
+    "sourcePortId" : "capabilities",
+    "targetPortId" : "capabilities"
+  }, {
+    "sourceNodeId" : "cpu-usage",
+    "targetNodeId" : "agent",
+    "sourcePortId" : "capabilities",
+    "targetPortId" : "capabilities"
   } ],
   "variables" : [ {
     "name" : "message",
@@ -244,7 +514,41 @@
       "role" : "return"
     }
   } ],
-  "tools" : [ ],
+  "tools" : [ {
+    "id" : "calculator",
+    "type" : "TOOL",
+    "capability" : {
+      "name" : "Calculator",
+      "description" : "Basic arithmetic on two numbers",
+      "tags" : [ ],
+      "examples" : [ "Compute order totals", "Apply a percentage discount", "Convert units with a formula" ],
+      "required_inputs" : [ ],
+      "required_outputs" : [ ],
+      "tool_requirements" : [ ],
+      "required_context" : [ ]
+    },
+    "runtimeBinding" : {
+      "implementationId" : "olo-core:calculator"
+    },
+    "configuration" : { }
+  }, {
+    "id" : "cpu-usage",
+    "type" : "TOOL",
+    "capability" : {
+      "name" : "CPU Usage",
+      "description" : "Reads CPU usage metrics from CSV files in a configured folder filtered by time range",
+      "tags" : [ ],
+      "examples" : [ "Check CPU spike during payment gateway outage", "Compare baseline and peak CPU during incident" ],
+      "required_inputs" : [ ],
+      "required_outputs" : [ ],
+      "tool_requirements" : [ ],
+      "required_context" : [ ]
+    },
+    "runtimeBinding" : {
+      "implementationId" : "olo-core:cpu-usage"
+    },
+    "configuration" : { }
+  } ],
   "agents" : [ ],
   "hooks" : [ ],
   "modelProviders" : [ {
@@ -261,26 +565,31 @@
     "rules" : [ ],
     "metadata" : { }
   } ],
-  "prompts" : [ {
-    "id" : "default-prompt",
-    "name" : "Default planner prompt",
-    "promptTemplate" : "You are a research planner.\n\nInvestigate {message}.\n\nUse available capabilities when needed.\nDelegate work when another agent is more suitable."
-  } ],
-  "defaultPromptId" : "default-prompt",
   "extensions" : [ ],
   "metadata" : {
-    "role" : "agent",
-    "agentSelectionStrategy" : "dynamic",
-    "planningStrategy" : "react",
-    "plannerContext" : {
-      "selectedVariables" : [ "message" ],
-      "injectCapabilities" : false,
-      "injectAgents" : true,
-      "selectedAgents" : [ "planner", "reviewer", "architect" ],
-      "selectedTools" : [ ]
-    },
     "description" : "Autonomous tool-using agent",
+    "plannerContext" : {
+      "injectCapabilities" : false,
+      "selectedTools" : [ "olo-core:calculator", "olo-core:cpu-usage" ],
+      "selectedAgents" : [ "planner", "reviewer", "architect", "agent", "debug" ],
+      "selectedVariables" : [ "message" ],
+      "injectAgents" : false
+    },
+    "planningStrategy" : "react",
+    "agentSelectionStrategy" : "dynamic",
+    "role" : "agent",
+    "returnVariable" : "ReturnValue",
     "agentType" : "autonomous",
-    "returnVariable" : "ReturnValue"
+    "canvasView" : {
+      "viewport" : {
+        "x" : 6,
+        "y" : 82,
+        "zoom" : 1
+      },
+      "size" : {
+        "width" : 1200,
+        "height" : 1591
+      }
+    }
   }
 }

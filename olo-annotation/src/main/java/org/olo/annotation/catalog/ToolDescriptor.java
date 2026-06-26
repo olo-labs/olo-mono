@@ -7,6 +7,8 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class ToolDescriptor extends CatalogComponent {
 
+    public List<PortDescriptor> inputs;
+    public List<PortDescriptor> outputs;
     public List<ParameterDescriptor> parameters;
 
     /** Machine-readable JSON Schema contract. Omitted when unset. */

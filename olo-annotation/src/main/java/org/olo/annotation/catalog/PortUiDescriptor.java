@@ -11,4 +11,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public final class PortUiDescriptor {
 
     public String position;
+    /** Canvas handle color token (e.g. {@code message}, {@code capabilities}). */
+    public String color;
 }

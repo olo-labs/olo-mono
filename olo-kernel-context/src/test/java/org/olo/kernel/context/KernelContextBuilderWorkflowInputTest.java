@@ -22,7 +22,7 @@ class KernelContextBuilderWorkflowInputTest {
         }
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false);
-        WorkflowDefinition source = registry.findByQueue("agent").orElseThrow();
+        WorkflowDefinition source = registry.findById("agent").orElseThrow();
         String payload = Files.readString(
                 Paths.get("../olo-workflow-input/samples/agent-execution/workflow-input.json")
                         .toAbsolutePath()
@@ -30,7 +30,7 @@ class KernelContextBuilderWorkflowInputTest {
         WorkflowInput input = WorkflowInput.fromJson(payload);
 
         KernelRuntimeContext context = KernelContextBuilder.build(
-                KernelContextBuildRequest.of("agent", input, source));
+                KernelContextBuildRequest.of("oloQueue2", input, source));
 
         assertThat(context.getInput()).isSameAs(input);
         assertThat(context.isGraphReady()).isTrue();

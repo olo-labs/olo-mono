@@ -105,9 +105,8 @@ class WorkflowPresetGenerationTest {
 
             JsonNode model = findParameter(parameters, "model");
 
-            assertThat(model.get("required").asBoolean()).isTrue();
-
-            assertThat(model.get("validation").get("minLength").asInt()).isEqualTo(1);
+            assertThat(model.get("required").asBoolean()).isFalse();
+            assertThat(model.has("validation")).isFalse();
 
         }
 

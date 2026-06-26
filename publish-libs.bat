@@ -15,6 +15,18 @@ for %%m in (olo-spi olo-annotation olo-annotation-processor) do (
   popd
 )
 
+echo Publishing olo-definition to build\repo ...
+pushd olo-definition
+call gradlew.bat -PoloPublishBuildDir=../build/publish-work/olo-definition :olo-definition:publishMavenPublicationToOloMonoRepository -x test
+if errorlevel 1 set FAILED=1
+popd
+
+echo Publishing olo-workflow-input to build\repo ...
+pushd olo-workflow-input
+call gradlew.bat -PoloPublishBuildDir=../build/publish-work/olo-workflow-input publishMavenPublicationToOloMonoRepository -x test
+if errorlevel 1 set FAILED=1
+popd
+
 if !FAILED! neq 0 (
   echo publish-libs failed.
   exit /b 1

@@ -23,7 +23,6 @@ import org.olo.definition.extension.ExtensionDefinition;
 import org.olo.definition.hook.HookDefinition;
 import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.model.ModelProviderDefinition;
-import org.olo.definition.planner.WorkflowPlannerPromptDefinition;
 import org.olo.definition.model.ModelRoutingDefinition;
 import org.olo.definition.input.WorkflowInputDefinition;
 import org.olo.definition.node.NodeDefinition;
@@ -77,8 +76,6 @@ import java.util.Objects;
     "hooks",
     "modelProviders",
     "modelRouting",
-    "prompts",
-    "defaultPromptId",
     "extensions",
     "metadata"
 })
@@ -109,8 +106,6 @@ public final class WorkflowDefinition {
     private final List<VariableDefinition> variables;
     private final List<ModelProviderDefinition> modelProviders;
     private final List<ModelRoutingDefinition> modelRouting;
-    private final List<WorkflowPlannerPromptDefinition> prompts;
-    private final String defaultPromptId;
     private final List<ExtensionDefinition> extensions;
     private final Map<String, Object> metadata;
     private final CapabilityDefinition capability;
@@ -152,8 +147,6 @@ public final class WorkflowDefinition {
         this.variables = builder.variables == null ? List.of() : List.copyOf(builder.variables);
         this.modelProviders = builder.modelProviders == null ? List.of() : List.copyOf(builder.modelProviders);
         this.modelRouting = builder.modelRouting == null ? List.of() : List.copyOf(builder.modelRouting);
-        this.prompts = builder.prompts == null ? List.of() : List.copyOf(builder.prompts);
-        this.defaultPromptId = builder.defaultPromptId;
         this.extensions = builder.extensions == null ? List.of() : List.copyOf(builder.extensions);
         this.metadata = builder.metadata == null
                 ? Map.of()
@@ -306,14 +299,6 @@ public final class WorkflowDefinition {
         return modelRouting;
     }
 
-    public List<WorkflowPlannerPromptDefinition> getPrompts() {
-        return prompts;
-    }
-
-    public String getDefaultPromptId() {
-        return defaultPromptId;
-    }
-
     public List<ExtensionDefinition> getExtensions() {
         return extensions;
     }
@@ -407,8 +392,6 @@ public final class WorkflowDefinition {
                 && Objects.equals(variables, that.variables)
                 && Objects.equals(modelProviders, that.modelProviders)
                 && Objects.equals(modelRouting, that.modelRouting)
-                && Objects.equals(prompts, that.prompts)
-                && Objects.equals(defaultPromptId, that.defaultPromptId)
                 && Objects.equals(extensions, that.extensions)
                 && Objects.equals(metadata, that.metadata)
                 && Objects.equals(capability, that.capability)
@@ -446,8 +429,6 @@ public final class WorkflowDefinition {
                 variables,
                 modelProviders,
                 modelRouting,
-                prompts,
-                defaultPromptId,
                 extensions,
                 metadata,
                 capability,
@@ -498,8 +479,6 @@ public final class WorkflowDefinition {
         private List<VariableDefinition> variables;
         private List<ModelProviderDefinition> modelProviders;
         private List<ModelRoutingDefinition> modelRouting;
-        private List<WorkflowPlannerPromptDefinition> prompts;
-        private String defaultPromptId;
         private List<ExtensionDefinition> extensions;
         private Map<String, Object> metadata;
         private CapabilityDefinition capability;
@@ -700,16 +679,6 @@ public final class WorkflowDefinition {
 
         public Builder modelRouting(List<ModelRoutingDefinition> modelRouting) {
             this.modelRouting = modelRouting;
-            return this;
-        }
-
-        public Builder prompts(List<WorkflowPlannerPromptDefinition> prompts) {
-            this.prompts = prompts;
-            return this;
-        }
-
-        public Builder defaultPromptId(String defaultPromptId) {
-            this.defaultPromptId = defaultPromptId;
             return this;
         }
 

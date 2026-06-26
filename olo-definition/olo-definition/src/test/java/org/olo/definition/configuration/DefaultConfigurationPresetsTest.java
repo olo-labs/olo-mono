@@ -11,9 +11,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 /**
  * Ensures on-disk presets under {@code olo-configuration/default/} match in-code definitions and
@@ -22,6 +24,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DefaultConfigurationPresetsTest {
 
     private final JsonWorkflowSerializer json = new JsonWorkflowSerializer();
+
+    @Test
+    void presetsUseTwoQueuesEvenly() {
+        var byQueue = DefaultConfigurationGenerator.PRESET_ENTRIES.stream()
+                .map(entry -> entry.factory().get().getQueue())
+                .collect(Collectors.groupingBy(queue -> queue, Collectors.counting()));
+
+        assertThat(byQueue.keySet())
+                .containsExactlyInAnyOrder(
+                        DefaultConfigurationDefinitions.OLO_QUEUE_1,
+                        DefaultConfigurationDefinitions.OLO_QUEUE_2);
+        assertThat(byQueue.get(DefaultConfigurationDefinitions.OLO_QUEUE_1)).isEqualTo(6);
+        assertThat(byQueue.get(DefaultConfigurationDefinitions.OLO_QUEUE_2)).isEqualTo(6);
+    }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("presetEntries")

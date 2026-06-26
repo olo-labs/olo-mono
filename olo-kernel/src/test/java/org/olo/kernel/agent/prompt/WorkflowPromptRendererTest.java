@@ -1,6 +1,10 @@
 package org.olo.kernel.agent.prompt;
 
 import org.junit.jupiter.api.Test;
+import org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport;
+import org.olo.definition.node.NodeDefinition;
+import org.olo.definition.parameter.AgentWorkflowParameters;
+import org.olo.definition.parameter.WorkflowParameterDefinition;
 import org.olo.definition.planner.WorkflowPlannerPromptDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.context.variables.WorkflowRuntimeVariables;
@@ -16,11 +20,16 @@ class WorkflowPromptRendererTest {
     private final PromptRenderer renderer = new WorkflowPromptRenderer();
 
     @Test
-    void rendersDefaultPromptWithMessageVariable() {
+    void rendersWorkflowSystemPromptParameter() {
         WorkflowDefinition graph = WorkflowDefinition.builder()
                 .id("fast")
-                .defaultPromptId(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID)
-                .prompts(List.of(WorkflowPlannerPromptDefinition.forPreset("fast")))
+                .putParameter(
+                        AgentWorkflowParameters.SYSTEM_PROMPT,
+                        WorkflowParameterDefinition.builder()
+                                .type("string")
+                                .defaultValue(WorkflowPlannerPromptDefinition.forPreset("fast").getPromptTemplate())
+                                .build())
+                .nodes(List.of(agentNode("agent")))
                 .build();
         WorkflowRuntimeVariables variables = WorkflowRuntimeVariables.fromDefinition(graph);
         variables.set("message", "quick question");
@@ -28,7 +37,7 @@ class WorkflowPromptRendererTest {
         String rendered = renderer.render(graph, variables);
 
         assertThat(rendered).contains("quick question");
-        assertThat(rendered).doesNotContain("{message}");
+        assertThat(rendered).contains("high-signal");
     }
 
     @Test
@@ -39,28 +48,70 @@ class WorkflowPromptRendererTest {
     }
 
     @Test
-    void renderForNodeUsesInlineAgentPromptForNonPlannerAgents() {
+    void renderForNodeUsesWorkflowSystemPromptParameter() {
         WorkflowDefinition graph = WorkflowDefinition.builder()
-                .id("dynamic-graph-creation")
-                .defaultPromptId(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID)
-                .prompts(List.of(WorkflowPlannerPromptDefinition.builder()
-                        .id(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID)
-                        .name("planner")
-                        .promptTemplate("JSON ONLY {message}")
-                        .build()))
+                .id("agent")
+                .putParameter(
+                        AgentWorkflowParameters.SYSTEM_PROMPT,
+                        WorkflowParameterDefinition.builder()
+                                .type("string")
+                                .defaultValue("Act like Agent and reply: {message}")
+                                .build())
                 .build();
         WorkflowRuntimeVariables variables = WorkflowRuntimeVariables.fromDefinition(graph);
         variables.set("message", "Hello");
 
         var agentNode = org.olo.definition.node.NodeDefinition.builder()
-                .id("greet")
+                .id("agent")
                 .type("AGENT")
                 .build();
 
         String rendered = renderer.renderForNode(graph, agentNode, variables);
 
+        assertThat(rendered).isEqualTo("Act like Agent and reply: Hello");
+    }
+
+    @Test
+    void renderForNodePrefersNodePromptTemplate() {
+        WorkflowDefinition graph = WorkflowDefinition.builder()
+                .id("dynamic-graph-creation")
+                .putParameter(
+                        AgentWorkflowParameters.SYSTEM_PROMPT,
+                        WorkflowParameterDefinition.builder()
+                                .type("string")
+                                .defaultValue("{message}")
+                                .build())
+                .build();
+        WorkflowRuntimeVariables variables = WorkflowRuntimeVariables.fromDefinition(graph);
+        variables.set("message", "Hello");
+
+        var plannerNode = NodeDefinition.builder()
+                .id("graph-planner")
+                .type("AGENT")
+                .putConfiguration(DynamicGraphPlannerSupport.CONFIG_DYNAMIC_GRAPH_PLANNER, true)
+                .putConfiguration("promptTemplate", "JSON ONLY {message}")
+                .build();
+
+        String rendered = renderer.renderForNode(graph, plannerNode, variables);
+
+        assertThat(rendered).isEqualTo("JSON ONLY Hello");
+    }
+
+    @Test
+    void renderForNodeUsesInlineAgentPromptWhenNoConfiguredPromptExists() {
+        WorkflowDefinition graph = WorkflowDefinition.builder()
+                .id("dynamic-graph-creation")
+                .build();
+        WorkflowRuntimeVariables variables = WorkflowRuntimeVariables.fromDefinition(graph);
+        variables.set("message", "Hello");
+
+        String rendered = renderer.renderForNode(graph, agentNode("greet"), variables);
+
         assertThat(rendered).contains("Hello");
-        assertThat(rendered).contains("helpful assistant");
-        assertThat(rendered).doesNotContain("JSON ONLY");
+        assertThat(rendered).contains("autonomous OLO agent");
+    }
+
+    private static NodeDefinition agentNode(String id) {
+        return NodeDefinition.builder().id(id).type("AGENT").build();
     }
 }

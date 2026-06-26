@@ -23,7 +23,6 @@ class PlannerContextDefinitionTest {
         assertTrue(selectedTools.isEmpty());
         assertTrue(selectedAgents.containsAll(List.of("planner", "reviewer", "architect")));
         assertEquals(false, defaults.get(PlannerContextDefinition.INJECT_CAPABILITIES));
-        assertEquals(true, defaults.get(PlannerContextDefinition.INJECT_AGENTS));
         assertEquals(List.of("message"), selectedVariables);
     }
 
@@ -31,18 +30,10 @@ class PlannerContextDefinitionTest {
     void presetDefaultsIncludeMessageVariableSelection() {
         Map<String, Object> planner = PlannerContextDefinition.presetDefaults("planner");
         assertEquals(List.of("message"), planner.get(PlannerContextDefinition.SELECTED_VARIABLES));
-        assertEquals(false, planner.get(PlannerContextDefinition.INJECT_AGENTS));
     }
 
     @Test
-    void agentDefaultPromptLivesAtWorkflowRoot() {
-        WorkflowPlannerPromptDefinition prompt = WorkflowPlannerPromptDefinition.agentDefault();
-        assertEquals(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID, prompt.getId());
-        assertTrue(prompt.getPromptTemplate().contains("{message}"));
-    }
-
-    @Test
-    void presetPromptsReferenceMessagePlaceholder() {
+    void presetPromptTemplatesReferenceMessagePlaceholder() {
         assertTrue(WorkflowPlannerPromptDefinition.forPreset("architect").getPromptTemplate().contains("{message}"));
         assertTrue(WorkflowPlannerPromptDefinition.forPreset("teacher").getPromptTemplate().contains("{message}"));
     }

@@ -1,9 +1,10 @@
 package org.olo.definition.configuration.dynamicgraphcreation;
 
+import org.olo.definition.designer.StudioDesignerAssertions;
 import org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.planner.PlannerContextDefinition;
-import org.olo.definition.planner.WorkflowPlannerPromptDefinition;
+import org.olo.definition.parameter.AgentWorkflowParameters;
 import org.olo.definition.preset.WorkflowPresetInfrastructure;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.validation.WorkflowValidator;
@@ -40,15 +41,18 @@ class DynamicGraphCreationConfigurationTest {
     }
 
     @Test
-    void promptRequiresJsonOnlyStructuredOutput() throws IOException {
+    void plannerNodePromptRequiresJsonOnlyStructuredOutput() throws IOException {
         Path configurationRoot = DynamicGraphCreationPaths.resolveConfigurationRoot();
         WorkflowDefinition workflow = json.deserialize(Files.readString(
                 configurationRoot.resolve(DynamicGraphCreationDefinitions.FILE_NAME + ".json")));
 
-        assertThat(workflow.getDefaultPromptId()).isEqualTo(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID);
-        assertThat(workflow.getPrompts()).hasSize(1);
-
-        String prompt = workflow.getPrompts().getFirst().getPromptTemplate();
+        NodeDefinition planner = workflow.getNodes().stream()
+                .filter(node -> DynamicGraphPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(node.getId()))
+                .findFirst()
+                .orElseThrow();
+        Object promptTemplate = planner.getConfiguration().get("promptTemplate");
+        assertThat(promptTemplate).isInstanceOf(String.class);
+        String prompt = (String) promptTemplate;
         assertThat(prompt).contains("{" + WorkflowPresetInfrastructure.MESSAGE_VARIABLE + "}");
         assertThat(prompt).containsIgnoringCase("Return ONLY a single JSON object");
         assertThat(prompt).containsIgnoringCase("no markdown");
@@ -69,6 +73,13 @@ class DynamicGraphCreationConfigurationTest {
                 .anyMatch(variable -> WorkflowPresetInfrastructure.MESSAGE_VARIABLE.equals(variable.getName()));
         assertThat(workflow.getModelProviders()).isNotEmpty();
         assertThat(workflow.getModelRouting()).isNotEmpty();
+        assertThat(workflow.getParameters().keySet())
+                .contains(
+                        AgentWorkflowParameters.SYSTEM_PROMPT,
+                        AgentWorkflowParameters.MAX_ITERATIONS,
+                        AgentWorkflowParameters.TEMPERATURE);
+        assertThat(workflow.getParameters().get(AgentWorkflowParameters.SYSTEM_PROMPT).getDefaultValue())
+                .isEqualTo(AgentWorkflowParameters.DEFAULT_SYSTEM_PROMPT);
         assertThat(workflow.getNodes().stream().map(node -> node.getType()).toList())
                 .containsExactly("START", "AGENT", "END");
         assertThat(workflow.getNodes().stream().map(node -> node.getId()).toList())
@@ -81,6 +92,8 @@ class DynamicGraphCreationConfigurationTest {
         assertThat(DynamicGraphPlannerSupport.isDynamicGraphPlanner(planner)).isTrue();
         assertThat(workflow.getVariables())
                 .anyMatch(variable -> DynamicGraphPlannerSupport.DEFAULT_OUTPUT_VARIABLE.equals(variable.getName()));
+
+        StudioDesignerAssertions.assertStudioBuildReady(workflow);
 
         @SuppressWarnings("unchecked")
         var plannerContext = (java.util.Map<String, Object>) workflow.getMetadata().get(PlannerContextDefinition.METADATA_KEY);

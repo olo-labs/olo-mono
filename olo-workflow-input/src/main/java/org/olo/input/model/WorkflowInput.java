@@ -1,6 +1,7 @@
 package org.olo.input.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +18,7 @@ import java.util.Objects;
  * When the payload is a string (Temporal sends workflow arg as one string), Jackson uses the
  * static String-argument creator so any worker's ObjectMapper can deserialize without a custom deserializer.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public final class WorkflowInput {
 
     private static final ObjectMapper MAPPER = WorkflowInputMapper.jsonMapper();

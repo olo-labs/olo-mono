@@ -22,14 +22,14 @@ class KernelContextBuilderTest {
         }
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false);
-        WorkflowDefinition source = registry.findByQueue("agent").orElseThrow();
+        WorkflowDefinition source = registry.findById("agent").orElseThrow();
         String payload = Files.readString(
                 Paths.get("../olo-workflow-input/samples/agent-execution/workflow-input.json")
                         .toAbsolutePath()
                         .normalize());
 
         KernelRuntimeContext context = KernelContextBuilder.build(
-                KernelContextBuildRequest.of("agent", payload, source));
+                KernelContextBuildRequest.of("oloQueue2", payload, source));
 
         assertThat(context.getQueue()).isEqualTo("agent");
         assertThat(context.isGraphReady()).isTrue();

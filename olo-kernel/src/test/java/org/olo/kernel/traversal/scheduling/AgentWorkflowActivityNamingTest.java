@@ -28,21 +28,21 @@ class AgentWorkflowActivityNamingTest {
         }
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false, true);
-        WorkflowDefinition source = registry.findByQueue("agent").orElseThrow();
+        WorkflowDefinition source = registry.findById("agent").orElseThrow();
 
         NodeDefinition agentNode = source.getNodes().stream()
                 .filter(node -> "agent".equals(node.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(agentNode.getLabel()).isEqualTo("Agent1");
-        assertThat(NodeActivityNaming.formatNode(agentNode)).isEqualTo("agent:Agent1");
+        assertThat(agentNode.getLabel()).isEqualTo("Agent3");
+        assertThat(NodeActivityNaming.formatNode(agentNode)).isEqualTo("agent:Agent3");
 
         WorkflowInput input = WorkflowInput.fromJson(
                 Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
                         .toAbsolutePath()
                         .normalize()));
         KernelRuntimeContext context = KernelContextBuilder.build(
-                KernelContextBuildRequest.of("agent", input, source));
+                KernelContextBuildRequest.of("oloQueue2", input, source));
 
         KernelExecutionSnapshot afterStart = KernelExecutionSnapshot.fromContext(
                 context,
@@ -53,6 +53,6 @@ class AgentWorkflowActivityNamingTest {
                 NodeStatus.COMPLETED,
                 "bound input");
 
-        assertThat(afterStart.getNextActivityName()).isEqualTo("agent:Agent1");
+        assertThat(afterStart.getNextActivityName()).isEqualTo("agent:Agent3");
     }
 }

@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.olo.definition.designer.StudioDesignerAssertions;
+import org.olo.definition.parameter.AgentWorkflowParameters;
 import org.olo.definition.planner.PlannerContextDefinition;
 import org.olo.definition.planner.WorkflowPlannerPromptDefinition;
 import org.olo.definition.preset.WorkflowPresetInfrastructure;
@@ -39,14 +41,23 @@ class DefaultConfigurationPipelineTest {
                 .anyMatch(variable -> WorkflowPresetInfrastructure.MESSAGE_VARIABLE.equals(variable.getName()));
         assertThat(onDisk.getCapability().getRequiredContext())
                 .contains(WorkflowPresetInfrastructure.MESSAGE_VARIABLE);
-        assertThat(onDisk.getPrompts()).hasSize(1);
-        assertThat(onDisk.getDefaultPromptId()).isEqualTo(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID);
-        assertThat(onDisk.getPrompts().getFirst().getPromptTemplate())
-                .contains("{" + WorkflowPresetInfrastructure.MESSAGE_VARIABLE + "}");
         assertThat(onDisk.getModelProviders()).isNotEmpty();
         assertThat(onDisk.getModelRouting()).isNotEmpty();
+        assertThat(onDisk.getParameters().keySet())
+                .contains(
+                        AgentWorkflowParameters.SYSTEM_PROMPT,
+                        AgentWorkflowParameters.MAX_ITERATIONS,
+                        AgentWorkflowParameters.TEMPERATURE);
+        assertThat(onDisk.getParameters().get(AgentWorkflowParameters.SYSTEM_PROMPT).getDefaultValue())
+                .isEqualTo(WorkflowPlannerPromptDefinition.forPreset(
+                                WorkflowPlannerPromptDefinition.presetIdForFile(fileName))
+                        .getPromptTemplate());
         assertThat(onDisk.getNodes().stream().map(node -> node.getType()).toList())
                 .containsExactly("START", "AGENT", "END");
+
+        StudioDesignerAssertions.assertStudioBuildReady(onDisk);
+        assertThat(onDisk.getDesigner().getNodeTypes().get("AGENT").getEmoji())
+                .isEqualTo(onDisk.getEmoji());
 
         @SuppressWarnings("unchecked")
         var plannerContext = (java.util.Map<String, Object>) onDisk.getMetadata().get(PlannerContextDefinition.METADATA_KEY);

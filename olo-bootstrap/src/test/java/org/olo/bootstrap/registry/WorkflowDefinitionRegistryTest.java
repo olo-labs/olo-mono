@@ -64,6 +64,37 @@ class WorkflowDefinitionRegistryTest {
         assertThat(registry.getWorkflowsByQueue()).hasSize(2);
     }
 
+    @Test
+    void resolvesSharedQueueByWorkflowId() {
+        WorkflowDefinition agent = workflow("agent", "1.0.0", "oloQueue2", true);
+        WorkflowDefinition dynamic = workflow("dynamic-graph-creation", "1.0.0", "oloQueue2", true);
+
+        WorkflowDefinitionRegistry registry = WorkflowDefinitionRegistry.of(
+                Path.of("test"),
+                List.of(cached("agent.json", agent), cached("dynamic-graph-creation.json", dynamic)));
+
+        assertThat(registry.findByQueue("oloQueue2")).contains(agent);
+        assertThat(registry.resolve("oloQueue2", "dynamic-graph-creation")).contains(dynamic);
+        assertThat(registry.resolve("oloQueue2", "agent")).contains(agent);
+    }
+
+    @Test
+    void resolvesWorkflowTypeFromPrimaryDefinitionOnQueue() {
+        WorkflowDefinition agent = WorkflowDefinition.builder()
+                .id("agent")
+                .version("1.0.0")
+                .queue("oloQueue2")
+                .isDefault(true)
+                .workflowType("olo")
+                .build();
+        WorkflowDefinitionRegistry registry = WorkflowDefinitionRegistry.of(
+                Path.of("test"),
+                List.of(cached("agent.json", agent)));
+
+        assertThat(registry.resolveWorkflowTypeForQueue("oloQueue2")).isEqualTo("olo");
+        assertThat(registry.resolveWorkflowTypeForQueue("missing")).isEqualTo("olo");
+    }
+
     private static CachedWorkflowDefinition cached(String sourcePath, WorkflowDefinition definition) {
         return new CachedWorkflowDefinition(sourcePath, definition);
     }

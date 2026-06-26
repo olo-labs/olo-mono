@@ -13,6 +13,7 @@ public final class OloCatalogLocations {
     public static final String TOOLS_CATALOG = CATALOG_DIR + "/tools.json";
     public static final String HOOKS_CATALOG = CATALOG_DIR + "/hooks.json";
     public static final String WORKFLOW_PRESETS_CATALOG = CATALOG_DIR + "/workflow-presets.json";
+    public static final String WORKFLOW_TYPES_CATALOG = CATALOG_DIR + "/workflow-types.json";
 
     /**
      * Per-module JVM bindings ({@code implementationClass}, {@code spiInterface}) keyed by global extension id.

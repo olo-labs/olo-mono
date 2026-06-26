@@ -62,6 +62,18 @@ public @interface OloTool {
     OloProperty[] configuration() default {};
 
     /**
+     * Graph canvas port profile when {@link #inputs()} and {@link #outputs()} are empty.
+     * Tools default to {@link OloCanvasPorts#CAPABILITY_PLUGIN}.
+     */
+    OloCanvasPorts canvasPorts() default OloCanvasPorts.CAPABILITY_PLUGIN;
+
+    /** Explicit canvas inputs; overrides {@link #canvasPorts()} when non-empty. */
+    OloPort[] inputs() default {};
+
+    /** Explicit canvas outputs; overrides {@link #canvasPorts()} when non-empty. */
+    OloPort[] outputs() default {};
+
+    /**
      * JSON Schema object (as a string) describing semantic inputs for machine-readable planners.
      * Omitted from catalog when blank.
      */

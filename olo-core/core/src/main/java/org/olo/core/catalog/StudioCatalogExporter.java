@@ -30,6 +30,7 @@ import java.util.stream.Stream;
  *   <li>{@code runtime.json} — merged JVM bindings keyed by global extension id</li>
  *   <li>{@code nodes.json}, {@code tools.json}, {@code hooks.json} — per-type debug slices</li>
  *   <li>{@code workflow-presets.json} — workflow parameter UI schema from {@code @OloWorkflowPreset}</li>
+ *   <li>{@code workflow-types.json} — Temporal workflow types and queue bindings from {@code @OloWorkflowType}</li>
  * </ul>
  */
 public final class StudioCatalogExporter {
@@ -55,9 +56,13 @@ public final class StudioCatalogExporter {
         writePerTypeCatalog(outDir.resolve("hooks.json"), catalog, "hooks", generatedAt, mapper);
         List<WorkflowPresetDescriptor> workflowPresets =
                 WorkflowPresetCatalogLoader.loadMerged(CoreExtensionCatalog.class.getClassLoader());
-        writeMergedCatalog(outDir.resolve("catalog.json"), catalog, workflowPresets, generatedAt, mapper);
+        Map<String, Object> workflowTypesCatalog =
+                WorkflowTypesCatalogLoader.loadMerged(CoreExtensionCatalog.class.getClassLoader());
+        writeMergedCatalog(
+                outDir.resolve("catalog.json"), catalog, workflowPresets, workflowTypesCatalog, generatedAt, mapper);
         writeRuntimeRegistry(outDir.resolve("runtime.json"), runtime, generatedAt, mapper);
         writeWorkflowPresets(outDir.resolve("workflow-presets.json"), workflowPresets, generatedAt, mapper);
+        writeWorkflowTypes(outDir.resolve("workflow-types.json"), workflowTypesCatalog, generatedAt, mapper);
     }
 
     private static void removeUnwantedFiles(Path outDir) throws IOException {
@@ -128,6 +133,7 @@ public final class StudioCatalogExporter {
             Path file,
             ExtensionCatalog catalog,
             List<WorkflowPresetDescriptor> workflowPresets,
+            Map<String, Object> workflowTypesCatalog,
             String generatedAt,
             ObjectMapper mapper)
             throws IOException {
@@ -139,6 +145,16 @@ public final class StudioCatalogExporter {
         bundle.put("hooks", catalog.hooks());
         if (!workflowPresets.isEmpty()) {
             bundle.put("workflowPresets", workflowPresets);
+        }
+        @SuppressWarnings("unchecked")
+        List<Object> workflowTypes = (List<Object>) workflowTypesCatalog.get("workflowTypes");
+        @SuppressWarnings("unchecked")
+        List<Object> queues = (List<Object>) workflowTypesCatalog.get("queues");
+        if (workflowTypes != null && !workflowTypes.isEmpty()) {
+            bundle.put("workflowTypes", workflowTypes);
+        }
+        if (queues != null && !queues.isEmpty()) {
+            bundle.put("queues", queues);
         }
         mapper.writeValue(file.toFile(), bundle);
     }
@@ -163,6 +179,25 @@ public final class StudioCatalogExporter {
         document.put("catalogType", "workflow-presets");
         document.put("moduleId", "olo-core");
         document.put("presets", workflowPresets);
+        mapper.writeValue(file.toFile(), document);
+    }
+
+    private static void writeWorkflowTypes(
+            Path file, Map<String, Object> workflowTypesCatalog, String generatedAt, ObjectMapper mapper)
+            throws IOException {
+        @SuppressWarnings("unchecked")
+        List<Object> workflowTypes = (List<Object>) workflowTypesCatalog.get("workflowTypes");
+        @SuppressWarnings("unchecked")
+        List<Object> queues = (List<Object>) workflowTypesCatalog.get("queues");
+        if ((workflowTypes == null || workflowTypes.isEmpty()) && (queues == null || queues.isEmpty())) {
+            return;
+        }
+        Map<String, Object> document = new LinkedHashMap<>();
+        applyDocumentHeader(document, String.valueOf(workflowTypesCatalog.getOrDefault("schemaVersion", "1.0")), generatedAt);
+        document.put("catalogType", "workflow-types");
+        document.put("moduleId", "olo-kernel");
+        document.put("workflowTypes", workflowTypes == null ? List.of() : workflowTypes);
+        document.put("queues", queues == null ? List.of() : queues);
         mapper.writeValue(file.toFile(), document);
     }
 }

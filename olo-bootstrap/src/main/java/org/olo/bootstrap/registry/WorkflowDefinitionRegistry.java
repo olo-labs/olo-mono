@@ -155,4 +155,36 @@ public final class WorkflowDefinitionRegistry {
     public Optional<WorkflowDefinition> findByQueue(String queue) {
         return Optional.ofNullable(byQueue.get(queue));
     }
+
+    /**
+     * Resolves a workflow for execution when multiple definitions may share the same Temporal queue.
+     * Prefers {@code workflowId} when present; otherwise falls back to {@code queue}.
+     */
+    public Optional<WorkflowDefinition> resolve(String queue, String workflowId) {
+        if (workflowId != null && !workflowId.isBlank()) {
+            Optional<WorkflowDefinition> byId = findById(workflowId.trim());
+            if (byId.isPresent()) {
+                return byId;
+            }
+        }
+        if (queue != null && !queue.isBlank()) {
+            return findByQueue(queue.trim());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Temporal workflow type for {@code queue}, taken from the primary workflow definition JSON
+     * ({@code workflowType} field). Falls back to {@code olo} when unset.
+     */
+    public String resolveWorkflowTypeForQueue(String queue) {
+        if (queue == null || queue.isBlank()) {
+            return "olo";
+        }
+        return findByQueue(queue.trim())
+                .map(WorkflowDefinition::getWorkflowType)
+                .filter(type -> type != null && !type.isBlank())
+                .map(String::trim)
+                .orElse("olo");
+    }
 }

@@ -12,8 +12,13 @@ public final class PortDescriptor {
 
     public String id;
     public String name;
+    public String label;
     public String schema;
+    public String type;
+    public String acceptType;
     public boolean required;
+    public int minConnections;
+    public Integer maxConnections;
     public String description;
     public PortUiDescriptor ui;
 }

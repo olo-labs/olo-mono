@@ -50,4 +50,13 @@ public @interface OloHook {
      */
     @Deprecated
     boolean experimental() default false;
+
+    /** Graph canvas port profile; hooks default to {@link OloCanvasPorts#CAPABILITY_PLUGIN}. */
+    OloCanvasPorts canvasPorts() default OloCanvasPorts.CAPABILITY_PLUGIN;
+
+    /** Explicit canvas inputs; overrides {@link #canvasPorts()} when non-empty. */
+    OloPort[] inputs() default {};
+
+    /** Explicit canvas outputs; overrides {@link #canvasPorts()} when non-empty. */
+    OloPort[] outputs() default {};
 }

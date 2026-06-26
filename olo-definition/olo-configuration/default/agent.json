@@ -14,9 +14,80 @@
       "height" : 120
     },
     "resizable" : true,
-    "draggable" : true
+    "draggable" : true,
+    "layout" : {
+      "originX" : 80,
+      "originY" : 80,
+      "columnGap" : 360,
+      "rowGap" : 200,
+      "columns" : 4
+    },
+    "canvas" : {
+      "backgroundColor" : "#3f3f46",
+      "gridGap" : 16,
+      "edgeStroke" : "#52525b",
+      "selectionBorder" : "#3b82f6",
+      "minimapNodeColor" : "#52525b"
+    },
+    "portColors" : {
+      "capabilities" : "#22c55e",
+      "integer" : "#38bdf8",
+      "boolean" : "#fb923c",
+      "message" : "#ef4444",
+      "any" : "#94a3b8",
+      "agent-plug" : "#a855f7",
+      "number" : "#38bdf8",
+      "array" : "#f472b6",
+      "object" : "#c084fc",
+      "string" : "#a3e635"
+    },
+    "nodeTypes" : {
+      "AGENT" : {
+        "emoji" : "🤖",
+        "typeLabel" : "Agent",
+        "inlineProperties" : [ {
+          "id" : "parameters",
+          "widget" : "WORKFLOW_PARAMETERS",
+          "label" : "Parameters"
+        }, {
+          "id" : "model",
+          "widget" : "MODEL_SELECTOR",
+          "label" : "Model"
+        } ]
+      },
+      "START" : {
+        "emoji" : "▶",
+        "typeLabel" : "Start",
+        "description" : "Workflow entry — maps caller input to workflow variables",
+        "palette" : {
+          "name" : "Start",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "inputVariables",
+          "widget" : "VARIABLE_CHECKLIST",
+          "label" : "Input variables",
+          "binding" : "inputVariableMappings"
+        } ]
+      },
+      "END" : {
+        "emoji" : "⏹",
+        "typeLabel" : "End",
+        "description" : "Workflow exit — maps a workflow variable to the caller result",
+        "palette" : {
+          "name" : "End",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "outputVariable",
+          "widget" : "VARIABLE_SELECT",
+          "label" : "Output variable",
+          "binding" : "outputVariableMapping"
+        } ]
+      }
+    }
   },
-  "queue" : "agent",
+  "queue" : "oloQueue2",
   "workflowType" : "olo",
   "runAgain" : true,
   "childWorkflows" : [ {
@@ -76,16 +147,13 @@
     "model" : {
       "type" : "string",
       "label" : "Model",
-      "description" : "Model identifier",
+      "description" : "Default model identifier",
       "defaultValue" : "",
-      "required" : true,
-      "validation" : {
-        "minLength" : 1
-      },
+      "required" : false,
       "ui" : {
         "widget" : "MODEL_SELECTOR",
         "group" : "Model Settings",
-        "help" : "LLM used for agent reasoning.",
+        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
         "order" : 2
       }
     },
@@ -111,13 +179,13 @@
       "type" : "string",
       "label" : "System Prompt",
       "description" : "System prompt for the agent",
-      "defaultValue" : "",
+      "defaultValue" : "You are an autonomous OLO agent that investigates requests, uses tools when they help, and delegates to specialist agents when they are a better fit.\n\nUser request:\n{message}\n\nRespond clearly and actionably. Use capabilities when they add value. Prefer delegation when another agent is better suited.",
       "required" : false,
       "ui" : {
         "widget" : "TEXTAREA",
         "group" : "Model Settings",
-        "help" : "Optional instructions that shape agent behavior.",
-        "placeholder" : "You are a helpful assistant…",
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
         "order" : 0
       }
     },
@@ -145,42 +213,87 @@
     "type" : "START",
     "ports" : [ {
       "id" : "out",
-      "name" : "out",
-      "schema" : "any",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
       "direction" : "OUTPUT",
       "required" : false,
       "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
       "ui" : {
-        "position" : "RIGHT"
+        "position" : "RIGHT",
+        "color" : "#ef4444"
       }
     } ],
     "reads" : [ "input.message" ],
     "writes" : [ ],
     "configuration" : {
-      "inputVariableMappings" : [ "message" ]
+      "inputVariableMappings" : [ "message" ],
+      "designer" : {
+        "position" : {
+          "x" : 80,
+          "y" : 80
+        }
+      }
     }
   }, {
     "id" : "agent",
     "type" : "AGENT",
     "ports" : [ {
       "id" : "in",
-      "name" : "in",
-      "schema" : "any",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : true,
+      "minConnections" : 1,
+      "maxConnections" : 1,
+      "shortDescription" : "Incoming workflow message",
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "acceptType" : "capabilities",
       "direction" : "INPUT",
       "required" : false,
       "minConnections" : 0,
+      "shortDescription" : "Tools and hooks registered for runtime prompt assembly (0 or more)",
       "ui" : {
-        "position" : "LEFT"
+        "position" : "BOTTOM",
+        "color" : "#22c55e"
+      }
+    }, {
+      "id" : "agentPlug",
+      "label" : "available agents",
+      "schema" : "agent-plug",
+      "type" : "agent-plug",
+      "acceptType" : "agent-plug",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Child workflows registered for runtime prompt assembly (0 or more)",
+      "ui" : {
+        "position" : "BOTTOM",
+        "color" : "#a855f7"
       }
     }, {
       "id" : "out",
-      "name" : "out",
-      "schema" : "any",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
       "direction" : "OUTPUT",
       "required" : false,
       "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
       "ui" : {
-        "position" : "RIGHT"
+        "position" : "RIGHT",
+        "color" : "#ef4444"
       }
     } ],
     "execution" : {
@@ -196,24 +309,43 @@
     },
     "reads" : [ ],
     "writes" : [ ],
-    "configuration" : { }
+    "configuration" : {
+      "designer" : {
+        "position" : {
+          "x" : 440,
+          "y" : 80
+        }
+      }
+    }
   }, {
     "id" : "end",
     "type" : "END",
     "ports" : [ {
       "id" : "in",
-      "name" : "in",
-      "schema" : "any",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
       "direction" : "INPUT",
-      "required" : false,
-      "minConnections" : 0,
+      "required" : true,
+      "minConnections" : 1,
+      "maxConnections" : 1,
+      "shortDescription" : "Incoming workflow message",
       "ui" : {
-        "position" : "LEFT"
+        "position" : "LEFT",
+        "color" : "#ef4444"
       }
     } ],
     "reads" : [ ],
     "writes" : [ ],
-    "configuration" : { }
+    "configuration" : {
+      "designer" : {
+        "position" : {
+          "x" : 800,
+          "y" : 80
+        }
+      }
+    }
   } ],
   "edges" : [ {
     "sourceNodeId" : "start",
@@ -260,26 +392,19 @@
     "rules" : [ ],
     "metadata" : { }
   } ],
-  "prompts" : [ {
-    "id" : "default-prompt",
-    "name" : "Default planner prompt",
-    "promptTemplate" : "You are a research planner.\n\nInvestigate {message}.\n\nUse available capabilities when needed.\nDelegate work when another agent is more suitable."
-  } ],
-  "defaultPromptId" : "default-prompt",
   "extensions" : [ ],
   "metadata" : {
-    "returnVariable" : "ReturnValue",
-    "agentType" : "autonomous",
     "description" : "Autonomous tool-using agent",
     "plannerContext" : {
       "selectedTools" : [ ],
       "selectedAgents" : [ "planner", "reviewer", "architect" ],
-      "injectAgents" : true,
-      "injectCapabilities" : false,
-      "selectedVariables" : [ "message" ]
+      "selectedVariables" : [ "message" ],
+      "injectCapabilities" : false
     },
     "planningStrategy" : "react",
+    "agentSelectionStrategy" : "dynamic",
     "role" : "agent",
-    "agentSelectionStrategy" : "dynamic"
+    "returnVariable" : "ReturnValue",
+    "agentType" : "autonomous"
   }
 }

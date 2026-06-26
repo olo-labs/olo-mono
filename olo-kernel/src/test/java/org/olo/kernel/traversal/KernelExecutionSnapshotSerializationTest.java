@@ -2,9 +2,12 @@ package org.olo.kernel.traversal;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.olo.bootstrap.OloBootstrap;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.input.model.WorkflowInput;
+import org.olo.kernel.KernelRuntimeHolder;
 import org.olo.kernel.context.KernelContextBuildRequest;
 import org.olo.kernel.context.KernelContextBuilder;
 import org.olo.kernel.context.KernelRuntimeContext;
@@ -22,6 +25,43 @@ class KernelExecutionSnapshotSerializationTest {
             .findAndRegisterModules()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+    @AfterEach
+    void tearDown() {
+        KernelRuntimeHolder.reset();
+    }
+
+    @Test
+    void omitsGraphJsonWhenRegistryMatchesQueue() throws Exception {
+        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
+        if (!Files.exists(presets)) {
+            throw new org.opentest4j.TestAbortedException("olo-configuration presets not found");
+        }
+
+        KernelRuntimeHolder.setRegistry(OloBootstrap.load(presets, false));
+        WorkflowDefinition source = KernelRuntimeHolder.registry().findById("fast").orElseThrow();
+        WorkflowInput baseInput = WorkflowInput.fromJson(
+                Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
+                        .toAbsolutePath()
+                        .normalize()));
+        WorkflowInput input = baseInput.toBuilder()
+                .routing(new org.olo.input.model.Routing(
+                        "fast",
+                        baseInput.getRouting().getTransactionType(),
+                        baseInput.getRouting().getTransactionId(),
+                        baseInput.getRouting().getConfigVersion()))
+                .build();
+        KernelRuntimeContext context = KernelContextBuilder.build(
+                KernelContextBuildRequest.of("oloQueue2", input, source));
+        KernelExecutionSnapshot snapshot = KernelExecutionSnapshot.fromContext(context);
+
+        String json = MAPPER.writeValueAsString(snapshot);
+
+        assertThat(json).doesNotContain("graphJson");
+        KernelExecutionSnapshot restored = MAPPER.readValue(json, KernelExecutionSnapshot.class);
+        assertThat(restored.getGraph().getId()).isEqualTo("fast");
+        assertThat(restored.getGraphJson()).isNull();
+    }
+
     @Test
     void roundTripsThroughJacksonLikeTemporalPayloadConverter() throws Exception {
         Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
@@ -30,14 +70,21 @@ class KernelExecutionSnapshotSerializationTest {
         }
 
         WorkflowDefinition source = org.olo.bootstrap.OloBootstrap.load(presets, false)
-                .findByQueue("fast")
+                .findById("fast")
                 .orElseThrow();
-        WorkflowInput input = WorkflowInput.fromJson(
+        WorkflowInput baseInput = WorkflowInput.fromJson(
                 Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
                         .toAbsolutePath()
                         .normalize()));
+        WorkflowInput input = baseInput.toBuilder()
+                .routing(new org.olo.input.model.Routing(
+                        "fast",
+                        baseInput.getRouting().getTransactionType(),
+                        baseInput.getRouting().getTransactionId(),
+                        baseInput.getRouting().getConfigVersion()))
+                .build();
         KernelRuntimeContext context = KernelContextBuilder.build(
-                KernelContextBuildRequest.of("fast", input, source));
+                KernelContextBuildRequest.of("oloQueue2", input, source));
         KernelExecutionSnapshot snapshot = KernelExecutionSnapshot.fromContext(
                 context,
                 "agent",
@@ -50,7 +97,7 @@ class KernelExecutionSnapshotSerializationTest {
         String json = MAPPER.writeValueAsString(snapshot);
         KernelExecutionSnapshot restored = MAPPER.readValue(json, KernelExecutionSnapshot.class);
 
-        assertThat(restored.getQueue()).isEqualTo(snapshot.getQueue());
+        assertThat(restored.getQueue()).isEqualTo("oloQueue2");
         assertThat(restored.getNextNodeId()).isEqualTo("agent");
         assertThat(restored.getStep()).isEqualTo(2);
         assertThat(restored.getStatus()).isEqualTo(KernelExecutionSnapshot.Status.RUNNING);
@@ -59,7 +106,7 @@ class KernelExecutionSnapshotSerializationTest {
         assertThat(restored.isNextRequiresDedicatedActivity()).isTrue();
         assertThat(restored.getWorkflowActivityName()).isEqualTo(snapshot.getWorkflowActivityName());
         assertThat(restored.getNextActivityName()).isEqualTo(snapshot.getNextActivityName());
-        assertThat(restored.getGraph().getId()).isEqualTo(snapshot.getGraph().getId());
+        assertThat(restored.getGraph().getId()).isEqualTo("fast");
         assertThat(restored.toContext().getVariableMap()).isEqualTo(snapshot.toContext().getVariableMap());
     }
 
@@ -74,19 +121,30 @@ class KernelExecutionSnapshotSerializationTest {
 
         WorkflowDefinition graph = new org.olo.definition.serializer.JsonWorkflowSerializer()
                 .deserialize(Files.readString(workflowJson));
-        WorkflowInput input = WorkflowInput.fromJson(
+        Path presets = workflowJson.getParent();
+        KernelRuntimeHolder.setRegistry(OloBootstrap.load(presets, false));
+        WorkflowInput baseInput = WorkflowInput.fromJson(
                 Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
                         .toAbsolutePath()
                         .normalize()));
+        WorkflowInput input = baseInput.toBuilder()
+                .routing(new org.olo.input.model.Routing(
+                        "dynamic-graph-creation",
+                        baseInput.getRouting().getTransactionType(),
+                        baseInput.getRouting().getTransactionId(),
+                        baseInput.getRouting().getConfigVersion()))
+                .build();
         KernelRuntimeContext context = KernelContextBuilder.build(
-                KernelContextBuildRequest.of("dynamic-graph-creation", input, graph));
+                KernelContextBuildRequest.of("oloQueue2", input, graph));
         KernelExecutionSnapshot snapshot = KernelExecutionSnapshot.fromContext(context);
 
         String json = MAPPER.writeValueAsString(snapshot);
+        assertThat(json).doesNotContain("graphJson");
+
         KernelExecutionSnapshot restored = MAPPER.readValue(json, KernelExecutionSnapshot.class);
 
         assertThat(restored.getGraph().getId()).isEqualTo("dynamic-graph-creation");
-        assertThat(restored.getGraphJson()).contains("tool_requirements");
+        assertThat(restored.getGraphJson()).isNull();
         assertThat(restored.isNextRequiresDedicatedActivity()).isTrue();
         assertThat(restored.getWorkflowActivityName())
                 .isEqualTo("dynamic-graph-creation:Dynamic Graph Creation");

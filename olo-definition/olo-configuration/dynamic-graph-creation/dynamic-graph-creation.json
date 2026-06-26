@@ -1,210 +1,428 @@
 {
-  "id" : "dynamic-graph-creation",
-  "enabled" : true,
-  "isDefault" : true,
-  "label" : "Dynamic Graph Creation",
-  "role" : "Dynamic Graph Creator",
-  "shortDescription" : "Generates OLO workflow graphs as JSON-only structured output and expands them inline at runtime",
-  "emoji" : "🧩",
-  "designer" : {
-    "paletteGroup" : "Agents",
-    "searchKeywords" : [ "dynamic", "graph", "workflow", "json" ],
-    "resizable" : true,
-    "draggable" : true
-  },
-  "queue" : "dynamic-graph-creation",
-  "workflowType" : "olo",
-  "runAgain" : true,
-  "childWorkflows" : [ ],
-  "availableAgents" : [ ],
-  "version" : "1.0.0",
-  "capability" : {
-    "name" : "Dynamic Graph Creation",
-    "description" : "Generates OLO workflow graphs as JSON-only structured output and expands them inline at runtime",
-    "tags" : [ "dynamic-graph", "json" ],
-    "examples" : [ ],
-    "required_inputs" : [ "input" ],
-    "required_outputs" : [ "output" ],
-    "tool_requirements" : [ ],
-    "required_context" : [ "message", "generatedGraphJson" ]
-  },
-  "runtime" : {
-    "contractVersion" : "1.0",
-    "executionModel" : "INLINE"
-  },
-  "inputs" : {
-    "message" : {
-      "schema" : "string",
-      "required" : true,
-      "populateState" : true
-    }
-  },
-  "state" : { },
-  "parameters" : { },
-  "nodes" : [ {
-    "id" : "start",
-    "type" : "START",
-    "ports" : [ {
-      "id" : "out",
-      "name" : "out",
-      "schema" : "any",
-      "direction" : "OUTPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "ui" : {
-        "position" : "RIGHT"
-      }
-    } ],
-    "reads" : [ "input.message" ],
-    "writes" : [ ],
-    "configuration" : {
-      "inputVariableMappings" : [ "message" ]
-    }
-  }, {
-    "id" : "graph-planner",
-    "type" : "AGENT",
-    "ports" : [ {
-      "id" : "in",
-      "name" : "in",
-      "schema" : "any",
-      "direction" : "INPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "ui" : {
-        "position" : "LEFT"
-      }
-    }, {
-      "id" : "out",
-      "name" : "out",
-      "schema" : "any",
-      "direction" : "OUTPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "ui" : {
-        "position" : "RIGHT"
-      }
-    } ],
-    "execution" : {
-      "executionKind" : "ACTIVITY",
-      "executionModel" : "INLINE",
-      "routers" : [ ]
+  "id": "dynamic-graph-creation",
+  "enabled": true,
+  "isDefault": true,
+  "label": "Dynamic Graph Creation",
+  "role": "Dynamic Graph Creator",
+  "shortDescription": "Generates OLO workflow graphs as JSON-only structured output and expands them inline at runtime",
+  "emoji": "🧩",
+  "designer": {
+    "paletteGroup": "Agents",
+    "searchKeywords": [
+      "dynamic",
+      "graph",
+      "workflow",
+      "json"
+    ],
+    "nodeSize": {
+      "width": 300,
+      "height": 120
     },
-    "reads" : [ ],
-    "writes" : [ ],
-    "configuration" : {
-      "dynamicGraphPlanner" : true,
-      "outputVariable" : "generatedGraphJson",
-      "maxInvalidJsonRetries" : 3,
-      "continueNodeId" : "end"
-    }
-  }, {
-    "id" : "end",
-    "type" : "END",
-    "ports" : [ {
-      "id" : "in",
-      "name" : "in",
-      "schema" : "any",
-      "direction" : "INPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "ui" : {
-        "position" : "LEFT"
+    "resizable": true,
+    "draggable": true,
+    "layout": {
+      "originX": 80,
+      "originY": 80,
+      "columnGap": 360,
+      "rowGap": 200,
+      "columns": 4
+    },
+    "canvas": {
+      "backgroundColor": "#3f3f46",
+      "gridGap": 16,
+      "edgeStroke": "#52525b",
+      "selectionBorder": "#3b82f6",
+      "minimapNodeColor": "#52525b"
+    },
+    "portColors": {
+      "any": "#94a3b8",
+      "number": "#38bdf8",
+      "array": "#f472b6",
+      "boolean": "#fb923c",
+      "message": "#ef4444",
+      "string": "#a3e635",
+      "object": "#c084fc",
+      "integer": "#38bdf8"
+    },
+    "nodeTypes": {
+      "START": {
+        "emoji": "▶",
+        "typeLabel": "Start",
+        "description": "Workflow entry — maps caller input to workflow variables",
+        "palette": {
+          "name": "Start",
+          "category": "control"
+        },
+        "inlineProperties": [
+          {
+            "id": "inputVariables",
+            "widget": "VARIABLE_CHECKLIST",
+            "label": "Input variables",
+            "binding": "inputVariableMappings"
+          }
+        ]
+      },
+      "AGENT": {
+        "emoji": "🧩",
+        "typeLabel": "Agent",
+        "inlineProperties": [
+          {
+            "id": "parameters",
+            "widget": "WORKFLOW_PARAMETERS",
+            "label": "Parameters"
+          },
+          {
+            "id": "model",
+            "widget": "MODEL_SELECTOR",
+            "label": "Model"
+          }
+        ]
+      },
+      "END": {
+        "emoji": "⏹",
+        "typeLabel": "End",
+        "description": "Workflow exit — maps a workflow variable to the caller result",
+        "palette": {
+          "name": "End",
+          "category": "control"
+        },
+        "inlineProperties": [
+          {
+            "id": "outputVariable",
+            "widget": "VARIABLE_SELECT",
+            "label": "Output variable",
+            "binding": "outputVariableMapping"
+          }
+        ]
       }
-    } ],
-    "reads" : [ ],
-    "writes" : [ ],
-    "configuration" : { }
-  } ],
-  "edges" : [ {
-    "sourceNodeId" : "start",
-    "sourcePortId" : "out",
-    "targetNodeId" : "graph-planner",
-    "targetPortId" : "in"
-  }, {
-    "sourceNodeId" : "graph-planner",
-    "sourcePortId" : "out",
-    "targetNodeId" : "end",
-    "targetPortId" : "in"
-  } ],
-  "variables" : [ {
-    "name" : "message",
-    "type" : "string",
-    "description" : "",
-    "required" : true,
-    "scope" : "READONLY_EXTERNAL",
-    "metadata" : { }
-  }, {
-    "name" : "generatedGraphJson",
-    "type" : "string",
-    "description" : "Model-produced workflow graph JSON",
-    "required" : false,
-    "scope" : "LOCAL",
-    "metadata" : {
-      "role" : "generated-graph"
     }
-  }, {
-    "name" : "generatedGraphJsonRetryCount",
-    "type" : "number",
-    "description" : "Invalid JSON retry counter for the dynamic graph planner",
-    "required" : false,
-    "scope" : "LOCAL",
-    "metadata" : { }
-  }, {
-    "name" : "generatedGraphJsonValidationError",
-    "type" : "string",
-    "description" : "Last validation error from generatedGraphJson, injected into planner retries",
-    "required" : false,
-    "scope" : "LOCAL",
-    "metadata" : { }
-  }, {
-    "name" : "ReturnValue",
-    "type" : "string",
-    "description" : "Workflow return message returned to the caller",
-    "required" : false,
-    "scope" : "LOCAL",
-    "metadata" : {
-      "role" : "return"
+  },
+  "queue": "dynamic-graph-creation",
+  "workflowType": "olo",
+  "runAgain": true,
+  "childWorkflows": [],
+  "availableAgents": [],
+  "version": "1.0.0",
+  "capability": {
+    "name": "Dynamic Graph Creation",
+    "description": "Generates OLO workflow graphs as JSON-only structured output and expands them inline at runtime",
+    "tags": [
+      "dynamic-graph",
+      "json"
+    ],
+    "examples": [],
+    "required_inputs": [
+      "input"
+    ],
+    "required_outputs": [
+      "output"
+    ],
+    "tool_requirements": [],
+    "required_context": [
+      "message",
+      "generatedGraphJson"
+    ]
+  },
+  "runtime": {
+    "contractVersion": "1.0",
+    "executionModel": "INLINE"
+  },
+  "inputs": {
+    "message": {
+      "schema": "string",
+      "required": true,
+      "populateState": true
     }
-  } ],
-  "tools" : [ ],
-  "agents" : [ ],
-  "hooks" : [ ],
-  "modelProviders" : [ {
-    "id" : "model-provider",
-    "provider" : "local",
-    "model" : "llama3.2:latest",
-    "configuration" : {
-      "baseUrl" : "http://localhost:51435"
-    }
-  } ],
-  "modelRouting" : [ {
-    "id" : "default-routing",
-    "defaultProviderId" : "model-provider",
-    "rules" : [ ],
-    "metadata" : { }
-  } ],
-  "prompts" : [ {
-    "id" : "default-prompt",
-    "name" : "Dynamic graph JSON generator prompt",
-    "promptTemplate" : "You are an OLO workflow graph generator.\n\nGoal: produce a valid WorkflowDefinition graph for this request:\n{message}\n\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Do not wrap the JSON in ```json``` blocks.\n3. Every graph MUST include exactly one START node, one END node, and edges connecting START -> steps -> END.\n4. Node type must be one of: START, END, AGENT, TOOL, MODEL, PARALLEL, HUMAN, CONDITION, ROUTER, PLANNER, REFLECTION, EVALUATOR, VECTOR_SEARCH, MEMORY, WORKFLOW_REF.\n   Never use pipe-separated placeholders.\n5. AGENT nodes answer the user in plain conversational text. Only this graph-planner step returns workflow JSON.\n6. Node ids must be unique kebab-case strings.\n7. Prefer the smallest valid graph that satisfies the request.\n8. TOOL nodes require configuration.toolId using olo-core tool ids, for example:\n   olo-core:web-search, olo-core:log-reader, olo-core:cpu-usage, olo-core:memory-usage,\n   olo-core:numeric-metric, olo-core:recently-changed-code, olo-core:calculator, olo-core:http-tool.\n   For news or web lookup requests, prefer olo-core:web-search.\n   For observability tools (log-reader, cpu-usage, memory-usage, numeric-metric), include\n   configuration.arguments with ISO-8601 startTime and endTime when the user mentions a time window.\n   Example: \"arguments\": { \"startTime\": \"2026-06-14T14:30:00Z\", \"endTime\": \"2026-06-14T14:31:00Z\" }\n\nMinimal valid example (follow this shape):\n{\n  \"id\": \"hello-workflow\",\n  \"label\": \"Hello Workflow\",\n  \"nodes\": [\n    { \"id\": \"start\", \"type\": \"START\" },\n    { \"id\": \"greet\", \"type\": \"AGENT\" },\n    { \"id\": \"end\", \"type\": \"END\" }\n  ],\n  \"edges\": [\n    {\n      \"sourceNodeId\": \"start\",\n      \"sourcePortId\": \"out\",\n      \"targetNodeId\": \"greet\",\n      \"targetPortId\": \"in\"\n    },\n    {\n      \"sourceNodeId\": \"greet\",\n      \"sourcePortId\": \"out\",\n      \"targetNodeId\": \"end\",\n      \"targetPortId\": \"in\"\n    }\n  ]\n}\n\nIf a previous attempt failed validation, fix it:\n{generatedGraphJsonValidationError}\n\nRespond with JSON only."
-  } ],
-  "defaultPromptId" : "default-prompt",
-  "extensions" : [ ],
-  "metadata" : {
-    "returnVariable" : "ReturnValue",
-    "plannerContext" : {
-      "selectedVariables" : [ "message" ],
-      "injectCapabilities" : false,
-      "injectAgents" : false,
-      "selectedAgents" : [ ],
-      "selectedTools" : [ ]
+  },
+  "state": {},
+  "parameters": {
+    "temperature": {
+      "type": "number",
+      "label": "Temperature",
+      "description": "Sampling temperature",
+      "defaultValue": 0.2,
+      "required": false,
+      "validation": {
+        "minimum": 0,
+        "maximum": 2,
+        "step": 0.1
+      },
+      "ui": {
+        "widget": "SLIDER",
+        "group": "Model Settings",
+        "help": "Higher values increase response creativity.",
+        "order": 3
+      }
     },
-    "role" : "dynamic-graph-creation",
-    "dynamicGraphCreation" : {
-      "outputVariable" : "generatedGraphJson",
-      "plannerNodeId" : "graph-planner",
-      "continueNodeId" : "end"
+    "systemPrompt": {
+      "type": "string",
+      "label": "System Prompt",
+      "description": "System prompt for the agent",
+      "defaultValue": "{message}",
+      "required": false,
+      "ui": {
+        "widget": "TEXTAREA",
+        "group": "Model Settings",
+        "help": "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder": "You are a helpful assistant…\n\n{message}",
+        "order": 0
+      }
     },
-    "description" : "Generates OLO workflow graphs as JSON-only structured output and expands them inline at runtime"
+    "maxIterations": {
+      "type": "integer",
+      "label": "Max Iterations",
+      "description": "Maximum agent reasoning iterations",
+      "defaultValue": 10,
+      "required": false,
+      "validation": {
+        "minimum": 1,
+        "maximum": 100,
+        "step": 1
+      },
+      "ui": {
+        "widget": "NUMBER",
+        "group": "Model Settings",
+        "help": "Caps how many planner/tool loops the agent may run.",
+        "order": 1
+      }
+    },
+    "model": {
+      "type": "string",
+      "label": "Model",
+      "description": "Default model identifier",
+      "defaultValue": "",
+      "required": false,
+      "ui": {
+        "widget": "MODEL_SELECTOR",
+        "group": "Model Settings",
+        "help": "Optional workflow default. Prefer the Model control on each Agent node.",
+        "order": 2
+      }
+    }
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "START",
+      "ports": [
+        {
+          "id": "out",
+          "label": "message out",
+          "schema": "message",
+          "type": "message",
+          "direction": "OUTPUT",
+          "required": false,
+          "minConnections": 0,
+          "shortDescription": "Outgoing workflow message",
+          "ui": {
+            "position": "RIGHT",
+            "color": "#ef4444"
+          }
+        }
+      ],
+      "reads": [
+        "input.message"
+      ],
+      "writes": [],
+      "configuration": {
+        "inputVariableMappings": [
+          "message"
+        ],
+        "designer": {
+          "position": {
+            "y": 80,
+            "x": 80
+          }
+        }
+      }
+    },
+    {
+      "id": "graph-planner",
+      "type": "AGENT",
+      "ports": [
+        {
+          "id": "in",
+          "label": "message in",
+          "schema": "message",
+          "type": "message",
+          "acceptType": "message",
+          "direction": "INPUT",
+          "required": true,
+          "minConnections": 1,
+          "maxConnections": 1,
+          "shortDescription": "Incoming workflow message",
+          "ui": {
+            "position": "LEFT",
+            "color": "#ef4444"
+          }
+        },
+        {
+          "id": "out",
+          "label": "message out",
+          "schema": "message",
+          "type": "message",
+          "direction": "OUTPUT",
+          "required": false,
+          "minConnections": 0,
+          "shortDescription": "Outgoing workflow message",
+          "ui": {
+            "position": "RIGHT",
+            "color": "#ef4444"
+          }
+        }
+      ],
+      "execution": {
+        "executionKind": "ACTIVITY",
+        "executionModel": "INLINE",
+        "routers": []
+      },
+      "reads": [],
+      "writes": [],
+      "configuration": {
+        "dynamicGraphPlanner": true,
+        "outputVariable": "generatedGraphJson",
+        "maxInvalidJsonRetries": 3,
+        "continueNodeId": "end",
+        "promptTemplate": "You are an OLO workflow graph generator.\n\nGoal: produce a valid WorkflowDefinition graph for this request:\n{message}\n\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Do not wrap the JSON in ```json``` blocks.\n3. Every graph MUST include exactly one START node, one END node, and edges connecting START -> steps -> END.\n4. Node type must be one of: START, END, AGENT, TOOL, MODEL, PARALLEL, HUMAN, CONDITION, ROUTER, PLANNER, REFLECTION, EVALUATOR, VECTOR_SEARCH, MEMORY, WORKFLOW_REF.\n   Never use pipe-separated placeholders.\n5. AGENT nodes answer the user in plain conversational text. Only this graph-planner step returns workflow JSON.\n6. Node ids must be unique kebab-case strings.\n7. Prefer the smallest valid graph that satisfies the request.\n8. TOOL nodes require configuration.toolId using olo-core tool ids, for example:\n   olo-core:web-search, olo-core:log-reader, olo-core:cpu-usage, olo-core:memory-usage,\n   olo-core:numeric-metric, olo-core:recently-changed-code, olo-core:calculator, olo-core:http-tool.\n   For news or web lookup requests, prefer olo-core:web-search.\n   For observability tools (log-reader, cpu-usage, memory-usage, numeric-metric), include\n   configuration.arguments with ISO-8601 startTime and endTime when the user mentions a time window.\n   Example: \"arguments\": { \"startTime\": \"2026-06-14T14:30:00Z\", \"endTime\": \"2026-06-14T14:31:00Z\" }\n\nMinimal valid example (follow this shape):\n{\n  \"id\": \"hello-workflow\",\n  \"label\": \"Hello Workflow\",\n  \"nodes\": [\n    { \"id\": \"start\", \"type\": \"START\" },\n    { \"id\": \"greet\", \"type\": \"AGENT\" },\n    { \"id\": \"end\", \"type\": \"END\" }\n  ],\n  \"edges\": [\n    {\n      \"sourceNodeId\": \"start\",\n      \"sourcePortId\": \"out\",\n      \"targetNodeId\": \"greet\",\n      \"targetPortId\": \"in\"\n    },\n    {\n      \"sourceNodeId\": \"greet\",\n      \"sourcePortId\": \"out\",\n      \"targetNodeId\": \"end\",\n      \"targetPortId\": \"in\"\n    }\n  ]\n}\n\nIf a previous attempt failed validation, fix it:\n{generatedGraphJsonValidationError}\n\nRespond with JSON only.",
+        "designer": {
+          "position": {
+            "y": 80,
+            "x": 440
+          }
+        }
+      }
+    },
+    {
+      "id": "end",
+      "type": "END",
+      "ports": [
+        {
+          "id": "in",
+          "label": "message in",
+          "schema": "message",
+          "type": "message",
+          "acceptType": "message",
+          "direction": "INPUT",
+          "required": true,
+          "minConnections": 1,
+          "maxConnections": 1,
+          "shortDescription": "Incoming workflow message",
+          "ui": {
+            "position": "LEFT",
+            "color": "#ef4444"
+          }
+        }
+      ],
+      "reads": [],
+      "writes": [],
+      "configuration": {
+        "designer": {
+          "position": {
+            "y": 80,
+            "x": 800
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "sourceNodeId": "start",
+      "sourcePortId": "out",
+      "targetNodeId": "graph-planner",
+      "targetPortId": "in"
+    },
+    {
+      "sourceNodeId": "graph-planner",
+      "sourcePortId": "out",
+      "targetNodeId": "end",
+      "targetPortId": "in"
+    }
+  ],
+  "variables": [
+    {
+      "name": "message",
+      "type": "string",
+      "description": "",
+      "required": true,
+      "scope": "READONLY_EXTERNAL",
+      "metadata": {}
+    },
+    {
+      "name": "generatedGraphJson",
+      "type": "string",
+      "description": "Model-produced workflow graph JSON",
+      "required": false,
+      "scope": "LOCAL",
+      "metadata": {
+        "role": "generated-graph"
+      }
+    },
+    {
+      "name": "generatedGraphJsonRetryCount",
+      "type": "number",
+      "description": "Invalid JSON retry counter for the dynamic graph planner",
+      "required": false,
+      "scope": "LOCAL",
+      "metadata": {}
+    },
+    {
+      "name": "generatedGraphJsonValidationError",
+      "type": "string",
+      "description": "Last validation error from generatedGraphJson, injected into planner retries",
+      "required": false,
+      "scope": "LOCAL",
+      "metadata": {}
+    },
+    {
+      "name": "ReturnValue",
+      "type": "string",
+      "description": "Workflow return message returned to the caller",
+      "required": false,
+      "scope": "LOCAL",
+      "metadata": {
+        "role": "return"
+      }
+    }
+  ],
+  "tools": [],
+  "agents": [],
+  "hooks": [],
+  "modelProviders": [
+    {
+      "id": "model-provider",
+      "provider": "local",
+      "model": "llama3.2:latest",
+      "configuration": {
+        "baseUrl": "http://localhost:51435"
+      }
+    }
+  ],
+  "modelRouting": [
+    {
+      "id": "default-routing",
+      "defaultProviderId": "model-provider",
+      "rules": [],
+      "metadata": {}
+    }
+  ],
+  "extensions": [],
+  "metadata": {
+    "description": "Generates OLO workflow graphs as JSON-only structured output and expands them inline at runtime",
+    "returnVariable": "ReturnValue",
+    "plannerContext": {
+      "selectedVariables": [
+        "message"
+      ],
+      "selectedAgents": [],
+      "selectedTools": [],
+      "injectCapabilities": false
+    },
+    "role": "dynamic-graph-creation",
+    "dynamicGraphCreation": {
+      "continueNodeId": "end",
+      "outputVariable": "generatedGraphJson",
+      "plannerNodeId": "graph-planner"
+    }
   }
 }

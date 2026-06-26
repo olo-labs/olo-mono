@@ -22,6 +22,7 @@ import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeRouterDefinition;
 import org.olo.definition.port.PortDefinition;
 import org.olo.definition.port.PortDirection;
+import org.olo.definition.port.PortWireCompatibility;
 import org.olo.definition.input.WorkflowInputDefinition;
 import org.olo.definition.path.DataPath;
 import org.olo.definition.path.DataPathParseResult;
@@ -574,21 +575,25 @@ public final class WorkflowValidator {
                 errors);
 
         if (sourcePort.port != null && targetPort.port != null) {
-            if (!SchemaCompatibility.compatible(sourcePort.port.getSchema(), targetPort.port.getSchema())) {
+            boolean compatible = usesWireTypeContract(sourcePort.port) || usesWireTypeContract(targetPort.port)
+                    ? PortWireCompatibility.compatible(sourcePort.port, targetPort.port)
+                    : SchemaCompatibility.compatible(
+                            sourcePort.port.getSchema(), targetPort.port.getSchema());
+            if (!compatible) {
                 errors.add(
                         prefix
-                                + "schema mismatch: output port '"
+                                + "wire type mismatch: output port '"
                                 + sourcePort.port.getId()
                                 + "' on node "
                                 + source.getId()
                                 + " ("
-                                + sourcePort.port.getSchema()
+                                + PortWireCompatibility.wireType(sourcePort.port)
                                 + ") is not compatible with input port '"
                                 + targetPort.port.getId()
                                 + "' on node "
                                 + target.getId()
-                                + " ("
-                                + targetPort.port.getSchema()
+                                + " (accepts "
+                                + String.join(", ", PortWireCompatibility.acceptTypes(targetPort.port))
                                 + ")");
             }
         }
@@ -839,6 +844,11 @@ public final class WorkflowValidator {
             errors.add("node " + nodeId + " " + accessKind + "s unknown " + path.root().prefix() + " field: "
                     + path.literal() + " (no " + path.root().prefix() + " field '" + topLevel + "')");
         }
+    }
+
+    private static boolean usesWireTypeContract(PortDefinition port) {
+        return (port.getType() != null && !port.getType().isBlank())
+                || (port.getAcceptType() != null && !port.getAcceptType().isBlank());
     }
 
     private static boolean isBlank(String value) {

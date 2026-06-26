@@ -1,14 +1,12 @@
 package org.olo.definition.configuration.dynamicgraphcreation;
 
 import org.olo.definition.capability.CapabilityDefinition;
-import org.olo.definition.designer.DesignerDefinition;
+import org.olo.definition.designer.StudioDesignerDefaults;
 import org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport;
 import org.olo.definition.execution.ExecutionKind;
 import org.olo.definition.execution.ExecutionModel;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
-import org.olo.definition.planner.WorkflowPlannerPromptDefinition;
-import org.olo.definition.port.PortDefinition;
 import org.olo.definition.port.PortDirection;
 import org.olo.definition.preset.WorkflowPresetInfrastructure;
 import org.olo.definition.variable.VariableDefinition;
@@ -94,15 +92,8 @@ public final class DynamicGraphCreationDefinitions {
                 .role("Dynamic Graph Creator")
                 .shortDescription(description)
                 .emoji("🧩")
-                .designer(DesignerDefinition.builder()
-                        .paletteGroup("Agents")
-                        .searchKeyword("dynamic")
-                        .searchKeyword("graph")
-                        .searchKeyword("workflow")
-                        .searchKeyword("json")
-                        .resizable(true)
-                        .draggable(true)
-                        .build())
+                .designer(StudioDesignerDefaults.studioAgentDesigner(
+                        "🧩", "dynamic", "graph", "workflow", "json"))
                 .queue(WORKFLOW_ID)
                 .workflowType("olo")
                 .runAgain(true)
@@ -139,17 +130,15 @@ public final class DynamicGraphCreationDefinitions {
                         .scope(VariableScope.LOCAL)
                         .build())
                 .defaultLocalModelInfrastructure()
-                .plannerPrompt(WorkflowPlannerPromptDefinition.builder()
-                        .id(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID)
-                        .name("Dynamic graph JSON generator prompt")
-                        .promptTemplate(JSON_ONLY_PROMPT_TEMPLATE)
-                        .build())
-                .defaultPromptId(WorkflowPlannerPromptDefinition.DEFAULT_PROMPT_ID)
+                .baselineAgentParameters()
                 .startNodeWithMessageInput("start")
                 .addNode(dynamicGraphPlannerNode(plannerNodeId))
                 .endNode("end")
                 .connect("start", "out", plannerNodeId, "in")
                 .connect(plannerNodeId, "out", "end", "in")
+                .nodeCanvasLayout("start", 0)
+                .nodeCanvasLayout(plannerNodeId, 1)
+                .nodeCanvasLayout("end", 2)
                 .metadata("description", description)
                 .metadata("role", WORKFLOW_ID)
                 .metadata(
@@ -171,8 +160,8 @@ public final class DynamicGraphCreationDefinitions {
                 .type(NodeType.AGENT.name())
                 .executionKind(ExecutionKind.ACTIVITY)
                 .executionModel(ExecutionModel.INLINE)
-                .addPort(defaultPort("in", PortDirection.INPUT))
-                .addPort(defaultPort("out", PortDirection.OUTPUT))
+                .addPort(WorkflowBuilder.messagePort("in", PortDirection.INPUT))
+                .addPort(WorkflowBuilder.messagePort("out", PortDirection.OUTPUT))
                 .putConfiguration(DynamicGraphPlannerSupport.CONFIG_DYNAMIC_GRAPH_PLANNER, true)
                 .putConfiguration(
                         DynamicGraphPlannerSupport.CONFIG_OUTPUT_VARIABLE,
@@ -181,10 +170,7 @@ public final class DynamicGraphCreationDefinitions {
                         DynamicGraphPlannerSupport.CONFIG_MAX_INVALID_JSON_RETRIES,
                         DynamicGraphPlannerSupport.DEFAULT_MAX_INVALID_JSON_RETRIES)
                 .putConfiguration(DynamicGraphPlannerSupport.CONFIG_CONTINUE_NODE_ID, "end")
+                .putConfiguration("promptTemplate", JSON_ONLY_PROMPT_TEMPLATE)
                 .build();
-    }
-
-    private static PortDefinition defaultPort(String id, PortDirection direction) {
-        return PortDefinition.builder().id(id).name(id).schema("any").direction(direction).build();
     }
 }

@@ -63,12 +63,13 @@ public final class TemporalWorkerFactory {
         }
 
         for (String queue : queues) {
-            log.info("Registering olo-kernel on Temporal queue '{}' (workflowType=olo)", queue);
+            String workflowType = registry.resolveWorkflowTypeForQueue(queue);
+            log.info("Registering olo-kernel on Temporal queue '{}' (workflowType={})", queue, workflowType);
             try {
                 Worker worker = factory.newWorker(queue);
                 KernelWorkflowRegistrar.register(worker, registry);
             } catch (RuntimeException e) {
-                log.error("Failed to register olo-kernel on queue '{}'", queue, e);
+                log.error("Failed to register olo-kernel on queue '{}' (workflowType={})", queue, workflowType, e);
                 throw e;
             }
         }

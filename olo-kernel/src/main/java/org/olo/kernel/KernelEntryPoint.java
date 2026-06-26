@@ -59,11 +59,13 @@ public final class KernelEntryPoint {
         Objects.requireNonNull(inputPayload, "inputPayload");
         Objects.requireNonNull(registry, "registry");
 
-        WorkflowDefinition sourceGraph = registry.findByQueue(queue)
-                .orElseThrow(() -> new KernelException("no workflow definition registered for queue: " + queue));
+        WorkflowInput input = WorkflowInput.fromJson(inputPayload);
+        WorkflowDefinition sourceGraph = registry.resolve(queue, workflowIdFromInput(input))
+                .orElseThrow(() -> new KernelException("no workflow definition registered for queue: " + queue
+                        + (workflowIdFromInput(input) != null ? " (workflowId=" + workflowIdFromInput(input) + ")" : "")));
 
         KernelRuntimeContext context = KernelContextBuilder.build(
-                KernelContextBuildRequest.of(queue, inputPayload, sourceGraph));
+                KernelContextBuildRequest.of(queue, input, sourceGraph));
         return finishFromContext(queue, context);
     }
 
@@ -77,8 +79,9 @@ public final class KernelEntryPoint {
         Objects.requireNonNull(input, "input");
         Objects.requireNonNull(registry, "registry");
 
-        WorkflowDefinition sourceGraph = registry.findByQueue(queue)
-                .orElseThrow(() -> new KernelException("no workflow definition registered for queue: " + queue));
+        WorkflowDefinition sourceGraph = registry.resolve(queue, workflowIdFromInput(input))
+                .orElseThrow(() -> new KernelException("no workflow definition registered for queue: " + queue
+                        + (workflowIdFromInput(input) != null ? " (workflowId=" + workflowIdFromInput(input) + ")" : "")));
 
         KernelRuntimeContext context = KernelContextBuilder.build(
                 KernelContextBuildRequest.of(queue, input, sourceGraph));
@@ -197,5 +200,13 @@ public final class KernelEntryPoint {
                 TraversalDiagnostics.formatValue(resolution.returnVariableValue()),
                 context.getVariableMap(),
                 resolution.message());
+    }
+
+    private static String workflowIdFromInput(WorkflowInput input) {
+        if (input == null || input.getRouting() == null) {
+            return null;
+        }
+        String pipeline = input.getRouting().getPipeline();
+        return pipeline != null && !pipeline.isBlank() ? pipeline.trim() : null;
     }
 }

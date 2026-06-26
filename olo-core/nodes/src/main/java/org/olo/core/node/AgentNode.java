@@ -5,6 +5,7 @@ import org.olo.annotation.OloExecutionModel;
 import org.olo.annotation.OloNode;
 import org.olo.annotation.OloNodeShape;
 import org.olo.annotation.OloPort;
+import org.olo.annotation.OloPortPosition;
 import org.olo.annotation.OloProperty;
 import org.olo.annotation.OloPropertyType;
 import org.olo.annotation.OloStability;
@@ -37,8 +38,37 @@ import java.util.Map;
             "Research a topic and draft a report",
             "Plan multi-step tasks autonomously"
         },
-        inputs = @OloPort(id = "in", name = "in", schema = "any", required = true),
-        outputs = @OloPort(id = "out", name = "out", schema = "any"),
+        inputs = {
+                @OloPort(
+                        id = "in",
+                        name = "message in",
+                        schema = "message",
+                        description = "Incoming workflow message",
+                        required = true,
+                        position = OloPortPosition.LEFT),
+                @OloPort(
+                        id = "capabilities",
+                        name = "available tools",
+                        schema = "capabilities",
+                        description = "Tools and hooks registered for runtime prompt assembly (0 or more)",
+                        minConnections = 0,
+                        maxConnections = -1,
+                        position = OloPortPosition.BOTTOM),
+                @OloPort(
+                        id = "agentPlug",
+                        name = "available agents",
+                        schema = "agent-plug",
+                        description = "Child workflows registered for runtime prompt assembly (0 or more)",
+                        minConnections = 0,
+                        maxConnections = -1,
+                        position = OloPortPosition.BOTTOM)
+        },
+        outputs = @OloPort(
+                id = "out",
+                name = "message out",
+                schema = "message",
+                description = "Outgoing workflow message",
+                position = OloPortPosition.RIGHT),
         configuration = @OloProperty(
                 name = "systemPrompt",
                 label = "System Prompt",

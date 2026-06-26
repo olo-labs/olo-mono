@@ -7,7 +7,6 @@ import java.util.Map;
 /**
  * Well-known {@code metadata.plannerContext} shape for agent workflow presets.
  * <p>
- * Prompt templates live at workflow root ({@code prompts[]}, {@code defaultPromptId}).
  * This metadata block holds planner exposure settings only.
  */
 public final class PlannerContextDefinition {
@@ -37,12 +36,10 @@ public final class PlannerContextDefinition {
             context.put(SELECTED_TOOLS, List.of());
             context.put(SELECTED_AGENTS, List.of("planner", "reviewer", "architect"));
             context.put(INJECT_CAPABILITIES, false);
-            context.put(INJECT_AGENTS, true);
         } else {
             context.put(SELECTED_TOOLS, List.of());
             context.put(SELECTED_AGENTS, List.of());
             context.put(INJECT_CAPABILITIES, false);
-            context.put(INJECT_AGENTS, false);
         }
         return Map.copyOf(context);
     }

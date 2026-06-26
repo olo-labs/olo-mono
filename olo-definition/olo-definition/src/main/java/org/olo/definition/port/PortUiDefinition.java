@@ -16,9 +16,11 @@ import java.util.Objects;
 public final class PortUiDefinition {
 
     private final PortUiPosition position;
+    private final String color;
 
     private PortUiDefinition(Builder builder) {
         this.position = builder.position;
+        this.color = builder.color;
     }
 
     public static Builder builder() {
@@ -33,6 +35,10 @@ public final class PortUiDefinition {
         return position;
     }
 
+    public String getColor() {
+        return color;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -41,21 +47,27 @@ public final class PortUiDefinition {
         if (!(o instanceof PortUiDefinition that)) {
             return false;
         }
-        return position == that.position;
+        return position == that.position && Objects.equals(color, that.color);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(position);
+        return Objects.hash(position, color);
     }
 
     @JsonPOJOBuilder(withPrefix = "")
     public static final class Builder {
 
         private PortUiPosition position;
+        private String color;
 
         public Builder position(PortUiPosition position) {
             this.position = position;
+            return this;
+        }
+
+        public Builder color(String color) {
+            this.color = color;
             return this;
         }
 

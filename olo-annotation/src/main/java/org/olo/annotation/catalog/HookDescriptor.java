@@ -7,5 +7,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class HookDescriptor extends CatalogComponent {
 
+    public List<PortDescriptor> inputs;
+    public List<PortDescriptor> outputs;
     public List<String> phases;
 }

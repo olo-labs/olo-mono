@@ -42,6 +42,6 @@ class WorkerBootstrapTest {
 
         WorkerRuntimeContext refreshed = WorkerBootstrap.start(true);
         assertThat(refreshed).isNotSameAs(first);
-        assertThat(refreshed.workflowRegistry().findByQueue("planner")).isPresent();
+        assertThat(refreshed.workflowRegistry().findById("planner")).isPresent();
     }
 }

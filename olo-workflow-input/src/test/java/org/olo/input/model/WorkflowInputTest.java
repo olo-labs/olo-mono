@@ -91,4 +91,26 @@ class WorkflowInputTest {
         assertEquals("https://api.example.com/callback", input.getExecution().getCallbackUrl());
         assertEquals(300, input.getExecution().getTimeoutSeconds());
     }
+
+    @Test
+    void fromJson_ignoresGraphJsonFieldWhenPresent() {
+        String json = """
+                {
+                  "version": "1.0",
+                  "inputs": [],
+                  "graphJson": "{\\"id\\":\\"agent\\"}",
+                  "routing": {
+                    "pipeline": "agent-pipeline",
+                    "transactionType": "AGENT_EXECUTION",
+                    "transactionId": "tx-1"
+                  }
+                }
+                """;
+
+        WorkflowInput input = WorkflowInput.fromJson(json);
+
+        assertNotNull(input);
+        assertEquals("1.0", input.getVersion());
+        assertEquals("agent-pipeline", input.getRouting().getPipeline());
+    }
 }

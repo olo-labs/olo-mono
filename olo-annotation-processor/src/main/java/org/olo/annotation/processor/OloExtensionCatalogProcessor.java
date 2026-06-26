@@ -230,8 +230,8 @@ public class OloExtensionCatalogProcessor extends AbstractProcessor {
                 annotation.uiWidth(),
                 annotation.uiHeight());
         descriptor.connectionPolicy = ConnectionPolicyPopulator.from(annotation.connectionPolicy());
-        descriptor.inputs = ports(annotation.inputs(), false);
-        descriptor.outputs = ports(annotation.outputs(), true);
+        descriptor.inputs = materializeNodePorts(annotation.inputs(), false);
+        descriptor.outputs = materializeNodePorts(annotation.outputs(), true);
         descriptor.parameters = parameters(annotation.configuration());
         descriptor.contract =
                 CatalogContractPopulator.create(
@@ -278,6 +278,8 @@ public class OloExtensionCatalogProcessor extends AbstractProcessor {
                         "TOOL", descriptor.id, typeElement, "org.olo.spi.tool.Tool"));
         descriptor.designer =
                 DesignerPopulator.from(annotation.designer(), annotation.category(), annotation.tags());
+        descriptor.inputs = CatalogPortPopulator.resolveInputs(annotation.inputs(), annotation.canvasPorts());
+        descriptor.outputs = CatalogPortPopulator.resolveOutputs(annotation.outputs(), annotation.canvasPorts());
         descriptor.parameters = mergeToolParameters(annotation.arguments(), annotation.configuration());
         descriptor.contract =
                 CatalogContractPopulator.create(
@@ -324,32 +326,21 @@ public class OloExtensionCatalogProcessor extends AbstractProcessor {
                         "HOOK", descriptor.id, typeElement, "org.olo.spi.hook.Hook"));
         descriptor.designer =
                 DesignerPopulator.from(annotation.designer(), annotation.category(), annotation.tags());
+        descriptor.inputs = CatalogPortPopulator.resolveInputs(annotation.inputs(), annotation.canvasPorts());
+        descriptor.outputs = CatalogPortPopulator.resolveOutputs(annotation.outputs(), annotation.canvasPorts());
         descriptor.phases = phases(annotation.phases());
         return descriptor;
     }
 
-    private static List<PortDescriptor> ports(OloPort[] ports, boolean output) {
+    private static List<PortDescriptor> materializeNodePorts(OloPort[] ports, boolean output) {
         if (ports == null || ports.length == 0) {
             return List.of();
         }
         List<PortDescriptor> out = new ArrayList<>();
         for (OloPort port : ports) {
-            PortDescriptor descriptor = new PortDescriptor();
-            descriptor.id = port.id();
-            descriptor.name = CatalogDefaults.materializePortName(port.id(), port.name());
-            descriptor.schema = port.schema();
-            descriptor.required = port.required();
-            descriptor.description = CatalogDefaults.blankToNull(port.description());
-            descriptor.ui = portUi(port, output);
-            out.add(descriptor);
+            out.add(CatalogPortPopulator.materializePort(port, output));
         }
         return out;
-    }
-
-    private static org.olo.annotation.catalog.PortUiDescriptor portUi(OloPort port, boolean output) {
-        org.olo.annotation.catalog.PortUiDescriptor ui = new org.olo.annotation.catalog.PortUiDescriptor();
-        ui.position = resolvePortPosition(port.position(), output).name();
-        return ui;
     }
 
     private static org.olo.annotation.OloPortPosition resolvePortPosition(

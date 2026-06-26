@@ -2,6 +2,8 @@ package org.olo.annotation.catalog;
 
 import org.olo.spi.port.PortSchemaCompatibility;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,6 +22,13 @@ public final class PortConnectionRules {
     }
 
     public static Map<String, Object> catalogDefaults() {
-        return PortSchemaCompatibility.catalogConnectionRules();
+        Map<String, Object> rules = new LinkedHashMap<>(PortSchemaCompatibility.catalogConnectionRules());
+        rules.put("wireTypes", catalogWireTypes());
+        return rules;
+    }
+
+    /** Mirrors {@code org.olo.definition.port.PortWireType} without a compile dependency on olo-definition. */
+    public static List<String> catalogWireTypes() {
+        return List.of("any", "message", "capabilities", "agent-plug");
     }
 }

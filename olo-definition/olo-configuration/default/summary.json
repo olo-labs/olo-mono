@@ -9,10 +9,85 @@
   "designer" : {
     "paletteGroup" : "Agents",
     "searchKeywords" : [ "summary" ],
+    "nodeSize" : {
+      "width" : 300,
+      "height" : 120
+    },
     "resizable" : true,
-    "draggable" : true
+    "draggable" : true,
+    "layout" : {
+      "originX" : 80,
+      "originY" : 80,
+      "columnGap" : 360,
+      "rowGap" : 200,
+      "columns" : 4
+    },
+    "canvas" : {
+      "backgroundColor" : "#3f3f46",
+      "gridGap" : 16,
+      "edgeStroke" : "#52525b",
+      "selectionBorder" : "#3b82f6",
+      "minimapNodeColor" : "#52525b"
+    },
+    "portColors" : {
+      "capabilities" : "#22c55e",
+      "integer" : "#38bdf8",
+      "boolean" : "#fb923c",
+      "message" : "#ef4444",
+      "any" : "#94a3b8",
+      "agent-plug" : "#a855f7",
+      "number" : "#38bdf8",
+      "array" : "#f472b6",
+      "object" : "#c084fc",
+      "string" : "#a3e635"
+    },
+    "nodeTypes" : {
+      "AGENT" : {
+        "emoji" : "📝",
+        "typeLabel" : "Agent",
+        "inlineProperties" : [ {
+          "id" : "parameters",
+          "widget" : "WORKFLOW_PARAMETERS",
+          "label" : "Parameters"
+        }, {
+          "id" : "model",
+          "widget" : "MODEL_SELECTOR",
+          "label" : "Model"
+        } ]
+      },
+      "START" : {
+        "emoji" : "▶",
+        "typeLabel" : "Start",
+        "description" : "Workflow entry — maps caller input to workflow variables",
+        "palette" : {
+          "name" : "Start",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "inputVariables",
+          "widget" : "VARIABLE_CHECKLIST",
+          "label" : "Input variables",
+          "binding" : "inputVariableMappings"
+        } ]
+      },
+      "END" : {
+        "emoji" : "⏹",
+        "typeLabel" : "End",
+        "description" : "Workflow exit — maps a workflow variable to the caller result",
+        "palette" : {
+          "name" : "End",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "outputVariable",
+          "widget" : "VARIABLE_SELECT",
+          "label" : "Output variable",
+          "binding" : "outputVariableMapping"
+        } ]
+      }
+    }
   },
-  "queue" : "summary",
+  "queue" : "oloQueue2",
   "workflowType" : "olo",
   "runAgain" : true,
   "childWorkflows" : [ ],
@@ -40,48 +115,157 @@
     }
   },
   "state" : { },
-  "parameters" : { },
+  "parameters" : {
+    "model" : {
+      "type" : "string",
+      "label" : "Model",
+      "description" : "Default model identifier",
+      "defaultValue" : "",
+      "required" : false,
+      "ui" : {
+        "widget" : "MODEL_SELECTOR",
+        "group" : "Model Settings",
+        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
+        "order" : 2
+      }
+    },
+    "maxIterations" : {
+      "type" : "integer",
+      "label" : "Max Iterations",
+      "description" : "Maximum agent reasoning iterations",
+      "defaultValue" : 10,
+      "required" : false,
+      "validation" : {
+        "minimum" : 1.0,
+        "maximum" : 100.0,
+        "step" : 1.0
+      },
+      "ui" : {
+        "widget" : "NUMBER",
+        "group" : "Model Settings",
+        "help" : "Caps how many planner/tool loops the agent may run.",
+        "order" : 1
+      }
+    },
+    "systemPrompt" : {
+      "type" : "string",
+      "label" : "System Prompt",
+      "description" : "System prompt for the agent",
+      "defaultValue" : "You distill content into the most important points for a busy reader.\n\nContent:\n{message}\n\nReturn a tight summary: key takeaways, decisions, and open questions.",
+      "required" : false,
+      "ui" : {
+        "widget" : "TEXTAREA",
+        "group" : "Model Settings",
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
+        "order" : 0
+      }
+    },
+    "temperature" : {
+      "type" : "number",
+      "label" : "Temperature",
+      "description" : "Sampling temperature",
+      "defaultValue" : 0.2,
+      "required" : false,
+      "validation" : {
+        "minimum" : 0.0,
+        "maximum" : 2.0,
+        "step" : 0.1
+      },
+      "ui" : {
+        "widget" : "SLIDER",
+        "group" : "Model Settings",
+        "help" : "Higher values increase response creativity.",
+        "order" : 3
+      }
+    }
+  },
   "nodes" : [ {
     "id" : "start",
     "type" : "START",
     "ports" : [ {
       "id" : "out",
-      "name" : "out",
-      "schema" : "any",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
       "direction" : "OUTPUT",
       "required" : false,
       "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
       "ui" : {
-        "position" : "RIGHT"
+        "position" : "RIGHT",
+        "color" : "#ef4444"
       }
     } ],
     "reads" : [ "input.message" ],
     "writes" : [ ],
     "configuration" : {
-      "inputVariableMappings" : [ "message" ]
+      "inputVariableMappings" : [ "message" ],
+      "designer" : {
+        "position" : {
+          "x" : 80,
+          "y" : 80
+        }
+      }
     }
   }, {
     "id" : "agent",
     "type" : "AGENT",
     "ports" : [ {
       "id" : "in",
-      "name" : "in",
-      "schema" : "any",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : true,
+      "minConnections" : 1,
+      "maxConnections" : 1,
+      "shortDescription" : "Incoming workflow message",
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "acceptType" : "capabilities",
       "direction" : "INPUT",
       "required" : false,
       "minConnections" : 0,
+      "shortDescription" : "Tools and hooks registered for runtime prompt assembly (0 or more)",
       "ui" : {
-        "position" : "LEFT"
+        "position" : "BOTTOM",
+        "color" : "#22c55e"
+      }
+    }, {
+      "id" : "agentPlug",
+      "label" : "available agents",
+      "schema" : "agent-plug",
+      "type" : "agent-plug",
+      "acceptType" : "agent-plug",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Child workflows registered for runtime prompt assembly (0 or more)",
+      "ui" : {
+        "position" : "BOTTOM",
+        "color" : "#a855f7"
       }
     }, {
       "id" : "out",
-      "name" : "out",
-      "schema" : "any",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
       "direction" : "OUTPUT",
       "required" : false,
       "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
       "ui" : {
-        "position" : "RIGHT"
+        "position" : "RIGHT",
+        "color" : "#ef4444"
       }
     } ],
     "execution" : {
@@ -97,24 +281,43 @@
     },
     "reads" : [ ],
     "writes" : [ ],
-    "configuration" : { }
+    "configuration" : {
+      "designer" : {
+        "position" : {
+          "x" : 440,
+          "y" : 80
+        }
+      }
+    }
   }, {
     "id" : "end",
     "type" : "END",
     "ports" : [ {
       "id" : "in",
-      "name" : "in",
-      "schema" : "any",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
       "direction" : "INPUT",
-      "required" : false,
-      "minConnections" : 0,
+      "required" : true,
+      "minConnections" : 1,
+      "maxConnections" : 1,
+      "shortDescription" : "Incoming workflow message",
       "ui" : {
-        "position" : "LEFT"
+        "position" : "LEFT",
+        "color" : "#ef4444"
       }
     } ],
     "reads" : [ ],
     "writes" : [ ],
-    "configuration" : { }
+    "configuration" : {
+      "designer" : {
+        "position" : {
+          "x" : 800,
+          "y" : 80
+        }
+      }
+    }
   } ],
   "edges" : [ {
     "sourceNodeId" : "start",
@@ -161,23 +364,16 @@
     "rules" : [ ],
     "metadata" : { }
   } ],
-  "prompts" : [ {
-    "id" : "default-prompt",
-    "name" : "Default summary prompt",
-    "promptTemplate" : "You summarize content into key points.\n\nSummarize {message} briefly."
-  } ],
-  "defaultPromptId" : "default-prompt",
   "extensions" : [ ],
   "metadata" : {
-    "role" : "summary",
-    "returnVariable" : "ReturnValue",
     "description" : "Brief summaries and key points",
     "plannerContext" : {
       "selectedTools" : [ ],
       "selectedAgents" : [ ],
-      "injectAgents" : false,
-      "injectCapabilities" : false,
-      "selectedVariables" : [ "message" ]
-    }
+      "selectedVariables" : [ "message" ],
+      "injectCapabilities" : false
+    },
+    "role" : "summary",
+    "returnVariable" : "ReturnValue"
   }
 }

@@ -16,7 +16,10 @@ java {
     withSourcesJar()
 }
 
+apply from: rootProject.file('../gradle/olo-mono-repo.gradle')
+
 repositories {
+    configureOloMonoRepositories(repositories)
     mavenCentral()
     mavenLocal()
 }
@@ -31,6 +34,9 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
     implementation 'org.slf4j:slf4j-api:2.0.17'
 
+    compileOnly 'org.olo:olo-annotation:0.1.0-SNAPSHOT'
+    annotationProcessor 'org.olo:olo-annotation-processor:0.1.0-SNAPSHOT'
+
     testImplementation 'org.olo:olo-bootstrap:0.1.0-SNAPSHOT'
 
     testImplementation platform('org.junit:junit-bom:5.11.4')
@@ -40,6 +46,13 @@ dependencies {
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+        "-Aolo.catalog.module=olo-kernel",
+        "-Aolo.catalog.provider=olo-kernel"
+    ]
 }
 
 tasks.named('javadoc').configure {

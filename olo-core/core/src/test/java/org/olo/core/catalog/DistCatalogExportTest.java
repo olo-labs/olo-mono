@@ -129,8 +129,8 @@ class DistCatalogExportTest {
                 .isEqualTo("SLIDER");
         assertThat(findParameter(presetParameters, "temperature").get("validation").get("minimum").asDouble())
                 .isEqualTo(0.0);
-        assertThat(findParameter(presetParameters, "model").get("required").asBoolean()).isTrue();
-        assertThat(findParameter(presetParameters, "model").get("validation").get("minLength").asInt()).isEqualTo(1);
+        assertThat(findParameter(presetParameters, "model").get("required").asBoolean()).isFalse();
+        assertThat(findParameter(presetParameters, "model").has("validation")).isFalse();
 
         JsonNode presets = MAPPER.readTree(distCatalog.resolve("workflow-presets.json").toFile());
         assertThat(presets.get("catalogType").asText()).isEqualTo("workflow-presets");
