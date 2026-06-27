@@ -9,6 +9,7 @@ import org.olo.kernel.traversal.strategy.ExecutionStrategyRegistry;
 import org.olo.kernel.traversal.strategy.impl.ChildWorkflowExecutionStrategy;
 import org.olo.kernel.traversal.strategy.impl.ConditionalExecutionStrategy;
 import org.olo.kernel.traversal.strategy.impl.DynamicGraphExpansionExecutionStrategy;
+import org.olo.kernel.traversal.strategy.impl.ToolCallExpansionExecutionStrategy;
 import org.olo.kernel.traversal.strategy.impl.LinearExecutionStrategy;
 import org.olo.kernel.traversal.strategy.impl.ParallelExecutionStrategy;
 import org.olo.kernel.agent.LlmInvocationService;
@@ -88,6 +89,7 @@ public final class GraphTraverserFactory {
                 new ParallelExecutionStrategy(),
                 new ConditionalExecutionStrategy(),
                 new DynamicGraphExpansionExecutionStrategy(),
+                new ToolCallExpansionExecutionStrategy(),
                 new ChildWorkflowExecutionStrategy(),
                 new LinearExecutionStrategy()));
         ExecutionContextFactory executionContextFactory = new KernelExecutionContextFactory();

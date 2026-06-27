@@ -1,5 +1,6 @@
 package org.olo.definition.configuration;
 
+import org.olo.definition.configuration.agenttool.AgentToolExecutionDefinitions;
 import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.designer.DesignerDefinition;
 import org.olo.definition.designer.StudioDesignerDefaults;
@@ -65,46 +66,7 @@ final class DefaultConfigurationDefinitions {
     }
 
     static WorkflowDefinition agent() {
-        String description = "Autonomous tool-using agent";
-        return build(WorkflowBuilder.create("Agent")
-                .id("agent")
-                .enabled(true)
-                .isDefault(true)
-                .role("Agent")
-                .shortDescription(description)
-                .emoji("🤖")
-                .designer(StudioDesignerDefaults.studioAgentDesigner("🤖", "planning", "task", "agent"))
-                .queue(OLO_QUEUE_2)
-                .workflowType("olo")
-                .runAgain(true)
-                .version("1.0.0")
-                .agentWorkflowRuntime()
-                .capability(agentCapability("Agent", description, "agent"))
-                .withMessageContract()
-                .defaultLocalModelInfrastructure()
-                .agentPlannerMetadata()
-                .agentPlannerContext()
-                .agentParameters()
-                .agentAvailableAgents()
-                .agentDelegation()
-                .childWorkflow(ChildWorkflowDefinition.builder()
-                        .workflowId("planner")
-                        .workflowVersion("1.0.0")
-                        .build())
-                .childWorkflow(ChildWorkflowDefinition.builder()
-                        .workflowId("fast")
-                        .workflowVersion("1.0.0")
-                        .build())
-                .childWorkflow(ChildWorkflowDefinition.builder()
-                        .workflowId("detailed")
-                        .workflowVersion("1.0.0")
-                        .build())
-                .childWorkflow(ChildWorkflowDefinition.builder()
-                        .workflowId("reviewer")
-                        .workflowVersion("1.0.0")
-                        .build())
-                .agentCanvasPipeline("agent")
-                .metadata("description", description));
+        return AgentToolExecutionDefinitions.agent();
     }
 
     static WorkflowDefinition architect() {

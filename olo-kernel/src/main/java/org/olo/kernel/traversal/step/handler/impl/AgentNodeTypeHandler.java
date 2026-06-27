@@ -2,9 +2,11 @@ package org.olo.kernel.traversal.step.handler.impl;
 
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
+import org.olo.definition.toolcall.ToolCallPlannerSupport;
 import org.olo.kernel.agent.executor.AgentExecutor;
 import org.olo.kernel.agent.executor.AgentExecutorRegistry;
 import org.olo.kernel.context.KernelRuntimeContext;
+import org.olo.kernel.toolcall.AvailableToolsJsonResolver;
 import org.olo.kernel.traversal.log.TraversalDiagnostics;
 import org.olo.kernel.traversal.step.handler.NodeTypeHandler;
 import org.olo.spi.node.NodeResult;
@@ -29,6 +31,12 @@ public final class AgentNodeTypeHandler implements NodeTypeHandler {
 
     @Override
     public NodeResult execute(KernelRuntimeContext context, NodeDefinition node) {
+        if (ToolCallPlannerSupport.isToolCallPlanner(node) && context.getGraph() != null) {
+            String availableToolsJson =
+                    AvailableToolsJsonResolver.resolve(context.getGraph(), node.getId());
+            context.getVariables()
+                    .set(ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE, availableToolsJson);
+        }
         AgentExecutor executor = agentExecutorRegistry.resolve(node);
         TraversalDiagnostics.logAgentExecutorSelected(node.getId(), executor.id());
         return executor.execute(context, node);

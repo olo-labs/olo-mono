@@ -8,6 +8,8 @@ import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.traversal.context.ExecutionContextFactory;
 import org.olo.kernel.traversal.context.impl.VariableScopeBridge;
 import org.olo.kernel.traversal.input.impl.MessageVariableInputBinder;
+import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.kernel.toolcall.AvailableToolsJsonResolver;
 import org.olo.kernel.traversal.log.TraversalDiagnostics;
 import org.olo.kernel.traversal.step.handler.NodeTypeHandler;
 import org.olo.core.runtime.DefaultExecutionContext;
@@ -76,8 +78,21 @@ public final class ToolNodeTypeHandler implements NodeTypeHandler {
             if (result.status() == ToolStatus.SUCCESS) {
                 Map<String, Object> output = new LinkedHashMap<>(result.output());
                 output.put("toolId", toolId);
-                output.put("response", formatToolResponse(result));
+                String response = formatToolResponse(result);
+                output.put("response", response);
+                if (shouldAggregateToolResult(node)) {
+                    AvailableToolsJsonResolver.appendToolResult(
+                            context.getVariables(), toolId, node.getId(), true, response);
+                }
                 return NodeResult.completed(result.message(), output);
+            }
+            if (shouldAggregateToolResult(node)) {
+                AvailableToolsJsonResolver.appendToolResult(
+                        context.getVariables(),
+                        toolId,
+                        node.getId(),
+                        false,
+                        result.message() == null ? "tool invocation failed" : result.message());
             }
             return NodeResult.failed(
                     result.message() == null ? "tool invocation failed for " + toolId : result.message(),
@@ -87,7 +102,7 @@ public final class ToolNodeTypeHandler implements NodeTypeHandler {
         }
     }
 
-    static String resolveToolId(String configuredToolId) {
+    public static String resolveToolId(String configuredToolId) {
         String alias = TOOL_ID_ALIASES.get(configuredToolId);
         if (alias != null) {
             return alias;
@@ -165,6 +180,12 @@ public final class ToolNodeTypeHandler implements NodeTypeHandler {
     private static boolean hasNonBlank(Map<String, Object> arguments, String key) {
         Object value = arguments.get(key);
         return value != null && !String.valueOf(value).isBlank();
+    }
+
+    private static boolean shouldAggregateToolResult(NodeDefinition node) {
+        return node.getConfiguration() != null
+                && Boolean.TRUE.equals(
+                        node.getConfiguration().get(ToolCallPlannerSupport.CONFIG_AGGREGATE_TOOL_RESULT));
     }
 
     private static String formatToolResponse(ToolResult result) {

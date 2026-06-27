@@ -52,8 +52,16 @@ class DefaultConfigurationPipelineTest {
                 .isEqualTo(WorkflowPlannerPromptDefinition.forPreset(
                                 WorkflowPlannerPromptDefinition.presetIdForFile(fileName))
                         .getPromptTemplate());
-        assertThat(onDisk.getNodes().stream().map(node -> node.getType()).toList())
-                .containsExactly("START", "AGENT", "END");
+        if ("agent".equals(fileName)) {
+            assertThat(onDisk.getNodes().stream().map(node -> node.getType()).toList())
+                    .containsExactly("START", "TOOL", "TOOL", "AGENT", "END");
+            assertThat(onDisk.getMetadata()).containsKey("dynamicToolExecution");
+            assertThat(onDisk.getVariables().stream().map(v -> v.getName()))
+                    .contains("availableToolsJson", "toolCallSequenceJson", "toolResultsJson");
+        } else {
+            assertThat(onDisk.getNodes().stream().map(node -> node.getType()).toList())
+                    .containsExactly("START", "AGENT", "END");
+        }
 
         StudioDesignerAssertions.assertStudioBuildReady(onDisk);
         assertThat(onDisk.getDesigner().getNodeTypes().get("AGENT").getEmoji())
@@ -61,8 +69,13 @@ class DefaultConfigurationPipelineTest {
 
         @SuppressWarnings("unchecked")
         var plannerContext = (java.util.Map<String, Object>) onDisk.getMetadata().get(PlannerContextDefinition.METADATA_KEY);
-        assertThat(plannerContext)
-                .containsEntry(PlannerContextDefinition.SELECTED_VARIABLES, java.util.List.of("message"));
+        if ("agent".equals(fileName)) {
+            assertThat(plannerContext.get(PlannerContextDefinition.SELECTED_VARIABLES))
+                    .isEqualTo(java.util.List.of("message", "availableToolsJson", "toolCallSequenceJson"));
+        } else {
+            assertThat(plannerContext)
+                    .containsEntry(PlannerContextDefinition.SELECTED_VARIABLES, java.util.List.of("message"));
+        }
     }
 
     static Stream<Arguments> pipelinePresets() {

@@ -313,7 +313,9 @@ public final class WorkflowValidator {
 
         if (NodeType.AGENT.value().equals(type)
                 && workflow == null
-                && !org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport.isDynamicGraphPlanner(node)) {
+                && !org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport.isDynamicGraphPlanner(node)
+                && !org.olo.definition.toolcall.ToolCallPlannerSupport.isToolCallPlanner(node)
+                && !org.olo.definition.dynamicgraph.DynamicSubgraphInjectionSupport.isToolSynthesis(node)) {
             errors.add("AGENT node " + nodeId + " requires a workflow reference (agent = workflow)");
         }
         if (NodeType.WORKFLOW_REF.value().equals(type) && workflow == null) {
@@ -390,6 +392,24 @@ public final class WorkflowValidator {
             }
             if (node.getExecutionKind() != ExecutionKind.ACTIVITY) {
                 errors.add("dynamic graph planner AGENT node " + nodeId + " requires execution.executionKind ACTIVITY");
+            }
+            return;
+        }
+        if (org.olo.definition.toolcall.ToolCallPlannerSupport.isToolCallPlanner(node)) {
+            if (node.getExecutionModel() != ExecutionModel.INLINE) {
+                errors.add("tool-call planner AGENT node " + nodeId + " requires execution.executionModel INLINE");
+            }
+            if (node.getExecutionKind() != ExecutionKind.ACTIVITY) {
+                errors.add("tool-call planner AGENT node " + nodeId + " requires execution.executionKind ACTIVITY");
+            }
+            return;
+        }
+        if (org.olo.definition.dynamicgraph.DynamicSubgraphInjectionSupport.isToolSynthesis(node)) {
+            if (node.getExecutionModel() != ExecutionModel.INLINE) {
+                errors.add("tool synthesis AGENT node " + nodeId + " requires execution.executionModel INLINE");
+            }
+            if (node.getExecutionKind() != ExecutionKind.ACTIVITY) {
+                errors.add("tool synthesis AGENT node " + nodeId + " requires execution.executionKind ACTIVITY");
             }
             return;
         }

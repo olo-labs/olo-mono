@@ -34,8 +34,8 @@ class AgentWorkflowActivityNamingTest {
                 .filter(node -> "agent".equals(node.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(agentNode.getLabel()).isEqualTo("Agent3");
-        assertThat(NodeActivityNaming.formatNode(agentNode)).isEqualTo("agent:Agent3");
+        assertThat(agentNode.getLabel()).isEqualTo("Agent");
+        assertThat(NodeActivityNaming.formatNode(agentNode)).isEqualTo("agent:Agent");
 
         WorkflowInput input = WorkflowInput.fromJson(
                 Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
@@ -53,6 +53,6 @@ class AgentWorkflowActivityNamingTest {
                 NodeStatus.COMPLETED,
                 "bound input");
 
-        assertThat(afterStart.getNextActivityName()).isEqualTo("agent:Agent3");
+        assertThat(afterStart.getNextActivityName()).isEqualTo("agent:Agent");
     }
 }

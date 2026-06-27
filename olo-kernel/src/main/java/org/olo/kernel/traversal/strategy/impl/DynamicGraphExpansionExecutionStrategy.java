@@ -1,6 +1,8 @@
 package org.olo.kernel.traversal.strategy.impl;
 
 import org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport;
+import org.olo.kernel.dynamicgraph.DynamicSubgraphInjectionLogger;
+import org.olo.kernel.dynamicgraph.DynamicSubgraphInjectionLogger.InjectionRecord;
 import org.olo.kernel.dynamicgraph.DynamicSubgraphMerger;
 import org.olo.kernel.dynamicgraph.MutableGraphSession;
 import org.olo.kernel.traversal.strategy.ExecutionDecision;
@@ -56,6 +58,15 @@ public final class DynamicGraphExpansionExecutionStrategy implements ExecutionSt
                 node.getId(),
                 continueNodeId,
                 validation.normalizedJson());
+        DynamicSubgraphInjectionLogger.logInjection(new InjectionRecord(
+                InjectionRecord.Kind.DYNAMIC_GRAPH,
+                name(),
+                request.context().getGraph().getId(),
+                node.getId(),
+                continueNodeId,
+                mergeResult.entryNodeId(),
+                validation.normalizedJson(),
+                mergeResult.graph()));
         graphSession.replaceGraph(mergeResult.graph());
         return ExecutionDecision.expandSubgraph(name(), mergeResult.entryNodeId());
     }

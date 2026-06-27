@@ -9,3 +9,8 @@ includeBuild('../olo-core') {
         substitute module('org.olo:olo-core') using project(':core')
     }
 }
+includeBuild('../olo-definition') {
+    dependencySubstitution {
+        substitute module('org.olo:olo-definition') using project(':olo-definition')
+    }
+}

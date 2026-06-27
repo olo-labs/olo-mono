@@ -286,10 +286,15 @@ public final class WorkflowBuilder {
     }
 
     public WorkflowBuilder toolNode(String id) {
+        return canvasToolNode(id);
+    }
+
+    /** TOOL node wired only to an agent capabilities port (optional message input). */
+    public WorkflowBuilder canvasToolNode(String id) {
         return addNode(NodeDefinition.builder()
                 .id(id)
                 .type(NodeType.TOOL)
-                .addPort(defaultPort("in", "in", PortDirection.INPUT))
+                .addPort(optionalMessagePort("in", PortDirection.INPUT))
                 .addPort(defaultPort("out", "out", PortDirection.OUTPUT))
                 .addPort(pluginPort("capabilities", PortWireType.CAPABILITIES, PortDirection.OUTPUT))
                 .build());
@@ -514,6 +519,36 @@ public final class WorkflowBuilder {
         return defaultPort(id, id, direction);
     }
 
+    /** Capabilities plugin port for tool wiring on agent nodes. */
+    public static PortDefinition capabilitiesPort(PortDirection direction) {
+        return pluginPort("capabilities", PortWireType.CAPABILITIES, direction);
+    }
+
+    /** Agent-plug port for child-workflow wiring on agent nodes. */
+    public static PortDefinition agentPlugPort(PortDirection direction) {
+        return pluginPort("agentPlug", PortWireType.AGENT_PLUG, direction);
+    }
+
+    /** Merges entries into an existing node's {@code configuration} map. */
+    public WorkflowBuilder putNodeConfiguration(String nodeId, Map<String, Object> configuration) {
+        Objects.requireNonNull(nodeId, "nodeId is required");
+        Objects.requireNonNull(configuration, "configuration is required");
+        for (int i = 0; i < nodes.size(); i++) {
+            NodeDefinition node = nodes.get(i);
+            if (!node.getId().equals(nodeId)) {
+                continue;
+            }
+            Map<String, Object> merged = new LinkedHashMap<>();
+            if (node.getConfiguration() != null) {
+                merged.putAll(node.getConfiguration());
+            }
+            merged.putAll(configuration);
+            nodes.set(i, nodeWithConfiguration(node, merged));
+            return this;
+        }
+        throw new IllegalArgumentException("unknown node id for configuration: " + nodeId);
+    }
+
     public WorkflowBuilder extension(ExtensionDefinition extension) {
         Objects.requireNonNull(extension, "extension is required");
         extensions.add(extension);
@@ -730,6 +765,30 @@ public final class WorkflowBuilder {
                 .toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-|-$", "");
+    }
+
+    private static PortDefinition optionalMessagePort(String id, PortDirection direction) {
+        String label = direction == PortDirection.INPUT ? MESSAGE_INPUT_PORT_LABEL : MESSAGE_OUTPUT_PORT_LABEL;
+        String wireType = PortWireType.MESSAGE.wireName();
+        PortDefinition.Builder builder = PortDefinition.builder()
+                .id(id)
+                .label(label)
+                .shortDescription(direction == PortDirection.INPUT
+                        ? MESSAGE_INPUT_PORT_DESCRIPTION
+                        : MESSAGE_OUTPUT_PORT_DESCRIPTION)
+                .schema(wireType)
+                .type(wireType)
+                .direction(direction)
+                .ui(PortUiDefinition.builder()
+                        .position(PortUiPosition.defaultFor(direction))
+                        .color(MESSAGE_PORT_COLOR)
+                        .build())
+                .required(false)
+                .minConnections(0);
+        if (direction == PortDirection.INPUT) {
+            builder.acceptType(wireType);
+        }
+        return builder.build();
     }
 
     private static PortDefinition defaultPort(String id, String name, PortDirection direction) {

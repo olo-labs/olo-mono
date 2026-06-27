@@ -7,7 +7,7 @@
   },
   "workflowDefinitions": {
     "scanFolder": "../../olo-definition/olo-configuration/current-active",
-    "recursive": false
+    "recursive": true
   },
   "temporal": {
     "namespace": "default",

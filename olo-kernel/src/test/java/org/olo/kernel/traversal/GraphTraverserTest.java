@@ -62,7 +62,7 @@ class GraphTraverserTest {
         }
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false);
-        WorkflowDefinition source = registry.findByQueue(queue).orElseThrow();
+        WorkflowDefinition source = registry.findById(queue).orElseThrow();
         return KernelContextBuilder.build(KernelContextBuildRequest.of(queue, input, source));
     }
 

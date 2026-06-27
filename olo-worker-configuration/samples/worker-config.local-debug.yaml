@@ -19,7 +19,7 @@ server:
 workflowDefinitions:
   # Active pipeline JSON (same folder as olo backend OLO_CONFIGURATION_DIR and chat UI).
   scanFolder: "../../olo-definition/olo-configuration/current-active"
-  recursive: false
+  recursive: true
 temporal:
   namespace: "default"
   target: "localhost:47233"

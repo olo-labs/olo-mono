@@ -21,3 +21,7 @@ Thumbs.db
 samples/generated/
 samples/**/*-copy.json
 samples/**/*-copy.yaml
+
+# Runtime dynamic subgraph injection audit logs
+olo-configuration/log/*
+!olo-configuration/log/.gitkeep

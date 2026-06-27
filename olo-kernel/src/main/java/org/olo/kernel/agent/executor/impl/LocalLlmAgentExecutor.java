@@ -1,5 +1,6 @@
 package org.olo.kernel.agent.executor.impl;
 
+import org.olo.definition.toolcall.ToolCallPlannerSupport;
 import org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
@@ -55,6 +56,10 @@ public final class LocalLlmAgentExecutor implements AgentExecutor {
             if (DynamicGraphPlannerSupport.isDynamicGraphPlanner(node)) {
                 context.getVariables().set(
                         DynamicGraphPlannerSupport.outputVariable(node), invocation.response());
+            }
+            if (ToolCallPlannerSupport.isToolCallPlanner(node)) {
+                context.getVariables().set(
+                        ToolCallPlannerSupport.outputVariable(node), invocation.response());
             }
             return NodeResult.completed(invocation.response(), output);
         } catch (RuntimeException e) {

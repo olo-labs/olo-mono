@@ -4,7 +4,7 @@
   "isDefault" : true,
   "label" : "Agent",
   "role" : "Agent",
-  "shortDescription" : "Autonomous tool-using agent",
+  "shortDescription" : "Autonomous tool-using agent with strict JSON tool-call planning",
   "emoji" : "🤖",
   "designer" : {
     "paletteGroup" : "Agents",
@@ -30,8 +30,6 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "capabilities" : "#22c55e",
-      "integer" : "#38bdf8",
       "boolean" : "#fb923c",
       "message" : "#ef4444",
       "any" : "#94a3b8",
@@ -39,7 +37,9 @@
       "number" : "#38bdf8",
       "array" : "#f472b6",
       "object" : "#c084fc",
-      "string" : "#a3e635"
+      "string" : "#a3e635",
+      "capabilities" : "#22c55e",
+      "integer" : "#38bdf8"
     },
     "nodeTypes" : {
       "AGENT" : {
@@ -113,19 +113,18 @@
   "version" : "1.0.0",
   "capability" : {
     "name" : "Agent",
-    "description" : "Autonomous tool-using agent",
+    "description" : "Autonomous tool-using agent with strict JSON tool-call planning",
     "tags" : [ "agent" ],
     "examples" : [ ],
     "required_inputs" : [ "input" ],
     "required_outputs" : [ "output" ],
     "tool_requirements" : [ ],
-    "required_context" : [ "message" ]
+    "required_context" : [ "message", "availableToolsJson", "toolCallSequenceJson" ]
   },
   "runtime" : {
     "contractVersion" : "1.0",
-    "executionModel" : "CHILD_WORKFLOW",
-    "capabilities" : [ "DEBUG", "REPLAY", "TIMEOUT" ],
-    "defaultTimeout" : "PT10M",
+    "executionModel" : "INLINE",
+    "capabilities" : [ "DEBUG", "REPLAY" ],
     "delegation" : {
       "enabled" : true,
       "parallelEnabled" : true,
@@ -237,8 +236,107 @@
       }
     }
   }, {
+    "id" : "calculator",
+    "type" : "TOOL",
+    "ports" : [ {
+      "id" : "in",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Incoming workflow message",
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "out",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
+      "ui" : {
+        "position" : "RIGHT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Capability indicator for runtime prompt assembly on a connected agent",
+      "ui" : {
+        "position" : "TOP",
+        "color" : "#22c55e"
+      }
+    } ],
+    "reads" : [ ],
+    "writes" : [ ],
+    "configuration" : {
+      "toolId" : "olo-core:calculator"
+    }
+  }, {
+    "id" : "cpu-usage",
+    "type" : "TOOL",
+    "ports" : [ {
+      "id" : "in",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Incoming workflow message",
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "out",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
+      "ui" : {
+        "position" : "RIGHT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Capability indicator for runtime prompt assembly on a connected agent",
+      "ui" : {
+        "position" : "TOP",
+        "color" : "#22c55e"
+      }
+    } ],
+    "reads" : [ ],
+    "writes" : [ ],
+    "configuration" : {
+      "toolId" : "olo-core:cpu-usage"
+    }
+  }, {
     "id" : "agent",
     "type" : "AGENT",
+    "label" : "Agent",
     "ports" : [ {
       "id" : "in",
       "label" : "message in",
@@ -297,19 +395,18 @@
       }
     } ],
     "execution" : {
-      "executionKind" : "SUBWORKFLOW",
-      "executionModel" : "CHILD_WORKFLOW",
-      "routers" : [ ],
-      "workflowRef" : {
-        "workflowId" : "agent",
-        "version" : "1.0.0",
-        "inputMapping" : { },
-        "outputMapping" : { }
-      }
+      "executionKind" : "ACTIVITY",
+      "executionModel" : "INLINE",
+      "routers" : [ ]
     },
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
+      "toolCallPlanner" : true,
+      "outputVariable" : "toolCallSequenceJson",
+      "maxInvalidJsonRetries" : 3,
+      "continueNodeId" : "end",
+      "promptTemplate" : "You are an OLO tool-call planner.\n\nUser request:\n{message}\n\nAvailable tools (strict allow-list — use only these toolId values):\n{availableToolsJson}\n\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Do not wrap the JSON in ```json``` blocks.\n3. Schema:\n{\n  \"toolCalls\": [\n    { \"toolId\": \"olo-core:calculator\", \"arguments\": { } }\n  ],\n  \"directResponse\": null\n}\n4. If no tools are needed, set \"toolCalls\": [] and put the final answer in \"directResponse\".\n5. If tools are needed, set \"directResponse\": null and list toolCalls in execution order.\n6. Each toolId MUST appear in availableToolsJson.\n7. Include arguments when a tool needs structured input (for example ISO-8601 startTime/endTime for observability tools).\n\nIf a previous attempt failed validation, fix it:\n{toolCallSequenceJsonValidationError}\n\nRespond with JSON only.",
       "designer" : {
         "position" : {
           "x" : 440,
@@ -357,6 +454,16 @@
     "sourcePortId" : "out",
     "targetNodeId" : "end",
     "targetPortId" : "in"
+  }, {
+    "sourceNodeId" : "calculator",
+    "sourcePortId" : "capabilities",
+    "targetNodeId" : "agent",
+    "targetPortId" : "capabilities"
+  }, {
+    "sourceNodeId" : "cpu-usage",
+    "sourcePortId" : "capabilities",
+    "targetNodeId" : "agent",
+    "targetPortId" : "capabilities"
   } ],
   "variables" : [ {
     "name" : "message",
@@ -364,6 +471,45 @@
     "description" : "",
     "required" : true,
     "scope" : "READONLY_EXTERNAL",
+    "metadata" : { }
+  }, {
+    "name" : "availableToolsJson",
+    "type" : "string",
+    "description" : "JSON array of tools connected on the canvas and registered in tools[]",
+    "required" : false,
+    "scope" : "LOCAL",
+    "metadata" : {
+      "role" : "available-tools"
+    }
+  }, {
+    "name" : "toolCallSequenceJson",
+    "type" : "string",
+    "description" : "Model-produced strict JSON tool call sequence",
+    "required" : false,
+    "scope" : "LOCAL",
+    "metadata" : {
+      "role" : "tool-call-sequence"
+    }
+  }, {
+    "name" : "toolResultsJson",
+    "type" : "string",
+    "description" : "Aggregated JSON results from executed tool nodes for synthesis",
+    "required" : false,
+    "scope" : "LOCAL",
+    "metadata" : { }
+  }, {
+    "name" : "toolCallSequenceJsonRetryCount",
+    "type" : "number",
+    "description" : "Invalid JSON retry counter for the tool-call planner",
+    "required" : false,
+    "scope" : "LOCAL",
+    "metadata" : { }
+  }, {
+    "name" : "toolCallSequenceJsonValidationError",
+    "type" : "string",
+    "description" : "Last validation error from toolCallSequenceJson, injected into planner retries",
+    "required" : false,
+    "scope" : "LOCAL",
     "metadata" : { }
   }, {
     "name" : "ReturnValue",
@@ -375,7 +521,41 @@
       "role" : "return"
     }
   } ],
-  "tools" : [ ],
+  "tools" : [ {
+    "id" : "calculator",
+    "type" : "TOOL",
+    "capability" : {
+      "name" : "Calculator",
+      "description" : "Basic arithmetic on two numbers",
+      "tags" : [ ],
+      "examples" : [ "Compute order totals" ],
+      "required_inputs" : [ ],
+      "required_outputs" : [ ],
+      "tool_requirements" : [ ],
+      "required_context" : [ ]
+    },
+    "runtimeBinding" : {
+      "implementationId" : "olo-core:calculator"
+    },
+    "configuration" : { }
+  }, {
+    "id" : "cpu-usage",
+    "type" : "TOOL",
+    "capability" : {
+      "name" : "CPU Usage",
+      "description" : "Reads CPU usage metrics from CSV files in a configured folder filtered by time range",
+      "tags" : [ ],
+      "examples" : [ "Check CPU spike during payment gateway outage" ],
+      "required_inputs" : [ ],
+      "required_outputs" : [ ],
+      "tool_requirements" : [ ],
+      "required_context" : [ ]
+    },
+    "runtimeBinding" : {
+      "implementationId" : "olo-core:cpu-usage"
+    },
+    "configuration" : { }
+  } ],
   "agents" : [ ],
   "hooks" : [ ],
   "modelProviders" : [ {
@@ -394,16 +574,22 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
-    "description" : "Autonomous tool-using agent",
+    "planningStrategy" : "react",
+    "dynamicToolExecution" : {
+      "continueNodeId" : "end",
+      "outputVariable" : "toolCallSequenceJson",
+      "availableToolsVariable" : "availableToolsJson",
+      "plannerNodeId" : "agent"
+    },
+    "role" : "agent",
+    "agentSelectionStrategy" : "dynamic",
+    "description" : "Autonomous tool-using agent with strict JSON tool-call planning",
     "plannerContext" : {
-      "selectedTools" : [ ],
+      "selectedTools" : [ "olo-core:calculator", "olo-core:cpu-usage" ],
       "selectedAgents" : [ "planner", "reviewer", "architect" ],
-      "selectedVariables" : [ "message" ],
+      "selectedVariables" : [ "message", "availableToolsJson", "toolCallSequenceJson" ],
       "injectCapabilities" : false
     },
-    "planningStrategy" : "react",
-    "agentSelectionStrategy" : "dynamic",
-    "role" : "agent",
     "returnVariable" : "ReturnValue",
     "agentType" : "autonomous"
   }

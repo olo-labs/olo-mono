@@ -170,7 +170,9 @@ public final class DynamicSubgraphMerger {
                 if (NodeType.START.name().equals(node.getType()) || NodeType.END.name().equals(node.getType())) {
                     continue;
                 }
-                builder.addNode(withDefaultPorts(remapNode(node, idMap.get(node.getId()))));
+                NodeDefinition remapped = withDefaultPorts(
+                        DynamicNodeLabels.withDynamicLabel(remapNode(node, idMap.get(node.getId())), graph));
+                builder.addNode(remapped);
             }
 
             for (EdgeDefinition edge : subgraphEdges) {
@@ -227,6 +229,10 @@ public final class DynamicSubgraphMerger {
             NodeDefinition.Builder builder = NodeDefinition.builder()
                     .id(text(node, "id"))
                     .type(text(node, "type"));
+            String label = text(node, "label");
+            if (label != null && !label.isBlank()) {
+                builder.label(label);
+            }
             JsonNode configuration = node.get("configuration");
             if (configuration != null && configuration.isObject()) {
                 builder.configuration(MAPPER.convertValue(configuration, Map.class));
@@ -250,11 +256,14 @@ public final class DynamicSubgraphMerger {
     }
 
     private static NodeDefinition remapNode(NodeDefinition node, String newId) {
-        return NodeDefinition.builder()
+        NodeDefinition.Builder builder = NodeDefinition.builder()
                 .id(newId)
                 .type(node.getType())
-                .configuration(node.getConfiguration())
-                .build();
+                .configuration(node.getConfiguration());
+        if (node.getLabel() != null && !node.getLabel().isBlank()) {
+            builder.label(node.getLabel());
+        }
+        return builder.build();
     }
 
     private static EdgeDefinition remapEdge(EdgeDefinition edge, Map<String, String> idMap) {
@@ -273,6 +282,7 @@ public final class DynamicSubgraphMerger {
         NodeDefinition.Builder builder = NodeDefinition.builder()
                 .id(node.getId())
                 .type(node.getType())
+                .label(node.getLabel())
                 .configuration(node.getConfiguration());
         if (!NodeType.END.name().equals(node.getType())) {
             builder.addPort(PortDefinition.builder()
