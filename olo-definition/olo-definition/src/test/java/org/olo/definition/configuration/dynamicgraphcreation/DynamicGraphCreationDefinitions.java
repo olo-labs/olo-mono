@@ -1,5 +1,6 @@
 package org.olo.definition.configuration.dynamicgraphcreation;
 
+import org.olo.definition.OloProductTerminology;
 import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.designer.StudioDesignerDefaults;
 import org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport;
@@ -23,12 +24,15 @@ public final class DynamicGraphCreationDefinitions {
 
     public static final String WORKFLOW_ID = "dynamic-graph-creation";
     public static final String FILE_NAME = WORKFLOW_ID;
+    public static final String QUEUE = "oloQueue2";
 
     static final String JSON_ONLY_PROMPT_TEMPLATE =
-            """
-            You are an OLO workflow graph generator.
+            "You are an "
+                    + OloProductTerminology.PRODUCT
+                    + """
+                     workflow graph generator.
 
-            Goal: produce a valid WorkflowDefinition graph for this request:
+                    Goal: produce a valid WorkflowDefinition graph for this request:
             {message}
 
             Output rules (strict):
@@ -83,7 +87,7 @@ public final class DynamicGraphCreationDefinitions {
 
     public static WorkflowDefinition dynamicGraphCreation() {
         String description =
-                "Generates OLO workflow graphs as JSON-only structured output and expands them inline at runtime";
+                "Generates " + OloProductTerminology.WORKFLOW + " graphs as JSON-only structured output and expands them inline at runtime";
         String plannerNodeId = DynamicGraphPlannerSupport.DEFAULT_PLANNER_NODE_ID;
         return WorkflowBuilder.create("Dynamic Graph Creation")
                 .id(WORKFLOW_ID)
@@ -94,7 +98,7 @@ public final class DynamicGraphCreationDefinitions {
                 .emoji("🧩")
                 .designer(StudioDesignerDefaults.studioAgentDesigner(
                         "🧩", "dynamic", "graph", "workflow", "json"))
-                .queue(WORKFLOW_ID)
+                .queue(QUEUE)
                 .workflowType("olo")
                 .runAgain(true)
                 .version("1.0.0")

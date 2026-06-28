@@ -4,7 +4,7 @@ package org.olo.definition.node;
 
 /**
 
- * Business / logical node types for AI orchestration graphs.
+ * Business / logical node types for Open LLM Orchestrator (OLO) workflow graphs.
 
  * <p>
 

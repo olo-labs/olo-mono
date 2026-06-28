@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Builds {@code availableToolsJson} from capabilities edges and workflow tool artifacts.
@@ -63,7 +64,42 @@ public final class AvailableToolsJsonResolver {
             tools.add(entry);
         }
         try {
-            return MAPPER.writeValueAsString(tools);
+            String json = MAPPER.writeValueAsString(tools);
+            return filterToolsByPlannerContext(graph, json);
+        } catch (Exception e) {
+            return "[]";
+        }
+    }
+
+    private static String filterToolsByPlannerContext(WorkflowDefinition graph, String json) {
+        if (!PlannerContextRuntime.injectCapabilities(graph)) {
+            return "[]";
+        }
+        return PlannerContextRuntime.selectedToolIds(graph)
+                .map(selected -> filterToolJson(json, selected))
+                .orElse(json);
+    }
+
+    private static String filterToolJson(String json, Set<String> selectedToolIds) {
+        if (selectedToolIds.isEmpty()) {
+            return "[]";
+        }
+        try {
+            var root = MAPPER.readTree(json);
+            if (!root.isArray()) {
+                return "[]";
+            }
+            var filtered = MAPPER.createArrayNode();
+            for (var entry : root) {
+                if (!entry.isObject()) {
+                    continue;
+                }
+                String toolId = entry.has("toolId") ? entry.get("toolId").asText() : null;
+                if (toolId != null && selectedToolIds.contains(toolId)) {
+                    filtered.add(entry);
+                }
+            }
+            return MAPPER.writeValueAsString(filtered);
         } catch (Exception e) {
             return "[]";
         }

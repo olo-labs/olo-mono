@@ -17,6 +17,9 @@ public final class CoreToolIds {
     public static final String MEMORY_USAGE = "olo-core:memory-usage";
     public static final String NUMERIC_METRIC = "olo-core:numeric-metric";
     public static final String RECENTLY_CHANGED_CODE = "olo-core:recently-changed-code";
+    public static final String RESEARCH_LITERATURE = "olo-core:research-literature";
+    public static final String TRAVEL_DESTINATIONS = "olo-core:travel-destinations";
+    public static final String TRAVEL_OFFERS = "olo-core:travel-offers";
 
     private CoreToolIds() {
     }

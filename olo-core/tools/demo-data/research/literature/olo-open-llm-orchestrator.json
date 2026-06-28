@@ -1,0 +1,25 @@
+{
+  "topic": "open llm orchestrator olo",
+  "title": "Open LLM Orchestrator (OLO) — declarative LLM workflow platform",
+  "keywords": ["olo", "open llm orchestrator", "workflow orchestration", "llm agents", "knowledge search"],
+  "papers": [
+    {
+      "id": "paper-olo-001",
+      "title": "Declarative workflow graphs for multi-agent LLM orchestration",
+      "authors": ["Olo Labs"],
+      "year": 2026,
+      "summary": "Describes portable workflow JSON, tool-call planners, and child-agent delegation in OLO."
+    },
+    {
+      "id": "paper-olo-002",
+      "title": "Temporal-backed execution of inline tool-call subgraphs",
+      "authors": ["Olo Labs"],
+      "year": 2026,
+      "summary": "Runtime expansion of planner-produced tool sequences without child workflow dispatch."
+    }
+  ],
+  "keyFindings": [
+    "OLO (Open LLM Orchestrator) separates workflow definitions from per-run inputs and worker deployment settings.",
+    "Scenario collections combine tool-call planners, mock catalog tools, and specialist child agents on a shared canvas."
+  ]
+}

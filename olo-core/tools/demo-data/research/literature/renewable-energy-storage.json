@@ -1,0 +1,24 @@
+{
+  "topic": "renewable energy storage",
+  "title": "Grid-scale battery adoption trends",
+  "papers": [
+    {
+      "id": "paper-renewable-001",
+      "title": "Lithium-ion degradation in utility-scale installations",
+      "authors": ["Chen, L.", "Patel, R."],
+      "year": 2025,
+      "summary": "Field study of 14 utility sites showing capacity fade correlated with daily cycling depth."
+    },
+    {
+      "id": "paper-renewable-002",
+      "title": "Hybrid solar + storage dispatch models",
+      "authors": ["Nguyen, T."],
+      "year": 2024,
+      "summary": "Compares rule-based and ML dispatch policies for co-located PV and battery assets."
+    }
+  ],
+  "keyFindings": [
+    "Shallow cycling extends battery life by 18–24% in the sampled fleet.",
+    "Hybrid dispatch models reduce curtailment by 11% versus solar-only baselines."
+  ]
+}

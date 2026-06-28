@@ -300,6 +300,29 @@ public final class WorkflowBuilder {
                 .build());
     }
 
+    /**
+     * Child-agent plugin node wired only to a planner {@code agentPlug} port (optional message ports).
+     * Uses {@code configuration.delegateAgentId} so Studio shows the child-workflow body and open link.
+     */
+    public WorkflowBuilder canvasChildAgentPluginNode(String id, String childWorkflowId, String label) {
+        Objects.requireNonNull(childWorkflowId, "childWorkflowId is required");
+        return addNode(NodeDefinition.builder()
+                .id(id)
+                .type(NodeType.AGENT)
+                .label(label)
+                .workflow(WorkflowReferenceDefinition.builder()
+                        .workflowId(childWorkflowId)
+                        .version("1.0.0")
+                        .build())
+                .executionKind(ExecutionKind.SUBWORKFLOW)
+                .executionModel(ExecutionModel.CHILD_WORKFLOW)
+                .addPort(optionalMessagePort("in", PortDirection.INPUT))
+                .addPort(defaultPort("out", "out", PortDirection.OUTPUT))
+                .addPort(pluginPort("agentPlug", PortWireType.AGENT_PLUG, PortDirection.OUTPUT))
+                .putConfiguration("delegateAgentId", childWorkflowId)
+                .build());
+    }
+
     public WorkflowBuilder vectorSearchNode(String id) {
         return addNode(NodeDefinition.builder()
                 .id(id)
@@ -373,6 +396,15 @@ public final class WorkflowBuilder {
         edges.clear();
         if (replacementEdges != null) {
             edges.addAll(replacementEdges);
+        }
+        return this;
+    }
+
+    /** Replaces the working node list (used when stripping runtime-injected subgraph nodes). */
+    public WorkflowBuilder replaceNodes(List<NodeDefinition> replacementNodes) {
+        nodes.clear();
+        if (replacementNodes != null) {
+            nodes.addAll(replacementNodes);
         }
         return this;
     }
@@ -475,6 +507,35 @@ public final class WorkflowBuilder {
                 org.olo.definition.planner.PlannerContextDefinition.METADATA_KEY,
                 org.olo.definition.planner.PlannerContextDefinition.presetDefaults(presetId));
         return this;
+    }
+
+    /**
+     * Leaf agent canvas: START → AGENT (inline local LLM) → END.
+     * Keeps {@code workflowRef} for Studio identity but does not self-dispatch as a child workflow.
+     */
+    public WorkflowBuilder localAgentCanvasPipeline(String workflowId) {
+        Objects.requireNonNull(workflowId, "workflowId is required");
+        return startNodeWithMessageInput("start")
+                .addNode(NodeDefinition.builder()
+                        .id("agent")
+                        .type(NodeType.AGENT.name())
+                        .workflow(WorkflowReferenceDefinition.builder()
+                                .workflowId(workflowId)
+                                .version("1.0.0")
+                                .build())
+                        .executionKind(ExecutionKind.ACTIVITY)
+                        .executionModel(ExecutionModel.INLINE)
+                        .addPort(messagePort("in", PortDirection.INPUT))
+                        .addPort(pluginPort("capabilities", PortWireType.CAPABILITIES, PortDirection.INPUT))
+                        .addPort(pluginPort("agentPlug", PortWireType.AGENT_PLUG, PortDirection.INPUT))
+                        .addPort(messagePort("out", PortDirection.OUTPUT))
+                        .build())
+                .endNode("end")
+                .connect("start", "out", "agent", "in")
+                .connect("agent", "out", "end", "in")
+                .nodeCanvasLayout("start", 0)
+                .nodeCanvasLayout("agent", 1)
+                .nodeCanvasLayout("end", 2);
     }
 
     /**

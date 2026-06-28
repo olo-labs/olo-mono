@@ -35,6 +35,18 @@ class NodeExecutionSchedulingTest {
     }
 
     @Test
+    void childWorkflowRunsInWorkflowThread() {
+        NodeDefinition childAgent = NodeDefinition.builder()
+                .id("delegate")
+                .type("AGENT")
+                .executionModel(ExecutionModel.CHILD_WORKFLOW)
+                .build();
+
+        assertThat(NodeExecutionScheduling.requiresDedicatedActivity(childAgent)).isFalse();
+        assertThat(NodeExecutionScheduling.runsInWorkflow(childAgent)).isTrue();
+    }
+
+    @Test
     void nodesWithoutExecutionMetadataUseDedicatedActivities() {
         NodeDefinition start = NodeDefinition.builder().id("start").type("START").build();
         NodeDefinition tool = NodeDefinition.builder().id("read-logs").type("TOOL").build();

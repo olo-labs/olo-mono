@@ -1,5 +1,6 @@
 package org.olo.definition.configuration.agenttool;
 
+import org.olo.definition.OloProductTerminology;
 import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.designer.StudioDesignerDefaults;
 import org.olo.definition.execution.ExecutionKind;
@@ -36,10 +37,12 @@ public final class AgentToolExecutionDefinitions {
     public static final String CPU_USAGE_TOOL_ID = "olo-core:cpu-usage";
 
     static final String JSON_ONLY_PROMPT_TEMPLATE =
-            """
-            You are an OLO tool-call planner.
+            "You are an "
+                    + OloProductTerminology.PRODUCT
+                    + """
+                     tool-call planner.
 
-            User request:
+                    User request:
             {message}
 
             Available tools (strict allow-list — use only these toolId values):

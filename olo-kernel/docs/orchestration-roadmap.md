@@ -14,7 +14,7 @@ Related:
 
 ## Vision
 
-OLO orchestration spans more than local LLM calls:
+Open LLM Orchestrator (OLO) orchestration spans more than local LLM calls:
 
 | Backend | Role |
 |---------|------|

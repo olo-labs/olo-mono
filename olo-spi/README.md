@@ -1,6 +1,6 @@
 # olo-spi
 
-**Service Provider Interface** for OLO runtime execution — contracts only, **no implementations**.
+**Service Provider Interface** for Open LLM Orchestrator (OLO) runtime execution — contracts only, **no implementations**.
 
 | Package | Contents |
 |---------|----------|

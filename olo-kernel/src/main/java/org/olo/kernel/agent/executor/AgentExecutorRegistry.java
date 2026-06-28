@@ -1,6 +1,9 @@
 package org.olo.kernel.agent.executor;
 
 import org.olo.definition.node.NodeDefinition;
+import org.olo.kernel.agent.executor.impl.ChildWorkflowAgentExecutor;
+import org.olo.kernel.childworkflow.ChildWorkflowDelegationSupport;
+import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.exception.KernelException;
 
 import java.util.List;
@@ -21,8 +24,16 @@ public final class AgentExecutorRegistry {
     }
 
     public AgentExecutor resolve(NodeDefinition node) {
+        return resolve(null, node);
+    }
+
+    public AgentExecutor resolve(KernelRuntimeContext context, NodeDefinition node) {
         Objects.requireNonNull(node, "node");
         for (AgentExecutor executor : executors) {
+            if (executor instanceof ChildWorkflowAgentExecutor
+                    && !ChildWorkflowDelegationSupport.isExternalChildTarget(context, node)) {
+                continue;
+            }
             if (executor.supports(node)) {
                 return executor;
             }

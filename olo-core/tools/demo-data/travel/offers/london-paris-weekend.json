@@ -1,0 +1,29 @@
+{
+  "destination": "Paris",
+  "origin": "London",
+  "title": "Weekend packages London → Paris",
+  "offers": [
+    {
+      "packageId": "paris-weekend-001",
+      "origin": "London",
+      "destination": "Paris",
+      "departureDate": "2026-07-11",
+      "returnDate": "2026-07-13",
+      "flightUsd": 145,
+      "hotelUsd": 320,
+      "totalUsd": 465,
+      "hotel": "Left Bank boutique — 4.4 rating"
+    },
+    {
+      "packageId": "paris-weekend-002",
+      "origin": "London",
+      "destination": "Paris",
+      "departureDate": "2026-07-18",
+      "returnDate": "2026-07-20",
+      "flightUsd": 168,
+      "hotelUsd": 295,
+      "totalUsd": 463,
+      "hotel": "Marais studio — 4.6 rating"
+    }
+  ]
+}

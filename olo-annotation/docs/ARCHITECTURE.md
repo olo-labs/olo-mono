@@ -4,7 +4,7 @@
 
 ## Purpose
 
-`olo-annotation` provides **metadata annotations** for OLO extension implementations (nodes, tools, hooks) and a **runtime catalog loader** that merges processor-generated JSON from the classpath.
+`olo-annotation` provides **metadata annotations** for Open LLM Orchestrator (OLO) extension implementations (nodes, tools, hooks) and a **runtime catalog loader** that merges processor-generated JSON from the classpath.
 
 Workflow editor UIs use this metadata to render palettes, property forms, and port wiring without hard-coding extension lists.
 

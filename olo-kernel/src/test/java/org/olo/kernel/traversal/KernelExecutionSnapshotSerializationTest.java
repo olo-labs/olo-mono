@@ -112,7 +112,7 @@ class KernelExecutionSnapshotSerializationTest {
 
     @Test
     void roundTripsDynamicGraphCreationPreset() throws Exception {
-        Path workflowJson = Paths.get("../olo-definition/olo-configuration/current-active/dynamic-graph-creation.json")
+        Path workflowJson = Paths.get("../olo-definition/olo-configuration/dynamic-graph-creation/dynamic-graph-creation.json")
                 .toAbsolutePath()
                 .normalize();
         if (!Files.exists(workflowJson)) {
@@ -121,7 +121,7 @@ class KernelExecutionSnapshotSerializationTest {
 
         WorkflowDefinition graph = new org.olo.definition.serializer.JsonWorkflowSerializer()
                 .deserialize(Files.readString(workflowJson));
-        Path presets = workflowJson.getParent();
+        Path presets = workflowJson.getParent().getParent();
         KernelRuntimeHolder.setRegistry(OloBootstrap.load(presets, false));
         WorkflowInput baseInput = WorkflowInput.fromJson(
                 Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")

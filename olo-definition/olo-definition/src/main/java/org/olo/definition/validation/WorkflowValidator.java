@@ -113,7 +113,7 @@ public final class WorkflowValidator {
                 validateOnFailure(node, nodeIds, errors);
                 validateHumanApproval(node, errors);
                 validateExecutionMapping(node, errors);
-                validateAgentExecution(node, errors);
+                validateAgentExecution(workflow.getId(), node, errors);
                 validateWorkflowReference(node, errors);
                 validateParallelJoin(node, errors);
                 validateDataPathAccess(node, stateFieldNames, inputFieldNames, parameterFieldNames, errors);
@@ -381,7 +381,7 @@ public final class WorkflowValidator {
         }
     }
 
-    private static void validateAgentExecution(NodeDefinition node, List<String> errors) {
+    private static void validateAgentExecution(String workflowId, NodeDefinition node, List<String> errors) {
         if (!NodeType.AGENT.value().equals(node.getType())) {
             return;
         }
@@ -413,12 +413,32 @@ public final class WorkflowValidator {
             }
             return;
         }
+        if (isLeafSelfAgent(workflowId, node)) {
+            if (node.getExecutionModel() != ExecutionModel.INLINE) {
+                errors.add("leaf self AGENT node " + nodeId + " requires execution.executionModel INLINE");
+            }
+            if (node.getExecutionKind() != ExecutionKind.ACTIVITY) {
+                errors.add("leaf self AGENT node " + nodeId + " requires execution.executionKind ACTIVITY");
+            }
+            return;
+        }
         if (node.getExecutionModel() != ExecutionModel.CHILD_WORKFLOW) {
             errors.add("AGENT node " + nodeId + " requires execution.executionModel CHILD_WORKFLOW");
         }
         if (node.getExecutionKind() != ExecutionKind.SUBWORKFLOW) {
             errors.add("AGENT node " + nodeId + " requires execution.executionKind SUBWORKFLOW");
         }
+    }
+
+    /**
+     * Leaf agent preset: workflowRef points at the same workflow file; runs inline (local LLM), not as a child run.
+     */
+    private static boolean isLeafSelfAgent(String workflowId, NodeDefinition node) {
+        if (isBlank(workflowId) || node.getWorkflow() == null) {
+            return false;
+        }
+        String refId = node.getWorkflow().getWorkflowId();
+        return !isBlank(refId) && workflowId.trim().equals(refId.trim());
     }
 
     private static void validateOnFailure(NodeDefinition node, Set<String> nodeIds, List<String> errors) {

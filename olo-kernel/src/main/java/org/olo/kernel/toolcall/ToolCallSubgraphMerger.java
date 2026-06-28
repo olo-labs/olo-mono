@@ -2,25 +2,26 @@ package org.olo.kernel.toolcall;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.olo.definition.edge.EdgeDefinition;
+import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.execution.ExecutionKind;
 import org.olo.definition.execution.ExecutionModel;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.port.PortDefinition;
 import org.olo.definition.port.PortDirection;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.workflow.WorkflowReferenceDefinition;
 import org.olo.definition.dynamicgraph.ToolSynthesisSupport;
-import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.dynamicgraph.DynamicNodeLabels;
+import org.olo.definition.toolcall.ToolCallPlannerSupport;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -34,6 +35,10 @@ public final class ToolCallSubgraphMerger {
     }
 
     public static ValidationResult validate(String rawJson, String allowedToolsJson) {
+        return validate(rawJson, allowedToolsJson, null);
+    }
+
+    public static ValidationResult validate(String rawJson, String allowedToolsJson, String allowedAgentsJson) {
         if (rawJson == null || rawJson.isBlank()) {
             return ValidationResult.invalid("tool call sequence JSON is blank");
         }
@@ -47,6 +52,10 @@ public final class ToolCallSubgraphMerger {
             if (toolCalls == null || !toolCalls.isArray()) {
                 return ValidationResult.invalid("tool call sequence JSON requires a toolCalls array");
             }
+            JsonNode agentCalls = root.has("agentCalls") ? root.get("agentCalls") : null;
+            if (agentCalls != null && !agentCalls.isArray()) {
+                return ValidationResult.invalid("tool call sequence JSON requires agentCalls to be an array when present");
+            }
             if (!root.has("directResponse")) {
                 return ValidationResult.invalid("tool call sequence JSON requires directResponse (string or null)");
             }
@@ -55,7 +64,9 @@ public final class ToolCallSubgraphMerger {
                     ? null
                     : directResponseNode.asText();
             Set<String> allowedToolIds = parseAllowedToolIds(allowedToolsJson);
+            Set<String> allowedAgentIds = parseAllowedAgentIds(allowedAgentsJson);
             List<ParsedToolCall> parsedCalls = new ArrayList<>();
+            List<ParsedAgentCall> parsedAgentCalls = new ArrayList<>();
             for (JsonNode call : toolCalls) {
                 if (!call.isObject()) {
                     return ValidationResult.invalid("each toolCalls entry must be an object");
@@ -77,16 +88,32 @@ public final class ToolCallSubgraphMerger {
                 }
                 parsedCalls.add(new ParsedToolCall(toolId, arguments));
             }
-            if (!parsedCalls.isEmpty()) {
+            if (agentCalls != null) {
+                for (JsonNode call : agentCalls) {
+                    if (!call.isObject()) {
+                        return ValidationResult.invalid("each agentCalls entry must be an object");
+                    }
+                    String agentId = text(call, "agentId");
+                    if (agentId == null || agentId.isBlank()) {
+                        return ValidationResult.invalid("each agentCalls entry requires agentId");
+                    }
+                    if (!allowedAgentIds.isEmpty() && !allowedAgentIds.contains(agentId)) {
+                        return ValidationResult.invalid("agentId is not in availableAgentsJson allow-list: " + agentId);
+                    }
+                    String message = text(call, "message");
+                    parsedAgentCalls.add(new ParsedAgentCall(agentId, message));
+                }
+            }
+            if (!parsedCalls.isEmpty() || !parsedAgentCalls.isEmpty()) {
                 if (directResponse != null && !directResponse.isBlank()) {
                     return ValidationResult.invalid(
-                            "directResponse must be null when toolCalls is non-empty");
+                            "directResponse must be null when toolCalls or agentCalls is non-empty");
                 }
-                return ValidationResult.toolCalls(normalized, parsedCalls);
+                return ValidationResult.calls(normalized, parsedCalls, parsedAgentCalls);
             }
             if (directResponse == null || directResponse.isBlank()) {
                 return ValidationResult.invalid(
-                        "directResponse is required when toolCalls is empty");
+                        "directResponse is required when toolCalls and agentCalls are empty");
             }
             return ValidationResult.directResponse(normalized, directResponse);
         } catch (Exception e) {
@@ -99,12 +126,103 @@ public final class ToolCallSubgraphMerger {
             String plannerNodeId,
             String continueNodeId,
             List<ParsedToolCall> toolCalls) {
+        return mergeAgentAndToolCalls(graph, plannerNodeId, continueNodeId, List.of(), toolCalls);
+    }
+
+    public static MergeResult mergeAgentAndToolCalls(
+            WorkflowDefinition graph,
+            String plannerNodeId,
+            String continueNodeId,
+            List<ParsedAgentCall> agentCalls,
+            List<ParsedToolCall> toolCalls) {
+        graph = DynamicSubgraphStripper.stripInjectedNodes(graph, plannerNodeId, continueNodeId);
+        if (agentCalls == null || agentCalls.isEmpty()) {
+            return mergeToolsOnly(graph, plannerNodeId, continueNodeId, toolCalls);
+        }
+        String prefix = "agent-dyn-" + System.nanoTime() + "-";
+        List<String> dynamicAgentNodeIds = new ArrayList<>();
+        WorkflowBuilder builder = WorkflowBuilder.from(graph);
+        List<EdgeDefinition> mergedEdges = new ArrayList<>();
+        for (EdgeDefinition edge : graph.getEdges()) {
+            if (plannerNodeId.equals(edge.getSourceNodeId()) && continueNodeId.equals(edge.getTargetNodeId())) {
+                continue;
+            }
+            mergedEdges.add(edge);
+        }
+
+        for (int index = 0; index < agentCalls.size(); index++) {
+            ParsedAgentCall call = agentCalls.get(index);
+            String nodeId = prefix + "step-" + index;
+            dynamicAgentNodeIds.add(nodeId);
+            Map<String, Object> configuration = new LinkedHashMap<>();
+            configuration.put("delegateAgentId", call.agentId());
+            if (call.message() != null && !call.message().isBlank()) {
+                configuration.put("delegateMessage", call.message());
+            }
+            builder.addNode(withDefaultPorts(NodeDefinition.builder()
+                    .id(nodeId)
+                    .type(NodeType.AGENT.name())
+                    .label(DynamicNodeLabels.prefixedAgent(
+                            AgentLabelResolver.resolve(call.agentId(), graph, plannerNodeId)))
+                    .executionKind(ExecutionKind.SUBWORKFLOW)
+                    .executionModel(ExecutionModel.CHILD_WORKFLOW)
+                    .workflow(WorkflowReferenceDefinition.builder()
+                            .workflowId(call.agentId())
+                            .version("1.0.0")
+                            .build())
+                    .configuration(configuration)
+                    .build()));
+        }
+
+        String entryNodeId = dynamicAgentNodeIds.getFirst();
+        mergedEdges.add(EdgeDefinition.builder()
+                .sourceNodeId(plannerNodeId)
+                .sourcePortId("out")
+                .targetNodeId(entryNodeId)
+                .targetPortId("in")
+                .build());
+
+        for (int index = 0; index < dynamicAgentNodeIds.size(); index++) {
+            String current = dynamicAgentNodeIds.get(index);
+            if (index + 1 < dynamicAgentNodeIds.size()) {
+                mergedEdges.add(EdgeDefinition.builder()
+                        .sourceNodeId(current)
+                        .sourcePortId("out")
+                        .targetNodeId(dynamicAgentNodeIds.get(index + 1))
+                        .targetPortId("in")
+                        .build());
+            }
+        }
+
+        String tailNodeId = dynamicAgentNodeIds.getLast();
+        if (toolCalls == null || toolCalls.isEmpty()) {
+            mergedEdges.add(EdgeDefinition.builder()
+                    .sourceNodeId(tailNodeId)
+                    .sourcePortId("out")
+                    .targetNodeId(continueNodeId)
+                    .targetPortId("in")
+                    .build());
+            builder.replaceEdges(mergedEdges);
+            return new MergeResult(builder.build(), entryNodeId);
+        }
+
+        builder.replaceEdges(mergedEdges);
+        MergeResult toolMerge = mergeToolsOnly(builder.build(), tailNodeId, continueNodeId, toolCalls);
+        return new MergeResult(toolMerge.graph(), entryNodeId);
+    }
+
+    private static MergeResult mergeToolsOnly(
+            WorkflowDefinition graph,
+            String sourceNodeId,
+            String continueNodeId,
+            List<ParsedToolCall> toolCalls) {
+        graph = DynamicSubgraphStripper.stripInjectedToolNodes(graph, sourceNodeId, continueNodeId);
         String prefix = "tool-dyn-" + System.nanoTime() + "-";
         List<String> dynamicNodeIds = new ArrayList<>();
         WorkflowBuilder builder = WorkflowBuilder.from(graph);
         List<EdgeDefinition> mergedEdges = new ArrayList<>();
         for (EdgeDefinition edge : graph.getEdges()) {
-            if (plannerNodeId.equals(edge.getSourceNodeId()) && continueNodeId.equals(edge.getTargetNodeId())) {
+            if (sourceNodeId.equals(edge.getSourceNodeId()) && continueNodeId.equals(edge.getTargetNodeId())) {
                 continue;
             }
             mergedEdges.add(edge);
@@ -123,7 +241,7 @@ public final class ToolCallSubgraphMerger {
             builder.addNode(withDefaultPorts(NodeDefinition.builder()
                     .id(nodeId)
                     .type(NodeType.TOOL.name())
-                    .label(DynamicNodeLabels.prefixed(ToolLabelResolver.resolve(call.toolId(), graph)))
+                    .label(DynamicNodeLabels.prefixedTool(ToolLabelResolver.resolve(call.toolId(), graph)))
                     .configuration(configuration)
                     .build()));
         }
@@ -132,7 +250,7 @@ public final class ToolCallSubgraphMerger {
         builder.addNode(withDefaultPorts(NodeDefinition.builder()
                 .id(synthesisNodeId)
                 .type(NodeType.AGENT.name())
-                .label(DynamicNodeLabels.prefixed("Tool synthesis"))
+                .label(DynamicNodeLabels.prefixedAgent("Tool synthesis"))
                 .executionKind(ExecutionKind.ACTIVITY)
                 .executionModel(ExecutionModel.INLINE)
                 .putConfiguration("promptTemplate", ToolCallPlannerSupport.TOOL_SYNTHESIS_PROMPT_TEMPLATE)
@@ -141,7 +259,7 @@ public final class ToolCallSubgraphMerger {
 
         String entryNodeId = dynamicNodeIds.getFirst();
         mergedEdges.add(EdgeDefinition.builder()
-                .sourceNodeId(plannerNodeId)
+                .sourceNodeId(sourceNodeId)
                 .sourcePortId("out")
                 .targetNodeId(entryNodeId)
                 .targetPortId("in")
@@ -215,6 +333,32 @@ public final class ToolCallSubgraphMerger {
         return allowed;
     }
 
+    static Set<String> parseAllowedAgentIds(String allowedAgentsJson) {
+        Set<String> allowed = new LinkedHashSet<>();
+        if (allowedAgentsJson == null || allowedAgentsJson.isBlank()) {
+            return allowed;
+        }
+        try {
+            JsonNode root = MAPPER.readTree(allowedAgentsJson.trim());
+            if (!root.isArray()) {
+                return allowed;
+            }
+            for (JsonNode entry : root) {
+                if (entry.isObject()) {
+                    String agentId = text(entry, "agentId");
+                    if (agentId != null && !agentId.isBlank()) {
+                        allowed.add(agentId);
+                    }
+                } else if (entry.isTextual()) {
+                    allowed.add(entry.asText());
+                }
+            }
+        } catch (Exception ignored) {
+            return allowed;
+        }
+        return allowed;
+    }
+
     private static NodeDefinition withDefaultPorts(NodeDefinition node) {
         if (node.getPorts() != null && !node.getPorts().isEmpty()) {
             return node;
@@ -263,12 +407,16 @@ public final class ToolCallSubgraphMerger {
     public record ParsedToolCall(String toolId, Map<String, Object> arguments) {
     }
 
+    public record ParsedAgentCall(String agentId, String message) {
+    }
+
     public record ValidationResult(
             boolean valid,
             Kind kind,
             String normalizedJson,
             String directResponse,
             List<ParsedToolCall> toolCalls,
+            List<ParsedAgentCall> agentCalls,
             String message) {
 
         public enum Kind {
@@ -277,17 +425,29 @@ public final class ToolCallSubgraphMerger {
             INVALID
         }
 
+        public static ValidationResult calls(
+                String normalizedJson, List<ParsedToolCall> toolCalls, List<ParsedAgentCall> agentCalls) {
+            return new ValidationResult(
+                    true,
+                    Kind.TOOL_CALLS,
+                    normalizedJson,
+                    null,
+                    List.copyOf(toolCalls),
+                    List.copyOf(agentCalls),
+                    null);
+        }
+
         public static ValidationResult toolCalls(String normalizedJson, List<ParsedToolCall> toolCalls) {
-            return new ValidationResult(true, Kind.TOOL_CALLS, normalizedJson, null, List.copyOf(toolCalls), null);
+            return calls(normalizedJson, toolCalls, List.of());
         }
 
         public static ValidationResult directResponse(String normalizedJson, String directResponse) {
             return new ValidationResult(
-                    true, Kind.DIRECT_RESPONSE, normalizedJson, directResponse, List.of(), null);
+                    true, Kind.DIRECT_RESPONSE, normalizedJson, directResponse, List.of(), List.of(), null);
         }
 
         public static ValidationResult invalid(String message) {
-            return new ValidationResult(false, Kind.INVALID, null, null, List.of(), message);
+            return new ValidationResult(false, Kind.INVALID, null, null, List.of(), List.of(), message);
         }
     }
 

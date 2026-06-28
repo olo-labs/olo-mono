@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Root declarative artifact for an AI orchestration workflow graph.
+ * Root declarative artifact for an Open LLM Orchestrator (OLO) workflow graph.
  * Serializable to JSON/YAML; contains no execution or runtime state.
  */
 @JsonDeserialize(builder = WorkflowDefinition.Builder.class)

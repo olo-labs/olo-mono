@@ -1,6 +1,6 @@
 # olo-definition
 
-Pure Java library for **serializable AI orchestration workflow graphs**. No execution, no model calls, no runtime state, no Spring.
+Pure Java library for **serializable Open LLM Orchestrator (OLO) workflow graphs**. No execution, no model calls, no runtime state, no Spring.
 
 ## Build
 

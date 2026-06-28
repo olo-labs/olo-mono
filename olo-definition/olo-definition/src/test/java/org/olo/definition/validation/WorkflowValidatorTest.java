@@ -445,6 +445,24 @@ class WorkflowValidatorTest {
     }
 
     @Test
+    void acceptsLeafSelfAgentWithInlineExecution() {
+        WorkflowDefinition workflow = WorkflowDefinition.builder()
+                .id("literature-agent")
+                .capability(ValidationTestFixtures.minimalCapability())
+                .addNode(ValidationTestFixtures.node("agent", NodeType.AGENT)
+                        .executionKind(ExecutionKind.ACTIVITY)
+                        .executionModel(ExecutionModel.INLINE)
+                        .workflow(WorkflowReferenceDefinition.builder()
+                                .workflowId("literature-agent")
+                                .build())
+                        .build())
+                .build();
+
+        ValidationResult result = WorkflowValidator.validate(workflow);
+        assertThat(result.valid()).isTrue();
+    }
+
+    @Test
     void validateOrThrowThrows() {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("broken")

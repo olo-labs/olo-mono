@@ -1,6 +1,6 @@
 # olo-mono
 
-Monorepo for **OLO** — declarative AI workflow orchestration. Workflow graphs, deployment settings, and runtime execution are split into separate modules so each layer can evolve independently.
+Monorepo for **OLO (Open LLM Orchestrator)** — declarative LLM workflow orchestration. Workflow graphs, deployment settings, and runtime execution are split into separate modules so each layer can evolve independently.
 
 **Architecture docs:** [docs/README.md](docs/README.md) — [system architecture](docs/ARCHITECTURE.md), [module reference](docs/MODULES.md).
 

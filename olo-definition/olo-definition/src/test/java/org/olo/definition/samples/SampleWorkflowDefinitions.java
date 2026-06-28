@@ -1,5 +1,6 @@
 package org.olo.definition.samples;
 
+import org.olo.definition.OloProductTerminology;
 import org.olo.definition.edge.EdgeDefinition;
 import org.olo.definition.error.ErrorRoute;
 import org.olo.definition.error.OnFailureDefinition;
@@ -72,11 +73,11 @@ final class SampleWorkflowDefinitions {
                 .id("minimal-echo")
                 .version("1.0.0")
                 .capability(passThroughCapability(
-                        "Minimal Echo", "Smallest valid OLO workflow: passes input through to output."))
+                        "Minimal Echo", "Smallest valid " + OloProductTerminology.WORKFLOW + ": passes input through to output."))
                 .inputNode("input")
                 .outputNode("output")
                 .connect("input", "output")
-                .metadata("description", "Smallest valid OLO workflow: passes input through to output."));
+                .metadata("description", "Smallest valid " + OloProductTerminology.WORKFLOW + ": passes input through to output."));
     }
 
     static WorkflowDefinition stockAnalysis() {

@@ -1,6 +1,7 @@
 package org.olo.definition.dynamicgraph;
 
 import org.junit.jupiter.api.Test;
+import org.olo.definition.configuration.ConfigurationFixturePaths;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowDefinition;
 
@@ -13,14 +14,9 @@ class DynamicSubgraphInjectionSupportTest {
 
     @Test
     void loadsToolCallInjectionDocumentForBuilder() throws Exception {
-        Path source = Path.of("../olo-configuration/current-active/tool-call-agent-agent.json")
-                .toAbsolutePath()
-                .normalize();
-        if (!Files.exists(source)) {
-            throw new org.opentest4j.TestAbortedException("tool-call injection sample not found");
-        }
-
+        Path source = ConfigurationFixturePaths.resolveFixture("tool-call-agent-agent.json");
         String raw = Files.readString(source);
+
         assertThat(DynamicSubgraphInjectionSupport.isInjectionDocument(raw)).isTrue();
 
         WorkflowDefinition workflow = DynamicSubgraphInjectionSupport.loadBuilderWorkflow(raw);

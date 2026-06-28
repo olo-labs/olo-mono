@@ -1,5 +1,6 @@
 package org.olo.definition.configuration;
 
+import org.olo.definition.OloProductTerminology;
 import org.olo.definition.configuration.agenttool.AgentToolExecutionDefinitions;
 import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.designer.DesignerDefinition;
@@ -147,7 +148,7 @@ final class DefaultConfigurationDefinitions {
 
     /** Minimal echo task-queue preset ({@code workflow.json} on disk, id {@code minimal-echo}). */
     static WorkflowDefinition workflow() {
-        String description = "Smallest valid OLO workflow: passes input through to output.";
+        String description = "Smallest valid " + OloProductTerminology.WORKFLOW + ": passes input through to output.";
         return build(WorkflowBuilder.create("Minimal Echo")
                 .id("minimal-echo")
                 .enabled(true)

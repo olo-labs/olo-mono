@@ -3,24 +3,28 @@ package org.olo.kernel.agent.executor.impl;
 import org.olo.definition.execution.ExecutionModel;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
+import org.olo.definition.toolcall.ToolCallPlannerSupport;
 import org.olo.kernel.agent.executor.AgentExecutor;
+import org.olo.kernel.childworkflow.ChildWorkflowCoordinator;
 import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.exception.KernelException;
 import org.olo.spi.node.NodeResult;
 
+import java.util.Objects;
+
 /**
  * Agent backed by a child workflow ({@code workflowRef} on the node).
- * <p>
- * When enabled, delegates dispatch / wait / resume / output merge to
- * {@link org.olo.kernel.childworkflow.ChildWorkflowCoordinator}. Not wired yet — {@link #supports}
- * returns {@code false} so existing presets keep using {@link LocalLlmAgentExecutor}.
+ * Dispatches a separate workflow file and blocks until the child completes.
  */
 public final class ChildWorkflowAgentExecutor implements AgentExecutor {
 
     public static final String EXECUTOR_ID = "child-workflow";
 
-    /** Set true when kernel dispatches {@code workflowRef} child workflows. */
-    private static final boolean DISPATCH_ENABLED = false;
+    private final ChildWorkflowCoordinator coordinator;
+
+    public ChildWorkflowAgentExecutor(ChildWorkflowCoordinator coordinator) {
+        this.coordinator = Objects.requireNonNull(coordinator, "coordinator");
+    }
 
     @Override
     public String id() {
@@ -32,15 +36,25 @@ public final class ChildWorkflowAgentExecutor implements AgentExecutor {
         if (node == null || !NodeType.AGENT.name().equals(node.getType())) {
             return false;
         }
-        return DISPATCH_ENABLED
-                && node.getExecutionModel() == ExecutionModel.CHILD_WORKFLOW
-                && node.getWorkflow() != null;
+        if (ToolCallPlannerSupport.isToolCallPlanner(node)) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(node.getConfiguration() != null
+                ? node.getConfiguration().get(AgentCallDispatchExecutor.CONFIG_AGENT_CALL_DISPATCH)
+                : null)) {
+            return false;
+        }
+        if (org.olo.definition.dynamicgraph.AgentSynthesisSupport.isAgentSynthesis(node)) {
+            return false;
+        }
+        return node.getExecutionModel() == ExecutionModel.CHILD_WORKFLOW && node.getWorkflow() != null;
     }
 
     @Override
     public NodeResult execute(KernelRuntimeContext context, NodeDefinition node) {
-        throw new KernelException(
-                "ChildWorkflowAgentExecutor is not implemented for node: " + node.getId()
-                        + "; enable supports() when child workflow dispatch is wired");
+        if (!coordinator.handles(node)) {
+            throw new KernelException("child workflow coordinator does not handle node: " + node.getId());
+        }
+        return coordinator.dispatch(context, node);
     }
 }

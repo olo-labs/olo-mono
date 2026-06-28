@@ -21,6 +21,9 @@ public final class CoreTools {
                 new CpuUsageTool(),
                 new MemoryUsageTool(),
                 new NumericMetricTool(),
-                new RecentlyChangedCodeTool());
+                new RecentlyChangedCodeTool(),
+                new ResearchLiteratureTool(),
+                new TravelDestinationTool(),
+                new TravelOffersTool());
     }
 }

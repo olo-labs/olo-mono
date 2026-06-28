@@ -50,7 +50,11 @@ public final class StudioDesignerAssertions {
             assertThat(position.get("x")).isInstanceOf(Number.class);
             assertThat(position.get("y")).isInstanceOf(Number.class);
             if ("AGENT".equalsIgnoreCase(node.getType())) {
-                assertAgentHostPorts(node);
+                if (isAgentPlugin(node)) {
+                    assertAgentPluginPorts(node);
+                } else {
+                    assertAgentHostPorts(node);
+                }
             }
             if ("TOOL".equalsIgnoreCase(node.getType()) || "HOOK".equalsIgnoreCase(node.getType())) {
                 assertCapabilityPluginPorts(node);
@@ -66,12 +70,28 @@ public final class StudioDesignerAssertions {
                 port, PortDirection.OUTPUT, PortWireType.CAPABILITIES.wireName(), "capabilities"));
     }
 
+    public static void assertAgentPluginPorts(NodeDefinition pluginNode) {
+        List<PortDefinition> ports = pluginNode.getPorts();
+        assertThat(ports).anyMatch(port -> isMessagePort(port, PortDirection.INPUT));
+        assertThat(ports).anyMatch(port -> isMessagePort(port, PortDirection.OUTPUT));
+        assertThat(ports).anyMatch(port -> isPluginPort(
+                port, PortDirection.OUTPUT, PortWireType.AGENT_PLUG.wireName(), "agentPlug"));
+    }
+
     public static void assertAgentHostPorts(NodeDefinition agentNode) {
         List<PortDefinition> ports = agentNode.getPorts();
         assertThat(ports).anyMatch(port -> isMessagePort(port, PortDirection.INPUT));
         assertThat(ports).anyMatch(port -> isMessagePort(port, PortDirection.OUTPUT));
         assertThat(ports).anyMatch(port -> isPluginPort(port, PortDirection.INPUT, PortWireType.CAPABILITIES.wireName(), "capabilities"));
         assertThat(ports).anyMatch(port -> isPluginPort(port, PortDirection.INPUT, PortWireType.AGENT_PLUG.wireName(), "agentPlug"));
+    }
+
+    private static boolean isAgentPlugin(NodeDefinition node) {
+        if (node.getConfiguration() == null) {
+            return false;
+        }
+        Object delegateAgentId = node.getConfiguration().get("delegateAgentId");
+        return delegateAgentId instanceof String id && !id.isBlank();
     }
 
     private static boolean isMessagePort(PortDefinition port, PortDirection direction) {

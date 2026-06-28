@@ -6,11 +6,15 @@ import org.olo.kernel.dynamicgraph.DynamicSubgraphInjectionLogger;
 import org.olo.kernel.dynamicgraph.DynamicSubgraphInjectionLogger.InjectionRecord;
 import org.olo.kernel.dynamicgraph.MutableGraphSession;
 import org.olo.kernel.toolcall.AvailableToolsJsonResolver;
+import org.olo.kernel.toolcall.AgentCallResultsSupport;
 import org.olo.kernel.toolcall.ToolCallSubgraphMerger;
 import org.olo.kernel.traversal.strategy.ExecutionDecision;
 import org.olo.kernel.traversal.strategy.ExecutionStrategy;
 import org.olo.kernel.traversal.strategy.ExecutionStrategyRequest;
 import org.olo.spi.node.NodeStatus;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * After an inline tool-call planner agent completes, validates {@code toolCallSequenceJson},
@@ -33,9 +37,12 @@ public final class ToolCallExpansionExecutionStrategy implements ExecutionStrate
         String availableToolsJson = request.context()
                 .getVariables()
                 .getString(ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE);
+        String availableAgentsJson = request.context()
+                .getVariables()
+                .getString(ToolCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE);
         String rawJson = request.context().getVariables().getString(outputVariable);
         ToolCallSubgraphMerger.ValidationResult validation =
-                ToolCallSubgraphMerger.validate(rawJson, availableToolsJson);
+                ToolCallSubgraphMerger.validate(rawJson, availableToolsJson, availableAgentsJson);
         if (!validation.valid()) {
             int retries = ToolCallSubgraphMerger.readRetryCount(request.context().getVariables());
             int maxRetries = ToolCallPlannerSupport.maxInvalidJsonRetries(node);
@@ -65,12 +72,39 @@ public final class ToolCallExpansionExecutionStrategy implements ExecutionStrate
             return ExecutionDecision.linear(name(), continueNodeId);
         }
 
+        List<ToolCallSubgraphMerger.ParsedAgentCall> pendingAgentCalls = AgentCallResultsSupport.filterPending(
+                validation.agentCalls(), request.context().getVariables());
+        List<ToolCallSubgraphMerger.ParsedToolCall> pendingToolCalls = validation.toolCalls();
+
+        if (pendingAgentCalls.isEmpty() && pendingToolCalls.isEmpty()) {
+            int retries = ToolCallSubgraphMerger.readRetryCount(request.context().getVariables());
+            int maxRetries = ToolCallPlannerSupport.maxInvalidJsonRetries(node);
+            String duplicateMessage = duplicateDelegationMessage(validation);
+            request.context()
+                    .getVariables()
+                    .set(ToolCallPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE, duplicateMessage);
+            if (retries + 1 >= maxRetries) {
+                return ExecutionDecision.failed(
+                        name(),
+                        "planner repeated already-dispatched agents or tools after "
+                                + maxRetries
+                                + " attempts: "
+                                + duplicateMessage);
+            }
+            ToolCallSubgraphMerger.incrementRetryCount(request.context().getVariables());
+            request.context()
+                    .getVariables()
+                    .set(ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE, null);
+            return ExecutionDecision.reexecute(name(), node.getId());
+        }
+
         ToolCallSubgraphMerger.resetToolResults(request.context().getVariables());
-        ToolCallSubgraphMerger.MergeResult mergeResult = ToolCallSubgraphMerger.merge(
+        ToolCallSubgraphMerger.MergeResult mergeResult = ToolCallSubgraphMerger.mergeAgentAndToolCalls(
                 graphSession.graph(),
                 node.getId(),
                 continueNodeId,
-                validation.toolCalls());
+                pendingAgentCalls,
+                pendingToolCalls);
         DynamicSubgraphInjectionLogger.logInjection(new InjectionRecord(
                 InjectionRecord.Kind.TOOL_CALL,
                 name(),
@@ -87,5 +121,21 @@ public final class ToolCallExpansionExecutionStrategy implements ExecutionStrate
     @Override
     public String name() {
         return "tool-call-expansion";
+    }
+
+    private static String duplicateDelegationMessage(ToolCallSubgraphMerger.ValidationResult validation) {
+        List<String> parts = new ArrayList<>();
+        if (!validation.agentCalls().isEmpty()) {
+            parts.add("agentCalls already completed for: "
+                    + validation.agentCalls().stream()
+                            .map(ToolCallSubgraphMerger.ParsedAgentCall::agentId)
+                            .reduce((left, right) -> left + ", " + right)
+                            .orElse(""));
+        }
+        if (!validation.toolCalls().isEmpty()) {
+            parts.add("toolCalls were already executed or tools are unavailable");
+        }
+        return String.join("; ", parts)
+                + ". Read agentResultsJson and return directResponse or delegate to a different agent.";
     }
 }

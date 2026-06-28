@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-description = 'Serializable workflow graph definitions for OLO AI orchestration'
+description = 'Serializable workflow graph definitions for the Open LLM Orchestrator (OLO)'
 
 repositories {
     mavenLocal()
@@ -44,6 +44,8 @@ jar {
 def samplesDir = rootProject.layout.projectDirectory.dir('samples')
 def configurationDir = rootProject.layout.projectDirectory.dir('olo-configuration/default')
 def dynamicGraphCreationDir = rootProject.layout.projectDirectory.dir('olo-configuration/dynamic-graph-creation')
+def researchPlannerDir = rootProject.layout.projectDirectory.dir('olo-configuration/research-planner')
+def travelPlannerDir = rootProject.layout.projectDirectory.dir('olo-configuration/travel-planner')
 
 tasks.register('generateSamples', Test) {
     group = 'build'
@@ -84,16 +86,46 @@ tasks.register('generateDynamicGraphCreation', Test) {
     }
 }
 
+tasks.register('generateResearchPlanner', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/research-planner scenario via ResearchPlannerRegenerationTest'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.researchPlanner.configuration.dir', researchPlannerDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.researchplanner.ResearchPlannerRegenerationTest'
+    }
+}
+
+tasks.register('generateTravelPlanner', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/travel-planner scenario via TravelPlannerRegenerationTest'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.travelPlanner.configuration.dir', travelPlannerDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.travelplanner.TravelPlannerRegenerationTest'
+    }
+}
+
 tasks.named('test', Test) {
     dependsOn generateSamples, generateConfiguration
     workingDir = rootProject.projectDir
     systemProperty 'olo.samples.dir', samplesDir.asFile.absolutePath
     systemProperty 'olo.configuration.dir', configurationDir.asFile.absolutePath
     systemProperty 'olo.dynamicGraphCreation.configuration.dir', dynamicGraphCreationDir.asFile.absolutePath
+    systemProperty 'olo.researchPlanner.configuration.dir', researchPlannerDir.asFile.absolutePath
+    systemProperty 'olo.travelPlanner.configuration.dir', travelPlannerDir.asFile.absolutePath
     filter {
         excludeTestsMatching 'org.olo.definition.samples.SampleWorkflowRegenerationTest'
         excludeTestsMatching 'org.olo.definition.configuration.DefaultConfigurationRegenerationTest'
         excludeTestsMatching 'org.olo.definition.configuration.dynamicgraphcreation.DynamicGraphCreationRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.researchplanner.ResearchPlannerRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.travelplanner.TravelPlannerRegenerationTest'
     }
 }
 

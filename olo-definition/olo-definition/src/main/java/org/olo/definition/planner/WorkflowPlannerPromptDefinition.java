@@ -1,5 +1,6 @@
 package org.olo.definition.planner;
 
+import org.olo.definition.OloProductTerminology;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -71,13 +72,9 @@ public final class WorkflowPlannerPromptDefinition {
     private static String promptTemplate(String presetId) {
         return switch (presetId) {
             case "agent" ->
-                    """
-                    You are an autonomous OLO agent that investigates requests, uses tools when they help, and delegates to specialist agents when they are a better fit.
-
-                    User request:
-                    {message}
-
-                    Respond clearly and actionably. Use capabilities when they add value. Prefer delegation when another agent is better suited.""";
+                    "You are an autonomous "
+                            + OloProductTerminology.PRODUCT
+                            + " agent that investigates requests, uses tools when they help, and delegates to specialist agents when they are a better fit.\n\nUser request:\n{message}\n\nRespond clearly and actionably. Use capabilities when they add value. Prefer delegation when another agent is better suited.";
             case "planner" ->
                     """
                     You are a planning specialist. Break complex work into ordered, actionable steps with clear outcomes.

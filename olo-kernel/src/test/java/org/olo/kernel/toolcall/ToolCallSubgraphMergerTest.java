@@ -12,6 +12,8 @@ import org.olo.definition.toolcall.ToolCallPlannerSupport;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ToolCallSubgraphMergerTest {
@@ -69,6 +71,60 @@ class ToolCallSubgraphMergerTest {
     }
 
     @Test
+    void validatesAgentCallsAgainstAllowList() {
+        var result = ToolCallSubgraphMerger.validate(
+                """
+                {
+                  "toolCalls": [],
+                  "agentCalls": [
+                    { "agentId": "literature-agent", "message": "Find papers on OLO" }
+                  ],
+                  "directResponse": null
+                }
+                """,
+                "[]",
+                """
+                [{"agentId":"literature-agent"}]
+                """);
+
+        assertThat(result.valid()).isTrue();
+        assertThat(result.agentCalls()).hasSize(1);
+        assertThat(result.agentCalls().getFirst().agentId()).isEqualTo("literature-agent");
+    }
+
+    @Test
+    void mergeAgentCallsRoutesEachAgentAsChildWorkflowToEnd() {
+        WorkflowDefinition base = orchestratorWithChildAgents();
+        ToolCallSubgraphMerger.MergeResult mergeResult = ToolCallSubgraphMerger.mergeAgentAndToolCalls(
+                base,
+                ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID,
+                "end",
+                List.of(
+                        new ToolCallSubgraphMerger.ParsedAgentCall("literature-agent", "Find papers"),
+                        new ToolCallSubgraphMerger.ParsedAgentCall("synthesis-agent", "Summarize findings")),
+                List.of());
+
+        assertThat(mergeResult.entryNodeId()).contains("step-0");
+        assertThat(mergeResult.graph().getNodes().stream()
+                .filter(node -> node.getId() != null && node.getId().contains("agent-dyn-"))
+                .map(node -> node.getLabel())
+                .filter(label -> label != null && !label.isBlank()))
+                .containsExactly("Dyn-Agent Literature Agent", "Dyn-Agent Synthesis Agent");
+        assertThat(mergeResult.graph().getNodes().stream()
+                .filter(node -> node.getId().contains("step-0"))
+                .findFirst()
+                .orElseThrow()
+                .getExecutionModel())
+                .isEqualTo(org.olo.definition.execution.ExecutionModel.CHILD_WORKFLOW);
+        assertThat(mergeResult.graph().getEdges()).noneMatch(edge ->
+                edge.getTargetNodeId() != null && edge.getTargetNodeId().contains("agent-synthesis"));
+        assertThat(mergeResult.graph().getEdges()).anyMatch(edge ->
+                edge.getSourceNodeId() != null
+                        && edge.getSourceNodeId().contains("step-1")
+                        && "end".equals(edge.getTargetNodeId()));
+    }
+
+    @Test
     void mergesToolChainWithSynthesisBeforeEnd() {
         WorkflowDefinition base = baseWorkflowWithTools();
         ToolCallSubgraphMerger.MergeResult mergeResult = ToolCallSubgraphMerger.merge(
@@ -85,7 +141,7 @@ class ToolCallSubgraphMergerTest {
                 .filter(node -> "TOOL".equals(node.getType()))
                 .map(node -> node.getLabel())
                 .filter(label -> label != null && !label.isBlank()))
-                .containsExactlyInAnyOrder("Dyn-Calculator", "Dyn-CPU Usage");
+                .containsExactlyInAnyOrder("Dyn-Tool Calculator", "Dyn-Tool CPU Usage");
         assertThat(mergeResult.graph().getEdges()).anyMatch(edge ->
                 ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(edge.getSourceNodeId())
                         && mergeResult.entryNodeId().equals(edge.getTargetNodeId()));
@@ -93,6 +149,33 @@ class ToolCallSubgraphMergerTest {
                 edge.getSourceNodeId() != null
                         && edge.getSourceNodeId().contains("tool-synthesis")
                         && "end".equals(edge.getTargetNodeId()));
+    }
+
+    private static WorkflowDefinition orchestratorWithChildAgents() {
+        return WorkflowBuilder.from(baseWorkflow())
+                .childWorkflow(org.olo.definition.workflow.ChildWorkflowDefinition.builder()
+                        .workflowId("literature-agent")
+                        .workflowVersion("1.0.0")
+                        .build())
+                .childWorkflow(org.olo.definition.workflow.ChildWorkflowDefinition.builder()
+                        .workflowId("synthesis-agent")
+                        .workflowVersion("1.0.0")
+                        .build())
+                .addNode(org.olo.definition.node.NodeDefinition.builder()
+                        .id("literature-agent")
+                        .type(NodeType.AGENT.name())
+                        .label("Literature Agent")
+                        .putConfiguration("delegateAgentId", "literature-agent")
+                        .build())
+                .addNode(org.olo.definition.node.NodeDefinition.builder()
+                        .id("synthesis-agent")
+                        .type(NodeType.AGENT.name())
+                        .label("Synthesis Agent")
+                        .putConfiguration("delegateAgentId", "synthesis-agent")
+                        .build())
+                .connect("literature-agent", "agentPlug", ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID, "agentPlug")
+                .connect("synthesis-agent", "agentPlug", ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID, "agentPlug")
+                .build();
     }
 
     private static WorkflowDefinition baseWorkflowWithTools() {

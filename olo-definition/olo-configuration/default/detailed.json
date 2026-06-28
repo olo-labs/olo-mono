@@ -30,29 +30,31 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "boolean" : "#fb923c",
       "message" : "#ef4444",
-      "any" : "#94a3b8",
-      "agent-plug" : "#a855f7",
+      "boolean" : "#fb923c",
+      "capabilities" : "#22c55e",
+      "integer" : "#38bdf8",
+      "string" : "#a3e635",
+      "object" : "#c084fc",
       "number" : "#38bdf8",
       "array" : "#f472b6",
-      "object" : "#c084fc",
-      "string" : "#a3e635",
-      "capabilities" : "#22c55e",
-      "integer" : "#38bdf8"
+      "agent-plug" : "#a855f7",
+      "any" : "#94a3b8"
     },
     "nodeTypes" : {
-      "AGENT" : {
-        "emoji" : "📖",
-        "typeLabel" : "Agent",
+      "END" : {
+        "emoji" : "⏹",
+        "typeLabel" : "End",
+        "description" : "Workflow exit — maps a workflow variable to the caller result",
+        "palette" : {
+          "name" : "End",
+          "category" : "control"
+        },
         "inlineProperties" : [ {
-          "id" : "parameters",
-          "widget" : "WORKFLOW_PARAMETERS",
-          "label" : "Parameters"
-        }, {
-          "id" : "model",
-          "widget" : "MODEL_SELECTOR",
-          "label" : "Model"
+          "id" : "outputVariable",
+          "widget" : "VARIABLE_SELECT",
+          "label" : "Output variable",
+          "binding" : "outputVariableMapping"
         } ]
       },
       "START" : {
@@ -70,19 +72,17 @@
           "binding" : "inputVariableMappings"
         } ]
       },
-      "END" : {
-        "emoji" : "⏹",
-        "typeLabel" : "End",
-        "description" : "Workflow exit — maps a workflow variable to the caller result",
-        "palette" : {
-          "name" : "End",
-          "category" : "control"
-        },
+      "AGENT" : {
+        "emoji" : "📖",
+        "typeLabel" : "Agent",
         "inlineProperties" : [ {
-          "id" : "outputVariable",
-          "widget" : "VARIABLE_SELECT",
-          "label" : "Output variable",
-          "binding" : "outputVariableMapping"
+          "id" : "parameters",
+          "widget" : "WORKFLOW_PARAMETERS",
+          "label" : "Parameters"
+        }, {
+          "id" : "model",
+          "widget" : "MODEL_SELECTOR",
+          "label" : "Model"
         } ]
       }
     }
@@ -116,17 +116,36 @@
   },
   "state" : { },
   "parameters" : {
-    "model" : {
+    "temperature" : {
+      "type" : "number",
+      "label" : "Temperature",
+      "description" : "Sampling temperature",
+      "defaultValue" : 0.2,
+      "required" : false,
+      "validation" : {
+        "minimum" : 0.0,
+        "maximum" : 2.0,
+        "step" : 0.1
+      },
+      "ui" : {
+        "widget" : "SLIDER",
+        "group" : "Model Settings",
+        "help" : "Higher values increase response creativity.",
+        "order" : 3
+      }
+    },
+    "systemPrompt" : {
       "type" : "string",
-      "label" : "Model",
-      "description" : "Default model identifier",
-      "defaultValue" : "",
+      "label" : "System Prompt",
+      "description" : "System prompt for the agent",
+      "defaultValue" : "You explain topics thoroughly with context, examples, and edge cases.\n\nTopic:\n{message}\n\nStructure the response for deep understanding: overview, details, examples, pitfalls, and summary.",
       "required" : false,
       "ui" : {
-        "widget" : "MODEL_SELECTOR",
+        "widget" : "TEXTAREA",
         "group" : "Model Settings",
-        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
-        "order" : 2
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
+        "order" : 0
       }
     },
     "maxIterations" : {
@@ -147,36 +166,17 @@
         "order" : 1
       }
     },
-    "systemPrompt" : {
+    "model" : {
       "type" : "string",
-      "label" : "System Prompt",
-      "description" : "System prompt for the agent",
-      "defaultValue" : "You explain topics thoroughly with context, examples, and edge cases.\n\nTopic:\n{message}\n\nStructure the response for deep understanding: overview, details, examples, pitfalls, and summary.",
+      "label" : "Model",
+      "description" : "Default model identifier",
+      "defaultValue" : "",
       "required" : false,
       "ui" : {
-        "widget" : "TEXTAREA",
+        "widget" : "MODEL_SELECTOR",
         "group" : "Model Settings",
-        "help" : "Include {message} to inject the workflow input into the system prompt.",
-        "placeholder" : "You are a helpful assistant…\n\n{message}",
-        "order" : 0
-      }
-    },
-    "temperature" : {
-      "type" : "number",
-      "label" : "Temperature",
-      "description" : "Sampling temperature",
-      "defaultValue" : 0.2,
-      "required" : false,
-      "validation" : {
-        "minimum" : 0.0,
-        "maximum" : 2.0,
-        "step" : 0.1
-      },
-      "ui" : {
-        "widget" : "SLIDER",
-        "group" : "Model Settings",
-        "help" : "Higher values increase response creativity.",
-        "order" : 3
+        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
+        "order" : 2
       }
     }
   },
@@ -203,8 +203,8 @@
       "inputVariableMappings" : [ "message" ],
       "designer" : {
         "position" : {
-          "x" : 80,
-          "y" : 80
+          "y" : 80,
+          "x" : 80
         }
       }
     }
@@ -284,8 +284,8 @@
     "configuration" : {
       "designer" : {
         "position" : {
-          "x" : 440,
-          "y" : 80
+          "y" : 80,
+          "x" : 440
         }
       }
     }
@@ -313,8 +313,8 @@
     "configuration" : {
       "designer" : {
         "position" : {
-          "x" : 800,
-          "y" : 80
+          "y" : 80,
+          "x" : 800
         }
       }
     }
@@ -366,14 +366,14 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
-    "description" : "Thorough, in-depth explanations",
+    "returnVariable" : "ReturnValue",
+    "role" : "detailed",
     "plannerContext" : {
       "selectedTools" : [ ],
-      "selectedAgents" : [ ],
+      "injectCapabilities" : false,
       "selectedVariables" : [ "message" ],
-      "injectCapabilities" : false
+      "selectedAgents" : [ ]
     },
-    "role" : "detailed",
-    "returnVariable" : "ReturnValue"
+    "description" : "Thorough, in-depth explanations"
   }
 }

@@ -9,21 +9,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DynamicNodeLabelsTest {
 
     @Test
-    void prefixesLabelOnce() {
-        assertThat(DynamicNodeLabels.prefixed("Calculator")).isEqualTo("Dyn-Calculator");
-        assertThat(DynamicNodeLabels.prefixed("Dyn-Calculator")).isEqualTo("Dyn-Calculator");
+    void prefixesToolAndAgentLabels() {
+        assertThat(DynamicNodeLabels.prefixedTool("Calculator")).isEqualTo("Dyn-Tool Calculator");
+        assertThat(DynamicNodeLabels.prefixedAgent("Agent dispatch")).isEqualTo("Dyn-Agent Agent dispatch");
     }
 
     @Test
-    void appliesDynamicLabelToToolNodeWithoutLabel() {
-        NodeDefinition node = NodeDefinition.builder()
+    void withDynamicLabelUsesCategoryPrefix() {
+        NodeDefinition tool = NodeDefinition.builder()
                 .id("dyn-tool")
                 .type(NodeType.TOOL.name())
-                .putConfiguration("toolId", "olo-core:cpu-usage")
+                .label("Research Literature")
+                .build();
+        NodeDefinition agent = NodeDefinition.builder()
+                .id("dyn-agent")
+                .type(NodeType.AGENT.name())
+                .label("Tool synthesis")
                 .build();
 
-        NodeDefinition labeled = DynamicNodeLabels.withDynamicLabel(node, null);
-
-        assertThat(labeled.getLabel()).isEqualTo("Dyn-cpu-usage");
+        assertThat(DynamicNodeLabels.withDynamicLabel(tool, null).getLabel())
+                .isEqualTo("Dyn-Tool Research Literature");
+        assertThat(DynamicNodeLabels.withDynamicLabel(agent, null).getLabel())
+                .isEqualTo("Dyn-Agent Tool synthesis");
     }
 }

@@ -1,5 +1,6 @@
 package org.olo.definition.toolcall;
 
+import org.olo.definition.OloProductTerminology;
 import org.olo.definition.node.NodeDefinition;
 
 import java.util.Map;
@@ -22,24 +23,44 @@ public final class ToolCallPlannerSupport {
     public static final String DEFAULT_PLANNER_NODE_ID = "agent";
     public static final String DEFAULT_OUTPUT_VARIABLE = "toolCallSequenceJson";
     public static final String DEFAULT_AVAILABLE_TOOLS_VARIABLE = "availableToolsJson";
+    public static final String DEFAULT_AVAILABLE_AGENTS_VARIABLE = "availableAgentsJson";
+    public static final String METADATA_AVAILABLE_AGENTS_VARIABLE = "availableAgentsVariable";
     public static final String DEFAULT_TOOL_RESULTS_VARIABLE = "toolResultsJson";
+    public static final String DEFAULT_AGENT_RESULTS_VARIABLE = "agentResultsJson";
     public static final String DEFAULT_RETRY_VARIABLE = "toolCallSequenceJsonRetryCount";
     public static final String DEFAULT_VALIDATION_ERROR_VARIABLE = "toolCallSequenceJsonValidationError";
     public static final String DEFAULT_SYNTHESIS_NODE_SUFFIX = "tool-synthesis";
+    public static final String DEFAULT_AGENT_SYNTHESIS_NODE_SUFFIX = "agent-synthesis";
 
     public static final int DEFAULT_MAX_INVALID_JSON_RETRIES = 3;
 
     public static final String TOOL_SYNTHESIS_PROMPT_TEMPLATE =
-            """
-            You are an OLO agent synthesizing a final answer from tool results.
+            "You are an "
+                    + OloProductTerminology.PRODUCT
+                    + """
+                     agent synthesizing a final answer from tool results.
 
-            User request:
-            {message}
+                    User request:
+                    {message}
 
-            Tool results (JSON):
-            {toolResultsJson}
+                    Tool results (JSON):
+                    {toolResultsJson}
 
-            Respond clearly and actionably using the tool results. If a tool failed or returned no data, say so.""";
+                    Respond clearly and actionably using the tool results. If a tool failed or returned no data, say so.""";
+
+    public static final String AGENT_SYNTHESIS_PROMPT_TEMPLATE =
+            "You are an "
+                    + OloProductTerminology.PRODUCT
+                    + """
+                     agent synthesizing a final answer from child agent workflow results.
+
+                    User request:
+                    {message}
+
+                    Child agent results (JSON):
+                    {agentResultsJson}
+
+                    Respond clearly and actionably using the child agent results. If a child agent failed or returned no data, say so.""";
 
     private ToolCallPlannerSupport() {
     }

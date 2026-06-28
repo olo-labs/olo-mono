@@ -108,7 +108,7 @@ class WorkflowPromptRendererTest {
         String rendered = renderer.renderForNode(graph, agentNode("greet"), variables);
 
         assertThat(rendered).contains("Hello");
-        assertThat(rendered).contains("autonomous OLO agent");
+        assertThat(rendered).contains("autonomous Open LLM Orchestrator (OLO) agent");
     }
 
     private static NodeDefinition agentNode(String id) {

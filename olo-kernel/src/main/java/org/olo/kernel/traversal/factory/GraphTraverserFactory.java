@@ -17,10 +17,13 @@ import org.olo.kernel.agent.client.LlmClient;
 import org.olo.kernel.agent.client.impl.OllamaLlmClient;
 import org.olo.kernel.agent.executor.AgentExecutor;
 import org.olo.kernel.agent.executor.AgentExecutorRegistry;
+import org.olo.kernel.agent.executor.impl.AgentCallDispatchExecutor;
 import org.olo.kernel.agent.executor.impl.ChildWorkflowAgentExecutor;
 import org.olo.kernel.agent.executor.impl.HumanAgentExecutor;
 import org.olo.kernel.agent.executor.impl.LocalLlmAgentExecutor;
 import org.olo.kernel.agent.executor.impl.RemoteAgentExecutor;
+import org.olo.kernel.childworkflow.ChildWorkflowCoordinator;
+import org.olo.kernel.childworkflow.DefaultChildWorkflowCoordinator;
 import org.olo.kernel.agent.impl.DefaultLlmInvocationService;
 import org.olo.kernel.agent.model.ModelProviderResolver;
 import org.olo.kernel.agent.model.impl.WorkflowModelProviderResolver;
@@ -96,7 +99,8 @@ public final class GraphTraverserFactory {
         NodeRequestFactory nodeRequestFactory = new DefaultNodeRequestFactory();
         NodeTypeResolver nodeTypeResolver = new CoreNodeTypeResolver();
         NodeOutputApplier outputApplier = new ExecutionOutputApplier();
-        AgentExecutorRegistry agentExecutorRegistry = defaultAgentExecutorRegistry(llmInvocationService);
+        AgentExecutorRegistry agentExecutorRegistry = defaultAgentExecutorRegistry(
+                llmInvocationService, new DefaultChildWorkflowCoordinator());
 
         List<NodeTypeHandler> handlers = List.of(
                 new StartNodeTypeHandler(inputBinder),
@@ -121,12 +125,18 @@ public final class GraphTraverserFactory {
     /**
      * Specific executors first; {@link LocalLlmAgentExecutor} last as fallback for AGENT nodes.
      */
-    static AgentExecutorRegistry defaultAgentExecutorRegistry(LlmInvocationService llmInvocationService) {
+    static AgentExecutorRegistry defaultAgentExecutorRegistry(
+            LlmInvocationService llmInvocationService, ChildWorkflowCoordinator childWorkflowCoordinator) {
         List<AgentExecutor> executors = List.of(
                 new RemoteAgentExecutor(),
                 new HumanAgentExecutor(),
-                new ChildWorkflowAgentExecutor(),
+                new AgentCallDispatchExecutor(),
+                new ChildWorkflowAgentExecutor(childWorkflowCoordinator),
                 new LocalLlmAgentExecutor(llmInvocationService));
         return new AgentExecutorRegistry(executors);
+    }
+
+    static AgentExecutorRegistry defaultAgentExecutorRegistry(LlmInvocationService llmInvocationService) {
+        return defaultAgentExecutorRegistry(llmInvocationService, new DefaultChildWorkflowCoordinator());
     }
 }

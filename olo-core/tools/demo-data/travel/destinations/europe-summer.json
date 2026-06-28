@@ -1,0 +1,24 @@
+{
+  "region": "europe",
+  "title": "Summer city breaks in Western Europe",
+  "destinations": [
+    {
+      "city": "Paris",
+      "country": "France",
+      "highlights": ["Louvre evening slots", "Seine cycling path", "Montmartre food tour"],
+      "bestMonths": ["May", "June", "September"],
+      "avgDailyBudgetUsd": 220
+    },
+    {
+      "city": "Barcelona",
+      "country": "Spain",
+      "highlights": ["Gothic Quarter walk", "Park Güell", "Beach mornings in Barceloneta"],
+      "bestMonths": ["April", "May", "October"],
+      "avgDailyBudgetUsd": 180
+    }
+  ],
+  "travelTips": [
+    "Book museums 2–3 weeks ahead for peak summer weekends.",
+    "Regional trains are often cheaper when purchased 7 days in advance."
+  ]
+}

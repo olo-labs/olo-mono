@@ -1,6 +1,6 @@
 # olo-core
 
-Default **implementations** for OLO runtime SPI contracts (`olo-spi`).
+Default **implementations** for Open LLM Orchestrator (OLO) runtime SPI contracts (`olo-spi`).
 
 ## Usage
 

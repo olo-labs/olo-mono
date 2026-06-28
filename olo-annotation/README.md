@@ -1,6 +1,6 @@
 # olo-annotation
 
-Compile-time annotations for OLO extension metadata used by workflow editor UIs.
+Compile-time annotations for Open LLM Orchestrator (OLO) extension metadata used by workflow editor UIs.
 
 **Documentation:** [docs/](docs/README.md) — [v1 freeze](docs/V1.md), [API contracts](docs/ANNOTATIONS.md), [editor conventions](docs/EDITOR_CONVENTIONS.md), [architecture](docs/ARCHITECTURE.md)
 

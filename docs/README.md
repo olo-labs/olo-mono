@@ -1,6 +1,6 @@
 # OLO monorepo documentation
 
-Architecture and module reference for **olo-mono** — the Java libraries and worker process that implement OLO workflow orchestration.
+Architecture and module reference for **olo-mono** — the Java libraries and worker process that implement the **Open LLM Orchestrator (OLO)**.
 
 ## Documents
 

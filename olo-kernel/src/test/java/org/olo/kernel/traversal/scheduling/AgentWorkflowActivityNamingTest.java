@@ -22,9 +22,11 @@ class AgentWorkflowActivityNamingTest {
 
     @Test
     void agentPresetUsesNodeLabelForDedicatedActivityName() throws Exception {
-        Path presets = Paths.get("../olo-definition/olo-configuration/current-active").toAbsolutePath().normalize();
+        Path presets = java.nio.file.Paths.get("../olo-definition/olo-configuration/default")
+                .toAbsolutePath()
+                .normalize();
         if (!Files.exists(presets)) {
-            throw new org.opentest4j.TestAbortedException("current-active presets not found");
+            throw new org.opentest4j.TestAbortedException("default presets not found");
         }
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false, true);

@@ -6,7 +6,7 @@ plugins {
 group = 'org.olo'
 version = '0.1.0-SNAPSHOT'
 
-description = 'Compile-time annotations for OLO extension metadata (nodes, tools, hooks)'
+description = 'Compile-time annotations for Open LLM Orchestrator (OLO) extension metadata (nodes, tools, hooks)'
 
 java {
     toolchain {

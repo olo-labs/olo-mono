@@ -1,0 +1,24 @@
+{
+  "topic": "ai safety alignment",
+  "title": "Recent survey papers on alignment evaluation",
+  "papers": [
+    {
+      "id": "paper-aisafety-001",
+      "title": "Benchmark suites for instruction-following robustness",
+      "authors": ["Morales, A.", "Singh, K."],
+      "year": 2025,
+      "summary": "Catalogues 9 public benchmarks and proposes a composite alignment score."
+    },
+    {
+      "id": "paper-aisafety-002",
+      "title": "Red-teaming workflows for enterprise copilots",
+      "authors": ["Brooks, E."],
+      "year": 2024,
+      "summary": "Documents a repeatable human+automated red-team loop for production assistants."
+    }
+  ],
+  "keyFindings": [
+    "Composite scores reduce false confidence when single benchmarks disagree.",
+    "Human review remains necessary for policy-violation classes with low base rates."
+  ]
+}

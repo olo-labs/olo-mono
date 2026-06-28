@@ -30,31 +30,18 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "boolean" : "#fb923c",
-      "message" : "#ef4444",
-      "any" : "#94a3b8",
       "agent-plug" : "#a855f7",
-      "number" : "#38bdf8",
-      "array" : "#f472b6",
-      "object" : "#c084fc",
-      "string" : "#a3e635",
+      "any" : "#94a3b8",
+      "message" : "#ef4444",
+      "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
-      "integer" : "#38bdf8"
+      "integer" : "#38bdf8",
+      "string" : "#a3e635",
+      "object" : "#c084fc",
+      "number" : "#38bdf8",
+      "array" : "#f472b6"
     },
     "nodeTypes" : {
-      "AGENT" : {
-        "emoji" : "🤖",
-        "typeLabel" : "Agent",
-        "inlineProperties" : [ {
-          "id" : "parameters",
-          "widget" : "WORKFLOW_PARAMETERS",
-          "label" : "Parameters"
-        }, {
-          "id" : "model",
-          "widget" : "MODEL_SELECTOR",
-          "label" : "Model"
-        } ]
-      },
       "START" : {
         "emoji" : "▶",
         "typeLabel" : "Start",
@@ -68,6 +55,19 @@
           "widget" : "VARIABLE_CHECKLIST",
           "label" : "Input variables",
           "binding" : "inputVariableMappings"
+        } ]
+      },
+      "AGENT" : {
+        "emoji" : "🤖",
+        "typeLabel" : "Agent",
+        "inlineProperties" : [ {
+          "id" : "parameters",
+          "widget" : "WORKFLOW_PARAMETERS",
+          "label" : "Parameters"
+        }, {
+          "id" : "model",
+          "widget" : "MODEL_SELECTOR",
+          "label" : "Model"
         } ]
       },
       "END" : {
@@ -143,17 +143,36 @@
   },
   "state" : { },
   "parameters" : {
-    "model" : {
+    "temperature" : {
+      "type" : "number",
+      "label" : "Temperature",
+      "description" : "Sampling temperature",
+      "defaultValue" : 0.2,
+      "required" : false,
+      "validation" : {
+        "minimum" : 0.0,
+        "maximum" : 2.0,
+        "step" : 0.1
+      },
+      "ui" : {
+        "widget" : "SLIDER",
+        "group" : "Model Settings",
+        "help" : "Higher values increase response creativity.",
+        "order" : 3
+      }
+    },
+    "systemPrompt" : {
       "type" : "string",
-      "label" : "Model",
-      "description" : "Default model identifier",
-      "defaultValue" : "",
+      "label" : "System Prompt",
+      "description" : "System prompt for the agent",
+      "defaultValue" : "You are an autonomous Open LLM Orchestrator (OLO) agent that investigates requests, uses tools when they help, and delegates to specialist agents when they are a better fit.\n\nUser request:\n{message}\n\nRespond clearly and actionably. Use capabilities when they add value. Prefer delegation when another agent is better suited.",
       "required" : false,
       "ui" : {
-        "widget" : "MODEL_SELECTOR",
+        "widget" : "TEXTAREA",
         "group" : "Model Settings",
-        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
-        "order" : 2
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
+        "order" : 0
       }
     },
     "maxIterations" : {
@@ -174,36 +193,17 @@
         "order" : 1
       }
     },
-    "systemPrompt" : {
+    "model" : {
       "type" : "string",
-      "label" : "System Prompt",
-      "description" : "System prompt for the agent",
-      "defaultValue" : "You are an autonomous OLO agent that investigates requests, uses tools when they help, and delegates to specialist agents when they are a better fit.\n\nUser request:\n{message}\n\nRespond clearly and actionably. Use capabilities when they add value. Prefer delegation when another agent is better suited.",
+      "label" : "Model",
+      "description" : "Default model identifier",
+      "defaultValue" : "",
       "required" : false,
       "ui" : {
-        "widget" : "TEXTAREA",
+        "widget" : "MODEL_SELECTOR",
         "group" : "Model Settings",
-        "help" : "Include {message} to inject the workflow input into the system prompt.",
-        "placeholder" : "You are a helpful assistant…\n\n{message}",
-        "order" : 0
-      }
-    },
-    "temperature" : {
-      "type" : "number",
-      "label" : "Temperature",
-      "description" : "Sampling temperature",
-      "defaultValue" : 0.2,
-      "required" : false,
-      "validation" : {
-        "minimum" : 0.0,
-        "maximum" : 2.0,
-        "step" : 0.1
-      },
-      "ui" : {
-        "widget" : "SLIDER",
-        "group" : "Model Settings",
-        "help" : "Higher values increase response creativity.",
-        "order" : 3
+        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
+        "order" : 2
       }
     }
   },
@@ -230,8 +230,8 @@
       "inputVariableMappings" : [ "message" ],
       "designer" : {
         "position" : {
-          "x" : 80,
-          "y" : 80
+          "y" : 80,
+          "x" : 80
         }
       }
     }
@@ -406,11 +406,11 @@
       "outputVariable" : "toolCallSequenceJson",
       "maxInvalidJsonRetries" : 3,
       "continueNodeId" : "end",
-      "promptTemplate" : "You are an OLO tool-call planner.\n\nUser request:\n{message}\n\nAvailable tools (strict allow-list — use only these toolId values):\n{availableToolsJson}\n\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Do not wrap the JSON in ```json``` blocks.\n3. Schema:\n{\n  \"toolCalls\": [\n    { \"toolId\": \"olo-core:calculator\", \"arguments\": { } }\n  ],\n  \"directResponse\": null\n}\n4. If no tools are needed, set \"toolCalls\": [] and put the final answer in \"directResponse\".\n5. If tools are needed, set \"directResponse\": null and list toolCalls in execution order.\n6. Each toolId MUST appear in availableToolsJson.\n7. Include arguments when a tool needs structured input (for example ISO-8601 startTime/endTime for observability tools).\n\nIf a previous attempt failed validation, fix it:\n{toolCallSequenceJsonValidationError}\n\nRespond with JSON only.",
+      "promptTemplate" : "You are an Open LLM Orchestrator (OLO)         tool-call planner.\n\n        User request:\n{message}\n\nAvailable tools (strict allow-list — use only these toolId values):\n{availableToolsJson}\n\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Do not wrap the JSON in ```json``` blocks.\n3. Schema:\n{\n  \"toolCalls\": [\n    { \"toolId\": \"olo-core:calculator\", \"arguments\": { } }\n  ],\n  \"directResponse\": null\n}\n4. If no tools are needed, set \"toolCalls\": [] and put the final answer in \"directResponse\".\n5. If tools are needed, set \"directResponse\": null and list toolCalls in execution order.\n6. Each toolId MUST appear in availableToolsJson.\n7. Include arguments when a tool needs structured input (for example ISO-8601 startTime/endTime for observability tools).\n\nIf a previous attempt failed validation, fix it:\n{toolCallSequenceJsonValidationError}\n\nRespond with JSON only.",
       "designer" : {
         "position" : {
-          "x" : 440,
-          "y" : 80
+          "y" : 80,
+          "x" : 440
         }
       }
     }
@@ -438,8 +438,8 @@
     "configuration" : {
       "designer" : {
         "position" : {
-          "x" : 800,
-          "y" : 80
+          "y" : 80,
+          "x" : 800
         }
       }
     }
@@ -574,23 +574,23 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
-    "planningStrategy" : "react",
+    "role" : "agent",
     "dynamicToolExecution" : {
       "continueNodeId" : "end",
-      "outputVariable" : "toolCallSequenceJson",
+      "plannerNodeId" : "agent",
       "availableToolsVariable" : "availableToolsJson",
-      "plannerNodeId" : "agent"
+      "outputVariable" : "toolCallSequenceJson"
     },
-    "role" : "agent",
-    "agentSelectionStrategy" : "dynamic",
-    "description" : "Autonomous tool-using agent with strict JSON tool-call planning",
+    "planningStrategy" : "react",
+    "agentType" : "autonomous",
+    "returnVariable" : "ReturnValue",
     "plannerContext" : {
-      "selectedTools" : [ "olo-core:calculator", "olo-core:cpu-usage" ],
-      "selectedAgents" : [ "planner", "reviewer", "architect" ],
       "selectedVariables" : [ "message", "availableToolsJson", "toolCallSequenceJson" ],
+      "selectedAgents" : [ "planner", "reviewer", "architect" ],
+      "selectedTools" : [ "olo-core:calculator", "olo-core:cpu-usage" ],
       "injectCapabilities" : false
     },
-    "returnVariable" : "ReturnValue",
-    "agentType" : "autonomous"
+    "description" : "Autonomous tool-using agent with strict JSON tool-call planning",
+    "agentSelectionStrategy" : "dynamic"
   }
 }

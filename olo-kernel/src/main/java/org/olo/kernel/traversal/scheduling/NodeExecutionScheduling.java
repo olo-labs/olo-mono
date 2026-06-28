@@ -22,6 +22,9 @@ public final class NodeExecutionScheduling {
      */
     public static boolean requiresDedicatedActivity(NodeDefinition node) {
         ExecutionModel model = node.getExecutionModel();
+        if (model == ExecutionModel.CHILD_WORKFLOW) {
+            return false;
+        }
         if (model == ExecutionModel.INLINE) {
             return node.getExecutionKind() == ExecutionKind.ACTIVITY;
         }

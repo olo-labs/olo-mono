@@ -51,7 +51,7 @@ cd olo-worker
 
 **IDE:** open `olo-mono/olo-worker` and use launch config **olo-worker (local debug, olo-docker)** (`.vscode/launch.json`).
 
-`run` defaults to `../olo-worker-configuration/samples/worker-config.local-debug.yaml`, which loads workflow definitions from `olo-definition/olo-configuration/current-active/` (same active folder as the olo backend and chat UI). Without Gradle args, the provider also falls back to monorepo samples when `worker-config.yaml` is missing in the working directory.
+`run` defaults to `../olo-worker-configuration/samples/worker-config.local-debug.yaml`, which loads workflow definitions from **`olo-definition/olo-configuration/current-active/`** — copy presets there yourself before running (see `olo-configuration/current-active/README.md`). olo-ui uses the same folder via `OLO_CONFIGURATION_DIRECTORY`.
 
 Override explicitly:
 
