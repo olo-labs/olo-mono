@@ -159,6 +159,7 @@ public final class WorkflowBuilderNodes {
                 .id(id)
                 .type(NodeType.HUMAN)
                 .approval(approval)
+                .executionKind(ExecutionKind.HUMAN_WAIT)
                 .addPort(WorkflowBuilderPorts.defaultPort("in", "in", PortDirection.INPUT))
                 .addPort(WorkflowBuilderPorts.defaultPort("out", "out", PortDirection.OUTPUT));
         if (subtype != null) {

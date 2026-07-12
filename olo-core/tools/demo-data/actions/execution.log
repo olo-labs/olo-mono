@@ -1,0 +1,16 @@
+2026-07-12T11:53:42.916244100Z [START] container-restart toolId=olo-core:container-restart containerId=payment-service-7f8b9c
+2026-07-12T11:53:42.924746900Z [STEP] Validating operator approval for container payment-service-7f8b9c
+2026-07-12T11:53:42.924746900Z [STEP] Draining active connections from payment-service-7f8b9c
+2026-07-12T11:53:42.924746900Z [STEP] Sending SIGTERM to container payment-service-7f8b9c
+2026-07-12T11:53:42.924746900Z [STEP] Waiting for graceful shutdown
+2026-07-12T11:53:42.924746900Z [STEP] Starting replacement pod for payment-service-7f8b9c
+2026-07-12T11:53:42.924746900Z [STEP] Running readiness probe on replacement pod
+2026-07-12T11:53:42.924746900Z [COMPLETE] container-restart status=completed
+2026-07-12T11:54:33.290403900Z [START] container-restart toolId=olo-core:container-restart containerId=payment-service-7f8b9c
+2026-07-12T11:54:33.322248900Z [STEP] Validating operator approval for container payment-service-7f8b9c
+2026-07-12T11:54:33.322248900Z [STEP] Draining active connections from payment-service-7f8b9c
+2026-07-12T11:54:33.322248900Z [STEP] Sending SIGTERM to container payment-service-7f8b9c
+2026-07-12T11:54:33.322248900Z [STEP] Waiting for graceful shutdown
+2026-07-12T11:54:33.322248900Z [STEP] Starting replacement pod for payment-service-7f8b9c
+2026-07-12T11:54:33.323247200Z [STEP] Running readiness probe on replacement pod
+2026-07-12T11:54:33.323247200Z [COMPLETE] container-restart status=completed

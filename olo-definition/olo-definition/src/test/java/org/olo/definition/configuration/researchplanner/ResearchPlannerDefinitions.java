@@ -5,8 +5,11 @@
 package org.olo.definition.configuration.researchplanner;
 
 import org.olo.definition.OloProductTerminology;
+import org.olo.definition.configuration.scenario.ScenarioConversationPluginSupport;
+import org.olo.definition.configuration.scenario.ScenarioActionToolsSupport;
 import org.olo.definition.configuration.scenario.ScenarioPlannerSupport;
 import org.olo.definition.configuration.scenario.ScenarioPlannerSupport.ScenarioAgentSpec;
+import org.olo.definition.configuration.scenario.ScenarioPlannerSupport.ScenarioHumanActionSpec;
 import org.olo.definition.configuration.scenario.ScenarioPlannerSupport.ScenarioToolSpec;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowDefinition;
@@ -27,6 +30,7 @@ public final class ResearchPlannerDefinitions {
             """
             """
                     + OloProductTerminology.agentRolePrompt("research planning")
+                    + ScenarioConversationPluginSupport.conversationContextPromptBlock()
                     + """
 
             User request:
@@ -57,6 +61,8 @@ public final class ResearchPlannerDefinitions {
             5. Use literature-agent for literature lookup and synthesis-agent to combine findings into a brief (both are child workflows, not inline synthesis).
             6. Never repeat agentCalls for an agentId that already appears in agentResultsJson.
             7. If no agents or tools are needed, set both arrays to [] and put the final answer in "directResponse".
+            8. Final human-approved action — after synthesis-agent completes, call olo-core:create-pull-request with
+               title and headBranch from the operator's human-input approval. Include confirmationId and logPath in directResponse.
 
             If a previous attempt failed validation, fix it:
             {toolCallSequenceJsonValidationError}
@@ -77,7 +83,9 @@ public final class ResearchPlannerDefinitions {
                         List.of(
                                 new ScenarioAgentSpec(LITERATURE_AGENT_ID, "Literature Agent"),
                                 new ScenarioAgentSpec(SYNTHESIS_AGENT_ID, "Synthesis Agent")),
-                        List.of())
+                        List.of(researchLiteratureTool(), ScenarioActionToolsSupport.createPullRequestTool()),
+                        new ScenarioHumanActionSpec(
+                                "publish pull request", "title and headBranch for the research artifact PR"))
                 .build();
         WorkflowValidator.validateOrThrow(workflow);
         return workflow;

@@ -50,7 +50,12 @@ public final class ToolCallPlannerSupport {
                     Tool results (JSON):
                     {toolResultsJson}
 
-                    Respond clearly and actionably using the tool results. If a tool failed or returned no data, say so.""";
+                    Instructions:
+                    1. Use the "output" field in each tool result for destinations, offers, prices, dates, and IDs.
+                    2. Quote concrete values from the data (packageId, city, totalUsd, departureDate, etc.).
+                    3. Do not mention internal tool IDs, node IDs, or placeholder brackets like [insert ...].
+                    4. If a tool failed or returned no usable output, say so plainly.
+                    5. Respond in clear, user-facing prose — not JSON.""";
 
     public static final String AGENT_SYNTHESIS_PROMPT_TEMPLATE =
             "You are an "

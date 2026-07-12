@@ -156,6 +156,7 @@ public final class WorkflowBuilder {
     public WorkflowBuilder withMessageInput() { return infrastructure.withMessageInput(); }
     public WorkflowBuilder withMessageVariable() { return infrastructure.withMessageVariable(); }
     public WorkflowBuilder withMessageContract() { return infrastructure.withMessageContract(); }
+    public WorkflowBuilder withConversationVariables() { return infrastructure.withConversationVariables(); }
     public WorkflowBuilder defaultLocalModelInfrastructure() { return infrastructure.defaultLocalModelInfrastructure(); }
     public WorkflowBuilder presetPlannerContext(String presetId) { return infrastructure.presetPlannerContext(presetId); }
     public WorkflowBuilder withStandardReturnVariable() { return infrastructure.withStandardReturnVariable(); }

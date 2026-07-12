@@ -5,8 +5,11 @@
 package org.olo.definition.configuration.travelplanner;
 
 import org.olo.definition.OloProductTerminology;
+import org.olo.definition.configuration.scenario.ScenarioConversationPluginSupport;
+import org.olo.definition.configuration.scenario.ScenarioActionToolsSupport;
 import org.olo.definition.configuration.scenario.ScenarioPlannerSupport;
 import org.olo.definition.configuration.scenario.ScenarioPlannerSupport.ScenarioAgentSpec;
+import org.olo.definition.configuration.scenario.ScenarioPlannerSupport.ScenarioHumanActionSpec;
 import org.olo.definition.configuration.scenario.ScenarioPlannerSupport.ScenarioToolSpec;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowDefinition;
@@ -29,6 +32,7 @@ public final class TravelPlannerDefinitions {
             """
             """
                     + OloProductTerminology.agentRolePrompt("travel planning")
+                    + ScenarioConversationPluginSupport.conversationContextPromptBlock()
                     + """
 
             User request:
@@ -53,6 +57,9 @@ public final class TravelPlannerDefinitions {
             3. Use olo-core:travel-destinations for destination ideas and olo-core:travel-offers for packages.
             4. Delegate only to agents listed in availableAgentsJson when specialist help is needed.
             5. If no tools are needed, set "toolCalls": [] and put the final answer in "directResponse".
+            6. Final human-approved action — after itinerary-agent completes, call olo-core:book-ticket with offerId
+               and passengerName from the operator's human-input approval. Include confirmationId, bookingReference,
+               and logPath in directResponse.
 
             If a previous attempt failed validation, fix it:
             {toolCallSequenceJsonValidationError}
@@ -73,7 +80,9 @@ public final class TravelPlannerDefinitions {
                         List.of(
                                 new ScenarioAgentSpec(DESTINATION_AGENT_ID, "Destination Agent"),
                                 new ScenarioAgentSpec(ITINERARY_AGENT_ID, "Itinerary Agent")),
-                        List.of(travelDestinationsTool(), travelOffersTool()))
+                        List.of(travelDestinationsTool(), travelOffersTool(), ScenarioActionToolsSupport.bookTicketTool()),
+                        new ScenarioHumanActionSpec(
+                                "ticket booking", "offerId and passengerName (optional email) for the selected package"))
                 .build();
         WorkflowValidator.validateOrThrow(workflow);
         return workflow;

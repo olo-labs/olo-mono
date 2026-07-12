@@ -85,7 +85,7 @@ class DynamicGraphCreationConfigurationTest {
         assertThat(workflow.getParameters().get(AgentWorkflowParameters.SYSTEM_PROMPT).getDefaultValue())
                 .isEqualTo(AgentWorkflowParameters.DEFAULT_SYSTEM_PROMPT);
         assertThat(workflow.getNodes().stream().map(node -> node.getType()).toList())
-                .containsExactly("START", "AGENT", "END");
+                .containsExactly("START", "TOOL", "TOOL", "HUMAN", "AGENT", "END");
         assertThat(workflow.getNodes().stream().map(node -> node.getId()).toList())
                 .contains(DynamicGraphPlannerSupport.DEFAULT_PLANNER_NODE_ID);
         NodeDefinition planner = workflow.getNodes().stream()
@@ -102,6 +102,8 @@ class DynamicGraphCreationConfigurationTest {
         @SuppressWarnings("unchecked")
         var plannerContext = (java.util.Map<String, Object>) workflow.getMetadata().get(PlannerContextDefinition.METADATA_KEY);
         assertThat(plannerContext)
-                .containsEntry(PlannerContextDefinition.SELECTED_VARIABLES, java.util.List.of("message"));
+                .containsEntry(
+                        PlannerContextDefinition.SELECTED_VARIABLES,
+                        java.util.List.of("message", "conversationSummary"));
     }
 }

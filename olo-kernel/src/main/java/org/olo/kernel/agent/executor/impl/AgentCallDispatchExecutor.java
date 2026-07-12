@@ -63,6 +63,7 @@ public final class AgentCallDispatchExecutor implements AgentExecutor {
         String plannerNodeId = readPlannerNodeId(node);
         List<ParsedAgentCall> agentCalls = readAgentCalls(node);
         List<Map<String, Object>> results = new ArrayList<>();
+        String parentWorkflowId = context.getGraph() != null ? context.getGraph().getId() : null;
 
         for (ParsedAgentCall call : agentCalls) {
             if (AgentCallResultsSupport.completedAgentIds(context.getVariables()).contains(call.agentId())) {
@@ -76,7 +77,8 @@ public final class AgentCallDispatchExecutor implements AgentExecutor {
                 throw new KernelException("agentId is not in availableAgentsJson allow-list: " + call.agentId());
             }
             var childInput = ChildWorkflowInputs.forChildAgent(context, call.agentId(), call.message());
-            String childResult = ChildWorkflowRunGateway.execute(context.getQueue(), call.agentId(), childInput);
+            String childResult = ChildWorkflowRunGateway.execute(
+                    context.getQueue(), call.agentId(), childInput, parentWorkflowId);
             AgentCallResultsSupport.appendResult(
                     context.getVariables(), call.agentId(), call.message(), childResult);
             Map<String, Object> entry = new LinkedHashMap<>();

@@ -13,6 +13,8 @@ public enum OloPropertyType {
     TEXTAREA,
     NUMBER,
     BOOLEAN,
+    /** Yes/No button pair for operator approval gates (maps to boolean value). */
+    APPROVAL_TOGGLE,
     ENUM,
     JSON,
     /** Masked credential or API key field. */

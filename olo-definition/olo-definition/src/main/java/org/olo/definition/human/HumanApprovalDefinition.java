@@ -24,6 +24,7 @@ public final class HumanApprovalDefinition {
 
     private final String title;
     private final String description;
+    private final String inputPluginId;
     private final List<String> approvers;
     private final Long timeoutSeconds;
     private final boolean requireCommentOnReject;
@@ -31,6 +32,7 @@ public final class HumanApprovalDefinition {
     private HumanApprovalDefinition(Builder builder) {
         this.title = builder.title;
         this.description = builder.description;
+        this.inputPluginId = builder.inputPluginId;
         this.approvers = builder.approvers == null ? List.of() : List.copyOf(builder.approvers);
         this.timeoutSeconds = builder.timeoutSeconds;
         this.requireCommentOnReject = builder.requireCommentOnReject;
@@ -46,6 +48,11 @@ public final class HumanApprovalDefinition {
 
     public String getDescription() {
         return description;
+    }
+
+    /** Catalog plugin id ({@code olo-core:human-input-*}) that supplies UI form parameters. */
+    public String getInputPluginId() {
+        return inputPluginId;
     }
 
     public List<String> getApprovers() {
@@ -71,13 +78,14 @@ public final class HumanApprovalDefinition {
         return requireCommentOnReject == that.requireCommentOnReject
                 && Objects.equals(title, that.title)
                 && Objects.equals(description, that.description)
+                && Objects.equals(inputPluginId, that.inputPluginId)
                 && Objects.equals(approvers, that.approvers)
                 && Objects.equals(timeoutSeconds, that.timeoutSeconds);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, description, approvers, timeoutSeconds, requireCommentOnReject);
+        return Objects.hash(title, description, inputPluginId, approvers, timeoutSeconds, requireCommentOnReject);
     }
 
     @JsonPOJOBuilder(withPrefix = "")
@@ -85,6 +93,7 @@ public final class HumanApprovalDefinition {
 
         private String title;
         private String description;
+        private String inputPluginId;
         private List<String> approvers;
         private Long timeoutSeconds;
         private boolean requireCommentOnReject;
@@ -96,6 +105,11 @@ public final class HumanApprovalDefinition {
 
         public Builder description(String description) {
             this.description = description;
+            return this;
+        }
+
+        public Builder inputPluginId(String inputPluginId) {
+            this.inputPluginId = inputPluginId;
             return this;
         }
 

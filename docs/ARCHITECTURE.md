@@ -11,7 +11,7 @@ OLO separates **what a workflow is** (a portable graph definition), **how a work
 1. **Definition vs invocation vs deployment** — `WorkflowDefinition`, `WorkflowInput`, and worker settings are three different artifacts with different lifecycles.
 2. **Standalone Gradle modules** — Each library has its own `settings.gradle`, wrapper, and `publishToMavenLocal` coordinates (`org.olo:*:0.1.0-SNAPSHOT`). There is no single root Gradle build yet.
 3. **Dependency direction** — Data flows inward: `olo-definition` has no knowledge of workers; `olo-kernel` orchestrates context building but does not own graph execution (planned in `olo-runtime`).
-4. **Configuration on disk** — Preset workflows live under `olo-definition/olo-configuration/<region>/*.json`. The API and worker both load the same JSON shape; Docker dev mounts a copy from `olo-docker/dev/configuration/olo-configuration`.
+4. **Configuration on disk** — Scenario presets live under `olo-definition/olo-configuration/<scenario>/`. Runtime active folder is `current-active/` — activate via **olo-ui Administration → Scenarios** or copy manually. Docker dev may mount a separate copy under `olo-docker/dev/configuration/olo-configuration`.
 
 ## Layer model
 
@@ -25,7 +25,7 @@ flowchart TB
     end
 
     subgraph data [Data — not Gradle modules]
-        CFG[olo-definition/olo-configuration/default/*.json]
+        CFG[olo-definition/olo-configuration scenarios + current-active]
     end
 
     subgraph definition [Definition layer]
@@ -140,9 +140,11 @@ Preset workflows declare a return variable in JSON:
 }]
 ```
 
-When `metadata.returnVariable` is set, the kernel returns that variable's value from the runtime variable map. If the variable is missing or blank, the caller receives a fixed admin-contact message. When no return variable is configured, the kernel falls back to the user message from `WorkflowInput` (`userQuery` or first input).
+When `metadata.returnVariable` is set, the kernel returns that variable's value from the runtime variable map after graph traversal completes. If the variable is missing or blank, the caller receives a fixed admin-contact message. When no return variable is configured, the kernel falls back to the user message from `WorkflowInput` (`userQuery` or first input).
 
-Today the graph is **not executed** — `GraphIsolation.prepare()` is a stub — so `ReturnValue` is typically unset until `olo-runtime` populates variables during node execution.
+**Child workflows:** orchestrator nodes dispatch specialist agents via `agentCalls` or `CHILD_WORKFLOW` execution model. Each child runs as a Temporal child workflow; worker logs correlate parent and child by `transactionId`, `parentWorkflowId`, and `childWorkflowId`.
+
+**Cancel:** `POST /api/runs/{runId}/cancel` signals Temporal cancellation; olo-ui and olo-chat expose Cancel during in-progress runs.
 
 ## Worker bootstrap
 
@@ -159,22 +161,23 @@ flowchart LR
 | Step | Module | Output |
 |------|--------|--------|
 | 1 | olo-worker-configuration | `WorkerSettings` (Temporal target, scan path, cache, port) |
-| 2 | olo-worker | Absolute path to `olo-definition/olo-configuration/default` (or override) |
-| 3 | olo-bootstrap | `WorkflowDefinitionRegistry` (12 presets → 12 queues) |
+| 2 | olo-worker | Absolute path to `olo-definition/olo-configuration/current-active` (or override) |
+| 3 | olo-bootstrap | `WorkflowDefinitionRegistry` (all JSON under scan folder, including child-agent presets) |
 | 4–5 | olo-worker + olo-kernel | Temporal `Worker` per queue, `workflowType=olo` |
 
 `start(true)` refreshes configuration and the definition registry without restarting the JVM.
 
 ## Configuration topology
 
-Two configuration trees serve different roles:
-
 | Path | Consumer | Purpose |
 |------|----------|---------|
-| `olo-definition/olo-configuration/default/*.json` | API (`OLO_CONFIGURATION_DIR`), worker (`scanFolder`) | `WorkflowDefinition` presets — chat profiles, task queues |
-| `olo-worker-configuration/samples/*.yaml` | olo-worker only | Process settings — not workflow graphs |
+| `olo-definition/olo-configuration/<scenario>/` | Source control | Scenario presets (orchestrator + child agents + README) |
+| `olo-definition/olo-configuration/current-active/` | olo-ui, olo-be, olo-worker | **Active** runtime folder — activate from olo-ui **Administration → Scenarios** |
+| `olo-worker-configuration/samples/*.yaml` | olo-worker only | Process settings (`scanFolder`, Temporal, Redis cache) — not workflow graphs |
 
-Keep `olo-definition/olo-configuration`, `olo/olo-configuration`, and `olo-docker/dev/configuration/olo-configuration` aligned when changing presets.
+**olo-ui activation flow:** `POST /api/v1/configuration/folders/{id}/activate` copies a scenario into `current-active`, then `POST /api/v1/system/refresh` signals the worker via Redis (`olo:worker:refresh`).
+
+Keep `olo-definition/olo-configuration/current-active`, `olo/olo-configuration`, and `olo-docker/dev/configuration/olo-configuration` aligned when testing Docker stacks.
 
 ## Build and local development
 
@@ -226,4 +229,4 @@ The kernel and kernel-context APIs are shaped so runtime execution can plug in a
 | [olo](../olo/) | Spring Boot chat backend, REST/SSE/WebSocket, starts Temporal workflows |
 | [olo-docker](../../olo-docker/) | Dev/prod Docker Compose stacks |
 | [olo-chat](../olo-chat/) | Chat UI |
-| [olo-ui](../olo-ui/) | Additional UI surfaces |
+| [olo-ui](../olo-ui/) | Studio UI — workflow builder, scenario activation, tenant admin |

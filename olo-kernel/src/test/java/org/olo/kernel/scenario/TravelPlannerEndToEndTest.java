@@ -69,6 +69,10 @@ class TravelPlannerEndToEndTest {
                 CoreToolIds.TRAVEL_OFFERS,
                 Map.of("origin", "London", "destination", "Paris"));
 
+        String toolResultsJson = context.getVariables().getString("toolResultsJson");
+        assertThat(toolResultsJson).contains("paris-weekend-001");
+        assertThat(toolResultsJson).contains("Paris");
+
         var mergeValidation = ToolCallFactories.defaultToolCallSubgraphMerger().validate(
                 """
                 {
@@ -91,7 +95,7 @@ class TravelPlannerEndToEndTest {
         assertThat(mergeResult.graph().getNodes().stream().map(node -> node.getType())).contains("TOOL");
     }
 
-    private static void assertToolSuccess(
+    private static org.olo.spi.node.NodeResult assertToolSuccess(
             ToolNodeTypeHandler handler,
             KernelRuntimeContext context,
             String nodeId,
@@ -102,10 +106,12 @@ class TravelPlannerEndToEndTest {
                 .type(NodeType.TOOL.name())
                 .putConfiguration("toolId", toolId)
                 .putConfiguration("arguments", arguments)
+                .putConfiguration("aggregateToolResult", true)
                 .build();
         var toolResult = handler.execute(context, toolNode);
         assertThat(toolResult.status()).isEqualTo(NodeStatus.COMPLETED);
         assertThat(toolResult.output()).containsEntry("toolId", toolId);
+        return toolResult;
     }
 
     private static Path resolveConfigurationRoot(String folder) {

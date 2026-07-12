@@ -1,0 +1,20 @@
+{
+  "action": "book-ticket",
+  "targetLabel": "offerId",
+  "defaultTarget": "PAR-WKD-42",
+  "summary": "Booked travel offer {offerId}",
+  "steps": [
+    "Validating operator approval for booking {offerId}",
+    "Locking fare for offer {offerId}",
+    "Charging mock payment method",
+    "Issuing e-ticket confirmation",
+    "Sending itinerary email to traveler"
+  ],
+  "result": {
+    "offerId": "PAR-WKD-42",
+    "bookingReference": "BK-TRV-20260614-42",
+    "status": "confirmed",
+    "origin": "London",
+    "destination": "Paris"
+  }
+}

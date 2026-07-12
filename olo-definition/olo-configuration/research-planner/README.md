@@ -12,6 +12,12 @@ End-to-end scenario collection for a tool-call orchestrator with specialist chil
 | `literature-agent` | Paper discovery child agent | `oloQueue2` |
 | `synthesis-agent` | Brief synthesis child agent | `oloQueue2` |
 
+## Mock tools
+
+| Tool ID | Purpose | Example query |
+|---------|---------|---------------|
+| `olo-core:research-literature` | Mock academic paper summaries | `renewable energy storage`, `AI safety alignment` |
+
 ## Regenerate JSON
 
 From `olo-definition/olo-definition`:
@@ -20,11 +26,15 @@ From `olo-definition/olo-definition`:
 ./gradlew :olo-definition:generateResearchPlanner
 ```
 
-Writes **`olo-configuration/research-planner/`** only. For local olo-ui/worker testing, copy into **`current-active/`** (see `current-active/README.md`).
+Writes **`olo-configuration/research-planner/`** only.
+
+## Activate scenario
+
+**Recommended:** olo-ui → **Administration → Scenarios** → **Activate** `research-planner`. See [current-active/README.md](../current-active/README.md).
 
 ## Load in worker
 
-Point `scanFolder` at this folder, or copy into `current-active/` and scan that:
+Default local config scans `current-active/`. To scan this folder directly:
 
 ```yaml
 workflowDefinitions:

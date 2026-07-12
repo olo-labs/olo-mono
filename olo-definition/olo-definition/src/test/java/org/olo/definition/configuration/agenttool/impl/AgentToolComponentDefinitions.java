@@ -7,6 +7,7 @@ package org.olo.definition.configuration.agenttool.impl;
 import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.runtime.RuntimeBindingDefinition;
 import org.olo.definition.tool.ToolDefinition;
+import org.olo.definition.configuration.scenario.ScenarioConversationPluginSupport;
 import org.olo.definition.toolcall.ToolCallPlannerSupport;
 import org.olo.definition.variable.VariableDefinition;
 import org.olo.definition.variable.VariableScope;
@@ -17,6 +18,8 @@ import static org.olo.definition.configuration.agenttool.AgentToolExecutionDefin
 import static org.olo.definition.configuration.agenttool.AgentToolExecutionDefinitions.CALCULATOR_TOOL_ID;
 import static org.olo.definition.configuration.agenttool.AgentToolExecutionDefinitions.CPU_USAGE_NODE_ID;
 import static org.olo.definition.configuration.agenttool.AgentToolExecutionDefinitions.CPU_USAGE_TOOL_ID;
+import static org.olo.definition.configuration.agenttool.AgentToolExecutionDefinitions.RESTART_CONTAINER_NODE_ID;
+import static org.olo.definition.configuration.agenttool.AgentToolExecutionDefinitions.RESTART_CONTAINER_TOOL_ID;
 
 final class AgentToolComponentDefinitions {
 
@@ -48,6 +51,20 @@ final class AgentToolComponentDefinitions {
                         .build())
                 .runtimeBinding(RuntimeBindingDefinition.builder()
                         .implementationId(CPU_USAGE_TOOL_ID)
+                        .build())
+                .build();
+    }
+
+    static ToolDefinition restartContainerTool() {
+        return ToolDefinition.builder()
+                .id(RESTART_CONTAINER_NODE_ID)
+                .capability(CapabilityDefinition.builder()
+                        .name("Restart Container")
+                        .description("Mock-restarts a container after human approval; writes to the mock action log")
+                        .addExample("Restart payment-api-7f8c9 in production")
+                        .build())
+                .runtimeBinding(RuntimeBindingDefinition.builder()
+                        .implementationId(RESTART_CONTAINER_TOOL_ID)
                         .build())
                 .build();
     }
@@ -96,6 +113,26 @@ final class AgentToolComponentDefinitions {
                 .type("string")
                 .description("Last validation error from toolCallSequenceJson, injected into planner retries")
                 .scope(VariableScope.LOCAL)
+                .build();
+    }
+
+    static VariableDefinition conversationSummaryVariable() {
+        return VariableDefinition.builder()
+                .name(ScenarioConversationPluginSupport.CONVERSATION_SUMMARY_VARIABLE)
+                .type("string")
+                .description("Summary of prior conversation turns loaded by the conversation-load plugin")
+                .scope(VariableScope.LOCAL)
+                .metadata(Map.of("role", "conversation-summary"))
+                .build();
+    }
+
+    static VariableDefinition conversationHistoryVariable() {
+        return VariableDefinition.builder()
+                .name(ScenarioConversationPluginSupport.CONVERSATION_HISTORY_VARIABLE)
+                .type("string")
+                .description("JSON array of prior conversation turns loaded by the conversation-load plugin")
+                .scope(VariableScope.LOCAL)
+                .metadata(Map.of("role", "conversation-history"))
                 .build();
     }
 }

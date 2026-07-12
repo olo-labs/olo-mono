@@ -52,7 +52,7 @@ flowchart TB
 |------|------|---------|
 | [`olo-definition/`](olo-definition/) | Gradle project | Workflow graph POJOs, builders, JSON/YAML serializers, validation |
 | [`olo-workflow-input/`](olo-workflow-input/) | Gradle project | `WorkflowInput` invocation payload (de)serialization at worker boundaries |
-| [`olo-definition/olo-configuration/`](olo-definition/olo-configuration/) | Data only | Preset workflow definitions (`default/*.json`) — agent, planner, reviewer, etc. |
+| [`olo-definition/olo-configuration/`](olo-definition/olo-configuration/) | Data only | Scenario presets + `current-active/` runtime folder — activate via olo-ui **Administration → Scenarios** |
 | [`olo-worker-configuration/`](olo-worker-configuration/) | Gradle project | Worker deployment config (server, Temporal, cache, `scanFolder`); pluggable file/DB/Redis/GitHub sources |
 | [`olo-bootstrap/`](olo-bootstrap/) | Gradle project | Loads `olo-configuration` folders into an in-memory workflow registry |
 | [`olo-kernel-context/`](olo-kernel-context/) | Gradle project | Builds `KernelRuntimeContext` — deserialized input + isolated graph copy + UI callback |
@@ -110,7 +110,7 @@ Windows: use `gradlew.bat` instead of `./gradlew`.
 Run **olo-docker** for API, Temporal, Redis, and chat UI. Run **olo-worker** on the host in debug mode:
 
 - Worker config: [`olo-worker-configuration/samples/worker-config.local-debug.yaml`](olo-worker-configuration/samples/worker-config.local-debug.yaml)
-- Docker `olo` service mounts `olo-docker/dev/configuration/olo-configuration` at `/app/olo-configuration` (`OLO_CONFIGURATION_DIR`); keep it aligned with `olo-definition/olo-configuration/default` in this repo
+- Docker `olo` service mounts `olo-docker/dev/configuration/olo-configuration` at `/app/olo-configuration` (`OLO_CONFIGURATION_DIR`); keep it aligned with `olo-definition/olo-configuration/current-active` in this repo (activate scenarios from olo-ui or copy manually)
 - Docker `olo` service: `OLO_CHAT_CALLBACK_BASE_URL=http://localhost:47080` (so the API passes a host-reachable callback into workflow input)
 
 See [olo-worker/README.md](olo-worker/README.md) for ports and IDE launch settings.

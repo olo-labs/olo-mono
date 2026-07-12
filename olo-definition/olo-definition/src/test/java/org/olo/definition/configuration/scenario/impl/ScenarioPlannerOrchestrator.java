@@ -8,6 +8,7 @@ import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.designer.StudioDesignerDefaults;
 import org.olo.definition.execution.ExecutionKind;
 import org.olo.definition.execution.ExecutionModel;
+import org.olo.definition.human.HumanApprovalDefinition;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.planner.PlannerContextDefinition;
@@ -18,7 +19,9 @@ import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.toolcall.ToolCallPlannerSupport;
 import org.olo.definition.workflow.ChildWorkflowDefinition;
 import org.olo.definition.workflow.WorkflowBuilder;
+import org.olo.definition.configuration.scenario.ScenarioConversationPluginSupport;
 import org.olo.definition.configuration.scenario.ScenarioPlannerSupport.ScenarioAgentSpec;
+import org.olo.definition.configuration.scenario.ScenarioPlannerSupport.ScenarioHumanActionSpec;
 import org.olo.definition.configuration.scenario.ScenarioPlannerSupport.ScenarioToolSpec;
 
 import java.util.LinkedHashMap;
@@ -38,8 +41,16 @@ public final class ScenarioPlannerOrchestrator {
             String emoji,
             String promptTemplate,
             List<ScenarioAgentSpec> childAgents,
-            List<ScenarioToolSpec> tools) {
+            List<ScenarioToolSpec> tools,
+            ScenarioHumanActionSpec humanAction) {
         String plannerNodeId = ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID;
+        String humanNodeId = ScenarioHumanStepSupport.HUMAN_INPUT_NODE_ID;
+        String conversationLoadNodeId = ScenarioConversationPluginSupport.CONVERSATION_LOAD_NODE_ID;
+        String conversationStoreNodeId = ScenarioConversationPluginSupport.CONVERSATION_STORE_NODE_ID;
+        HumanApprovalDefinition humanIntake = humanAction == null
+                ? ScenarioHumanStepSupport.intakeForScenario(name, shortDescription)
+                : ScenarioHumanStepSupport.intakeForScenario(
+                        name, shortDescription, humanAction.actionLabel(), humanAction.requiredInputs());
         WorkflowBuilder builder = WorkflowBuilder.create(name)
                 .id(workflowId)
                 .enabled(true)
@@ -64,18 +75,28 @@ public final class ScenarioPlannerOrchestrator {
                 .variable(ScenarioPlannerVariables.toolResultsVariable())
                 .variable(ScenarioPlannerVariables.retryCountVariable())
                 .variable(ScenarioPlannerVariables.validationErrorVariable())
+                .variable(ScenarioPlannerVariables.conversationSummaryVariable())
+                .variable(ScenarioPlannerVariables.conversationHistoryVariable())
                 .defaultLocalModelInfrastructure()
                 .agentParameters(workflowId)
                 .agentPlannerMetadata()
                 .agentDelegation()
-                .startNodeWithMessageInput("start")
-                .addNode(toolCallPlannerNode(plannerNodeId, promptTemplate))
+                .startNodeWithMessageInput("start");
+        ScenarioConversationPluginSupport.wireConversationPlugins(builder, conversationStoreNodeId);
+        builder.humanNode(humanNodeId, "INPUT", humanIntake)
+                .addNode(toolCallPlannerNode(plannerNodeId, promptTemplate, conversationStoreNodeId))
                 .endNode("end")
-                .connect("start", "out", plannerNodeId, "in")
-                .connect(plannerNodeId, "out", "end", "in")
+                .connect("start", "out", conversationLoadNodeId, "in")
+                .connect(conversationLoadNodeId, "out", humanNodeId, "in")
+                .connect(humanNodeId, "out", plannerNodeId, "in")
+                .connect(plannerNodeId, "out", conversationStoreNodeId, "in")
+                .connect(conversationStoreNodeId, "out", "end", "in")
                 .nodeCanvasLayout("start", 0)
-                .nodeCanvasLayout(plannerNodeId, 1)
-                .nodeCanvasLayout("end", 2)
+                .nodeCanvasLayout(conversationLoadNodeId, 1)
+                .nodeCanvasLayout(humanNodeId, 2)
+                .nodeCanvasLayout(plannerNodeId, 3)
+                .nodeCanvasLayout(conversationStoreNodeId, 4)
+                .nodeCanvasLayout("end", 5)
                 .metadata("description", shortDescription)
                 .metadata("role", workflowId)
                 .metadata(
@@ -90,7 +111,7 @@ public final class ScenarioPlannerOrchestrator {
                                 ToolCallPlannerSupport.METADATA_AVAILABLE_AGENTS_VARIABLE,
                                 ToolCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE,
                                 ToolCallPlannerSupport.CONFIG_CONTINUE_NODE_ID,
-                                "end"))
+                                conversationStoreNodeId))
                 .metadata(PlannerContextDefinition.METADATA_KEY, orchestratorPlannerContext(childAgents, tools))
                 .withStandardReturnVariable();
 
@@ -153,6 +174,7 @@ public final class ScenarioPlannerOrchestrator {
                 PlannerContextDefinition.SELECTED_VARIABLES,
                 List.of(
                         WorkflowPresetInfrastructure.MESSAGE_VARIABLE,
+                        ScenarioConversationPluginSupport.CONVERSATION_SUMMARY_VARIABLE,
                         ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
                         ToolCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE,
                         ToolCallPlannerSupport.DEFAULT_AGENT_RESULTS_VARIABLE,
@@ -166,7 +188,7 @@ public final class ScenarioPlannerOrchestrator {
         return Map.copyOf(context);
     }
 
-    private static NodeDefinition toolCallPlannerNode(String nodeId, String promptTemplate) {
+    private static NodeDefinition toolCallPlannerNode(String nodeId, String promptTemplate, String continueNodeId) {
         return NodeDefinition.builder()
                 .id(nodeId)
                 .type(NodeType.AGENT.name())
@@ -184,7 +206,7 @@ public final class ScenarioPlannerOrchestrator {
                 .putConfiguration(
                         ToolCallPlannerSupport.CONFIG_MAX_INVALID_JSON_RETRIES,
                         ToolCallPlannerSupport.DEFAULT_MAX_INVALID_JSON_RETRIES)
-                .putConfiguration(ToolCallPlannerSupport.CONFIG_CONTINUE_NODE_ID, "end")
+                .putConfiguration(ToolCallPlannerSupport.CONFIG_CONTINUE_NODE_ID, continueNodeId)
                 .putConfiguration("promptTemplate", promptTemplate)
                 .build();
     }

@@ -28,6 +28,12 @@ public final class CoreTools {
                 new RecentlyChangedCodeTool(),
                 new ResearchLiteratureTool(),
                 new TravelDestinationTool(),
-                new TravelOffersTool());
+                new TravelOffersTool(),
+                new RestartContainerTool(),
+                new GitRevertTool(),
+                new CreatePullRequestTool(),
+                new BookTicketTool(),
+                new ConversationLoadTool(),
+                new ConversationStoreTool());
     }
 }

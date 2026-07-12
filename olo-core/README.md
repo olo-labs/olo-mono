@@ -60,4 +60,4 @@ Authoritative per-type files also live in plugin JARs (`META-INF/olo/catalog/`).
 
 `olo-be` copies `dist/catalog/catalog.json` at build time (`syncExtensionCatalog`) and serves it at `/api/v1/catalog` — **no `org.olo` Java dependency in the backend**, JSON only for editor rendering. Every dist catalog file includes `generatedAt` (ISO-8601) alongside `generatedBy` / `generatedByVersion` for cache invalidation and support attribution.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/HUMAN_INPUT_PLUGINS.md](docs/HUMAN_INPUT_PLUGINS.md) for human-input plugin form schemas.

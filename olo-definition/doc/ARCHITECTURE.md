@@ -931,7 +931,8 @@ Approval metadata is **`HumanApprovalDefinition`**, not a pile of keys in `confi
       "description": "Review the AI recommendation before executing.",
       "approvers": ["trading-desk"],
       "timeoutSeconds": 3600,
-      "requireCommentOnReject": true
+      "requireCommentOnReject": true,
+      "inputPluginId": "olo-core:human-input-restart-container"
     }
   }
 }
@@ -944,8 +945,11 @@ Approval metadata is **`HumanApprovalDefinition`**, not a pile of keys in `confi
 | `approvers` | Roles or user ids (required, non-empty) |
 | `timeoutSeconds` | Optional SLA before escalation |
 | `requireCommentOnReject` | Audit trail when rejecting |
+| `inputPluginId` | Optional human-input plugin id (`category = human-input`). Runtime resolves `parameters` (form fields with `type` + `ui.widget`) and `options` (footer actions) from the extension catalog. See [HUMAN_INPUT_PLUGINS.md](../../olo-core/docs/HUMAN_INPUT_PLUGINS.md). |
 
 `WorkflowBuilder.humanNode(id, approval)` sets `subtype` to `APPROVAL` by default. Runtime pauses until approval; future versions may use `approved` / `rejected` output ports (similar to `CONDITION`) for explicit branching.
+
+**Plugin form fields** use `@OloProperty` on human-input tools. Common input types: `STRING` (textbox), `TEXTAREA`, `BOOLEAN` (checkbox), `APPROVAL_TOGGLE` (Yes/No buttons), `ENUM` (select). The chat UI renders each field from `ui.widget`.
 
 ## 5. Building workflows
 

@@ -55,7 +55,7 @@ cd olo-worker
 
 **IDE:** open `olo-mono/olo-worker` and use launch config **olo-worker (local debug, olo-docker)** (`.vscode/launch.json`).
 
-`run` defaults to `../olo-worker-configuration/samples/worker-config.local-debug.yaml`, which loads workflow definitions from **`olo-definition/olo-configuration/current-active/`** — copy presets there yourself before running (see `olo-configuration/current-active/README.md`). olo-ui uses the same folder via `OLO_CONFIGURATION_DIRECTORY`.
+`run` defaults to `../olo-worker-configuration/samples/worker-config.local-debug.yaml`, which loads workflow definitions from **`olo-definition/olo-configuration/current-active/`**. Activate a scenario in **olo-ui → Administration → Scenarios** (recommended) or copy presets there manually — see `olo-configuration/current-active/README.md`. olo-ui uses the same folder via `OLO_CONFIGURATION_DIRECTORY`.
 
 Override explicitly:
 
@@ -97,6 +97,14 @@ cd olo-mono
 
 Bootstrap logs each step (`Step 1/5` … `Step 5/5`). On failure, the log includes what failed and how to fix it (config path, scan folder, **Ollama/LLM URL**, Temporal target). Set `org.slf4j.simpleLogger.defaultLogLevel=debug` for more detail.
 
+**Loaded workflows:** Step 3 logs **every** workflow JSON under `scanFolder`, including child-agent presets (`isDefault=false`), with `queue`, `id`, `version`, `source`, and node activity names. Previously only the primary workflow per queue was logged.
+
+**Child workflow runs:** When a parent dispatches child agents (`agentCalls` or `CHILD_WORKFLOW` nodes), logs include:
+
+- `Child workflow dispatch start/complete` — `childWorkflowId`, `parentWorkflowId`, `transactionId`, execution mode (`temporal-child` vs `in-process`)
+- `Kernel entry` / `Traversal context ready` — `workflowId` and `transactionId` per child Temporal workflow
+- Search logs by `transactionId` to follow parent → child execution in Worker Log / SLF4J output
+
 **LLM health check (Step 4/5):** before Temporal starts, the worker probes `GET {OLO_LLM_BASE_URL}/api/tags` (10s timeout) and verifies required models are installed. If Ollama is down you get an immediate error instead of a 5-minute timeout on the first workflow activity.
 
 ```powershell
@@ -110,9 +118,13 @@ docker exec olo-ollama ollama pull llama3.2
 WorkerRuntimeContext refreshed = WorkerBootstrap.start(true);
 ```
 
-### Studio UI refresh button (Redis)
+### Studio UI refresh (Redis)
 
-olo-ui **Refresh** in the workflow builder calls `POST /api/v1/worker/refresh` on **olo-be**, which writes a new token to Redis key **`olo:worker:refresh`** (override with `olo.worker.refresh-key` / `OLO_WORKER_REFRESH_KEY`).
+olo-ui **Refresh stack** (workflow builder toolbar) and **Administration → Scenarios → Activate** call `POST /api/v1/system/refresh` on **olo-be**, which:
+
+1. Writes a new token to Redis key **`olo:worker:refresh`** (override with `olo.worker.refresh-key` / `OLO_WORKER_REFRESH_KEY`)
+2. Reloads the **olo** runtime configuration (`POST /api/admin/configuration/reload` on port 7080)
+3. Reloads studio catalog and workflows in the browser
 
 When `cache.enabled: true` in worker config, **olo-worker** polls that key every 2s (`OLO_WORKER_REFRESH_POLL_MS` to override). On value change it calls `WorkerBootstrap.start(true)` — reloading worker configuration, workflow definitions, and Temporal task queues without restarting the JVM.
 

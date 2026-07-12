@@ -20,7 +20,7 @@ public final class CoreNodeTypeResolver implements NodeTypeResolver {
             case "PARALLEL" -> CoreNodeTypes.PARALLEL;
             case "LOOP" -> CoreNodeTypes.LOOP;
             case "SWITCH" -> CoreNodeTypes.SWITCH;
-            case "APPROVAL" -> CoreNodeTypes.APPROVAL;
+            case "APPROVAL", "HUMAN" -> CoreNodeTypes.APPROVAL;
             default -> definitionNodeType;
         };
     }

@@ -1,0 +1,12 @@
+[
+  {
+    "role": "user",
+    "content": "Investigate payment gateway timeouts between 14:30 and 14:35 UTC.",
+    "timestamp": "2026-06-14T14:20:00Z"
+  },
+  {
+    "role": "assistant",
+    "content": "Prior triage found ConnectionTimeout spikes in payment-service logs and elevated p95 latency.",
+    "timestamp": "2026-06-14T14:25:00Z"
+  }
+]

@@ -30,33 +30,18 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "message" : "#ef4444",
-      "boolean" : "#fb923c",
-      "capabilities" : "#22c55e",
-      "integer" : "#38bdf8",
-      "string" : "#a3e635",
       "object" : "#c084fc",
       "number" : "#38bdf8",
       "array" : "#f472b6",
       "agent-plug" : "#a855f7",
-      "any" : "#94a3b8"
+      "any" : "#94a3b8",
+      "message" : "#ef4444",
+      "boolean" : "#fb923c",
+      "capabilities" : "#22c55e",
+      "integer" : "#38bdf8",
+      "string" : "#a3e635"
     },
     "nodeTypes" : {
-      "END" : {
-        "emoji" : "⏹",
-        "typeLabel" : "End",
-        "description" : "Workflow exit — maps a workflow variable to the caller result",
-        "palette" : {
-          "name" : "End",
-          "category" : "control"
-        },
-        "inlineProperties" : [ {
-          "id" : "outputVariable",
-          "widget" : "VARIABLE_SELECT",
-          "label" : "Output variable",
-          "binding" : "outputVariableMapping"
-        } ]
-      },
       "START" : {
         "emoji" : "▶",
         "typeLabel" : "Start",
@@ -83,6 +68,21 @@
           "id" : "model",
           "widget" : "MODEL_SELECTOR",
           "label" : "Model"
+        } ]
+      },
+      "END" : {
+        "emoji" : "⏹",
+        "typeLabel" : "End",
+        "description" : "Workflow exit — maps a workflow variable to the caller result",
+        "palette" : {
+          "name" : "End",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "outputVariable",
+          "widget" : "VARIABLE_SELECT",
+          "label" : "Output variable",
+          "binding" : "outputVariableMapping"
         } ]
       }
     }
@@ -138,7 +138,7 @@
       "type" : "string",
       "label" : "System Prompt",
       "description" : "System prompt for the agent",
-      "defaultValue" : "You teach concepts step by step for someone learning the topic.\n\nLearning goal:\n{message}\n\nUse a progression: intuition, core ideas, worked example, common mistakes, and a short recap.",
+      "defaultValue" : "You teach concepts step by step for someone learning the topic.\n\nLearning goal:\n{message}\n\nUse a progression: intuition, core ideas, worked example, common mistakes, and a short recap.\nPrevious conversation summary (from conversation-load plugin):\n{conversationSummary}\n",
       "required" : false,
       "ui" : {
         "widget" : "TEXTAREA",
@@ -205,6 +205,61 @@
         "position" : {
           "y" : 80,
           "x" : 80
+        }
+      }
+    }
+  }, {
+    "id" : "conversation-load",
+    "type" : "TOOL",
+    "ports" : [ {
+      "id" : "in",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Incoming workflow message",
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "out",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
+      "ui" : {
+        "position" : "RIGHT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Capability indicator for runtime prompt assembly on a connected agent",
+      "ui" : {
+        "position" : "TOP",
+        "color" : "#22c55e"
+      }
+    } ],
+    "reads" : [ ],
+    "writes" : [ ],
+    "configuration" : {
+      "toolId" : "olo-core:conversation-load",
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 440
         }
       }
     }
@@ -285,7 +340,62 @@
       "designer" : {
         "position" : {
           "y" : 80,
-          "x" : 440
+          "x" : 800
+        }
+      }
+    }
+  }, {
+    "id" : "conversation-store",
+    "type" : "TOOL",
+    "ports" : [ {
+      "id" : "in",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Incoming workflow message",
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "out",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
+      "ui" : {
+        "position" : "RIGHT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Capability indicator for runtime prompt assembly on a connected agent",
+      "ui" : {
+        "position" : "TOP",
+        "color" : "#22c55e"
+      }
+    } ],
+    "reads" : [ ],
+    "writes" : [ ],
+    "configuration" : {
+      "toolId" : "olo-core:conversation-store",
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 1160
         }
       }
     }
@@ -314,7 +424,7 @@
       "designer" : {
         "position" : {
           "y" : 80,
-          "x" : 800
+          "x" : 1520
         }
       }
     }
@@ -322,10 +432,20 @@
   "edges" : [ {
     "sourceNodeId" : "start",
     "sourcePortId" : "out",
+    "targetNodeId" : "conversation-load",
+    "targetPortId" : "in"
+  }, {
+    "sourceNodeId" : "conversation-load",
+    "sourcePortId" : "out",
     "targetNodeId" : "agent",
     "targetPortId" : "in"
   }, {
     "sourceNodeId" : "agent",
+    "sourcePortId" : "out",
+    "targetNodeId" : "conversation-store",
+    "targetPortId" : "in"
+  }, {
+    "sourceNodeId" : "conversation-store",
     "sourcePortId" : "out",
     "targetNodeId" : "end",
     "targetPortId" : "in"
@@ -338,6 +458,24 @@
     "scope" : "READONLY_EXTERNAL",
     "metadata" : { }
   }, {
+    "name" : "conversationSummary",
+    "type" : "string",
+    "description" : "Summary of prior conversation turns loaded by the conversation-load plugin",
+    "required" : false,
+    "scope" : "LOCAL",
+    "metadata" : {
+      "role" : "conversation-summary"
+    }
+  }, {
+    "name" : "conversationHistory",
+    "type" : "string",
+    "description" : "JSON array of prior conversation turns loaded by the conversation-load plugin",
+    "required" : false,
+    "scope" : "LOCAL",
+    "metadata" : {
+      "role" : "conversation-history"
+    }
+  }, {
     "name" : "ReturnValue",
     "type" : "string",
     "description" : "Workflow return message returned to the caller",
@@ -347,7 +485,41 @@
       "role" : "return"
     }
   } ],
-  "tools" : [ ],
+  "tools" : [ {
+    "id" : "conversation-load",
+    "type" : "TOOL",
+    "capability" : {
+      "name" : "Conversation Load",
+      "description" : "Loads prior conversation and attaches summary to the workflow message",
+      "tags" : [ ],
+      "examples" : [ "Restore operator chat context before triage begins" ],
+      "required_inputs" : [ ],
+      "required_outputs" : [ ],
+      "tool_requirements" : [ ],
+      "required_context" : [ ]
+    },
+    "runtimeBinding" : {
+      "implementationId" : "olo-core:conversation-load"
+    },
+    "configuration" : { }
+  }, {
+    "id" : "conversation-store",
+    "type" : "TOOL",
+    "capability" : {
+      "name" : "Conversation Store",
+      "description" : "Persists the current turn to conversation history for the next run",
+      "tags" : [ ],
+      "examples" : [ "Save assistant response after scenario completion" ],
+      "required_inputs" : [ ],
+      "required_outputs" : [ ],
+      "tool_requirements" : [ ],
+      "required_context" : [ ]
+    },
+    "runtimeBinding" : {
+      "implementationId" : "olo-core:conversation-store"
+    },
+    "configuration" : { }
+  } ],
   "agents" : [ ],
   "hooks" : [ ],
   "modelProviders" : [ {
@@ -355,7 +527,7 @@
     "provider" : "local",
     "model" : "llama3.2:latest",
     "configuration" : {
-      "baseUrl" : "http://localhost:51435"
+      "baseUrl" : "http://localhost:11435"
     }
   } ],
   "modelRouting" : [ {
@@ -366,14 +538,14 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
-    "returnVariable" : "ReturnValue",
-    "role" : "teacher",
     "plannerContext" : {
+      "selectedVariables" : [ "message", "conversationSummary" ],
+      "selectedAgents" : [ ],
       "selectedTools" : [ ],
-      "injectCapabilities" : false,
-      "selectedVariables" : [ "message" ],
-      "selectedAgents" : [ ]
+      "injectCapabilities" : false
     },
-    "description" : "Learn concepts step by step"
+    "description" : "Learn concepts step by step",
+    "returnVariable" : "ReturnValue",
+    "role" : "teacher"
   }
 }

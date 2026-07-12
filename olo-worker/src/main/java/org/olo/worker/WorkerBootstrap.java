@@ -6,6 +6,7 @@ package org.olo.worker;
 
 import io.temporal.worker.WorkerFactory;
 import org.olo.bootstrap.OloBootstrap;
+import org.olo.bootstrap.model.CachedWorkflowDefinition;
 import org.olo.bootstrap.registry.WorkflowDefinitionRegistry;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
@@ -221,22 +222,31 @@ public final class WorkerBootstrap {
     }
 
     private static void logLoadedNodeActivityNames(WorkflowDefinitionRegistry registry) {
-        for (WorkflowDefinition workflow : registry.getWorkflowsByQueue().values()) {
-            if (workflow.getNodes() == null || workflow.getNodes().isEmpty()) {
-                continue;
-            }
-            StringBuilder names = new StringBuilder();
-            for (NodeDefinition node : workflow.getNodes()) {
-                if (!names.isEmpty()) {
-                    names.append(", ");
-                }
-                names.append(NodeActivityNaming.formatNode(node));
-            }
+        for (CachedWorkflowDefinition cached : registry.getWorkflows()) {
+            WorkflowDefinition workflow = cached.getDefinition();
+            String nodeActivities = formatNodeActivityNames(workflow);
             log.info(
-                    "Loaded workflow queue={} id={} nodeActivities=[{}]",
+                    "Loaded workflow queue={} id={} version={} isDefault={} source={} nodeActivities=[{}]",
                     workflow.getQueue(),
                     workflow.getId(),
-                    names);
+                    workflow.getVersion(),
+                    workflow.isDefault(),
+                    cached.getSourcePath(),
+                    nodeActivities);
         }
+    }
+
+    private static String formatNodeActivityNames(WorkflowDefinition workflow) {
+        if (workflow.getNodes() == null || workflow.getNodes().isEmpty()) {
+            return "";
+        }
+        StringBuilder names = new StringBuilder();
+        for (NodeDefinition node : workflow.getNodes()) {
+            if (!names.isEmpty()) {
+                names.append(", ");
+            }
+            names.append(NodeActivityNaming.formatNode(node));
+        }
+        return names.toString();
     }
 }

@@ -1,0 +1,19 @@
+{
+  "action": "scale-service",
+  "targetLabel": "serviceName",
+  "defaultTarget": "checkout-service",
+  "summary": "Scaled service {serviceName}",
+  "steps": [
+    "Validating operator approval to scale {serviceName}",
+    "Reading current replica count for {serviceName}",
+    "Updating desired replicas for {serviceName}",
+    "Waiting for rollout to complete",
+    "Confirming healthy pods for {serviceName}"
+  ],
+  "result": {
+    "serviceName": "checkout-service",
+    "previousReplicas": 4,
+    "replicas": 8,
+    "status": "scaled"
+  }
+}

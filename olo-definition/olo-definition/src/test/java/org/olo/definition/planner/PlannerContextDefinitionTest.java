@@ -27,13 +27,15 @@ class PlannerContextDefinitionTest {
         assertTrue(selectedTools.isEmpty());
         assertTrue(selectedAgents.containsAll(List.of("planner", "reviewer", "architect")));
         assertEquals(false, defaults.get(PlannerContextDefinition.INJECT_CAPABILITIES));
-        assertEquals(List.of("message"), selectedVariables);
+        assertEquals(List.of("message", "conversationSummary"), selectedVariables);
     }
 
     @Test
     void presetDefaultsIncludeMessageVariableSelection() {
         Map<String, Object> planner = PlannerContextDefinition.presetDefaults("planner");
-        assertEquals(List.of("message"), planner.get(PlannerContextDefinition.SELECTED_VARIABLES));
+        assertEquals(
+                List.of("message", "conversationSummary"),
+                planner.get(PlannerContextDefinition.SELECTED_VARIABLES));
     }
 
     @Test

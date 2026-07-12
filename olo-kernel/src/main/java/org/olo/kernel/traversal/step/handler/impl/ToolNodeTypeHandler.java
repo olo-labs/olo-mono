@@ -86,7 +86,12 @@ public final class ToolNodeTypeHandler implements NodeTypeHandler {
                 output.put("response", response);
                 if (shouldAggregateToolResult(node)) {
                     AvailableToolsJsonResolver.appendToolResult(
-                            context.getVariables(), toolId, node.getId(), true, response);
+                            context.getVariables(),
+                            toolId,
+                            node.getId(),
+                            true,
+                            response,
+                            result.output());
                 }
                 return NodeResult.completed(result.message(), output);
             }
@@ -96,7 +101,8 @@ public final class ToolNodeTypeHandler implements NodeTypeHandler {
                         toolId,
                         node.getId(),
                         false,
-                        result.message() == null ? "tool invocation failed" : result.message());
+                        result.message() == null ? "tool invocation failed" : result.message(),
+                        result.output() == null ? Map.of() : result.output());
             }
             return NodeResult.failed(
                     result.message() == null ? "tool invocation failed for " + toolId : result.message(),
@@ -153,6 +159,17 @@ public final class ToolNodeTypeHandler implements NodeTypeHandler {
             arguments.putIfAbsent("userQuery", message);
             arguments.putIfAbsent("text", message);
             arguments.putIfAbsent("message", message);
+        }
+
+        if (context.getInput() != null && context.getInput().getContext() != null) {
+            String sessionId = context.getInput().getContext().getSessionId();
+            if (sessionId != null && !sessionId.isBlank()) {
+                arguments.putIfAbsent("sessionId", sessionId);
+            }
+            String tenantId = context.getInput().getContext().getTenantId();
+            if (tenantId != null && !tenantId.isBlank()) {
+                arguments.putIfAbsent("tenantId", tenantId);
+            }
         }
 
         enrichObservabilityArguments(toolId, arguments);

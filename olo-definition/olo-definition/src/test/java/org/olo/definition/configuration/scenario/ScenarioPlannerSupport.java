@@ -37,9 +37,23 @@ public final class ScenarioPlannerSupport {
             String emoji,
             String promptTemplate,
             List<ScenarioAgentSpec> childAgents,
-            List<ScenarioToolSpec> tools) {
+            List<ScenarioToolSpec> tools,
+            ScenarioHumanActionSpec humanAction) {
         return ScenarioPlannerOrchestrator.orchestratorBuilder(
-                workflowId, queue, name, shortDescription, emoji, promptTemplate, childAgents, tools);
+                workflowId, queue, name, shortDescription, emoji, promptTemplate, childAgents, tools, humanAction);
+    }
+
+    public static WorkflowBuilder orchestratorBuilder(
+            String workflowId,
+            String queue,
+            String name,
+            String shortDescription,
+            String emoji,
+            String promptTemplate,
+            List<ScenarioAgentSpec> childAgents,
+            List<ScenarioToolSpec> tools) {
+        return orchestratorBuilder(
+                workflowId, queue, name, shortDescription, emoji, promptTemplate, childAgents, tools, null);
     }
 
     public static ToolDefinition scenarioTool(ScenarioToolSpec spec) {
@@ -55,5 +69,9 @@ public final class ScenarioPlannerSupport {
             String name,
             String description,
             String example) {
+    }
+
+    /** Describes the human-approved mock action the operator supplies at intake. */
+    public record ScenarioHumanActionSpec(String actionLabel, String requiredInputs) {
     }
 }

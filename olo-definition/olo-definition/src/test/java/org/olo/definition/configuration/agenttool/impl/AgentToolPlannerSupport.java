@@ -4,6 +4,7 @@
  */
 package org.olo.definition.configuration.agenttool.impl;
 
+import org.olo.definition.configuration.scenario.ScenarioConversationPluginSupport;
 import org.olo.definition.OloProductTerminology;
 import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.execution.ExecutionKind;
@@ -31,6 +32,9 @@ final class AgentToolPlannerSupport {
                     + OloProductTerminology.PRODUCT
                     + """
                      tool-call planner.
+            """
+                    + ScenarioConversationPluginSupport.conversationContextPromptBlock()
+                    + """
 
                     User request:
             {message}
@@ -52,6 +56,8 @@ final class AgentToolPlannerSupport {
             5. If tools are needed, set "directResponse": null and list toolCalls in execution order.
             6. Each toolId MUST appear in availableToolsJson.
             7. Include arguments when a tool needs structured input (for example ISO-8601 startTime/endTime for observability tools).
+            8. Final human-approved action — when the operator approved a container restart at human-input, call
+               olo-core:restart-container with containerId and namespace. Include confirmationId and logPath in directResponse.
 
             If a previous attempt failed validation, fix it:
             {toolCallSequenceJsonValidationError}
@@ -80,6 +86,7 @@ final class AgentToolPlannerSupport {
                 PlannerContextDefinition.SELECTED_VARIABLES,
                 List.of(
                         WorkflowPresetInfrastructure.MESSAGE_VARIABLE,
+                        ScenarioConversationPluginSupport.CONVERSATION_SUMMARY_VARIABLE,
                         ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
                         ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE));
         context.put(PlannerContextDefinition.SELECTED_TOOLS, List.of(CALCULATOR_TOOL_ID, CPU_USAGE_TOOL_ID));
@@ -90,7 +97,7 @@ final class AgentToolPlannerSupport {
         return Map.copyOf(context);
     }
 
-    static NodeDefinition toolCallPlannerNode(String nodeId) {
+    static NodeDefinition toolCallPlannerNode(String nodeId, String continueNodeId) {
         return NodeDefinition.builder()
                 .id(nodeId)
                 .type(NodeType.AGENT.name())
@@ -108,7 +115,7 @@ final class AgentToolPlannerSupport {
                 .putConfiguration(
                         ToolCallPlannerSupport.CONFIG_MAX_INVALID_JSON_RETRIES,
                         ToolCallPlannerSupport.DEFAULT_MAX_INVALID_JSON_RETRIES)
-                .putConfiguration(ToolCallPlannerSupport.CONFIG_CONTINUE_NODE_ID, "end")
+                .putConfiguration(ToolCallPlannerSupport.CONFIG_CONTINUE_NODE_ID, continueNodeId)
                 .putConfiguration("promptTemplate", JSON_ONLY_PROMPT_TEMPLATE)
                 .build();
     }

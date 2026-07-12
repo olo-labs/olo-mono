@@ -1,0 +1,19 @@
+{
+  "action": "failover-endpoint",
+  "targetLabel": "endpointId",
+  "defaultTarget": "payment-gateway-primary",
+  "summary": "Failed over endpoint {endpointId}",
+  "steps": [
+    "Validating operator approval to failover {endpointId}",
+    "Marking {endpointId} as unhealthy in service registry",
+    "Promoting failover target payment-gateway-secondary",
+    "Updating DNS/load-balancer routing weights",
+    "Verifying synthetic checks against failover endpoint"
+  ],
+  "result": {
+    "endpointId": "payment-gateway-primary",
+    "failoverTarget": "payment-gateway-secondary",
+    "region": "eu-west-2",
+    "status": "failover_active"
+  }
+}

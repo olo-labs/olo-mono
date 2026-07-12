@@ -41,6 +41,9 @@ Temporal queue task (WorkflowInput JSON object)
 | unset or `ACTIVITY` | Dedicated `executeTraversalStep` activity per node |
 | `INLINE` + `executionKind: ACTIVITY` | Dedicated activity (e.g. dynamic graph planner LLM step) |
 | `INLINE` without `ACTIVITY` kind | Executed synchronously inside the workflow loop |
+| `CHILD_WORKFLOW` | Dispatches a Temporal child workflow from the parent workflow thread; blocks until complete |
+
+**Child workflow logging:** `ChildWorkflowRunGateway` logs dispatch start/complete with `childWorkflowId`, `parentWorkflowId`, and `transactionId`. Activity-thread runs log `Kernel entry` and `Traversal context ready` with each child’s `workflowId`.
 
 Legacy synchronous entry (tests, direct API):
 

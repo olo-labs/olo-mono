@@ -4,6 +4,7 @@
  */
 package org.olo.definition.configuration.scenario.impl;
 
+import org.olo.definition.configuration.scenario.ScenarioConversationPluginSupport;
 import org.olo.definition.toolcall.ToolCallPlannerSupport;
 import org.olo.definition.variable.VariableDefinition;
 import org.olo.definition.variable.VariableScope;
@@ -79,6 +80,26 @@ final class ScenarioPlannerVariables {
                 .type("string")
                 .description("Last validation error from toolCallSequenceJson, injected into planner retries")
                 .scope(VariableScope.LOCAL)
+                .build();
+    }
+
+    static VariableDefinition conversationSummaryVariable() {
+        return VariableDefinition.builder()
+                .name(ScenarioConversationPluginSupport.CONVERSATION_SUMMARY_VARIABLE)
+                .type("string")
+                .description("Summary of prior conversation turns loaded by the conversation-load plugin")
+                .scope(VariableScope.LOCAL)
+                .metadata(Map.of("role", "conversation-summary"))
+                .build();
+    }
+
+    static VariableDefinition conversationHistoryVariable() {
+        return VariableDefinition.builder()
+                .name(ScenarioConversationPluginSupport.CONVERSATION_HISTORY_VARIABLE)
+                .type("string")
+                .description("JSON array of prior conversation turns loaded by the conversation-load plugin")
+                .scope(VariableScope.LOCAL)
+                .metadata(Map.of("role", "conversation-history"))
                 .build();
     }
 }

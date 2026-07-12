@@ -4,11 +4,13 @@
  */
 package org.olo.kernel.temporal;
 
+import io.temporal.workflow.SignalMethod;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
 import org.olo.annotation.OloQueueBinding;
 import org.olo.annotation.OloWorkflowType;
 import org.olo.input.model.WorkflowInput;
+import org.olo.kernel.human.HumanResumeInput;
 
 /**
  * Temporal workflow entry point for OLO queue execution ({@code workflowType=olo}).
@@ -29,4 +31,11 @@ public interface OloKernelWorkflow {
 
     @WorkflowMethod(name = "olo")
     String execute(WorkflowInput input);
+
+    @SignalMethod
+    void submitHumanInput(HumanResumeInput input);
+
+    /** Legacy signal from {@code olo-temporal-sdk} ({@code approved} + operator {@code message}). */
+    @SignalMethod(name = "humanInput")
+    void humanInput(boolean approved, String message);
 }

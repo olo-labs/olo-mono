@@ -33,6 +33,7 @@ public final class UiCallbackReporter {
 
     private static final long CONTEXT_READY_SEQUENCE = 1L;
     private static final long WORKFLOW_RESULT_SEQUENCE = 2L;
+    private static final long HUMAN_WAITING_SEQUENCE_BASE = 10_000L;
     private static final int EVENT_VERSION = 1;
     private static final String KERNEL_NODE_ID = "kernel";
 
@@ -80,6 +81,60 @@ public final class UiCallbackReporter {
                 Map.of("phase", "kernel-context"));
 
         postPayload(eventPostUrl, payload);
+    }
+
+    /**
+     * Posts a human-in-the-loop waiting gate so the UI can prompt the operator.
+     * No-op when no callback URL is present.
+     */
+    public static void reportHumanWaiting(
+            KernelRuntimeContext context, String nodeId, int step, Map<String, Object> waitingOutput) {
+        Objects.requireNonNull(context, "context");
+        Objects.requireNonNull(nodeId, "nodeId");
+        Objects.requireNonNull(waitingOutput, "waitingOutput");
+
+        if (resolveCallbackUrl(context.getInput()) == null) {
+            return;
+        }
+
+        Context inputContext = context.getInput().getContext();
+        String runId = inputContext != null ? inputContext.getRunId() : null;
+        if (runId == null || runId.isBlank()) {
+            throw new KernelContextException("runId is required to deliver human waiting callback");
+        }
+
+        String eventPostUrl = resolveEventPostUrl(context.getInput(), runId);
+        String correlationId = inputContext.getCorrelationId();
+
+        Map<String, Object> output = new LinkedHashMap<>(waitingOutput);
+        output.put("status", "HUMAN_WAITING");
+        output.put("queue", context.getQueue());
+        output.put("variables", context.getVariableMap());
+        mirrorHumanWaitingPromptFields(output);
+
+        RunEventCallbackPayload payload = new RunEventCallbackPayload(
+                HUMAN_WAITING_SEQUENCE_BASE + step,
+                EVENT_VERSION,
+                "NODE_COMPLETED",
+                correlationId,
+                nodeId,
+                "root",
+                "HUMAN",
+                "WAITING",
+                output,
+                Map.of("phase", "human-wait"));
+
+        log.info("Sending human waiting callback: runId={}, nodeId={}, url={}", runId, nodeId, eventPostUrl);
+        postPayload(eventPostUrl, payload);
+    }
+
+    private static void mirrorHumanWaitingPromptFields(Map<String, Object> output) {
+        if (!output.containsKey("prompt") && output.get("title") != null) {
+            output.put("prompt", output.get("title"));
+        }
+        if (!output.containsKey("message") && output.get("description") != null) {
+            output.put("message", output.get("description"));
+        }
     }
 
     private static void postPayload(String eventPostUrl, RunEventCallbackPayload payload) {

@@ -30,6 +30,14 @@ public record TraversalResult(
         return new TraversalResult(false, lastNodeId, status, message);
     }
 
+    public static TraversalResult waiting(String lastNodeId, String message) {
+        return new TraversalResult(false, lastNodeId, NodeStatus.WAITING, message);
+    }
+
+    public boolean waiting() {
+        return lastStatus == NodeStatus.WAITING;
+    }
+
     public Optional<String> resolvedLastNodeId() {
         return Optional.ofNullable(lastNodeId).filter(value -> !value.isBlank());
     }

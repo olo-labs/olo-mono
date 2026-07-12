@@ -22,11 +22,12 @@ public final class TraversalContextLogger {
     public static void logContextReady(
             KernelRuntimeContext context, String primaryInputMessage, String nextActivityName) {
         log.info(
-                "Traversal context ready: queue={}, workflowId={}, version={}, graphReady={}, "
+                "Traversal context ready: queue={}, workflowId={}, version={}, transactionId={}, graphReady={}, "
                         + "nextActivityName={}, primaryInputMessage={}, variables={}",
                 context.getQueue(),
                 context.getGraph().getId(),
                 context.getGraph().getVersion(),
+                transactionIdFrom(context),
                 context.isGraphReady(),
                 nextActivityName,
                 TraversalCompletionLogger.formatValue(primaryInputMessage),
@@ -40,11 +41,23 @@ public final class TraversalContextLogger {
     public static void logTraversalStart(
             KernelRuntimeContext context, int nodeCount, int edgeCount, String startNodeId) {
         log.info(
-                "Traversal start: queue={}, workflowId={}, nodes={}, edges={}, startNodeId={}",
+                "Traversal start: queue={}, workflowId={}, transactionId={}, nodes={}, edges={}, startNodeId={}",
                 context.getQueue(),
                 context.getGraph().getId(),
+                transactionIdFrom(context),
                 nodeCount,
                 edgeCount,
                 startNodeId);
+    }
+
+    private static String transactionIdFrom(KernelRuntimeContext context) {
+        if (context.getInput() == null || context.getInput().getRouting() == null) {
+            return null;
+        }
+        String transactionId = context.getInput().getRouting().getTransactionId();
+        if (transactionId == null || transactionId.isBlank()) {
+            return null;
+        }
+        return transactionId.trim();
     }
 }

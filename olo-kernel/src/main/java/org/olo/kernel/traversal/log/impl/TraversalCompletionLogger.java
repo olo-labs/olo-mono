@@ -50,6 +50,10 @@ public final class TraversalCompletionLogger {
         log.error("Traversal failed: nodeId={}, status={}, message={}", nodeId, status, formatValue(message));
     }
 
+    public static void logTraversalWaiting(String nodeId, String message) {
+        log.info("Traversal waiting for human input: nodeId={}, message={}", nodeId, formatValue(message));
+    }
+
     public static void logReturnResolve(
             String path,
             String returnVariable,

@@ -25,6 +25,14 @@ public final class CoreToolIds {
     public static final String TRAVEL_DESTINATIONS = "olo-core:travel-destinations";
     public static final String TRAVEL_OFFERS = "olo-core:travel-offers";
 
+    public static final String RESTART_CONTAINER = "olo-core:restart-container";
+    public static final String GIT_REVERT = "olo-core:git-revert";
+    public static final String CREATE_PULL_REQUEST = "olo-core:create-pull-request";
+    public static final String BOOK_TICKET = "olo-core:book-ticket";
+
+    public static final String CONVERSATION_LOAD = "olo-core:conversation-load";
+    public static final String CONVERSATION_STORE = "olo-core:conversation-store";
+
     private CoreToolIds() {
     }
 }

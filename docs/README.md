@@ -32,7 +32,7 @@ Deeper design for individual Gradle projects:
 ## Quick orientation
 
 ```
-olo-definition/olo-configuration/   Preset WorkflowDefinition JSON (data, not a Gradle module)
+olo-definition/olo-configuration/   Scenario presets + current-active/ (activate via olo-ui Administration → Scenarios)
 olo-definition/        Graph POJOs, serializers, validation
 olo-workflow-input/    Per-run invocation payload (WorkflowInput)
 olo-worker-configuration/  Worker deployment settings (port, Temporal, scanFolder)

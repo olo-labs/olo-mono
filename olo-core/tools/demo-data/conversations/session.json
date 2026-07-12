@@ -1,0 +1,17 @@
+[ {
+  "role" : "user",
+  "content" : "quick question",
+  "timestamp" : "2026-07-12T13:10:41.425781400Z"
+}, {
+  "role" : "assistant",
+  "content" : "LLM response for: You give fast, high-signal answers. Be brief unless detail is essential.\n\nRequest:\nquick question\n\nLead with the answer, then add only critical supporting detail.\nPrevious conversation summary (from conversation-load plugin):\nNo prior conversation.",
+  "timestamp" : "2026-07-12T13:10:41.425781400Z"
+}, {
+  "role" : "user",
+  "content" : "Previous conversation summary:\nuser: quick question assistant: LLM response for: You give fast, high-signal answers. Be brief unless detail is essential.\n\nRequest:\nquick question\n\nLead with the answer, then add only critical supporting deta...\n\nCurrent request:\nquick question",
+  "timestamp" : "2026-07-12T13:11:00.851225200Z"
+}, {
+  "role" : "assistant",
+  "content" : "LLM response for: You give fast, high-signal answers. Be brief unless detail is essential.\n\nRequest:\nPrevious conversation summary:\nuser: quick question assistant: LLM response for: You give fast, high-signal answers. Be brief unless detail is essential.\n\nRequest:\nquick question\n\nLead with the answer, then add only critical supporting deta...\n\nCurrent request:\nquick question\n\nLead with the answer, then add only critical supporting detail.\nPrevious conversation summary (from conversation-load plugin):\nuser: quick question assistant: LLM response for: You give fast, high-signal answers. Be brief unless detail is essential.\n\nRequest:\nquick question\n\nLead with the answer, then add only critical supporting deta...",
+  "timestamp" : "2026-07-12T13:11:00.852225800Z"
+} ]

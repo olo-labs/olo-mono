@@ -52,7 +52,9 @@ public final class DefaultChildWorkflowCoordinator implements ChildWorkflowCoord
 
         String childMessage = readDelegateMessage(node, parent);
         var childInput = ChildWorkflowInputs.forChildAgent(parent, childWorkflowId, childMessage);
-        String childResult = ChildWorkflowRunGateway.execute(parent.getQueue(), childWorkflowId, childInput);
+        String parentWorkflowId = parent.getGraph() != null ? parent.getGraph().getId() : null;
+        String childResult = ChildWorkflowRunGateway.execute(
+                parent.getQueue(), childWorkflowId, childInput, parentWorkflowId);
 
         NodeResult childNodeResult = NodeResult.completed(childResult, Map.of("response", childResult));
         mergeOutputs(parent, node, childNodeResult);

@@ -58,13 +58,13 @@ class DefaultConfigurationPipelineTest {
                         .getPromptTemplate());
         if ("agent".equals(fileName)) {
             assertThat(onDisk.getNodes().stream().map(node -> node.getType()).toList())
-                    .containsExactly("START", "TOOL", "TOOL", "AGENT", "END");
+                    .containsExactly("START", "TOOL", "TOOL", "HUMAN", "TOOL", "TOOL", "TOOL", "AGENT", "END");
             assertThat(onDisk.getMetadata()).containsKey("dynamicToolExecution");
             assertThat(onDisk.getVariables().stream().map(v -> v.getName()))
                     .contains("availableToolsJson", "toolCallSequenceJson", "toolResultsJson");
         } else {
             assertThat(onDisk.getNodes().stream().map(node -> node.getType()).toList())
-                    .containsExactly("START", "AGENT", "END");
+                    .containsExactly("START", "TOOL", "AGENT", "TOOL", "END");
         }
 
         StudioDesignerAssertions.assertStudioBuildReady(onDisk);
@@ -75,10 +75,13 @@ class DefaultConfigurationPipelineTest {
         var plannerContext = (java.util.Map<String, Object>) onDisk.getMetadata().get(PlannerContextDefinition.METADATA_KEY);
         if ("agent".equals(fileName)) {
             assertThat(plannerContext.get(PlannerContextDefinition.SELECTED_VARIABLES))
-                    .isEqualTo(java.util.List.of("message", "availableToolsJson", "toolCallSequenceJson"));
+                    .isEqualTo(java.util.List.of(
+                            "message", "conversationSummary", "availableToolsJson", "toolCallSequenceJson"));
         } else {
             assertThat(plannerContext)
-                    .containsEntry(PlannerContextDefinition.SELECTED_VARIABLES, java.util.List.of("message"));
+                    .containsEntry(
+                            PlannerContextDefinition.SELECTED_VARIABLES,
+                            java.util.List.of("message", "conversationSummary"));
         }
     }
 

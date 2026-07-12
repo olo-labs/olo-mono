@@ -52,6 +52,7 @@ import org.olo.kernel.traversal.step.TraversalStepExecutor;
 import org.olo.kernel.traversal.step.handler.NodeTypeHandler;
 import org.olo.kernel.traversal.step.handler.impl.AgentNodeTypeHandler;
 import org.olo.kernel.traversal.step.handler.impl.EndNodeTypeHandler;
+import org.olo.kernel.traversal.step.handler.impl.HumanNodeTypeHandler;
 import org.olo.kernel.traversal.step.handler.impl.NodeTypeHandlerRegistry;
 import org.olo.kernel.traversal.step.handler.impl.SpiNodeTypeHandler;
 import org.olo.kernel.traversal.step.handler.impl.StartNodeTypeHandler;
@@ -110,6 +111,7 @@ public final class GraphTraverserFactory {
 
         List<NodeTypeHandler> handlers = List.of(
                 new StartNodeTypeHandler(inputBinder),
+                new HumanNodeTypeHandler(),
                 new AgentNodeTypeHandler(agentExecutorRegistry),
                 new ToolNodeTypeHandler(executionEngine, executionContextFactory),
                 new EndNodeTypeHandler(),

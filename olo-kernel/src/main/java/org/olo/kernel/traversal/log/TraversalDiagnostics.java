@@ -111,6 +111,10 @@ public final class TraversalDiagnostics {
         TraversalCompletionLogger.logTraversalFailed(nodeId, status, message);
     }
 
+    public static void logTraversalWaiting(String nodeId, String message) {
+        TraversalCompletionLogger.logTraversalWaiting(nodeId, message);
+    }
+
     public static void logReturnResolve(
             String path,
             String returnVariable,

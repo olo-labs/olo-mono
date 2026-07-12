@@ -51,6 +51,13 @@ def configurationDir = rootProject.layout.projectDirectory.dir('olo-configuratio
 def dynamicGraphCreationDir = rootProject.layout.projectDirectory.dir('olo-configuration/dynamic-graph-creation')
 def researchPlannerDir = rootProject.layout.projectDirectory.dir('olo-configuration/research-planner')
 def travelPlannerDir = rootProject.layout.projectDirectory.dir('olo-configuration/travel-planner')
+def logRcaAnalysisDir = rootProject.layout.projectDirectory.dir('olo-configuration/log-rca-analysis')
+def performanceTriageDir = rootProject.layout.projectDirectory.dir('olo-configuration/performance-triage')
+def securityIncidentResponseDir = rootProject.layout.projectDirectory.dir('olo-configuration/security-incident-response')
+def releaseReadinessReviewDir = rootProject.layout.projectDirectory.dir('olo-configuration/release-readiness-review')
+def apiIntegrationTriageDir = rootProject.layout.projectDirectory.dir('olo-configuration/api-integration-triage')
+def capacityPlanningDir = rootProject.layout.projectDirectory.dir('olo-configuration/capacity-planning')
+def literatureReviewDir = rootProject.layout.projectDirectory.dir('olo-configuration/literature-review')
 
 tasks.register('generateSamples', Test) {
     group = 'build'
@@ -117,6 +124,105 @@ tasks.register('generateTravelPlanner', Test) {
     }
 }
 
+tasks.register('generateLogRcaAnalysis', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/log-rca-analysis scenario via LogRcaAnalysisRegenerationTest'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.logRcaAnalysis.configuration.dir', logRcaAnalysisDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.logrcaanalysis.LogRcaAnalysisRegenerationTest'
+    }
+}
+
+tasks.register('generatePerformanceTriage', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/performance-triage scenario'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.performanceTriage.configuration.dir', performanceTriageDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.performancetriage.PerformanceTriageRegenerationTest'
+    }
+}
+
+tasks.register('generateSecurityIncidentResponse', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/security-incident-response scenario'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.securityIncidentResponse.configuration.dir', securityIncidentResponseDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.securityincidentresponse.SecurityIncidentResponseRegenerationTest'
+    }
+}
+
+tasks.register('generateReleaseReadinessReview', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/release-readiness-review scenario'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.releaseReadinessReview.configuration.dir', releaseReadinessReviewDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.releasereadinessreview.ReleaseReadinessReviewRegenerationTest'
+    }
+}
+
+tasks.register('generateApiIntegrationTriage', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/api-integration-triage scenario'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.apiIntegrationTriage.configuration.dir', apiIntegrationTriageDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.apiintegrationtriage.ApiIntegrationTriageRegenerationTest'
+    }
+}
+
+tasks.register('generateCapacityPlanning', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/capacity-planning scenario'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.capacityPlanning.configuration.dir', capacityPlanningDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.capacityplanning.CapacityPlanningRegenerationTest'
+    }
+}
+
+tasks.register('generateLiteratureReview', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/literature-review scenario'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.literatureReview.configuration.dir', literatureReviewDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.literaturereview.LiteratureReviewRegenerationTest'
+    }
+}
+
+tasks.register('generateAllScenarios') {
+    group = 'build'
+    description = 'Regenerate all multi-agent scenario collections under olo-configuration/'
+    dependsOn generateResearchPlanner, generateTravelPlanner, generateLogRcaAnalysis,
+            generatePerformanceTriage, generateSecurityIncidentResponse, generateReleaseReadinessReview,
+            generateApiIntegrationTriage, generateCapacityPlanning, generateLiteratureReview
+}
+
 tasks.named('test', Test) {
     dependsOn generateSamples, generateConfiguration
     workingDir = rootProject.projectDir
@@ -125,12 +231,26 @@ tasks.named('test', Test) {
     systemProperty 'olo.dynamicGraphCreation.configuration.dir', dynamicGraphCreationDir.asFile.absolutePath
     systemProperty 'olo.researchPlanner.configuration.dir', researchPlannerDir.asFile.absolutePath
     systemProperty 'olo.travelPlanner.configuration.dir', travelPlannerDir.asFile.absolutePath
+    systemProperty 'olo.logRcaAnalysis.configuration.dir', logRcaAnalysisDir.asFile.absolutePath
+    systemProperty 'olo.performanceTriage.configuration.dir', performanceTriageDir.asFile.absolutePath
+    systemProperty 'olo.securityIncidentResponse.configuration.dir', securityIncidentResponseDir.asFile.absolutePath
+    systemProperty 'olo.releaseReadinessReview.configuration.dir', releaseReadinessReviewDir.asFile.absolutePath
+    systemProperty 'olo.apiIntegrationTriage.configuration.dir', apiIntegrationTriageDir.asFile.absolutePath
+    systemProperty 'olo.capacityPlanning.configuration.dir', capacityPlanningDir.asFile.absolutePath
+    systemProperty 'olo.literatureReview.configuration.dir', literatureReviewDir.asFile.absolutePath
     filter {
         excludeTestsMatching 'org.olo.definition.samples.SampleWorkflowRegenerationTest'
         excludeTestsMatching 'org.olo.definition.configuration.DefaultConfigurationRegenerationTest'
         excludeTestsMatching 'org.olo.definition.configuration.dynamicgraphcreation.DynamicGraphCreationRegenerationTest'
         excludeTestsMatching 'org.olo.definition.configuration.researchplanner.ResearchPlannerRegenerationTest'
         excludeTestsMatching 'org.olo.definition.configuration.travelplanner.TravelPlannerRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.logrcaanalysis.LogRcaAnalysisRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.performancetriage.PerformanceTriageRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.securityincidentresponse.SecurityIncidentResponseRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.releasereadinessreview.ReleaseReadinessReviewRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.apiintegrationtriage.ApiIntegrationTriageRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.capacityplanning.CapacityPlanningRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.literaturereview.LiteratureReviewRegenerationTest'
     }
 }
 

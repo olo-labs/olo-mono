@@ -58,3 +58,7 @@ Demo PRs tied to the same payment-service incident:
 | `847-circuit-breaker-hotfix.patch` | #847 | Post-incident circuit breaker hotfix |
 
 Optional arguments: `limit` (default 5), `pullRequestNumber` (e.g. `842` to filter by filename).
+
+## Multi-agent scenarios
+
+Observability scenarios (`log-rca-analysis`, `performance-triage`, `security-incident-response`, `release-readiness-review`, `api-integration-triage`, `capacity-planning`) use this data. Research and literature scenarios use `research-literature` mock fixtures. Activate a scenario in **olo-ui → Administration → Scenarios**, then run the orchestrator on `oloQueue2`. See [`olo-configuration/README.md`](../../../olo-definition/olo-configuration/README.md).

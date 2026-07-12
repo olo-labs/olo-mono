@@ -21,6 +21,12 @@ class ParameterSchemaMappingTest {
     }
 
     @Test
+    void mapsApprovalToggleToBooleanYesNoWidget() {
+        assertThat(ParameterSchemaMapping.fromPropertyType("APPROVAL_TOGGLE"))
+                .isEqualTo(new ParameterSchemaMapping.MappedParameter("boolean", ParameterWidget.APPROVAL_TOGGLE));
+    }
+
+    @Test
     void secretFlagOverridesType() {
         assertThat(ParameterSchemaMapping.fromPropertyType("STRING", true))
                 .isEqualTo(new ParameterSchemaMapping.MappedParameter("string", ParameterWidget.SECRET));

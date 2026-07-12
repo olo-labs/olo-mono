@@ -67,6 +67,9 @@ public final class DefaultGraphTraversalEngine implements GraphTraversalEngine {
         if (cursor.status() == KernelExecutionSnapshot.Status.FAILED) {
             return TraversalResult.failed(cursor.lastNodeId(), cursor.lastStatus(), cursor.message());
         }
+        if (cursor.status() == KernelExecutionSnapshot.Status.WAITING) {
+            return TraversalResult.waiting(cursor.lastNodeId(), cursor.message());
+        }
 
         TraversalDiagnostics.logTraversalComplete(
                 cursor.lastNodeId(), cursor.message(), context.getVariableMap(), context.getOutputMap());
@@ -103,9 +106,9 @@ public final class DefaultGraphTraversalEngine implements GraphTraversalEngine {
             return TraversalCursor.failed(currentNodeId, step, result.status(), message);
         }
         if (result.status() == NodeStatus.WAITING) {
-            String message = result.message() != null ? result.message() : "node execution waiting";
-            TraversalDiagnostics.logTraversalFailed(currentNodeId, result.status(), message);
-            return TraversalCursor.failed(currentNodeId, step, result.status(), message);
+            String message = result.message() != null ? result.message() : "awaiting human input";
+            TraversalDiagnostics.logTraversalWaiting(currentNodeId, message);
+            return TraversalCursor.waiting(currentNodeId, step, message);
         }
 
         ExecutionDecision decision = executionStrategyRegistry.decide(

@@ -17,6 +17,8 @@ public final class AgentToolExecutionDefinitions {
     public static final String CPU_USAGE_NODE_ID = "cpu-usage";
     public static final String CALCULATOR_TOOL_ID = "olo-core:calculator";
     public static final String CPU_USAGE_TOOL_ID = "olo-core:cpu-usage";
+    public static final String RESTART_CONTAINER_NODE_ID = "restart-container";
+    public static final String RESTART_CONTAINER_TOOL_ID = "olo-core:restart-container";
 
     private AgentToolExecutionDefinitions() {
     }

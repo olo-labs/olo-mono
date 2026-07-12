@@ -36,6 +36,16 @@ record TraversalCursor(
                 null, step, KernelExecutionSnapshot.Status.FAILED, lastNodeId, lastStatus, message);
     }
 
+    static TraversalCursor waiting(String waitingNodeId, int step, String message) {
+        return new TraversalCursor(
+                waitingNodeId,
+                step,
+                KernelExecutionSnapshot.Status.WAITING,
+                waitingNodeId,
+                NodeStatus.WAITING,
+                message);
+    }
+
     static TraversalCursor fromSnapshot(KernelExecutionSnapshot snapshot) {
         return new TraversalCursor(
                 snapshot.getNextNodeId(),

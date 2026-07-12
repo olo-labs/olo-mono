@@ -30,6 +30,7 @@ public final class ParameterSchemaMapping {
             case "TEXTAREA" -> new MappedParameter("string", ParameterWidget.TEXTAREA);
             case "NUMBER" -> new MappedParameter("number", ParameterWidget.NUMBER);
             case "BOOLEAN" -> new MappedParameter("boolean", ParameterWidget.BOOLEAN);
+            case "APPROVAL_TOGGLE" -> new MappedParameter("boolean", ParameterWidget.APPROVAL_TOGGLE);
             case "ENUM" -> new MappedParameter("enum", ParameterWidget.SELECT);
             case "JSON" -> new MappedParameter("object", ParameterWidget.JSON);
             case "SECRET" -> new MappedParameter("string", ParameterWidget.SECRET);

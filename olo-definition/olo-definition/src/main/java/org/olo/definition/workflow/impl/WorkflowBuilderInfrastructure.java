@@ -8,6 +8,7 @@ package org.olo.definition.workflow.impl;
 import org.olo.definition.model.ModelProviderDefinition;
 import org.olo.definition.model.ModelRoutingDefinition;
 import org.olo.definition.input.WorkflowInputDefinition;
+import org.olo.definition.preset.WorkflowConversationPluginSupport;
 import org.olo.definition.preset.WorkflowPresetInfrastructure;
 import org.olo.definition.variable.VariableDefinition;
 import org.olo.definition.workflow.WorkflowBuilder;
@@ -91,6 +92,12 @@ public final class WorkflowBuilderInfrastructure {
         return withMessageInput().withMessageVariable();
     }
 
+    public WorkflowBuilder withConversationVariables() {
+        addVariableIfAbsent(WorkflowConversationPluginSupport.conversationSummaryVariable());
+        addVariableIfAbsent(WorkflowConversationPluginSupport.conversationHistoryVariable());
+        return owner;
+    }
+
     // --- planner context presets ---
 
     public WorkflowBuilder presetPlannerContext(String presetId) {
@@ -118,5 +125,13 @@ public final class WorkflowBuilderInfrastructure {
                     .build());
         }
         return owner;
+    }
+
+    private void addVariableIfAbsent(VariableDefinition variable) {
+        boolean exists = state.variables.stream()
+                .anyMatch(existing -> variable.getName().equals(existing.getName()));
+        if (!exists) {
+            nodes.variable(variable);
+        }
     }
 }

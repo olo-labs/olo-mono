@@ -1,0 +1,18 @@
+{
+  "action": "submit-research-review",
+  "targetLabel": "manuscriptId",
+  "defaultTarget": "MS-REN-2026-014",
+  "summary": "Submitted manuscript {manuscriptId} for peer review",
+  "steps": [
+    "Validating operator approval for manuscript {manuscriptId}",
+    "Packaging literature synthesis and citations",
+    "Uploading manuscript {manuscriptId} to review portal",
+    "Assigning reviewers from energy-research panel",
+    "Sending submission confirmation"
+  ],
+  "result": {
+    "manuscriptId": "MS-REN-2026-014",
+    "reviewPortalId": "REV-PORTAL-8821",
+    "status": "submitted"
+  }
+}

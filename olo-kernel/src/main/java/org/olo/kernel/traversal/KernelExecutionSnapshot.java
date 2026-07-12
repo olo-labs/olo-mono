@@ -39,6 +39,7 @@ public final class KernelExecutionSnapshot {
 
     public enum Status {
         RUNNING,
+        WAITING,
         COMPLETED,
         FAILED
     }
@@ -142,6 +143,10 @@ public final class KernelExecutionSnapshot {
         return status != Status.RUNNING;
     }
 
+    public boolean isWaiting() {
+        return status == Status.WAITING;
+    }
+
     public boolean requiresDedicatedActivityForNextNode() {
         return nextRequiresDedicatedActivity;
     }
@@ -164,6 +169,7 @@ public final class KernelExecutionSnapshot {
             case COMPLETED -> TraversalResult.completed(lastNodeId, message);
             case FAILED -> TraversalResult.failed(
                     lastNodeId, lastStatus != null ? lastStatus : NodeStatus.FAILED, message);
+            case WAITING -> TraversalResult.waiting(lastNodeId, message);
             case RUNNING -> throw new IllegalStateException("traversal snapshot is still running");
         };
     }

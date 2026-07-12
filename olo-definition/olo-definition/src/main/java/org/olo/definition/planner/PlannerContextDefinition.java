@@ -8,6 +8,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.olo.definition.preset.WorkflowConversationPluginSupport;
+import org.olo.definition.preset.WorkflowPresetInfrastructure;
+
 /**
  * Well-known {@code metadata.plannerContext} shape for agent workflow presets.
  * <p>
@@ -35,7 +38,11 @@ public final class PlannerContextDefinition {
 
     public static Map<String, Object> presetDefaults(String presetId) {
         Map<String, Object> context = new LinkedHashMap<>();
-        context.put(SELECTED_VARIABLES, List.of("message"));
+        context.put(
+                SELECTED_VARIABLES,
+                List.of(
+                        WorkflowPresetInfrastructure.MESSAGE_VARIABLE,
+                        WorkflowConversationPluginSupport.CONVERSATION_SUMMARY_VARIABLE));
         if ("agent".equals(presetId)) {
             context.put(SELECTED_TOOLS, List.of());
             context.put(SELECTED_AGENTS, List.of("planner", "reviewer", "architect"));

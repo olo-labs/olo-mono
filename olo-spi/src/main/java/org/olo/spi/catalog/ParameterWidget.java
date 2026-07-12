@@ -19,6 +19,8 @@ public enum ParameterWidget {
     NUMBER,
     SLIDER,
     BOOLEAN,
+    /** Yes/No button pair for human approval gates in chat and Studio. */
+    APPROVAL_TOGGLE,
     SELECT,
     MULTI_SELECT,
     JSON,
@@ -34,6 +36,9 @@ public enum ParameterWidget {
             Map.entry("slider", SLIDER),
             Map.entry("switch", BOOLEAN),
             Map.entry("boolean", BOOLEAN),
+            Map.entry("approval_toggle", APPROVAL_TOGGLE),
+            Map.entry("yes_no", APPROVAL_TOGGLE),
+            Map.entry("yes-no", APPROVAL_TOGGLE),
             Map.entry("select", SELECT),
             Map.entry("enum", SELECT),
             Map.entry("multi_select", MULTI_SELECT),

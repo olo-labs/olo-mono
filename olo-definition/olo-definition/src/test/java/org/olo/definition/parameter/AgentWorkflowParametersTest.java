@@ -141,7 +141,7 @@ class AgentWorkflowParametersTest {
         assertThat(workflow.getChildWorkflows()).hasSize(4);
         assertThat(workflow.getAvailableAgents()).isEqualTo(AgentAvailableAgents.agentPresetDefaults());
         assertThat(workflow.getRuntime().getDelegation()).isEqualTo(AgentDelegationPolicy.agentPresetDefaults());
-        assertThat(workflow.getTools()).hasSize(2);
+        assertThat(workflow.getTools()).hasSize(5);
     }
 
     @Test

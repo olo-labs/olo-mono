@@ -115,6 +115,16 @@ public final class AvailableToolsJsonResolver {
             String nodeId,
             boolean success,
             String response) {
+        appendToolResult(variables, toolId, nodeId, success, response, Map.of());
+    }
+
+    public static void appendToolResult(
+            org.olo.kernel.context.variables.WorkflowRuntimeVariables variables,
+            String toolId,
+            String nodeId,
+            boolean success,
+            String response,
+            Map<String, Object> output) {
         try {
             ArrayNode results = readResultsArray(variables);
             ObjectNode entry = MAPPER.createObjectNode();
@@ -122,6 +132,9 @@ public final class AvailableToolsJsonResolver {
             entry.put("nodeId", nodeId);
             entry.put("success", success);
             entry.put("response", response == null ? "" : response);
+            if (output != null && !output.isEmpty()) {
+                entry.set("output", MAPPER.valueToTree(output));
+            }
             results.add(entry);
             variables.set(ToolCallPlannerSupport.DEFAULT_TOOL_RESULTS_VARIABLE, MAPPER.writeValueAsString(results));
         } catch (Exception ignored) {

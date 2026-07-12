@@ -5,6 +5,8 @@
 package org.olo.definition.configuration.researchplanner;
 
 import org.junit.jupiter.api.Test;
+import org.olo.definition.configuration.scenario.ScenarioActionToolsSupport;
+import org.olo.definition.configuration.scenario.ScenarioConversationPluginSupport;
 import org.olo.definition.designer.StudioDesignerAssertions;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.toolcall.ToolCallPlannerSupport;
@@ -30,14 +32,20 @@ class ResearchPlannerConfigurationTest {
     }
 
     @Test
-    void orchestratorRegistersChildAgentsWithoutScenarioTool() throws IOException {
+    void orchestratorRegistersChildAgentsWithScenarioTool() throws IOException {
         Path configurationRoot = ResearchPlannerPaths.resolveConfigurationRoot();
         WorkflowDefinition orchestrator = json.deserialize(Files.readString(
                 configurationRoot.resolve(ResearchPlannerDefinitions.ORCHESTRATOR_ID + ".json")));
 
         assertThat(orchestrator.getChildWorkflows()).hasSize(2);
         assertThat(orchestrator.getAvailableAgents()).hasSize(2);
-        assertThat(orchestrator.getTools()).isEmpty();
+        assertThat(orchestrator.getTools()).hasSize(4);
+        assertThat(orchestrator.getTools().stream().map(tool -> tool.getId()).toList())
+                .containsExactlyInAnyOrder(
+                        ResearchPlannerDefinitions.RESEARCH_LITERATURE_NODE_ID,
+                        ScenarioActionToolsSupport.CREATE_PULL_REQUEST_NODE_ID,
+                        ScenarioConversationPluginSupport.CONVERSATION_LOAD_NODE_ID,
+                        ScenarioConversationPluginSupport.CONVERSATION_STORE_NODE_ID);
         assertThat(orchestrator.getMetadata()).containsKey(ToolCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
         assertThat(orchestrator.getVariables().stream().map(v -> v.getName()))
                 .contains(ToolCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE);
