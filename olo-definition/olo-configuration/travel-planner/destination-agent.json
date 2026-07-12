@@ -30,31 +30,18 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "message" : "#ef4444",
-      "boolean" : "#fb923c",
+      "object" : "#c084fc",
+      "string" : "#a3e635",
       "capabilities" : "#22c55e",
       "integer" : "#38bdf8",
-      "string" : "#a3e635",
-      "object" : "#c084fc",
-      "number" : "#38bdf8",
-      "array" : "#f472b6",
+      "boolean" : "#fb923c",
+      "message" : "#ef4444",
+      "any" : "#94a3b8",
       "agent-plug" : "#a855f7",
-      "any" : "#94a3b8"
+      "number" : "#38bdf8",
+      "array" : "#f472b6"
     },
     "nodeTypes" : {
-      "AGENT" : {
-        "emoji" : "🌍",
-        "typeLabel" : "Agent",
-        "inlineProperties" : [ {
-          "id" : "parameters",
-          "widget" : "WORKFLOW_PARAMETERS",
-          "label" : "Parameters"
-        }, {
-          "id" : "model",
-          "widget" : "MODEL_SELECTOR",
-          "label" : "Model"
-        } ]
-      },
       "END" : {
         "emoji" : "⏹",
         "typeLabel" : "End",
@@ -68,6 +55,19 @@
           "widget" : "VARIABLE_SELECT",
           "label" : "Output variable",
           "binding" : "outputVariableMapping"
+        } ]
+      },
+      "AGENT" : {
+        "emoji" : "🌍",
+        "typeLabel" : "Agent",
+        "inlineProperties" : [ {
+          "id" : "parameters",
+          "widget" : "WORKFLOW_PARAMETERS",
+          "label" : "Parameters"
+        }, {
+          "id" : "model",
+          "widget" : "MODEL_SELECTOR",
+          "label" : "Model"
         } ]
       },
       "START" : {
@@ -116,6 +116,19 @@
   },
   "state" : { },
   "parameters" : {
+    "model" : {
+      "type" : "string",
+      "label" : "Model",
+      "description" : "Default model identifier",
+      "defaultValue" : "",
+      "required" : false,
+      "ui" : {
+        "widget" : "MODEL_SELECTOR",
+        "group" : "Model Settings",
+        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
+        "order" : 2
+      }
+    },
     "maxIterations" : {
       "type" : "integer",
       "label" : "Max Iterations",
@@ -134,17 +147,18 @@
         "order" : 1
       }
     },
-    "model" : {
+    "systemPrompt" : {
       "type" : "string",
-      "label" : "Model",
-      "description" : "Default model identifier",
-      "defaultValue" : "",
+      "label" : "System Prompt",
+      "description" : "System prompt for the agent",
+      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}",
       "required" : false,
       "ui" : {
-        "widget" : "MODEL_SELECTOR",
+        "widget" : "TEXTAREA",
         "group" : "Model Settings",
-        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
-        "order" : 2
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
+        "order" : 0
       }
     },
     "temperature" : {
@@ -163,20 +177,6 @@
         "group" : "Model Settings",
         "help" : "Higher values increase response creativity.",
         "order" : 3
-      }
-    },
-    "systemPrompt" : {
-      "type" : "string",
-      "label" : "System Prompt",
-      "description" : "System prompt for the agent",
-      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}",
-      "required" : false,
-      "ui" : {
-        "widget" : "TEXTAREA",
-        "group" : "Model Settings",
-        "help" : "Include {message} to inject the workflow input into the system prompt.",
-        "placeholder" : "You are a helpful assistant…\n\n{message}",
-        "order" : 0
       }
     }
   },
@@ -269,8 +269,8 @@
       }
     } ],
     "execution" : {
-      "executionKind" : "SUBWORKFLOW",
-      "executionModel" : "CHILD_WORKFLOW",
+      "executionKind" : "ACTIVITY",
+      "executionModel" : "INLINE",
       "routers" : [ ],
       "workflowRef" : {
         "workflowId" : "destination-agent",
@@ -366,14 +366,14 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
-    "returnVariable" : "ReturnValue",
     "role" : "destination-agent",
+    "returnVariable" : "ReturnValue",
+    "description" : "Recommends cities and highlights for a travel region",
     "plannerContext" : {
-      "selectedAgents" : [ ],
-      "selectedTools" : [ ],
       "injectCapabilities" : false,
+      "selectedTools" : [ ],
+      "selectedAgents" : [ ],
       "selectedVariables" : [ "message" ]
-    },
-    "description" : "Recommends cities and highlights for a travel region"
+    }
   }
 }

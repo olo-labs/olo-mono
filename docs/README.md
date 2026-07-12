@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # OLO monorepo documentation
 
 Architecture and module reference for **olo-mono** — the Java libraries and worker process that implement the **Open LLM Orchestrator (OLO)**.

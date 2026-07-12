@@ -1,0 +1,22 @@
+{
+  "id": "default-worker",
+  "name": "OLO Worker Test",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8080
+  },
+  "workflowDefinitions": {
+    "scanFolder": "../../olo-definition/olo-configuration/default",
+    "recursive": true
+  },
+  "temporal": {
+    "namespace": "default",
+    "target": "localhost:47233"
+  },
+  "cache": {
+    "enabled": false
+  },
+  "metadata": {
+    "environment": "test"
+  }
+}

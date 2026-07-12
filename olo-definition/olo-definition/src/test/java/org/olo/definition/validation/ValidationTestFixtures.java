@@ -1,7 +1,12 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.validation;
 
 import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.node.NodeDefinition;
+import org.olo.definition.node.NodeDefinitionBuilder;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.port.PortDefinition;
 import org.olo.definition.port.PortDirection;
@@ -23,8 +28,8 @@ public final class ValidationTestFixtures {
                 .build();
     }
 
-    public static NodeDefinition.Builder node(String id, NodeType type) {
-        NodeDefinition.Builder builder = NodeDefinition.builder().id(id).type(type);
+    public static NodeDefinitionBuilder node(String id, NodeType type) {
+        NodeDefinitionBuilder builder = NodeDefinition.builder().id(id).type(type);
         if (type != NodeType.START) {
             builder.addPort(PortDefinition.inputPort("in", "any"));
         }

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.workflow;
 
 import org.olo.definition.human.HumanApprovalDefinition;
@@ -30,14 +34,17 @@ class WorkflowBuilderTest {
                 .outputNode("response")
                 .connect("request", "analysis")
                 .connect("analysis", "screener")
-                .connect("screener", "response")
+                .connect("screener", "out", "response", "in")
                 .build();
 
         assertThat(workflow.getId()).isEqualTo("stock-analysis");
         assertThat(workflow.getLabel()).isEqualTo("Stock Workflow");
         assertThat(workflow.getNodes()).hasSize(4);
         assertThat(workflow.getEdges()).hasSize(3);
-        assertThat(WorkflowValidator.validate(workflow).valid()).isTrue();
+        var validation = WorkflowValidator.validate(workflow);
+        assertThat(validation.valid())
+                .as("validation errors: %s", validation.errors())
+                .isTrue();
     }
 
     @Test
@@ -112,18 +119,22 @@ class WorkflowBuilderTest {
                 .connect("input", "recommendation")
                 .connect("recommendation", "trade-approval")
                 .connect("trade-approval", "execute-trade")
-                .connect("execute-trade", "output")
+                .connect("execute-trade", "out", "output", "in")
                 .build();
 
         assertThat(workflow.getNodes()).anyMatch(
                 n -> "trade-approval".equals(n.getId()) && NodeType.HUMAN.value().equals(n.getType()));
-        assertThat(WorkflowValidator.validate(workflow).valid()).isTrue();
+        var validation = WorkflowValidator.validate(workflow);
+        assertThat(validation.valid())
+                .as("validation errors: %s", validation.errors())
+                .isTrue();
     }
 
     @Test
     void buildsAgentWorkflow() {
         WorkflowDefinition workflow = WorkflowBuilder.create("Agent Handoff")
                 .id("agent-handoff")
+                .executionModel(ExecutionModel.CHILD_WORKFLOW)
                 .capability(ValidationTestFixtures.minimalCapability())
                 .inputNode("input")
                 .agentNode(
@@ -131,8 +142,8 @@ class WorkflowBuilderTest {
                         "HANDOFF",
                         WorkflowReferenceDefinition.builder().workflowId("support-agent").build())
                 .outputNode("output")
-                .connect("input", "support-agent")
-                .connect("support-agent", "output")
+                .connect("input", "out", "support-agent", "in")
+                .connect("support-agent", "out", "output", "in")
                 .build();
 
         NodeDefinition agentNode = workflow.getNodes().stream()
@@ -143,7 +154,10 @@ class WorkflowBuilderTest {
         assertThat(agentNode.getSubtype()).isEqualTo("HANDOFF");
         assertThat(agentNode.getExecutionKind()).isEqualTo(ExecutionKind.SUBWORKFLOW);
         assertThat(agentNode.getExecutionModel()).isEqualTo(ExecutionModel.CHILD_WORKFLOW);
-        assertThat(WorkflowValidator.validate(workflow).valid()).isTrue();
+        var validation = WorkflowValidator.validate(workflow);
+        assertThat(validation.valid())
+                .as("validation errors: %s", validation.errors())
+                .isTrue();
     }
 
     @Test

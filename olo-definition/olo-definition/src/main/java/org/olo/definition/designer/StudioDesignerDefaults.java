@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.designer;
 
 import java.util.LinkedHashMap;
@@ -121,7 +125,7 @@ public final class StudioDesignerDefaults {
     }
 
     public static DesignerDefinition studioAgentDesigner(String agentEmoji, String... searchKeywords) {
-        DesignerDefinition.Builder builder = DesignerDefinition.builder()
+        DesignerDefinitionBuilder builder = DesignerDefinition.builder()
                 .paletteGroup("Agents")
                 .nodeSize(NODE_WIDTH, NODE_HEIGHT)
                 .resizable(true)

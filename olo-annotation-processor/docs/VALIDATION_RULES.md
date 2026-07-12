@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Annotation processor validation rules
 
 Compile-time checks for `OloExtensionCatalogProcessor`. Rules fail the build with a stable **OLO-AP-*** code so plugin authors can search docs and CI logs.

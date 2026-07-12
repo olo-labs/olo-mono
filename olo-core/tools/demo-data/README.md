@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Demo observability data for olo-core tools
 
 Sample folders used by the built-in observability tools. Each tool maps to its own folder via the `dataFolder` configuration property.

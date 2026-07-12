@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Runtime Roadmap
 
 **Target architecture** for workflow lifecycle (`WorkflowStatus`), variable scope enforcement, suspension/resume, and multi-agent output merging. Planned work — not the current kernel contract.

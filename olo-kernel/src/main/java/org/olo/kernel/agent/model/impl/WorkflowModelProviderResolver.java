@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.agent.model.impl;
 
 import org.olo.definition.model.ModelProviderDefinition;
@@ -14,7 +18,7 @@ public final class WorkflowModelProviderResolver implements ModelProviderResolve
 
     private static final String TEMPERATURE_PARAMETER = "temperature";
     private static final double DEFAULT_TEMPERATURE = 0.2;
-    private static final String DEFAULT_BASE_URL = "http://localhost:51435";
+    private static final String DEFAULT_BASE_URL = "http://localhost:11435";
 
     @Override
     public ResolvedModelCall resolve(WorkflowDefinition graph) {

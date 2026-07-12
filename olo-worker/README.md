@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # olo-worker
 
 Main OLO Temporal worker process.
@@ -91,7 +95,14 @@ cd olo-mono
 
 ## Logging
 
-Bootstrap logs each step (`Step 1/4` … `Step 4/4`). On failure, the log includes what failed and how to fix it (config path, scan folder, Temporal target). Set `org.slf4j.simpleLogger.defaultLogLevel=debug` for more detail.
+Bootstrap logs each step (`Step 1/5` … `Step 5/5`). On failure, the log includes what failed and how to fix it (config path, scan folder, **Ollama/LLM URL**, Temporal target). Set `org.slf4j.simpleLogger.defaultLogLevel=debug` for more detail.
+
+**LLM health check (Step 4/5):** before Temporal starts, the worker probes `GET {OLO_LLM_BASE_URL}/api/tags` (10s timeout) and verifies required models are installed. If Ollama is down you get an immediate error instead of a 5-minute timeout on the first workflow activity.
+
+```powershell
+curl http://localhost:11435/api/tags
+docker exec olo-ollama ollama pull llama3.2
+```
 
 ## Refresh at runtime
 

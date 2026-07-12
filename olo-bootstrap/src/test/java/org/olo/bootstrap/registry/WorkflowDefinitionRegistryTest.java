@@ -1,8 +1,13 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.bootstrap.registry;
 
 import org.junit.jupiter.api.Test;
 import org.olo.bootstrap.model.CachedWorkflowDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
+import org.olo.definition.workflow.WorkflowDefinitionBuilder;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -104,7 +109,7 @@ class WorkflowDefinitionRegistryTest {
     }
 
     private static WorkflowDefinition workflow(String id, String version, String queue, Boolean isDefault) {
-        WorkflowDefinition.Builder builder = WorkflowDefinition.builder()
+        WorkflowDefinitionBuilder builder = WorkflowDefinition.builder()
                 .id(id)
                 .version(version)
                 .queue(queue);

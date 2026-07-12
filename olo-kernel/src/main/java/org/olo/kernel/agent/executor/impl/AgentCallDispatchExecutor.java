@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.agent.executor.impl;
 
 import org.olo.definition.node.NodeDefinition;
@@ -10,7 +14,7 @@ import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.exception.KernelException;
 import org.olo.kernel.toolcall.AgentCallResultsSupport;
 import org.olo.kernel.toolcall.AvailableAgentsJsonResolver;
-import org.olo.kernel.toolcall.ToolCallSubgraphMerger;
+import org.olo.kernel.toolcall.model.ParsedAgentCall;
 import org.olo.spi.node.NodeResult;
 
 import java.util.ArrayList;
@@ -57,10 +61,10 @@ public final class AgentCallDispatchExecutor implements AgentExecutor {
         }
 
         String plannerNodeId = readPlannerNodeId(node);
-        List<ToolCallSubgraphMerger.ParsedAgentCall> agentCalls = readAgentCalls(node);
+        List<ParsedAgentCall> agentCalls = readAgentCalls(node);
         List<Map<String, Object>> results = new ArrayList<>();
 
-        for (ToolCallSubgraphMerger.ParsedAgentCall call : agentCalls) {
+        for (ParsedAgentCall call : agentCalls) {
             if (AgentCallResultsSupport.completedAgentIds(context.getVariables()).contains(call.agentId())) {
                 continue;
             }
@@ -106,17 +110,17 @@ public final class AgentCallDispatchExecutor implements AgentExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<ToolCallSubgraphMerger.ParsedAgentCall> readAgentCalls(NodeDefinition node) {
+    private static List<ParsedAgentCall> readAgentCalls(NodeDefinition node) {
         Object configured = node.getConfiguration().get(CONFIG_AGENT_CALLS);
         if (configured instanceof List<?> list) {
-            List<ToolCallSubgraphMerger.ParsedAgentCall> calls = new ArrayList<>();
+            List<ParsedAgentCall> calls = new ArrayList<>();
             for (Object item : list) {
-                if (item instanceof ToolCallSubgraphMerger.ParsedAgentCall call) {
+                if (item instanceof ParsedAgentCall call) {
                     calls.add(call);
                 } else if (item instanceof Map<?, ?> map) {
                     String agentId = String.valueOf(map.get("agentId")).trim();
                     String message = map.containsKey("message") ? String.valueOf(map.get("message")) : null;
-                    calls.add(new ToolCallSubgraphMerger.ParsedAgentCall(agentId, message));
+                    calls.add(new ParsedAgentCall(agentId, message));
                 }
             }
             if (!calls.isEmpty()) {

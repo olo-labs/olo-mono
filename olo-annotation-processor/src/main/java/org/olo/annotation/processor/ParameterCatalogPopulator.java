@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.annotation.processor;
 
 import org.olo.annotation.OloProperty;
@@ -7,11 +11,11 @@ import org.olo.annotation.catalog.ParameterUiDescriptor;
 import org.olo.spi.catalog.ParameterSchemaMapping;
 
 /** Materializes unified {@link ParameterDescriptor} entries from extension annotations. */
-final class ParameterCatalogPopulator {
+public final class ParameterCatalogPopulator {
 
     private ParameterCatalogPopulator() {}
 
-    static ParameterDescriptor fromProperty(OloProperty property) {
+    public static ParameterDescriptor fromProperty(OloProperty property) {
         ParameterSchemaMapping.MappedParameter schema =
                 ParameterSchemaMapping.fromPropertyType(property.type().name(), property.secret());
 

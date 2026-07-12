@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.toolcall;
 
 import org.junit.jupiter.api.Test;
@@ -9,11 +13,15 @@ import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.context.variables.WorkflowRuntimeVariables;
 
+import org.olo.kernel.toolcall.model.ParsedAgentCall;
+
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AgentCallResultsSupportTest {
+
+    private static final ToolCallSubgraphMerger MERGER = ToolCallFactories.defaultToolCallSubgraphMerger();
 
     @Test
     void filtersAlreadyCompletedAgents() {
@@ -24,22 +32,22 @@ class AgentCallResultsSupportTest {
                 [{"agentId":"literature-agent","response":"done"}]
                 """);
 
-        List<ToolCallSubgraphMerger.ParsedAgentCall> pending = AgentCallResultsSupport.filterPending(
+        List<ParsedAgentCall> pending = AgentCallResultsSupport.filterPending(
                 List.of(
-                        new ToolCallSubgraphMerger.ParsedAgentCall("literature-agent", "again"),
-                        new ToolCallSubgraphMerger.ParsedAgentCall("synthesis-agent", "summarize")),
+                        new ParsedAgentCall("literature-agent", "again"),
+                        new ParsedAgentCall("synthesis-agent", "summarize")),
                 variables);
 
-        assertThat(pending).containsExactly(new ToolCallSubgraphMerger.ParsedAgentCall("synthesis-agent", "summarize"));
+        assertThat(pending).containsExactly(new ParsedAgentCall("synthesis-agent", "summarize"));
     }
 
     @Test
     void stripInjectedNodesRestoresPlannerToEnd() {
-        WorkflowDefinition expanded = ToolCallSubgraphMerger.mergeAgentAndToolCalls(
+        WorkflowDefinition expanded = MERGER.mergeAgentAndToolCalls(
                 baseWorkflow(),
                 ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID,
                 "end",
-                List.of(new ToolCallSubgraphMerger.ParsedAgentCall("literature-agent", "find papers")),
+                List.of(new ParsedAgentCall("literature-agent", "find papers")),
                 List.of()).graph();
 
         assertThat(expanded.getNodes().stream().map(node -> node.getId()))

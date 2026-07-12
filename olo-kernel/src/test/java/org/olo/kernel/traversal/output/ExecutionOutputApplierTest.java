@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.traversal.output;
 
 import org.junit.jupiter.api.Test;
@@ -5,6 +9,7 @@ import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.variable.VariableDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
+import org.olo.definition.workflow.WorkflowDefinitionBuilder;
 import org.olo.input.model.WorkflowInput;
 import org.olo.kernel.context.KernelContextBuildRequest;
 import org.olo.kernel.context.KernelContextBuilder;
@@ -81,7 +86,7 @@ class ExecutionOutputApplierTest {
     }
 
     private static WorkflowDefinition graphWithReturnVariable(String returnOutputKey) {
-        WorkflowDefinition.Builder builder = WorkflowDefinition.builder()
+        WorkflowDefinitionBuilder builder = WorkflowDefinition.builder()
                 .id("multi")
                 .metadata(Map.of(WorkflowReturnVariable.WORKFLOW_METADATA_KEY, "ReturnValue"))
                 .variables(List.of(

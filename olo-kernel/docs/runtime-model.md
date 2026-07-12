@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Runtime Model
 
 Normative model for **workflow execution status** and **variable scope** in OLO. This document defines target contracts before implementations diverge.

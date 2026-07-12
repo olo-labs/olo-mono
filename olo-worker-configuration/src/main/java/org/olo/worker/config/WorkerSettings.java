@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.worker.config;
 
 import org.olo.worker.config.model.CacheSettings;
@@ -75,6 +79,11 @@ public final class WorkerSettings {
 
     public TemporalSettings temporal() {
         return configuration.getTemporal();
+    }
+
+    public boolean temporalEnabled() {
+        TemporalSettings temporal = configuration.getTemporal();
+        return temporal == null || temporal.isEnabled();
     }
 
     public CacheSettings cache() {

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.annotation.processor;
 
 import org.olo.annotation.OloStability;
@@ -6,12 +10,12 @@ import org.olo.annotation.catalog.CatalogComponent;
 import javax.lang.model.element.TypeElement;
 
 /** Fills shared {@link CatalogComponent} fields from extension annotations. */
-final class CatalogComponentPopulator {
+public final class CatalogComponentPopulator {
 
     private CatalogComponentPopulator() {
     }
 
-    static void apply(
+    public static void apply(
             CatalogComponent target,
             String kind,
             String localId,

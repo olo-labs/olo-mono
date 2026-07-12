@@ -30,31 +30,18 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "message" : "#ef4444",
-      "boolean" : "#fb923c",
+      "object" : "#c084fc",
+      "string" : "#a3e635",
       "capabilities" : "#22c55e",
       "integer" : "#38bdf8",
-      "string" : "#a3e635",
-      "object" : "#c084fc",
-      "number" : "#38bdf8",
-      "array" : "#f472b6",
+      "boolean" : "#fb923c",
+      "message" : "#ef4444",
+      "any" : "#94a3b8",
       "agent-plug" : "#a855f7",
-      "any" : "#94a3b8"
+      "number" : "#38bdf8",
+      "array" : "#f472b6"
     },
     "nodeTypes" : {
-      "AGENT" : {
-        "emoji" : "✈️",
-        "typeLabel" : "Agent",
-        "inlineProperties" : [ {
-          "id" : "parameters",
-          "widget" : "WORKFLOW_PARAMETERS",
-          "label" : "Parameters"
-        }, {
-          "id" : "model",
-          "widget" : "MODEL_SELECTOR",
-          "label" : "Model"
-        } ]
-      },
       "END" : {
         "emoji" : "⏹",
         "typeLabel" : "End",
@@ -68,6 +55,19 @@
           "widget" : "VARIABLE_SELECT",
           "label" : "Output variable",
           "binding" : "outputVariableMapping"
+        } ]
+      },
+      "AGENT" : {
+        "emoji" : "✈️",
+        "typeLabel" : "Agent",
+        "inlineProperties" : [ {
+          "id" : "parameters",
+          "widget" : "WORKFLOW_PARAMETERS",
+          "label" : "Parameters"
+        }, {
+          "id" : "model",
+          "widget" : "MODEL_SELECTOR",
+          "label" : "Model"
         } ]
       },
       "START" : {
@@ -135,6 +135,19 @@
   },
   "state" : { },
   "parameters" : {
+    "model" : {
+      "type" : "string",
+      "label" : "Model",
+      "description" : "Default model identifier",
+      "defaultValue" : "",
+      "required" : false,
+      "ui" : {
+        "widget" : "MODEL_SELECTOR",
+        "group" : "Model Settings",
+        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
+        "order" : 2
+      }
+    },
     "maxIterations" : {
       "type" : "integer",
       "label" : "Max Iterations",
@@ -153,17 +166,18 @@
         "order" : 1
       }
     },
-    "model" : {
+    "systemPrompt" : {
       "type" : "string",
-      "label" : "Model",
-      "description" : "Default model identifier",
-      "defaultValue" : "",
+      "label" : "System Prompt",
+      "description" : "System prompt for the agent",
+      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}",
       "required" : false,
       "ui" : {
-        "widget" : "MODEL_SELECTOR",
+        "widget" : "TEXTAREA",
         "group" : "Model Settings",
-        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
-        "order" : 2
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
+        "order" : 0
       }
     },
     "temperature" : {
@@ -182,20 +196,6 @@
         "group" : "Model Settings",
         "help" : "Higher values increase response creativity.",
         "order" : 3
-      }
-    },
-    "systemPrompt" : {
-      "type" : "string",
-      "label" : "System Prompt",
-      "description" : "System prompt for the agent",
-      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}",
-      "required" : false,
-      "ui" : {
-        "widget" : "TEXTAREA",
-        "group" : "Model Settings",
-        "help" : "Include {message} to inject the workflow input into the system prompt.",
-        "placeholder" : "You are a helpful assistant…\n\n{message}",
-        "order" : 0
       }
     }
   },
@@ -639,6 +639,15 @@
       "role" : "available-agents"
     }
   }, {
+    "name" : "agentResultsJson",
+    "type" : "string",
+    "description" : "Aggregated JSON results from child agent workflows delegated by the planner",
+    "required" : false,
+    "scope" : "LOCAL",
+    "metadata" : {
+      "role" : "agent-results"
+    }
+  }, {
     "name" : "toolCallSequenceJson",
     "type" : "string",
     "description" : "Model-produced strict JSON tool call sequence",
@@ -731,25 +740,25 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
-    "dynamicToolExecution" : {
-      "plannerNodeId" : "agent",
-      "continueNodeId" : "end",
-      "outputVariable" : "toolCallSequenceJson",
-      "availableToolsVariable" : "availableToolsJson",
-      "availableAgentsVariable" : "availableAgentsJson"
-    },
-    "planningStrategy" : "react",
-    "agentType" : "autonomous",
-    "returnVariable" : "ReturnValue",
-    "plannerContext" : {
-      "injectCapabilities" : false,
-      "injectAgents" : true,
-      "selectedAgents" : [ "destination-agent", "itinerary-agent" ],
-      "selectedTools" : [ "olo-core:travel-destinations", "olo-core:travel-offers" ],
-      "selectedVariables" : [ "message", "availableToolsJson", "availableAgentsJson", "toolCallSequenceJson" ]
-    },
     "description" : "Plans trips by querying destination guides and travel offers, with specialist agents",
-    "agentSelectionStrategy" : "dynamic",
-    "role" : "travel-orchestrator"
+    "plannerContext" : {
+      "selectedTools" : [ "olo-core:travel-destinations", "olo-core:travel-offers" ],
+      "selectedAgents" : [ "destination-agent", "itinerary-agent" ],
+      "injectAgents" : true,
+      "injectCapabilities" : false,
+      "selectedVariables" : [ "message", "availableToolsJson", "availableAgentsJson", "agentResultsJson", "toolCallSequenceJson" ]
+    },
+    "returnVariable" : "ReturnValue",
+    "agentType" : "autonomous",
+    "planningStrategy" : "react",
+    "dynamicToolExecution" : {
+      "continueNodeId" : "end",
+      "plannerNodeId" : "agent",
+      "availableAgentsVariable" : "availableAgentsJson",
+      "availableToolsVariable" : "availableToolsJson",
+      "outputVariable" : "toolCallSequenceJson"
+    },
+    "role" : "travel-orchestrator",
+    "agentSelectionStrategy" : "dynamic"
   }
 }

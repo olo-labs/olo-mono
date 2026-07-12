@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Extension catalog JSON schema
 
 Catalog files are generated at compile time and live under `META-INF/olo/catalog/`. Schema version is **`1.0`** (field `schemaVersion`).

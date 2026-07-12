@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # OLO monorepo architecture
 
 OLO separates **what a workflow is** (a portable graph definition), **how a worker is deployed** (settings and scan paths), and **what data a single run carries** (invocation input). Execution today is routed through **Temporal**; the **kernel** is the synchronous entry point that builds runtime context and resolves the workflow return message.

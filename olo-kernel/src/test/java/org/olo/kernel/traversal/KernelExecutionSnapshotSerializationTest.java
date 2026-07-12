@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.traversal;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -121,8 +125,8 @@ class KernelExecutionSnapshotSerializationTest {
 
         WorkflowDefinition graph = new org.olo.definition.serializer.JsonWorkflowSerializer()
                 .deserialize(Files.readString(workflowJson));
-        Path presets = workflowJson.getParent().getParent();
-        KernelRuntimeHolder.setRegistry(OloBootstrap.load(presets, false));
+        Path presets = workflowJson.getParent();
+        KernelRuntimeHolder.setRegistry(OloBootstrap.load(presets, true));
         WorkflowInput baseInput = WorkflowInput.fromJson(
                 Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
                         .toAbsolutePath()

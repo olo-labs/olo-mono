@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.traversal.strategy.impl;
 
 import org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport;
@@ -5,16 +9,26 @@ import org.olo.kernel.dynamicgraph.DynamicSubgraphInjectionLogger;
 import org.olo.kernel.dynamicgraph.DynamicSubgraphInjectionLogger.InjectionRecord;
 import org.olo.kernel.dynamicgraph.DynamicSubgraphMerger;
 import org.olo.kernel.dynamicgraph.MutableGraphSession;
+import org.olo.kernel.dynamicgraph.model.DynamicSubgraphMergeResult;
+import org.olo.kernel.dynamicgraph.model.DynamicSubgraphValidationResult;
 import org.olo.kernel.traversal.strategy.ExecutionDecision;
 import org.olo.kernel.traversal.strategy.ExecutionStrategy;
 import org.olo.kernel.traversal.strategy.ExecutionStrategyRequest;
 import org.olo.spi.node.NodeStatus;
+
+import java.util.Objects;
 
 /**
  * After an inline dynamic graph planner node completes, validates {@code generatedGraphJson},
  * merges a subgraph into the active graph, or re-executes the planner when JSON is invalid.
  */
 public final class DynamicGraphExpansionExecutionStrategy implements ExecutionStrategy {
+
+    private final DynamicSubgraphMerger subgraphMerger;
+
+    public DynamicGraphExpansionExecutionStrategy(DynamicSubgraphMerger subgraphMerger) {
+        this.subgraphMerger = Objects.requireNonNull(subgraphMerger, "subgraphMerger");
+    }
 
     @Override
     public boolean supports(ExecutionStrategyRequest request) {
@@ -29,9 +43,9 @@ public final class DynamicGraphExpansionExecutionStrategy implements ExecutionSt
         var node = request.completedNode();
         String outputVariable = DynamicGraphPlannerSupport.outputVariable(node);
         String rawJson = request.context().getVariables().getString(outputVariable);
-        DynamicSubgraphMerger.ValidationResult validation = DynamicSubgraphMerger.validate(rawJson);
+        DynamicSubgraphValidationResult validation = subgraphMerger.validate(rawJson);
         if (!validation.valid()) {
-            int retries = DynamicSubgraphMerger.readRetryCount(request.context().getVariables());
+            int retries = subgraphMerger.readRetryCount(request.context().getVariables());
             int maxRetries = DynamicGraphPlannerSupport.maxInvalidJsonRetries(node);
             request.context()
                     .getVariables()
@@ -46,14 +60,14 @@ public final class DynamicGraphExpansionExecutionStrategy implements ExecutionSt
                                 + " attempts: "
                                 + validation.message());
             }
-            DynamicSubgraphMerger.incrementRetryCount(request.context().getVariables());
+            subgraphMerger.incrementRetryCount(request.context().getVariables());
             return ExecutionDecision.reexecute(name(), node.getId());
         }
 
-        DynamicSubgraphMerger.resetRetryCount(request.context().getVariables());
+        subgraphMerger.resetRetryCount(request.context().getVariables());
         request.context().getVariables().set(DynamicGraphPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE, null);
         String continueNodeId = DynamicGraphPlannerSupport.continueNodeId(node, "end");
-        DynamicSubgraphMerger.MergeResult mergeResult = DynamicSubgraphMerger.merge(
+        DynamicSubgraphMergeResult mergeResult = subgraphMerger.merge(
                 graphSession.graph(),
                 node.getId(),
                 continueNodeId,

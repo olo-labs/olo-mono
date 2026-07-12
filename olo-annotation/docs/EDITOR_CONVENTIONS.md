@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Editor conventions
 
 How workflow UIs (for example `olo-ui` Studio) should interpret catalog metadata. This is **not** part of the annotation API — see [ANNOTATIONS.md](ANNOTATIONS.md) for contracts.

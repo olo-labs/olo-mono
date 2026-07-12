@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.configuration.dynamicgraphcreation;
 
 import org.olo.definition.OloProductTerminology;
@@ -165,6 +169,8 @@ public final class DynamicGraphCreationDefinitions {
                 .executionKind(ExecutionKind.ACTIVITY)
                 .executionModel(ExecutionModel.INLINE)
                 .addPort(WorkflowBuilder.messagePort("in", PortDirection.INPUT))
+                .addPort(WorkflowBuilder.capabilitiesPort(PortDirection.INPUT))
+                .addPort(WorkflowBuilder.agentPlugPort(PortDirection.INPUT))
                 .addPort(WorkflowBuilder.messagePort("out", PortDirection.OUTPUT))
                 .putConfiguration(DynamicGraphPlannerSupport.CONFIG_DYNAMIC_GRAPH_PLANNER, true)
                 .putConfiguration(

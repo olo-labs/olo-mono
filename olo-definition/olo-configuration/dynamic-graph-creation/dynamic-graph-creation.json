@@ -30,16 +30,16 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "object" : "#c084fc",
       "number" : "#38bdf8",
-      "array" : "#f472b6",
       "agent-plug" : "#a855f7",
       "any" : "#94a3b8",
       "message" : "#ef4444",
       "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
       "integer" : "#38bdf8",
-      "string" : "#a3e635"
+      "string" : "#a3e635",
+      "object" : "#c084fc",
+      "array" : "#f472b6"
     },
     "nodeTypes" : {
       "START" : {
@@ -227,6 +227,34 @@
         "color" : "#ef4444"
       }
     }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "acceptType" : "capabilities",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Tools and hooks registered for runtime prompt assembly (0 or more)",
+      "ui" : {
+        "position" : "BOTTOM",
+        "color" : "#22c55e"
+      }
+    }, {
+      "id" : "agentPlug",
+      "label" : "available agents",
+      "schema" : "agent-plug",
+      "type" : "agent-plug",
+      "acceptType" : "agent-plug",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Child workflows registered for runtime prompt assembly (0 or more)",
+      "ui" : {
+        "position" : "BOTTOM",
+        "color" : "#a855f7"
+      }
+    }, {
       "id" : "out",
       "label" : "message out",
       "schema" : "message",
@@ -369,9 +397,9 @@
     },
     "role" : "dynamic-graph-creation",
     "dynamicGraphCreation" : {
-      "continueNodeId" : "end",
       "outputVariable" : "generatedGraphJson",
-      "plannerNodeId" : "graph-planner"
+      "plannerNodeId" : "graph-planner",
+      "continueNodeId" : "end"
     },
     "description" : "Generates Open LLM Orchestrator (OLO) workflow graphs as JSON-only structured output and expands them inline at runtime"
   }

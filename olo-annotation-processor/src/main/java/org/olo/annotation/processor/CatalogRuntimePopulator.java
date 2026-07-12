@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.annotation.processor;
 
 import org.olo.annotation.OloExecutionModel;
@@ -10,12 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Materializes {@link CatalogRuntimeDescriptor} from extension annotations. */
-final class CatalogRuntimePopulator {
+public final class CatalogRuntimePopulator {
 
     private CatalogRuntimePopulator() {
     }
 
-    static CatalogRuntimeDescriptor create(
+    public static CatalogRuntimeDescriptor create(
             String runtimeContractVersion,
             OloExecutionModel executionModel,
             boolean retryable,

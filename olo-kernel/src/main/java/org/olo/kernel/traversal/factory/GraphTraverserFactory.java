@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.traversal.factory;
 
 import org.olo.core.runtime.ExecutionEngine;
@@ -32,7 +36,9 @@ import org.olo.kernel.agent.prompt.impl.WorkflowPromptRenderer;
 import org.olo.kernel.traversal.GraphTraverser;
 import org.olo.kernel.traversal.context.ExecutionContextFactory;
 import org.olo.kernel.traversal.context.impl.KernelExecutionContextFactory;
+import org.olo.kernel.dynamicgraph.DynamicSubgraphFactories;
 import org.olo.kernel.traversal.engine.GraphTraversalEngine;
+import org.olo.kernel.traversal.engine.impl.DefaultGraphTraversalEngine;
 import org.olo.kernel.traversal.impl.DefaultGraphTraverser;
 import org.olo.kernel.traversal.input.WorkflowInputBinder;
 import org.olo.kernel.traversal.input.impl.MessageVariableInputBinder;
@@ -91,7 +97,7 @@ public final class GraphTraverserFactory {
         ExecutionStrategyRegistry executionStrategyRegistry = new ExecutionStrategyRegistry(List.of(
                 new ParallelExecutionStrategy(),
                 new ConditionalExecutionStrategy(),
-                new DynamicGraphExpansionExecutionStrategy(),
+                new DynamicGraphExpansionExecutionStrategy(DynamicSubgraphFactories.defaultMerger()),
                 new ToolCallExpansionExecutionStrategy(),
                 new ChildWorkflowExecutionStrategy(),
                 new LinearExecutionStrategy()));
@@ -115,7 +121,7 @@ public final class GraphTraverserFactory {
         NodeTypeHandlerRegistry handlerRegistry = new NodeTypeHandlerRegistry(handlers);
         TraversalStepExecutor stepExecutor = new DefaultTraversalStepExecutor(handlerRegistry, outputApplier);
 
-        return new GraphTraversalEngine(
+        return new DefaultGraphTraversalEngine(
                 startNodeResolver,
                 readinessValidator,
                 stepExecutor,

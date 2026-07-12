@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # olo-annotation
 
 Compile-time annotations for Open LLM Orchestrator (OLO) extension metadata used by workflow editor UIs.

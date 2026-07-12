@@ -1,8 +1,13 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel;
 
 import org.junit.jupiter.api.Test;
 import org.olo.bootstrap.OloBootstrap;
 import org.olo.bootstrap.registry.WorkflowDefinitionRegistry;
+import org.olo.kernel.exception.KernelException;
 import org.olo.kernel.input.WorkflowInputMessages;
 
 import org.olo.input.model.WorkflowInput;
@@ -29,13 +34,21 @@ class KernelEntryPointTest {
                         .normalize()));
         WorkflowInput input = baseInput.toBuilder()
                 .routing(new org.olo.input.model.Routing(
-                        "agent",
+                        "minimal-echo",
                         baseInput.getRouting().getTransactionType(),
                         baseInput.getRouting().getTransactionId(),
                         baseInput.getRouting().getConfigVersion()))
                 .build();
 
-        String result = KernelEntryPoint.execute("oloQueue2", input, registry);
+        String result;
+        try {
+            result = KernelEntryPoint.execute("oloQueue2", input, registry);
+        } catch (KernelException e) {
+            if (e.getMessage() != null && e.getMessage().contains("Ollama")) {
+                throw new org.opentest4j.TestAbortedException("Ollama not running", e);
+            }
+            throw e;
+        }
 
         assertThat(result).doesNotContain("child workflow dispatch pending");
         assertThat(result).isNotEqualTo(WorkflowInputMessages.MISSING_MESSAGE_RESPONSE);

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # olo-annotation-processor
 
 Annotation processor that generates extension catalog JSON for plug-and-play workflow editing.

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Module reference
 
 Each row is a **standalone Gradle project** under `olo-mono/`. All publish as `org.olo:<artifactId>:0.1.0-SNAPSHOT` unless noted.

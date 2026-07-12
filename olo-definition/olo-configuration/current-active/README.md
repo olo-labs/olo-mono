@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Research planner scenario
 
 End-to-end scenario collection for a tool-call orchestrator with specialist child agents and mock literature lookup tools.

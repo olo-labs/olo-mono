@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # olo-worker-configuration
 
 **Single entry point for all worker configuration.** Worker code must read settings through this module so the storage medium (file today, database / Redis / GitHub later) can change without touching workers.

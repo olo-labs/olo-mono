@@ -1,5 +1,10 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.core.tool;
 
+import org.olo.core.tool.catalog.ScenarioCatalogSupport;
 import org.olo.annotation.OloProperty;
 import org.olo.annotation.OloPropertyType;
 import org.olo.annotation.OloStability;

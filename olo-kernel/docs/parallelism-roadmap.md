@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Parallelism Roadmap
 
 Normative **target contract** for parallel multi-agent orchestration in OLO. Nothing in this document is required to be fully implemented yet; it exists so graph design, catalog types, kernel traversal, and Temporal scheduling do not diverge.

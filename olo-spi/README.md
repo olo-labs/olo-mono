@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # olo-spi
 
 **Service Provider Interface** for Open LLM Orchestrator (OLO) runtime execution — contracts only, **no implementations**.

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.toolcall;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -5,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.olo.definition.toolcall.ToolCallPlannerSupport;
 import org.olo.kernel.context.variables.WorkflowRuntimeVariables;
+import org.olo.kernel.toolcall.model.ParsedAgentCall;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,14 +35,14 @@ public final class AgentCallResultsSupport {
                 .collect(LinkedHashSet::new, Set::add, Set::addAll);
     }
 
-    public static List<ToolCallSubgraphMerger.ParsedAgentCall> filterPending(
-            List<ToolCallSubgraphMerger.ParsedAgentCall> agentCalls, WorkflowRuntimeVariables variables) {
+    public static List<ParsedAgentCall> filterPending(
+            List<ParsedAgentCall> agentCalls, WorkflowRuntimeVariables variables) {
         if (agentCalls == null || agentCalls.isEmpty()) {
             return List.of();
         }
         Set<String> completed = completedAgentIds(variables);
-        List<ToolCallSubgraphMerger.ParsedAgentCall> pending = new ArrayList<>();
-        for (ToolCallSubgraphMerger.ParsedAgentCall call : agentCalls) {
+        List<ParsedAgentCall> pending = new ArrayList<>();
+        for (ParsedAgentCall call : agentCalls) {
             if (!completed.contains(call.agentId())) {
                 pending.add(call);
             }

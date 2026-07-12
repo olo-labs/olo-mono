@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.annotation.processor;
 
 import org.olo.annotation.catalog.RuntimeBindingDescriptor;
@@ -5,12 +9,12 @@ import org.olo.annotation.catalog.RuntimeBindingDescriptor;
 import javax.lang.model.element.TypeElement;
 
 /** Builds {@link RuntimeBindingDescriptor} entries for {@code runtime.json}. */
-final class RuntimeBindingBuilder {
+public final class RuntimeBindingBuilder {
 
     private RuntimeBindingBuilder() {
     }
 
-    static RuntimeBindingDescriptor create(
+    public static RuntimeBindingDescriptor create(
             String kind,
             String globalId,
             TypeElement typeElement,

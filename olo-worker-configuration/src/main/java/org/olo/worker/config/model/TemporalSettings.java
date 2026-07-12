@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.worker.config.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -16,16 +20,27 @@ import java.util.Objects;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class TemporalSettings {
 
+    private final Boolean enabled;
     private final String namespace;
     private final String target;
 
     private TemporalSettings(Builder builder) {
+        this.enabled = builder.enabled;
         this.namespace = builder.namespace;
         this.target = builder.target;
     }
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    @JsonProperty("enabled")
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public boolean isEnabled() {
+        return enabled == null || enabled;
     }
 
     @JsonProperty("namespace")
@@ -46,19 +61,28 @@ public final class TemporalSettings {
         if (!(o instanceof TemporalSettings that)) {
             return false;
         }
-        return Objects.equals(namespace, that.namespace) && Objects.equals(target, that.target);
+        return Objects.equals(enabled, that.enabled)
+                && Objects.equals(namespace, that.namespace)
+                && Objects.equals(target, that.target);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(namespace, target);
+        return Objects.hash(enabled, namespace, target);
     }
 
     @JsonPOJOBuilder(withPrefix = "")
     public static final class Builder {
 
+        private Boolean enabled;
         private String namespace;
         private String target;
+
+        @JsonProperty("enabled")
+        public Builder enabled(Boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
 
         @JsonProperty("namespace")
         public Builder namespace(String namespace) {

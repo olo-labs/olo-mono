@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # olo-mono
 
 Monorepo for **OLO (Open LLM Orchestrator)** — declarative LLM workflow orchestration. Workflow graphs, deployment settings, and runtime execution are split into separate modules so each layer can evolve independently.

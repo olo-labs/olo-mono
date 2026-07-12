@@ -2,6 +2,7 @@
 #
 # Prerequisites:
 #   - olo-docker dev stack up (Temporal, Redis, olo API, olo-chat)
+#   - If Temporal is not running, the worker logs "Temporal server not available" and exits.
 #   - docker-compose-olo.yml sets OLO_CHAT_CALLBACK_BASE_URL=http://localhost:47080
 #     so the API embeds a callback URL reachable from this host process
 #
@@ -21,6 +22,7 @@ workflowDefinitions:
   scanFolder: "../../olo-definition/olo-configuration/current-active"
   recursive: true
 temporal:
+  enabled: true
   namespace: "default"
   target: "localhost:47233"
 cache:

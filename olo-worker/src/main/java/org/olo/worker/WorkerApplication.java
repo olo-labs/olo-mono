@@ -1,7 +1,13 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.worker;
 
 import org.olo.worker.config.WorkerConfigurationProvider;
 import org.olo.worker.config.source.ConfigurationSourceFactory;
+import org.olo.worker.llm.LlmServerUnavailableException;
+import org.olo.worker.temporal.TemporalServerUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +45,12 @@ public final class WorkerApplication {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("OLO worker interrupted", e);
+        } catch (TemporalServerUnavailableException e) {
+            log.error(e.getMessage());
+            System.exit(1);
+        } catch (LlmServerUnavailableException e) {
+            log.error(e.getMessage());
+            System.exit(1);
         } catch (RuntimeException e) {
             log.error("OLO worker failed to start", e);
             System.exit(1);

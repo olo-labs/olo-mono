@@ -30,31 +30,31 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "agent-plug" : "#a855f7",
+      "string" : "#a3e635",
+      "object" : "#c084fc",
       "number" : "#38bdf8",
       "array" : "#f472b6",
-      "object" : "#c084fc",
-      "string" : "#a3e635",
-      "capabilities" : "#22c55e",
-      "integer" : "#38bdf8",
-      "boolean" : "#fb923c",
+      "agent-plug" : "#a855f7",
+      "any" : "#94a3b8",
       "message" : "#ef4444",
-      "any" : "#94a3b8"
+      "boolean" : "#fb923c",
+      "capabilities" : "#22c55e",
+      "integer" : "#38bdf8"
     },
     "nodeTypes" : {
-      "END" : {
-        "emoji" : "⏹",
-        "typeLabel" : "End",
-        "description" : "Workflow exit — maps a workflow variable to the caller result",
+      "START" : {
+        "emoji" : "▶",
+        "typeLabel" : "Start",
+        "description" : "Workflow entry — maps caller input to workflow variables",
         "palette" : {
-          "name" : "End",
+          "name" : "Start",
           "category" : "control"
         },
         "inlineProperties" : [ {
-          "id" : "outputVariable",
-          "widget" : "VARIABLE_SELECT",
-          "label" : "Output variable",
-          "binding" : "outputVariableMapping"
+          "id" : "inputVariables",
+          "widget" : "VARIABLE_CHECKLIST",
+          "label" : "Input variables",
+          "binding" : "inputVariableMappings"
         } ]
       },
       "AGENT" : {
@@ -70,19 +70,19 @@
           "label" : "Model"
         } ]
       },
-      "START" : {
-        "emoji" : "▶",
-        "typeLabel" : "Start",
-        "description" : "Workflow entry — maps caller input to workflow variables",
+      "END" : {
+        "emoji" : "⏹",
+        "typeLabel" : "End",
+        "description" : "Workflow exit — maps a workflow variable to the caller result",
         "palette" : {
-          "name" : "Start",
+          "name" : "End",
           "category" : "control"
         },
         "inlineProperties" : [ {
-          "id" : "inputVariables",
-          "widget" : "VARIABLE_CHECKLIST",
-          "label" : "Input variables",
-          "binding" : "inputVariableMappings"
+          "id" : "outputVariable",
+          "widget" : "VARIABLE_SELECT",
+          "label" : "Output variable",
+          "binding" : "outputVariableMapping"
         } ]
       }
     }
@@ -153,17 +153,18 @@
         "order" : 3
       }
     },
-    "model" : {
+    "systemPrompt" : {
       "type" : "string",
-      "label" : "Model",
-      "description" : "Default model identifier",
-      "defaultValue" : "",
+      "label" : "System Prompt",
+      "description" : "System prompt for the agent",
+      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}",
       "required" : false,
       "ui" : {
-        "widget" : "MODEL_SELECTOR",
+        "widget" : "TEXTAREA",
         "group" : "Model Settings",
-        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
-        "order" : 2
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
+        "order" : 0
       }
     },
     "maxIterations" : {
@@ -184,18 +185,17 @@
         "order" : 1
       }
     },
-    "systemPrompt" : {
+    "model" : {
       "type" : "string",
-      "label" : "System Prompt",
-      "description" : "System prompt for the agent",
-      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}",
+      "label" : "Model",
+      "description" : "Default model identifier",
+      "defaultValue" : "",
       "required" : false,
       "ui" : {
-        "widget" : "TEXTAREA",
+        "widget" : "MODEL_SELECTOR",
         "group" : "Model Settings",
-        "help" : "Include {message} to inject the workflow input into the system prompt.",
-        "placeholder" : "You are a helpful assistant…\n\n{message}",
-        "order" : 0
+        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
+        "order" : 2
       }
     }
   },
@@ -222,8 +222,8 @@
       "inputVariableMappings" : [ "message" ],
       "designer" : {
         "position" : {
-          "x" : 80,
-          "y" : 80
+          "y" : 80,
+          "x" : 80
         }
       }
     }
@@ -303,8 +303,8 @@
       "promptTemplate" : "You are a research planning agent for the Open LLM Orchestrator (OLO).\nUser request:\n{message}\n\nAvailable tools (strict allow-list — use only these toolId values; empty means do not call tools):\n{availableToolsJson}\n\nAvailable agents (strict allow-list — delegate only to these agentId values):\n{availableAgentsJson}\n\nPrior agent results (JSON array — empty on first pass):\n{agentResultsJson}\n\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Schema:\n{\n  \"toolCalls\": [],\n  \"agentCalls\": [\n    { \"agentId\": \"literature-agent\", \"message\": \"Find papers on the user topic\" }\n  ],\n  \"directResponse\": null\n}\n3. When availableAgentsJson is non-empty, return agentCalls to delegate work to child workflows.\n   Each agentCall runs as a blocking child workflow (executorId=child-workflow) in order; execution then continues forward (not back to this planner).\n4. Use toolCalls only when availableToolsJson is non-empty and a listed tool is the best fit.\n5. Use literature-agent for literature lookup and synthesis-agent to combine findings into a brief (both are child workflows, not inline synthesis).\n6. Never repeat agentCalls for an agentId that already appears in agentResultsJson.\n7. If no agents or tools are needed, set both arrays to [] and put the final answer in \"directResponse\".\n\nIf a previous attempt failed validation, fix it:\n{toolCallSequenceJsonValidationError}\n\nRespond with JSON only.",
       "designer" : {
         "position" : {
-          "x" : 440,
-          "y" : 80
+          "y" : 80,
+          "x" : 440
         }
       }
     }
@@ -332,8 +332,8 @@
     "configuration" : {
       "designer" : {
         "position" : {
-          "x" : 800,
-          "y" : 80
+          "y" : 80,
+          "x" : 800
         }
       }
     }
@@ -399,8 +399,8 @@
       "delegateAgentId" : "literature-agent",
       "designer" : {
         "position" : {
-          "x" : 80,
-          "y" : 80
+          "y" : 80,
+          "x" : 80
         }
       }
     }
@@ -466,8 +466,8 @@
       "delegateAgentId" : "synthesis-agent",
       "designer" : {
         "position" : {
-          "x" : 440,
-          "y" : 80
+          "y" : 80,
+          "x" : 440
         }
       }
     }
@@ -586,25 +586,25 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
-    "agentSelectionStrategy" : "dynamic",
-    "description" : "Plans research tasks, queries literature, and delegates to specialist agents",
     "plannerContext" : {
       "selectedTools" : [ ],
-      "selectedAgents" : [ "literature-agent", "synthesis-agent" ],
-      "injectAgents" : true,
+      "selectedVariables" : [ "message", "availableToolsJson", "availableAgentsJson", "agentResultsJson", "toolCallSequenceJson" ],
       "injectCapabilities" : false,
-      "selectedVariables" : [ "message", "availableToolsJson", "availableAgentsJson", "agentResultsJson", "toolCallSequenceJson" ]
+      "injectAgents" : true,
+      "selectedAgents" : [ "literature-agent", "synthesis-agent" ]
     },
-    "returnVariable" : "ReturnValue",
-    "agentType" : "autonomous",
-    "planningStrategy" : "react",
+    "description" : "Plans research tasks, queries literature, and delegates to specialist agents",
+    "agentSelectionStrategy" : "dynamic",
+    "role" : "research-orchestrator",
     "dynamicToolExecution" : {
-      "availableToolsVariable" : "availableToolsJson",
       "outputVariable" : "toolCallSequenceJson",
-      "continueNodeId" : "end",
+      "availableToolsVariable" : "availableToolsJson",
+      "availableAgentsVariable" : "availableAgentsJson",
       "plannerNodeId" : "agent",
-      "availableAgentsVariable" : "availableAgentsJson"
+      "continueNodeId" : "end"
     },
-    "role" : "research-orchestrator"
+    "planningStrategy" : "react",
+    "agentType" : "autonomous",
+    "returnVariable" : "ReturnValue"
   }
 }

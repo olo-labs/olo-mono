@@ -1,8 +1,13 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.node;
 
 import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.validation.ValidationTestFixtures;
 import org.olo.definition.validation.WorkflowValidator;
+import org.olo.definition.port.PortDirection;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.junit.jupiter.api.Test;
@@ -19,8 +24,12 @@ class NodeDefinitionSerializationTest {
                 .id("router-test")
                 .capability(ValidationTestFixtures.minimalCapability())
                 .inputNode("input")
-                .addNode(ValidationTestFixtures.node("router", NodeType.ROUTER)
+                .addNode(NodeDefinition.builder()
+                        .id("router")
+                        .type(NodeType.ROUTER.name())
                         .version("2.1.0")
+                        .addPort(WorkflowBuilder.messagePort("in", PortDirection.INPUT))
+                        .addPort(WorkflowBuilder.messagePort("out", PortDirection.OUTPUT))
                         .addRouter(NodeRouterDefinition.builder()
                                 .id("route-a")
                                 .targetPort("a")

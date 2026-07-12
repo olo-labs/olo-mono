@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Graph Traversal — Implementation Contract
 
 This document describes **what olo-kernel implements today** for graph traversal: queue input through node execution to the return variable, queue response, and UI callback.

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.traversal;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -16,11 +20,12 @@ import org.olo.kernel.dynamicgraph.MutableGraphSession;
 import org.olo.kernel.graph.index.GraphIndex;
 import org.olo.kernel.graph.index.impl.DefaultGraphIndex;
 import org.olo.kernel.traversal.scheduling.NodeActivityNaming;
-import org.olo.kernel.traversal.scheduling.NodeExecutionScheduling;
+import org.olo.kernel.traversal.snapshot.impl.GraphSnapshotPolicy;
+import org.olo.kernel.traversal.snapshot.impl.KernelExecutionSnapshotFactory;
+import org.olo.kernel.traversal.snapshot.impl.SnapshotMapSupport;
+import org.olo.kernel.traversal.snapshot.impl.SnapshotSchedulingResolver;
 import org.olo.spi.node.NodeStatus;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -75,8 +80,8 @@ public final class KernelExecutionSnapshot {
         this.input = Objects.requireNonNull(input, "input");
         this.graph = GraphSnapshotPolicy.resolveGraph(queue, input, graphJson);
         this.graphJson = graphJson;
-        this.variables = copyMapAllowingNullValues(variables);
-        this.outputs = copyMapAllowingNullValues(outputs);
+        this.variables = SnapshotMapSupport.copyMapAllowingNullValues(variables);
+        this.outputs = SnapshotMapSupport.copyMapAllowingNullValues(outputs);
         this.nextNodeId = nextNodeId;
         this.step = step;
         this.status = Objects.requireNonNull(status, "status");
@@ -86,17 +91,17 @@ public final class KernelExecutionSnapshot {
         WorkflowDefinition resolvedGraph = this.graph;
         this.nextRequiresDedicatedActivity = nextRequiresDedicatedActivity != null
                 ? nextRequiresDedicatedActivity
-                : computeNextRequiresDedicatedActivity(resolvedGraph, nextNodeId, status);
+                : SnapshotSchedulingResolver.computeNextRequiresDedicatedActivity(resolvedGraph, nextNodeId, status);
         this.workflowActivityName = workflowActivityName != null && !workflowActivityName.isBlank()
                 ? workflowActivityName
                 : NodeActivityNaming.formatWorkflow(resolvedGraph);
         this.nextActivityName = nextActivityName != null
                 ? nextActivityName
-                : computeNextActivityName(resolvedGraph, nextNodeId, status);
+                : SnapshotSchedulingResolver.computeNextActivityName(resolvedGraph, nextNodeId, status);
     }
 
     public static KernelExecutionSnapshot fromContext(KernelRuntimeContext context) {
-        return fromContext(context, null, 0, Status.RUNNING, null, null, null);
+        return KernelExecutionSnapshotFactory.fromContext(context);
     }
 
     public static KernelExecutionSnapshot fromContext(
@@ -107,22 +112,8 @@ public final class KernelExecutionSnapshot {
             String lastNodeId,
             NodeStatus lastStatus,
             String message) {
-        WorkflowDefinition graph = context.getGraph();
-        return new KernelExecutionSnapshot(
-                context.getQueue(),
-                context.getInput(),
-                GraphSnapshotPolicy.maybeEmbedGraphJson(context.getQueue(), context.getInput(), graph),
-                context.getVariableMap(),
-                context.getOutputMap(),
-                nextNodeId,
-                step,
-                status,
-                lastNodeId,
-                lastStatus,
-                message,
-                computeNextRequiresDedicatedActivity(graph, nextNodeId, status),
-                NodeActivityNaming.formatWorkflow(graph),
-                computeNextActivityName(graph, nextNodeId, status));
+        return KernelExecutionSnapshotFactory.fromContext(
+                context, nextNodeId, step, status, lastNodeId, lastStatus, message);
     }
 
     public KernelRuntimeContext toContext() {
@@ -233,53 +224,5 @@ public final class KernelExecutionSnapshot {
 
     public String getNextActivityName() {
         return nextActivityName;
-    }
-
-    static boolean computeNextRequiresDedicatedActivity(
-            WorkflowDefinition graph, String nextNodeId, Status status) {
-        if (status != Status.RUNNING) {
-            return false;
-        }
-        GraphIndex index = new DefaultGraphIndex(graph);
-        String resolvedNextNodeId = nextNodeId;
-        if (resolvedNextNodeId == null || resolvedNextNodeId.isBlank()) {
-            resolvedNextNodeId = index.nodes().stream()
-                    .filter(node -> "START".equals(node.getType()))
-                    .map(NodeDefinition::getId)
-                    .findFirst()
-                    .orElse(null);
-        }
-        if (resolvedNextNodeId == null) {
-            return true;
-        }
-        final String lookupNodeId = resolvedNextNodeId;
-        return index.findNode(lookupNodeId)
-                .map(NodeExecutionScheduling::requiresDedicatedActivity)
-                .orElse(true);
-    }
-
-    static String computeNextActivityName(WorkflowDefinition graph, String nextNodeId, Status status) {
-        if (status != Status.RUNNING) {
-            return null;
-        }
-        GraphIndex index = new DefaultGraphIndex(graph);
-        String resolvedNextNodeId = nextNodeId;
-        if (resolvedNextNodeId == null || resolvedNextNodeId.isBlank()) {
-            resolvedNextNodeId = index.nodes().stream()
-                    .filter(node -> "START".equals(node.getType()))
-                    .map(NodeDefinition::getId)
-                    .findFirst()
-                    .orElse(null);
-        }
-        if (resolvedNextNodeId == null) {
-            return null;
-        }
-        final String lookupNodeId = resolvedNextNodeId;
-        return index.findNode(lookupNodeId).map(NodeActivityNaming::formatNode).orElse(null);
-    }
-
-    private static <K, V> Map<K, V> copyMapAllowingNullValues(Map<K, V> source) {
-        Objects.requireNonNull(source, "source");
-        return Collections.unmodifiableMap(new LinkedHashMap<>(source));
     }
 }

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.annotation.processor;
 
 import org.olo.annotation.OloDesigner;
@@ -12,11 +16,11 @@ import java.util.List;
 import java.util.Set;
 
 /** Materializes {@link DesignerDescriptor} from {@link OloDesigner} and legacy node layout fields. */
-final class DesignerPopulator {
+public final class DesignerPopulator {
 
     private DesignerPopulator() {}
 
-    static DesignerDescriptor from(
+    public static DesignerDescriptor from(
             OloDesigner designer,
             String category,
             String[] tags,
@@ -37,7 +41,7 @@ final class DesignerPopulator {
         return DesignerDefaults.stripInherited(descriptor);
     }
 
-    static DesignerDescriptor from(OloDesigner designer, String category, String[] tags) {
+    public static DesignerDescriptor from(OloDesigner designer, String category, String[] tags) {
         return from(designer, category, tags, null, 0, 0);
     }
 
@@ -90,7 +94,7 @@ final class DesignerPopulator {
         return defaultHeight(shape);
     }
 
-    static int defaultWidth(OloNodeShape shape) {
+    public static int defaultWidth(OloNodeShape shape) {
         return switch (shape) {
             case AGENT -> 300;
             case TOOL -> 160;
@@ -98,7 +102,7 @@ final class DesignerPopulator {
         };
     }
 
-    static int defaultHeight(OloNodeShape shape) {
+    public static int defaultHeight(OloNodeShape shape) {
         return switch (shape) {
             case AGENT -> 120;
             case TOOL -> 72;

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.annotation.processor;
 
 import org.olo.annotation.OloConnectionPolicy;
@@ -5,11 +9,11 @@ import org.olo.annotation.catalog.ConnectionPolicyDefaults;
 import org.olo.annotation.catalog.ConnectionPolicyDescriptor;
 
 /** Materializes {@link ConnectionPolicyDescriptor} from {@link OloConnectionPolicy}. */
-final class ConnectionPolicyPopulator {
+public final class ConnectionPolicyPopulator {
 
     private ConnectionPolicyPopulator() {}
 
-    static ConnectionPolicyDescriptor from(OloConnectionPolicy policy) {
+    public static ConnectionPolicyDescriptor from(OloConnectionPolicy policy) {
         if (policy == null) {
             return null;
         }

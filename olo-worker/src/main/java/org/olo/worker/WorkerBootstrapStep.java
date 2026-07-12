@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.worker;
 
 /**
@@ -16,10 +20,14 @@ enum WorkerBootstrapStep {
     WORKFLOW_REGISTRY(
             "build workflow definition registry",
             "Check that the scan folder contains valid workflow JSON/YAML files and that ids/queues are unique"),
+    LLM_ENDPOINT(
+            "verify LLM (Ollama) endpoint",
+            "Start Ollama at the configured URL (default http://localhost:11435), pull required models "
+                    + "(e.g. ollama pull llama3.2), or set -Dolo.worker.skipLlmHealthCheck=true for tests"),
     TEMPORAL(
             "connect to Temporal and register queue workers",
-            "Start Temporal at the configured target (default localhost:7233), or set -Dolo.worker.skipTemporal=true "
-                    + "to skip Temporal during local bootstrap-only runs");
+            "Start Temporal at the configured target (default localhost:7233). Tests may set "
+                    + "-Dolo.worker.skipTemporal=true to skip Temporal startup.");
 
     private final String action;
     private final String remediation;

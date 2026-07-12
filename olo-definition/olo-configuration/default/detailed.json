@@ -269,8 +269,8 @@
       }
     } ],
     "execution" : {
-      "executionKind" : "SUBWORKFLOW",
-      "executionModel" : "CHILD_WORKFLOW",
+      "executionKind" : "ACTIVITY",
+      "executionModel" : "INLINE",
       "routers" : [ ],
       "workflowRef" : {
         "workflowId" : "detailed",

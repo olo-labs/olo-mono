@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Workflow samples
 
 Example `WorkflowDefinition` artifacts in JSON and YAML under this directory. These files are **declarative only**—no secrets, no runtime configuration.

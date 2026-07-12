@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.parameter;
 
 import org.olo.annotation.catalog.ParameterDescriptor;
@@ -16,7 +20,7 @@ final class ParameterCatalogMapper {
         if (descriptor == null) {
             throw new IllegalArgumentException("parameter descriptor is required");
         }
-        WorkflowParameterDefinition.Builder builder = WorkflowParameterDefinition.builder()
+        WorkflowParameterDefinitionBuilder builder = WorkflowParameterDefinition.builder()
                 .type(descriptor.type)
                 .label(descriptor.label)
                 .description(descriptor.description)

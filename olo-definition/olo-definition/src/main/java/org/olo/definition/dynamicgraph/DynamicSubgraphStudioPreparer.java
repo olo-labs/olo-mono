@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.dynamicgraph;
 
 import org.olo.definition.designer.DesignerDefinition;
+import org.olo.definition.designer.DesignerDefinitionBuilder;
 import org.olo.definition.designer.InlinePropertyDefinition;
 import org.olo.definition.designer.NodePaletteDesignerDefinition;
 import org.olo.definition.designer.NodeTypeDesignerDefinition;
@@ -89,7 +94,7 @@ public final class DynamicSubgraphStudioPreparer {
         if (containsNodeType(workflow, "TOOL") && !nodeTypes.containsKey("TOOL")) {
             nodeTypes.put("TOOL", toolNodeType());
         }
-        DesignerDefinition.Builder designer = DesignerDefinition.builder()
+        DesignerDefinitionBuilder designer = DesignerDefinition.builder()
                 .paletteGroup(existing == null || existing.getPaletteGroup() == null
                         ? "Injected"
                         : existing.getPaletteGroup())

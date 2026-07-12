@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.parameter;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -32,7 +36,7 @@ public final class WorkflowParameterDefinitionDeserializer extends JsonDeseriali
     }
 
     private static WorkflowParameterDefinition fromObject(JsonNode node) {
-        WorkflowParameterDefinition.Builder builder = WorkflowParameterDefinition.builder();
+        WorkflowParameterDefinitionBuilder builder = WorkflowParameterDefinition.builder();
         JsonNode type = node.hasNonNull("type") ? node.get("type") : node.get("schema");
         if (type != null && !type.isNull()) {
             builder.type(type.asText());
@@ -112,7 +116,7 @@ public final class WorkflowParameterDefinitionDeserializer extends JsonDeseriali
         return builder.build();
     }
 
-    private static void applyValidation(WorkflowParameterDefinition.Builder builder, JsonNode validation) {
+    private static void applyValidation(WorkflowParameterDefinitionBuilder builder, JsonNode validation) {
         JsonNode minLength = validation.get("minLength");
         if (minLength != null && minLength.isIntegralNumber()) {
             builder.minLength(minLength.intValue());
@@ -155,7 +159,7 @@ public final class WorkflowParameterDefinitionDeserializer extends JsonDeseriali
     }
 
     private static WorkflowParameterDefinition fromLiteral(JsonNode node) {
-        WorkflowParameterDefinition.Builder builder = WorkflowParameterDefinition.builder();
+        WorkflowParameterDefinitionBuilder builder = WorkflowParameterDefinition.builder();
         if (node.isIntegralNumber()) {
             return builder.type("integer").defaultValue(node.intValue()).build();
         }

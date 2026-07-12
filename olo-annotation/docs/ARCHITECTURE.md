@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # olo-annotation architecture
 
 > **OLO 1.0:** Catalog architecture is frozen. See [OLO_1_0.md](OLO_1_0.md). Do not redesign the metadata system for 1.0 — build Studio, marketplace, validation, and AI workflows on this foundation.

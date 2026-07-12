@@ -1,5 +1,10 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.core.tool;
 
+import org.olo.core.tool.observability.ObservabilitySupport;
 import org.olo.spi.tool.ToolRequest;
 import org.olo.spi.tool.ToolResult;
 

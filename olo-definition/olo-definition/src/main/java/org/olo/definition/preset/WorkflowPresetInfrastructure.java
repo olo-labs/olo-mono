@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.preset;
 
 import java.util.Map;
@@ -34,7 +38,7 @@ public final class WorkflowPresetInfrastructure {
                 .id(MODEL_PROVIDER_ID)
                 .provider("local")
                 .model("llama3.2:latest")
-                .putConfiguration("baseUrl", "http://localhost:51435")
+                .putConfiguration("baseUrl", "http://localhost:11435")
                 .build();
     }
 

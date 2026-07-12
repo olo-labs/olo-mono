@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Test fixtures
 
 Committed samples used by unit tests (injection envelopes, etc.). Not loaded by the worker unless copied to `current-active/`.

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # olo-worker Architecture
 
 `olo-worker` is the **long-lived Temporal worker process** for the **Open LLM Orchestrator (OLO)**. It loads deployment settings and workflow definitions from disk, starts one Temporal poller per task queue, and delegates every workflow task to **olo-kernel** for graph execution, UI callbacks, and return-message resolution.

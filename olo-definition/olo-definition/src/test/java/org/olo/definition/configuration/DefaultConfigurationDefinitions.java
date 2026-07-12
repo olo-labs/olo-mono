@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.configuration;
 
 import org.olo.definition.OloProductTerminology;
@@ -61,7 +65,7 @@ final class DefaultConfigurationDefinitions {
                 .defaultLocalModelInfrastructure()
                 .presetPlannerContext(id)
                 .agentParameters(id)
-                .agentCanvasPipeline(id)
+                .localAgentCanvasPipeline(id)
                 .metadata("description", shortDescription)
                 .metadata("role", id));
     }
@@ -107,7 +111,7 @@ final class DefaultConfigurationDefinitions {
                 .defaultLocalModelInfrastructure()
                 .presetPlannerContext("debug")
                 .agentParameters("debug")
-                .agentCanvasPipeline("debug")
+                .localAgentCanvasPipeline("debug")
                 .metadata("description", description)
                 .metadata("role", "debug"));
     }
@@ -173,7 +177,7 @@ final class DefaultConfigurationDefinitions {
                 .defaultLocalModelInfrastructure()
                 .presetPlannerContext("minimal-echo")
                 .agentParameters("minimal-echo")
-                .agentCanvasPipeline("minimal-echo")
+                .localAgentCanvasPipeline("minimal-echo")
                 .metadata("description", description));
     }
 }

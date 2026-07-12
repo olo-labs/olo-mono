@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.dynamicgraph;
 
 import org.junit.jupiter.api.Test;
@@ -8,14 +12,18 @@ import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
+import org.olo.kernel.dynamicgraph.model.DynamicSubgraphMergeResult;
+import org.olo.kernel.dynamicgraph.model.DynamicSubgraphValidationResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DynamicSubgraphMergerTest {
 
+    private final DynamicSubgraphMerger merger = DynamicSubgraphFactories.defaultMerger();
+
     @Test
     void validatesMinimalSubgraphJson() {
-        var result = DynamicSubgraphMerger.validate(sampleSubgraphJson());
+        DynamicSubgraphValidationResult result = merger.validate(sampleSubgraphJson());
 
         assertThat(result.valid()).isTrue();
         assertThat(result.normalizedJson()).contains("\"nodes\"");
@@ -23,7 +31,7 @@ class DynamicSubgraphMergerTest {
 
     @Test
     void rejectsMarkdownWrappedJson() {
-        var result = DynamicSubgraphMerger.validate("```json\n" + sampleSubgraphJson() + "\n```");
+        DynamicSubgraphValidationResult result = merger.validate("```json\n" + sampleSubgraphJson() + "\n```");
 
         assertThat(result.valid()).isTrue();
     }
@@ -31,7 +39,7 @@ class DynamicSubgraphMergerTest {
     @Test
     void mergesSubgraphIntoWorkflowAndRewiresPlannerToEnd() {
         WorkflowDefinition base = baseWorkflow();
-        DynamicSubgraphMerger.MergeResult mergeResult = DynamicSubgraphMerger.merge(
+        DynamicSubgraphMergeResult mergeResult = merger.merge(
                 base,
                 DynamicGraphPlannerSupport.DEFAULT_PLANNER_NODE_ID,
                 "end",
@@ -74,7 +82,7 @@ class DynamicSubgraphMergerTest {
 
     @Test
     void rejectsInvalidNodeType() {
-        var result = DynamicSubgraphMerger.validate("""
+        DynamicSubgraphValidationResult result = merger.validate("""
                 {
                   "id": "bad",
                   "label": "Bad",
@@ -96,7 +104,7 @@ class DynamicSubgraphMergerTest {
 
     @Test
     void rejectsMissingEndNode() {
-        var result = DynamicSubgraphMerger.validate("""
+        DynamicSubgraphValidationResult result = merger.validate("""
                 {
                   "id": "bad",
                   "label": "Bad",

@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Workflow configuration (`olo-configuration`)
 
 Canonical **generated and versioned** workflow presets live here. Gradle generators write only to the collection folders below — never to `current-active/`.

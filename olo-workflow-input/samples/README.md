@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Workflow input samples
 
 Example `WorkflowInput` JSON payloads under this directory. These files are **declarative only**—no secrets, no live cache or file contents.

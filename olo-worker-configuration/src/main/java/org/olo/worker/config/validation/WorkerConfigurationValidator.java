@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.worker.config.validation;
 
 import org.olo.worker.config.exception.WorkerConfigurationException;

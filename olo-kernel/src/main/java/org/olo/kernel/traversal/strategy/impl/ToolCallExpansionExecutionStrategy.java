@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.traversal.strategy.impl;
 
 import org.olo.definition.toolcall.ToolCallPlannerSupport;
@@ -5,9 +9,11 @@ import org.olo.kernel.context.variables.WorkflowReturnVariable;
 import org.olo.kernel.dynamicgraph.DynamicSubgraphInjectionLogger;
 import org.olo.kernel.dynamicgraph.DynamicSubgraphInjectionLogger.InjectionRecord;
 import org.olo.kernel.dynamicgraph.MutableGraphSession;
-import org.olo.kernel.toolcall.AvailableToolsJsonResolver;
 import org.olo.kernel.toolcall.AgentCallResultsSupport;
+import org.olo.kernel.toolcall.ToolCallRetryVariables;
 import org.olo.kernel.toolcall.ToolCallSubgraphMerger;
+import org.olo.kernel.toolcall.model.ParsedAgentCall;
+import org.olo.kernel.toolcall.model.ToolCallValidationResult;
 import org.olo.kernel.traversal.strategy.ExecutionDecision;
 import org.olo.kernel.traversal.strategy.ExecutionStrategy;
 import org.olo.kernel.traversal.strategy.ExecutionStrategyRequest;
@@ -15,12 +21,27 @@ import org.olo.spi.node.NodeStatus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * After an inline tool-call planner agent completes, validates {@code toolCallSequenceJson},
- * merges a tool execution subgraph, or continues directly when {@code directResponse} is set.
+ * merges a tool/agent execution subgraph, or continues directly when {@code directResponse} is set.
  */
 public final class ToolCallExpansionExecutionStrategy implements ExecutionStrategy {
+
+    private final ToolCallSubgraphMerger subgraphMerger;
+    private final ToolCallRetryVariables retryVariables;
+
+    public ToolCallExpansionExecutionStrategy() {
+        this(org.olo.kernel.toolcall.ToolCallFactories.defaultToolCallSubgraphMerger(),
+                org.olo.kernel.toolcall.ToolCallFactories.defaultToolCallRetryVariables());
+    }
+
+    public ToolCallExpansionExecutionStrategy(
+            ToolCallSubgraphMerger subgraphMerger, ToolCallRetryVariables retryVariables) {
+        this.subgraphMerger = Objects.requireNonNull(subgraphMerger, "subgraphMerger");
+        this.retryVariables = Objects.requireNonNull(retryVariables, "retryVariables");
+    }
 
     @Override
     public boolean supports(ExecutionStrategyRequest request) {
@@ -41,65 +62,33 @@ public final class ToolCallExpansionExecutionStrategy implements ExecutionStrate
                 .getVariables()
                 .getString(ToolCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE);
         String rawJson = request.context().getVariables().getString(outputVariable);
-        ToolCallSubgraphMerger.ValidationResult validation =
-                ToolCallSubgraphMerger.validate(rawJson, availableToolsJson, availableAgentsJson);
+        ToolCallValidationResult validation =
+                subgraphMerger.validate(rawJson, availableToolsJson, availableAgentsJson);
         if (!validation.valid()) {
-            int retries = ToolCallSubgraphMerger.readRetryCount(request.context().getVariables());
-            int maxRetries = ToolCallPlannerSupport.maxInvalidJsonRetries(node);
-            request.context()
-                    .getVariables()
-                    .set(ToolCallPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE, validation.message());
-            if (retries + 1 >= maxRetries) {
-                return ExecutionDecision.failed(
-                        name(),
-                        "invalid tool call sequence JSON after "
-                                + maxRetries
-                                + " attempts: "
-                                + validation.message());
-            }
-            ToolCallSubgraphMerger.incrementRetryCount(request.context().getVariables());
-            return ExecutionDecision.reexecute(name(), node.getId());
+            return handleInvalidJson(request, node, validation.message());
         }
 
-        ToolCallSubgraphMerger.resetRetryCount(request.context().getVariables());
+        retryVariables.resetRetryCount(request.context().getVariables());
         request.context().getVariables().set(ToolCallPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE, null);
         String continueNodeId = ToolCallPlannerSupport.continueNodeId(node, "end");
 
-        if (validation.kind() == ToolCallSubgraphMerger.ValidationResult.Kind.DIRECT_RESPONSE) {
+        if (validation.kind() == ToolCallValidationResult.Kind.DIRECT_RESPONSE) {
             request.context()
                     .getVariables()
                     .set(WorkflowReturnVariable.DEFAULT_RETURN_VARIABLE_NAME, validation.directResponse());
             return ExecutionDecision.linear(name(), continueNodeId);
         }
 
-        List<ToolCallSubgraphMerger.ParsedAgentCall> pendingAgentCalls = AgentCallResultsSupport.filterPending(
+        List<ParsedAgentCall> pendingAgentCalls = AgentCallResultsSupport.filterPending(
                 validation.agentCalls(), request.context().getVariables());
-        List<ToolCallSubgraphMerger.ParsedToolCall> pendingToolCalls = validation.toolCalls();
+        var pendingToolCalls = validation.toolCalls();
 
         if (pendingAgentCalls.isEmpty() && pendingToolCalls.isEmpty()) {
-            int retries = ToolCallSubgraphMerger.readRetryCount(request.context().getVariables());
-            int maxRetries = ToolCallPlannerSupport.maxInvalidJsonRetries(node);
-            String duplicateMessage = duplicateDelegationMessage(validation);
-            request.context()
-                    .getVariables()
-                    .set(ToolCallPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE, duplicateMessage);
-            if (retries + 1 >= maxRetries) {
-                return ExecutionDecision.failed(
-                        name(),
-                        "planner repeated already-dispatched agents or tools after "
-                                + maxRetries
-                                + " attempts: "
-                                + duplicateMessage);
-            }
-            ToolCallSubgraphMerger.incrementRetryCount(request.context().getVariables());
-            request.context()
-                    .getVariables()
-                    .set(ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE, null);
-            return ExecutionDecision.reexecute(name(), node.getId());
+            return handleDuplicateDelegation(request, node, validation);
         }
 
-        ToolCallSubgraphMerger.resetToolResults(request.context().getVariables());
-        ToolCallSubgraphMerger.MergeResult mergeResult = ToolCallSubgraphMerger.mergeAgentAndToolCalls(
+        retryVariables.resetToolResults(request.context().getVariables());
+        var mergeResult = subgraphMerger.mergeAgentAndToolCalls(
                 graphSession.graph(),
                 node.getId(),
                 continueNodeId,
@@ -123,12 +112,50 @@ public final class ToolCallExpansionExecutionStrategy implements ExecutionStrate
         return "tool-call-expansion";
     }
 
-    private static String duplicateDelegationMessage(ToolCallSubgraphMerger.ValidationResult validation) {
+    private ExecutionDecision handleInvalidJson(
+            ExecutionStrategyRequest request, org.olo.definition.node.NodeDefinition node, String message) {
+        int retries = retryVariables.readRetryCount(request.context().getVariables());
+        int maxRetries = ToolCallPlannerSupport.maxInvalidJsonRetries(node);
+        request.context()
+                .getVariables()
+                .set(ToolCallPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE, message);
+        if (retries + 1 >= maxRetries) {
+            return ExecutionDecision.failed(
+                    name(), "invalid tool call sequence JSON after " + maxRetries + " attempts: " + message);
+        }
+        retryVariables.incrementRetryCount(request.context().getVariables());
+        return ExecutionDecision.reexecute(name(), node.getId());
+    }
+
+    private ExecutionDecision handleDuplicateDelegation(
+            ExecutionStrategyRequest request,
+            org.olo.definition.node.NodeDefinition node,
+            ToolCallValidationResult validation) {
+        int retries = retryVariables.readRetryCount(request.context().getVariables());
+        int maxRetries = ToolCallPlannerSupport.maxInvalidJsonRetries(node);
+        String duplicateMessage = duplicateDelegationMessage(validation);
+        request.context()
+                .getVariables()
+                .set(ToolCallPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE, duplicateMessage);
+        if (retries + 1 >= maxRetries) {
+            return ExecutionDecision.failed(
+                    name(),
+                    "planner repeated already-dispatched agents or tools after "
+                            + maxRetries
+                            + " attempts: "
+                            + duplicateMessage);
+        }
+        retryVariables.incrementRetryCount(request.context().getVariables());
+        request.context().getVariables().set(ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE, null);
+        return ExecutionDecision.reexecute(name(), node.getId());
+    }
+
+    private static String duplicateDelegationMessage(ToolCallValidationResult validation) {
         List<String> parts = new ArrayList<>();
         if (!validation.agentCalls().isEmpty()) {
             parts.add("agentCalls already completed for: "
                     + validation.agentCalls().stream()
-                            .map(ToolCallSubgraphMerger.ParsedAgentCall::agentId)
+                            .map(ParsedAgentCall::agentId)
                             .reduce((left, right) -> left + ", " + right)
                             .orElse(""));
         }

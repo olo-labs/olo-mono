@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.definition.hook;
 
 import org.olo.definition.capability.CapabilityDefinition;
@@ -8,6 +12,7 @@ import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.serializer.YamlWorkflowSerializer;
 import org.olo.definition.validation.ValidationTestFixtures;
 import org.olo.definition.validation.WorkflowValidator;
+import org.olo.definition.port.PortDirection;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.junit.jupiter.api.Test;
@@ -146,12 +151,16 @@ class HookDefinitionSerializationTest {
                         .pattern("llm1")
                         .onFinally(HookActionDefinition.builder().implementationId("cleanup").build())
                         .build())
-                .addNode(ValidationTestFixtures.node("llm1", NodeType.MODEL)
+                .addNode(NodeDefinition.builder()
+                        .id("llm1")
+                        .type(NodeType.MODEL.name())
                         .hooks(NodeHooksDefinition.builder()
                                 .addPre(HookActionDefinition.builder().implementationId("prompt-validator").build())
                                 .addOnError(HookActionDefinition.builder().implementationId("model-failure-alert").build())
                                 .addOnFinally(HookActionDefinition.builder().implementationId("cleanup").build())
                                 .build())
+                        .addPort(WorkflowBuilder.messagePort("in", PortDirection.INPUT))
+                        .addPort(WorkflowBuilder.messagePort("out", PortDirection.OUTPUT))
                         .build())
                 .inputNode("input")
                 .outputNode("output")
@@ -181,7 +190,12 @@ class HookDefinitionSerializationTest {
                         .pattern("trading.*")
                         .onError(HookActionDefinition.builder().implementationId("audit-error").build())
                         .build())
-                .addNode(ValidationTestFixtures.node("analysis-step", NodeType.MODEL).build())
+                .addNode(NodeDefinition.builder()
+                        .id("analysis-step")
+                        .type(NodeType.MODEL.name())
+                        .addPort(WorkflowBuilder.messagePort("in", PortDirection.INPUT))
+                        .addPort(WorkflowBuilder.messagePort("out", PortDirection.OUTPUT))
+                        .build())
                 .inputNode("input")
                 .outputNode("output")
                 .connect("input", "analysis-step")

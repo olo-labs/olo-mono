@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.olo.kernel.scenario;
 
 import org.junit.jupiter.api.Test;
@@ -11,7 +15,7 @@ import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.context.variables.WorkflowRuntimeVariables;
-import org.olo.kernel.toolcall.ToolCallSubgraphMerger;
+import org.olo.kernel.toolcall.ToolCallFactories;
 import org.olo.kernel.traversal.context.impl.KernelExecutionContextFactory;
 import org.olo.kernel.traversal.step.handler.impl.ToolNodeTypeHandler;
 import org.olo.input.model.WorkflowInput;
@@ -65,7 +69,7 @@ class TravelPlannerEndToEndTest {
                 CoreToolIds.TRAVEL_OFFERS,
                 Map.of("origin", "London", "destination", "Paris"));
 
-        var mergeValidation = ToolCallSubgraphMerger.validate(
+        var mergeValidation = ToolCallFactories.defaultToolCallSubgraphMerger().validate(
                 """
                 {
                   "toolCalls": [
@@ -79,7 +83,7 @@ class TravelPlannerEndToEndTest {
                 [{"toolId":"olo-core:travel-destinations"},{"toolId":"olo-core:travel-offers"}]
                 """);
         assertThat(mergeValidation.valid()).isTrue();
-        ToolCallSubgraphMerger.MergeResult mergeResult = ToolCallSubgraphMerger.merge(
+        var mergeResult = ToolCallFactories.defaultToolCallSubgraphMerger().merge(
                 orchestrator,
                 "agent",
                 "end",

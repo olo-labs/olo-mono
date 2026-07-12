@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # Annotation reference
 
 API contracts for `org.olo.annotation`. Retention is **`CLASS`** — compiler and annotation processor only, not runtime reflection.

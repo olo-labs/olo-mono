@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # olo-annotation-processor architecture
 
 > **OLO 1.0:** Catalog generation architecture is frozen. See [OLO_1_0.md](../../olo-annotation/docs/OLO_1_0.md). Next processor work: compile-time validation (OLO-AP-001–003), not schema redesign.

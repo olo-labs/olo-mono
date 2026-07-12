@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2026 Olo Labs
+SPDX-License-Identifier: Apache-2.0
+-->
 # OLO 1.0 — catalog architecture freeze
 
 The extension metadata system is **frozen for OLO 1.0**. The catalog architecture is strong enough to support community plugins, enterprise extensions, marketplace indexing, and long-term ecosystem growth. **Stop redesigning the metadata system** — invest effort elsewhere.

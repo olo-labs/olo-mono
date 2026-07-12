@@ -30,8 +30,6 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "agent-plug" : "#a855f7",
-      "any" : "#94a3b8",
       "message" : "#ef4444",
       "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
@@ -39,9 +37,26 @@
       "string" : "#a3e635",
       "object" : "#c084fc",
       "number" : "#38bdf8",
-      "array" : "#f472b6"
+      "array" : "#f472b6",
+      "agent-plug" : "#a855f7",
+      "any" : "#94a3b8"
     },
     "nodeTypes" : {
+      "END" : {
+        "emoji" : "⏹",
+        "typeLabel" : "End",
+        "description" : "Workflow exit — maps a workflow variable to the caller result",
+        "palette" : {
+          "name" : "End",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "outputVariable",
+          "widget" : "VARIABLE_SELECT",
+          "label" : "Output variable",
+          "binding" : "outputVariableMapping"
+        } ]
+      },
       "START" : {
         "emoji" : "▶",
         "typeLabel" : "Start",
@@ -68,21 +83,6 @@
           "id" : "model",
           "widget" : "MODEL_SELECTOR",
           "label" : "Model"
-        } ]
-      },
-      "END" : {
-        "emoji" : "⏹",
-        "typeLabel" : "End",
-        "description" : "Workflow exit — maps a workflow variable to the caller result",
-        "palette" : {
-          "name" : "End",
-          "category" : "control"
-        },
-        "inlineProperties" : [ {
-          "id" : "outputVariable",
-          "widget" : "VARIABLE_SELECT",
-          "label" : "Output variable",
-          "binding" : "outputVariableMapping"
         } ]
       }
     }
@@ -282,7 +282,13 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "toolId" : "olo-core:calculator"
+      "toolId" : "olo-core:calculator",
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 1160
+        }
+      }
     }
   }, {
     "id" : "cpu-usage",
@@ -331,7 +337,13 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "toolId" : "olo-core:cpu-usage"
+      "toolId" : "olo-core:cpu-usage",
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 1520
+        }
+      }
     }
   }, {
     "id" : "agent",
@@ -574,23 +586,23 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
-    "role" : "agent",
     "dynamicToolExecution" : {
-      "continueNodeId" : "end",
       "plannerNodeId" : "agent",
       "availableToolsVariable" : "availableToolsJson",
-      "outputVariable" : "toolCallSequenceJson"
+      "outputVariable" : "toolCallSequenceJson",
+      "continueNodeId" : "end"
     },
     "planningStrategy" : "react",
     "agentType" : "autonomous",
     "returnVariable" : "ReturnValue",
     "plannerContext" : {
-      "selectedVariables" : [ "message", "availableToolsJson", "toolCallSequenceJson" ],
-      "selectedAgents" : [ "planner", "reviewer", "architect" ],
       "selectedTools" : [ "olo-core:calculator", "olo-core:cpu-usage" ],
-      "injectCapabilities" : false
+      "injectCapabilities" : false,
+      "selectedVariables" : [ "message", "availableToolsJson", "toolCallSequenceJson" ],
+      "selectedAgents" : [ "planner", "reviewer", "architect" ]
     },
     "description" : "Autonomous tool-using agent with strict JSON tool-call planning",
-    "agentSelectionStrategy" : "dynamic"
+    "agentSelectionStrategy" : "dynamic",
+    "role" : "agent"
   }
 }
