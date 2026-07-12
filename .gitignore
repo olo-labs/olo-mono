@@ -7,3 +7,4 @@ build
 .gradle
 lib
 dist
+/olo-core/tools/demo-data/conversations/*.json

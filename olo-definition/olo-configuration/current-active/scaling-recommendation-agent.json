@@ -1,14 +1,14 @@
 {
-  "id" : "resource-pressure-agent",
+  "id" : "scaling-recommendation-agent",
   "enabled" : true,
   "isDefault" : false,
-  "label" : "Resource Pressure Agent",
-  "role" : "Resource Pressure Agent",
-  "shortDescription" : "Correlates CPU and memory pressure with degraded performance",
-  "emoji" : "💾",
+  "label" : "Scaling Recommendation Agent",
+  "role" : "Scaling Recommendation Agent",
+  "shortDescription" : "Recommends autoscaling, pool sizing, and resilience tuning",
+  "emoji" : "⚖️",
   "designer" : {
     "paletteGroup" : "Agents",
-    "searchKeywords" : [ "memory", "cpu" ],
+    "searchKeywords" : [ "scaling", "capacity" ],
     "nodeSize" : {
       "width" : 300,
       "height" : 120
@@ -30,6 +30,8 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
+      "string" : "#a3e635",
+      "object" : "#c084fc",
       "number" : "#38bdf8",
       "array" : "#f472b6",
       "agent-plug" : "#a855f7",
@@ -37,9 +39,7 @@
       "message" : "#ef4444",
       "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
-      "integer" : "#38bdf8",
-      "string" : "#a3e635",
-      "object" : "#c084fc"
+      "integer" : "#38bdf8"
     },
     "nodeTypes" : {
       "START" : {
@@ -58,7 +58,7 @@
         } ]
       },
       "AGENT" : {
-        "emoji" : "💾",
+        "emoji" : "⚖️",
         "typeLabel" : "Agent",
         "inlineProperties" : [ {
           "id" : "parameters",
@@ -94,9 +94,9 @@
   "availableAgents" : [ ],
   "version" : "1.0.0",
   "capability" : {
-    "name" : "Resource Pressure Agent",
-    "description" : "Correlates CPU and memory pressure with degraded performance",
-    "tags" : [ "resource-pressure-agent" ],
+    "name" : "Scaling Recommendation Agent",
+    "description" : "Recommends autoscaling, pool sizing, and resilience tuning",
+    "tags" : [ "scaling-recommendation-agent" ],
     "examples" : [ ],
     "required_inputs" : [ "input" ],
     "required_outputs" : [ "output" ],
@@ -328,7 +328,7 @@
       "executionModel" : "INLINE",
       "routers" : [ ],
       "workflowRef" : {
-        "workflowId" : "resource-pressure-agent",
+        "workflowId" : "scaling-recommendation-agent",
         "version" : "1.0.0",
         "inputMapping" : { },
         "outputMapping" : { }
@@ -538,14 +538,14 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
+    "role" : "scaling-recommendation-agent",
     "plannerContext" : {
       "selectedVariables" : [ "message", "conversationSummary" ],
       "selectedAgents" : [ ],
       "selectedTools" : [ ],
       "injectCapabilities" : false
     },
-    "description" : "Correlates CPU and memory pressure with degraded performance",
-    "returnVariable" : "ReturnValue",
-    "role" : "resource-pressure-agent"
+    "description" : "Recommends autoscaling, pool sizing, and resilience tuning",
+    "returnVariable" : "ReturnValue"
   }
 }

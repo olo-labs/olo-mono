@@ -1,14 +1,14 @@
 {
-  "id" : "performance-triage-orchestrator",
+  "id" : "capacity-planning-orchestrator",
   "enabled" : true,
   "isDefault" : true,
-  "label" : "Performance Triage Orchestrator",
-  "role" : "Performance Triage Orchestrator",
-  "shortDescription" : "Investigates latency spikes using mock metrics and specialist child workflows",
-  "emoji" : "⚡",
+  "label" : "Capacity Planning Orchestrator",
+  "role" : "Capacity Planning Orchestrator",
+  "shortDescription" : "Plans post-incident capacity using mock metrics, calculator, and specialist child workflows",
+  "emoji" : "\uD83D\uDCC8",
   "designer" : {
     "paletteGroup" : "Agents",
-    "searchKeywords" : [ "performance-triage-orchestrator", "planner", "scenario" ],
+    "searchKeywords" : [ "capacity-planning-orchestrator", "planner", "scenario" ],
     "nodeSize" : {
       "width" : 300,
       "height" : 120
@@ -30,6 +30,8 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
+      "string" : "#a3e635",
+      "object" : "#c084fc",
       "number" : "#38bdf8",
       "array" : "#f472b6",
       "agent-plug" : "#a855f7",
@@ -37,9 +39,7 @@
       "message" : "#ef4444",
       "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
-      "integer" : "#38bdf8",
-      "string" : "#a3e635",
-      "object" : "#c084fc"
+      "integer" : "#38bdf8"
     },
     "nodeTypes" : {
       "START" : {
@@ -58,7 +58,7 @@
         } ]
       },
       "AGENT" : {
-        "emoji" : "⚡",
+        "emoji" : "\uD83D\uDCC8",
         "typeLabel" : "Agent",
         "inlineProperties" : [ {
           "id" : "parameters",
@@ -91,31 +91,31 @@
   "workflowType" : "olo",
   "runAgain" : true,
   "childWorkflows" : [ {
-    "workflowId" : "latency-analysis-agent",
+    "workflowId" : "resource-utilization-agent",
     "workflowVersion" : "1.0.0"
   }, {
-    "workflowId" : "resource-pressure-agent",
+    "workflowId" : "cost-estimation-agent",
     "workflowVersion" : "1.0.0"
   }, {
-    "workflowId" : "optimization-agent",
+    "workflowId" : "scaling-recommendation-agent",
     "workflowVersion" : "1.0.0"
   }, {
-    "workflowId" : "performance-report-agent",
+    "workflowId" : "capacity-report-agent",
     "workflowVersion" : "1.0.0"
   } ],
   "availableAgents" : [ {
-    "id" : "latency-analysis-agent"
+    "id" : "resource-utilization-agent"
   }, {
-    "id" : "resource-pressure-agent"
+    "id" : "cost-estimation-agent"
   }, {
-    "id" : "optimization-agent"
+    "id" : "scaling-recommendation-agent"
   }, {
-    "id" : "performance-report-agent"
+    "id" : "capacity-report-agent"
   } ],
   "version" : "1.0.0",
   "capability" : {
-    "name" : "Performance Triage Orchestrator",
-    "description" : "Investigates latency spikes using mock metrics and specialist child workflows",
+    "name" : "Capacity Planning Orchestrator",
+    "description" : "Plans post-incident capacity using mock metrics, calculator, and specialist child workflows",
     "tags" : [ "agent", "scenario" ],
     "examples" : [ ],
     "required_inputs" : [ "input" ],
@@ -232,8 +232,8 @@
       "inputVariableMappings" : [ "message" ],
       "designer" : {
         "position" : {
-          "x" : 80,
-          "y" : 80
+          "x" : 83.95852373231867,
+          "y" : 78.6804920892271
         }
       }
     },
@@ -288,8 +288,8 @@
       "toolId" : "olo-core:conversation-load",
       "designer" : {
         "position" : {
-          "x" : 440,
-          "y" : 80
+          "x" : 442.63901582154585,
+          "y" : 65.48541298149816
         }
       }
     },
@@ -345,7 +345,7 @@
       "designer" : {
         "position" : {
           "x" : 1520,
-          "y" : 80
+          "y" : 66.80492089227106
         }
       }
     },
@@ -388,7 +388,7 @@
       "routers" : [ ],
       "approval" : {
         "title" : "Approve container restart",
-        "description" : "Review the request and add any missing context, constraints, or priorities before Performance Triage Orchestrator runs. Investigates latency spikes using mock metrics and specialist child workflows For the final human-approved action (container restart), provide: containerId and namespace (e.g. payment-api-7f8c9d / production).",
+        "description" : "Review the request and add any missing context, constraints, or priorities before Capacity Planning Orchestrator runs. Plans post-incident capacity using mock metrics, calculator, and specialist child workflows For the final human-approved action (container restart), provide: containerId and namespace to apply approved capacity changes.",
         "approvers" : [ "operator" ],
         "timeoutSeconds" : 3600,
         "requireCommentOnReject" : false
@@ -478,7 +478,7 @@
       "outputVariable" : "toolCallSequenceJson",
       "maxInvalidJsonRetries" : 3,
       "continueNodeId" : "conversation-store",
-      "promptTemplate" : "You are a performance triage and latency investigation agent for the Open LLM Orchestrator (OLO).\nPrevious conversation summary (from conversation-load plugin):\n{conversationSummary}\n\nUser request:\n{message}\n\nAvailable tools (strict allow-list — use only these toolId values):\n{availableToolsJson}\n\nAvailable agents (strict allow-list — delegate only to these agentId values):\n{availableAgentsJson}\n\nPrior agent results (JSON array — empty on first pass):\n{agentResultsJson}\n\nInvestigation playbook (execute in order across planner passes):\n1. Signal collection — query CPU, memory, and latency metrics for the incident window (ISO-8601 startTime/endTime).\n   Use olo-core:cpu-usage, olo-core:memory-usage, and olo-core:numeric-metric.\n2. Specialist analysis — delegate to child workflows:\n   - latency-analysis-agent: interpret p95/p99 latency spikes and user impact\n   - resource-pressure-agent: correlate CPU and memory pressure with the latency window\n   - optimization-agent: recommend tuning actions (timeouts, pool sizes, circuit breakers)\n3. Final report — delegate to performance-report-agent with findings from all prior agents.\nFinal step (human-approved mock action) — after investigation agents have completed:\n- Callolo-core:restart-container with arguments supplied by the operator at human-input (e.g. { \"containerId\": \"payment-api-7f8c9d\", \"namespace\": \"production\" }).\n  Purpose: restart the degraded service container after triage completes\n  The tool records a mock execution entry; include confirmationId, logPath, and summary in directResponse.\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Schema:\n{\n  \"toolCalls\": [],\n  \"agentCalls\": [\n    { \"agentId\": \"<agent-id>\", \"message\": \"<task for child workflow>\" }\n  ],\n  \"directResponse\": null\n}\n3. Each agentCall runs as a blocking child workflow (executorId=child-workflow) in order; execution then continues forward.\n4. Never repeat agentCalls for an agentId that already appears in agentResultsJson.\n5. If no tools or agents are needed, set both arrays to [] and put the final answer in \"directResponse\".\n\nIf a previous attempt failed validation, fix it:\n{toolCallSequenceJsonValidationError}\n\nRespond with JSON only.",
+      "promptTemplate" : "You are a capacity planning and cost estimation after an incident agent for the Open LLM Orchestrator (OLO).\nPrevious conversation summary (from conversation-load plugin):\n{conversationSummary}\n\nUser request:\n{message}\n\nAvailable tools (strict allow-list — use only these toolId values):\n{availableToolsJson}\n\nAvailable agents (strict allow-list — delegate only to these agentId values):\n{availableAgentsJson}\n\nPrior agent results (JSON array — empty on first pass):\n{agentResultsJson}\n\nInvestigation playbook (execute in order across planner passes):\n1. Utilization signals — query olo-core:cpu-usage and olo-core:memory-usage for the incident window (ISO-8601 startTime/endTime).\n   Delegate to resource-utilization-agent to summarize peak utilization and headroom.\n2. Cost math — use olo-core:calculator (expression or a/b/op arguments) to estimate extra instance-hours or over-provision cost.\n   Delegate to cost-estimation-agent with assumptions stated clearly.\n3. Scaling plan — delegate to scaling-recommendation-agent for autoscaling thresholds, pool sizes, and circuit breaker tuning.\n4. Capacity report — delegate to capacity-report-agent with executive summary, numbers, and recommended capacity changes.\nFinal step (human-approved mock action) — after investigation agents have completed:\n- Callolo-core:restart-container with arguments supplied by the operator at human-input (e.g. { \"containerId\": \"payment-api\", \"namespace\": \"production\" }).\n  Purpose: restart containers to apply the approved scaling or pool-size changes\n  The tool records a mock execution entry; include confirmationId, logPath, and summary in directResponse.\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Schema:\n{\n  \"toolCalls\": [],\n  \"agentCalls\": [\n    { \"agentId\": \"<agent-id>\", \"message\": \"<task for child workflow>\" }\n  ],\n  \"directResponse\": null\n}\n3. Each agentCall runs as a blocking child workflow (executorId=child-workflow) in order; execution then continues forward.\n4. Never repeat agentCalls for an agentId that already appears in agentResultsJson.\n5. If no tools or agents are needed, set both arrays to [] and put the final answer in \"directResponse\".\n\nIf a previous attempt failed validation, fix it:\n{toolCallSequenceJsonValidationError}\n\nRespond with JSON only.",
       "designer" : {
         "position" : {
           "x" : 1160,
@@ -517,9 +517,9 @@
     },
     "label" : "end"
   }, {
-    "id" : "latency-analysis-agent",
+    "id" : "resource-utilization-agent",
     "type" : "AGENT",
-    "label" : "Latency Analysis Agent",
+    "label" : "Resource Utilization Agent",
     "ports" : [ {
       "id" : "in",
       "label" : "message in",
@@ -566,7 +566,7 @@
       "executionModel" : "CHILD_WORKFLOW",
       "routers" : [ ],
       "workflowRef" : {
-        "workflowId" : "latency-analysis-agent",
+        "workflowId" : "resource-utilization-agent",
         "version" : "1.0.0",
         "inputMapping" : { },
         "outputMapping" : { }
@@ -575,18 +575,18 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "delegateAgentId" : "latency-analysis-agent",
+      "delegateAgentId" : "resource-utilization-agent",
       "designer" : {
         "position" : {
-          "x" : 194,
-          "y" : 553
+          "x" : 1596.8492101524873,
+          "y" : 644.4731107508205
         }
       }
     }
   }, {
-    "id" : "resource-pressure-agent",
+    "id" : "cost-estimation-agent",
     "type" : "AGENT",
-    "label" : "Resource Pressure Agent",
+    "label" : "Cost Estimation Agent",
     "ports" : [ {
       "id" : "in",
       "label" : "message in",
@@ -633,7 +633,7 @@
       "executionModel" : "CHILD_WORKFLOW",
       "routers" : [ ],
       "workflowRef" : {
-        "workflowId" : "resource-pressure-agent",
+        "workflowId" : "cost-estimation-agent",
         "version" : "1.0.0",
         "inputMapping" : { },
         "outputMapping" : { }
@@ -642,18 +642,18 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "delegateAgentId" : "resource-pressure-agent",
+      "delegateAgentId" : "cost-estimation-agent",
       "designer" : {
         "position" : {
-          "x" : 386,
-          "y" : 554
+          "x" : 1795.0151152232127,
+          "y" : 643.1950791077289
         }
       }
     }
   }, {
-    "id" : "optimization-agent",
+    "id" : "scaling-recommendation-agent",
     "type" : "AGENT",
-    "label" : "Optimization Agent",
+    "label" : "Scaling Recommendation Agent",
     "ports" : [ {
       "id" : "in",
       "label" : "message in",
@@ -700,7 +700,7 @@
       "executionModel" : "CHILD_WORKFLOW",
       "routers" : [ ],
       "workflowRef" : {
-        "workflowId" : "optimization-agent",
+        "workflowId" : "scaling-recommendation-agent",
         "version" : "1.0.0",
         "inputMapping" : { },
         "outputMapping" : { }
@@ -709,18 +709,18 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "delegateAgentId" : "optimization-agent",
+      "delegateAgentId" : "scaling-recommendation-agent",
       "designer" : {
         "position" : {
-          "x" : 576,
-          "y" : 556
+          "x" : 2001.0980677585753,
+          "y" : 639.6390158215457
         }
       }
     }
   }, {
-    "id" : "performance-report-agent",
+    "id" : "capacity-report-agent",
     "type" : "AGENT",
-    "label" : "Performance Report Agent",
+    "label" : "Capacity Report Agent",
     "ports" : [ {
       "id" : "in",
       "label" : "message in",
@@ -767,7 +767,7 @@
       "executionModel" : "CHILD_WORKFLOW",
       "routers" : [ ],
       "workflowRef" : {
-        "workflowId" : "performance-report-agent",
+        "workflowId" : "capacity-report-agent",
         "version" : "1.0.0",
         "inputMapping" : { },
         "outputMapping" : { }
@@ -776,11 +776,11 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "delegateAgentId" : "performance-report-agent",
+      "delegateAgentId" : "capacity-report-agent",
       "designer" : {
         "position" : {
-          "x" : 1160,
-          "y" : 80
+          "x" : 1757.7370835801212,
+          "y" : 430.9891042655899
         }
       }
     }
@@ -834,8 +834,8 @@
       "toolId" : "olo-core:cpu-usage",
       "designer" : {
         "position" : {
-          "x" : 771,
-          "y" : 556
+          "x" : 639.6581724156961,
+          "y" : 648.1839192709634
         }
       }
     },
@@ -890,14 +890,14 @@
       "toolId" : "olo-core:memory-usage",
       "designer" : {
         "position" : {
-          "x" : 1088,
-          "y" : 557
+          "x" : 325.3601488791428,
+          "y" : 650.4147626768131
         }
       }
     },
     "label" : "memory-usage"
   }, {
-    "id" : "latency-metric",
+    "id" : "calculator",
     "type" : "TOOL",
     "ports" : [ {
       "id" : "in",
@@ -943,15 +943,15 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "toolId" : "olo-core:numeric-metric",
+      "toolId" : "olo-core:calculator",
       "designer" : {
         "position" : {
-          "x" : 1403,
-          "y" : 558
+          "x" : 954.1093135798313,
+          "y" : 648.1458701850183
         }
       }
     },
-    "label" : "latency-metric"
+    "label" : "calculator"
   }, {
     "id" : "restart-container",
     "type" : "TOOL",
@@ -1002,8 +1002,8 @@
       "toolId" : "olo-core:restart-container",
       "designer" : {
         "position" : {
-          "x" : 1718.125,
-          "y" : 557
+          "x" : 1274.276625146824,
+          "y" : 647.4330409794068
         }
       }
     },
@@ -1035,22 +1035,22 @@
     "sourcePortId" : "out",
     "targetPortId" : "in"
   }, {
-    "sourceNodeId" : "latency-analysis-agent",
+    "sourceNodeId" : "resource-utilization-agent",
     "targetNodeId" : "agent",
     "sourcePortId" : "agentPlug",
     "targetPortId" : "agentPlug"
   }, {
-    "sourceNodeId" : "resource-pressure-agent",
+    "sourceNodeId" : "cost-estimation-agent",
     "targetNodeId" : "agent",
     "sourcePortId" : "agentPlug",
     "targetPortId" : "agentPlug"
   }, {
-    "sourceNodeId" : "optimization-agent",
+    "sourceNodeId" : "scaling-recommendation-agent",
     "targetNodeId" : "agent",
     "sourcePortId" : "agentPlug",
     "targetPortId" : "agentPlug"
   }, {
-    "sourceNodeId" : "performance-report-agent",
+    "sourceNodeId" : "capacity-report-agent",
     "targetNodeId" : "agent",
     "sourcePortId" : "agentPlug",
     "targetPortId" : "agentPlug"
@@ -1065,7 +1065,7 @@
     "sourcePortId" : "capabilities",
     "targetPortId" : "capabilities"
   }, {
-    "sourceNodeId" : "latency-metric",
+    "sourceNodeId" : "calculator",
     "targetNodeId" : "agent",
     "sourcePortId" : "capabilities",
     "targetPortId" : "capabilities"
@@ -1208,7 +1208,7 @@
       "name" : "CPU Usage",
       "description" : "Returns CPU utilization samples for a time window",
       "tags" : [ ],
-      "examples" : [ "Check CPU spike during payment gateway outage" ],
+      "examples" : [ "Peak CPU during payment-service outage" ],
       "required_inputs" : [ ],
       "required_outputs" : [ ],
       "tool_requirements" : [ ],
@@ -1225,7 +1225,7 @@
       "name" : "Memory Usage",
       "description" : "Returns heap/memory usage samples for a time window",
       "tags" : [ ],
-      "examples" : [ "Detect memory pressure during gateway timeout incident" ],
+      "examples" : [ "Memory spike during gateway timeout incident" ],
       "required_inputs" : [ ],
       "required_outputs" : [ ],
       "tool_requirements" : [ ],
@@ -1236,20 +1236,20 @@
     },
     "configuration" : { }
   }, {
-    "id" : "latency-metric",
+    "id" : "calculator",
     "type" : "TOOL",
     "capability" : {
-      "name" : "Latency Metric",
-      "description" : "Returns upstream latency samples (milliseconds) for a time window",
+      "name" : "Calculator",
+      "description" : "Evaluates arithmetic expressions for cost and capacity estimates",
       "tags" : [ ],
-      "examples" : [ "Inspect p95 latency spike during outage" ],
+      "examples" : [ "Compute extra instance-hours: 4 instances * 2.5 hours" ],
       "required_inputs" : [ ],
       "required_outputs" : [ ],
       "tool_requirements" : [ ],
       "required_context" : [ ]
     },
     "runtimeBinding" : {
-      "implementationId" : "olo-core:numeric-metric"
+      "implementationId" : "olo-core:calculator"
     },
     "configuration" : { }
   }, {
@@ -1288,35 +1288,35 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
+    "plannerContext" : {
+      "selectedTools" : [ "olo-core:cpu-usage", "olo-core:memory-usage", "olo-core:calculator", "olo-core:restart-container" ],
+      "selectedVariables" : [ "message", "conversationSummary", "availableToolsJson", "availableAgentsJson", "agentResultsJson", "toolCallSequenceJson" ],
+      "injectCapabilities" : false,
+      "injectAgents" : true,
+      "selectedAgents" : [ "resource-utilization-agent", "cost-estimation-agent", "scaling-recommendation-agent", "capacity-report-agent" ]
+    },
+    "description" : "Plans post-incident capacity using mock metrics, calculator, and specialist child workflows",
     "agentSelectionStrategy" : "dynamic",
-    "role" : "performance-triage-orchestrator",
+    "role" : "capacity-planning-orchestrator",
     "dynamicToolExecution" : {
+      "outputVariable" : "toolCallSequenceJson",
       "availableToolsVariable" : "availableToolsJson",
       "availableAgentsVariable" : "availableAgentsJson",
       "plannerNodeId" : "agent",
-      "continueNodeId" : "conversation-store",
-      "outputVariable" : "toolCallSequenceJson"
+      "continueNodeId" : "conversation-store"
     },
     "planningStrategy" : "react",
     "agentType" : "autonomous",
     "returnVariable" : "ReturnValue",
-    "plannerContext" : {
-      "selectedVariables" : [ "message", "conversationSummary", "availableToolsJson", "availableAgentsJson", "agentResultsJson", "toolCallSequenceJson" ],
-      "injectCapabilities" : false,
-      "injectAgents" : true,
-      "selectedAgents" : [ "latency-analysis-agent", "resource-pressure-agent", "optimization-agent", "performance-report-agent" ],
-      "selectedTools" : [ "olo-core:cpu-usage", "olo-core:memory-usage", "olo-core:numeric-metric", "olo-core:restart-container" ]
-    },
-    "description" : "Investigates latency spikes using mock metrics and specialist child workflows",
     "canvasView" : {
       "viewport" : {
-        "x" : 0,
-        "y" : 0,
+        "x" : -131,
+        "y" : -2,
         "zoom" : 1
       },
       "size" : {
-        "width" : 1215,
-        "height" : 1611
+        "width" : 1866,
+        "height" : 822
       }
     }
   }

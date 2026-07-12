@@ -1,14 +1,14 @@
 {
-  "id" : "optimization-agent",
+  "id" : "resource-utilization-agent",
   "enabled" : true,
   "isDefault" : false,
-  "label" : "Optimization Agent",
-  "role" : "Optimization Agent",
-  "shortDescription" : "Recommends concrete tuning and capacity actions",
-  "emoji" : "🛠️",
+  "label" : "Resource Utilization Agent",
+  "role" : "Resource Utilization Agent",
+  "shortDescription" : "Summarizes CPU and memory peaks versus baseline headroom",
+  "emoji" : "📊",
   "designer" : {
     "paletteGroup" : "Agents",
-    "searchKeywords" : [ "tuning", "optimization" ],
+    "searchKeywords" : [ "utilization", "metrics" ],
     "nodeSize" : {
       "width" : 300,
       "height" : 120
@@ -30,6 +30,8 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
+      "string" : "#a3e635",
+      "object" : "#c084fc",
       "number" : "#38bdf8",
       "array" : "#f472b6",
       "agent-plug" : "#a855f7",
@@ -37,9 +39,7 @@
       "message" : "#ef4444",
       "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
-      "integer" : "#38bdf8",
-      "string" : "#a3e635",
-      "object" : "#c084fc"
+      "integer" : "#38bdf8"
     },
     "nodeTypes" : {
       "START" : {
@@ -58,7 +58,7 @@
         } ]
       },
       "AGENT" : {
-        "emoji" : "🛠️",
+        "emoji" : "📊",
         "typeLabel" : "Agent",
         "inlineProperties" : [ {
           "id" : "parameters",
@@ -94,9 +94,9 @@
   "availableAgents" : [ ],
   "version" : "1.0.0",
   "capability" : {
-    "name" : "Optimization Agent",
-    "description" : "Recommends concrete tuning and capacity actions",
-    "tags" : [ "optimization-agent" ],
+    "name" : "Resource Utilization Agent",
+    "description" : "Summarizes CPU and memory peaks versus baseline headroom",
+    "tags" : [ "resource-utilization-agent" ],
     "examples" : [ ],
     "required_inputs" : [ "input" ],
     "required_outputs" : [ "output" ],
@@ -328,7 +328,7 @@
       "executionModel" : "INLINE",
       "routers" : [ ],
       "workflowRef" : {
-        "workflowId" : "optimization-agent",
+        "workflowId" : "resource-utilization-agent",
         "version" : "1.0.0",
         "inputMapping" : { },
         "outputMapping" : { }
@@ -538,14 +538,14 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
+    "role" : "resource-utilization-agent",
     "plannerContext" : {
       "selectedVariables" : [ "message", "conversationSummary" ],
       "selectedAgents" : [ ],
       "selectedTools" : [ ],
       "injectCapabilities" : false
     },
-    "description" : "Recommends concrete tuning and capacity actions",
-    "returnVariable" : "ReturnValue",
-    "role" : "optimization-agent"
+    "description" : "Summarizes CPU and memory peaks versus baseline headroom",
+    "returnVariable" : "ReturnValue"
   }
 }

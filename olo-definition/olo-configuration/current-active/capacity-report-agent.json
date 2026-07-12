@@ -1,14 +1,14 @@
 {
-  "id" : "latency-analysis-agent",
+  "id" : "capacity-report-agent",
   "enabled" : true,
   "isDefault" : false,
-  "label" : "Latency Analysis Agent",
-  "role" : "Latency Analysis Agent",
-  "shortDescription" : "Interprets latency spikes and customer-facing impact",
-  "emoji" : "📉",
+  "label" : "Capacity Report Agent",
+  "role" : "Capacity Report Agent",
+  "shortDescription" : "Publishes capacity planning report for leadership review",
+  "emoji" : "📑",
   "designer" : {
     "paletteGroup" : "Agents",
-    "searchKeywords" : [ "latency", "slo" ],
+    "searchKeywords" : [ "capacity", "report" ],
     "nodeSize" : {
       "width" : 300,
       "height" : 120
@@ -30,6 +30,8 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
+      "string" : "#a3e635",
+      "object" : "#c084fc",
       "number" : "#38bdf8",
       "array" : "#f472b6",
       "agent-plug" : "#a855f7",
@@ -37,9 +39,7 @@
       "message" : "#ef4444",
       "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
-      "integer" : "#38bdf8",
-      "string" : "#a3e635",
-      "object" : "#c084fc"
+      "integer" : "#38bdf8"
     },
     "nodeTypes" : {
       "START" : {
@@ -58,7 +58,7 @@
         } ]
       },
       "AGENT" : {
-        "emoji" : "📉",
+        "emoji" : "📑",
         "typeLabel" : "Agent",
         "inlineProperties" : [ {
           "id" : "parameters",
@@ -94,9 +94,9 @@
   "availableAgents" : [ ],
   "version" : "1.0.0",
   "capability" : {
-    "name" : "Latency Analysis Agent",
-    "description" : "Interprets latency spikes and customer-facing impact",
-    "tags" : [ "latency-analysis-agent" ],
+    "name" : "Capacity Report Agent",
+    "description" : "Publishes capacity planning report for leadership review",
+    "tags" : [ "capacity-report-agent" ],
     "examples" : [ ],
     "required_inputs" : [ "input" ],
     "required_outputs" : [ "output" ],
@@ -328,7 +328,7 @@
       "executionModel" : "INLINE",
       "routers" : [ ],
       "workflowRef" : {
-        "workflowId" : "latency-analysis-agent",
+        "workflowId" : "capacity-report-agent",
         "version" : "1.0.0",
         "inputMapping" : { },
         "outputMapping" : { }
@@ -538,14 +538,14 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
+    "role" : "capacity-report-agent",
     "plannerContext" : {
       "selectedVariables" : [ "message", "conversationSummary" ],
       "selectedAgents" : [ ],
       "selectedTools" : [ ],
       "injectCapabilities" : false
     },
-    "description" : "Interprets latency spikes and customer-facing impact",
-    "returnVariable" : "ReturnValue",
-    "role" : "latency-analysis-agent"
+    "description" : "Publishes capacity planning report for leadership review",
+    "returnVariable" : "ReturnValue"
   }
 }
