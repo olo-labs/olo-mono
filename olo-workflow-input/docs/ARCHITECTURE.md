@@ -14,7 +14,7 @@ It is **not** part of the `olo-definition` Gradle build. It depends on the publi
 |-------|----------|------|
 | **Definition** | `WorkflowDefinition` (`olo-definition`) | Stored in Git; describes graph, `inputs`, state, nodes |
 | **Invocation** | `WorkflowInput` (`olo-workflow-input`) | On the wire when a client **starts** a workflow run |
-| **Runtime** | `olo-runtime` (planned) | Executes graph; hydrates `input.*` → `state.*` |
+| **Runtime** | `olo-kernel` + `olo-core` | Executes graph; hydrates `input.*` → state via kernel context |
 
 **Core principle:** The workflow **definition** is long-lived configuration. The **invocation payload** is per-run data plus routing/context metadata for the worker boundary.
 
@@ -24,12 +24,12 @@ flowchart LR
     Payload[WorkflowInput JSON]
     Worker[Worker / Temporal]
     Def[WorkflowDefinition]
-    Runtime[olo-runtime]
+    Kernel[olo-kernel]
 
     Client -->|toJson| Payload
     Payload -->|fromJson| Worker
     Def -.->|validate inputs| Worker
-    Worker --> Runtime
+    Worker --> Kernel
 ```
 
 ## 2. Module boundaries
@@ -45,7 +45,7 @@ flowchart LR
 **Dependency rule:**
 
 ```
-olo-definition  ←  olo-workflow-input  ←  olo-runtime / worker apps
+olo-definition  ←  olo-workflow-input  ←  olo-kernel / worker apps
 ```
 
 `olo-workflow-input` must not be referenced from `olo-definition`.
@@ -215,7 +215,7 @@ Map resolved values for runtime `input.*` paths:
 Map<String, Object> map = WorkflowInputMaps.toInputMap(values, workflowDefinition.getInputs().keySet());
 ```
 
-Runtime (`olo-runtime`) copies `input.{name}` → `state.{name}` when `populateState` is true on the definition input (see `olo-definition` docs).
+Runtime (`olo-kernel`) copies `input.{name}` → state when `populateState` is true on the definition input (see `olo-definition` docs).
 
 ## 8. Configuration
 

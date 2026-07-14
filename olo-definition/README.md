@@ -2,34 +2,43 @@
 Copyright (c) 2026 Olo Labs
 SPDX-License-Identifier: Apache-2.0
 -->
-# olo-mono
+# olo-definition
 
-Monorepo for **OLO** (AI orchestration): declarative workflow definitions separated from runtime execution.
+Gradle project for **OLO workflow graph definitions** — serializable POJOs, builders, JSON/YAML serializers, and validation. Part of the [olo-mono](../README.md) monorepo.
 
 ## Documentation
 
-See [doc/ARCHITECTURE.md](doc/ARCHITECTURE.md) for module boundaries, graph model, serialization, and planned runtime design.
+| Document | Scope |
+|----------|--------|
+| [doc/ARCHITECTURE.md](doc/ARCHITECTURE.md) | Graph model, serialization, validation |
+| [olo-definition/README.md](olo-definition/README.md) | Module API and package layout |
+| [olo-configuration/README.md](olo-configuration/README.md) | Scenario presets and `current-active/` runtime folder |
 
-Example workflows: [samples/](samples/). Preset chat/task-queue definitions: [olo-configuration/](olo-configuration/).
+Example workflows: [samples/](samples/). Preset definitions: [olo-configuration/](olo-configuration/).
 
-## Modules
+## Related monorepo modules
 
-| Module | Status | Description |
-|--------|--------|-------------|
-| [olo-definition](olo-definition/) | Active | Serializable workflow graph POJOs, builders, JSON/YAML |
-| olo-runtime | Planned | Workflow execution engine |
-| olo-extensions | Planned | OpenAI, Ollama, Temporal, MCP, vector stores, tools |
+| Module | Role |
+|--------|------|
+| [olo-workflow-input](../olo-workflow-input/) | Per-run `WorkflowInput` invocation payload |
+| [olo-bootstrap](../olo-bootstrap/) | Loads `olo-configuration` folders into registry |
+| [olo-kernel](../olo-kernel/) | Graph traversal and Temporal orchestration |
+| [olo-core](../olo-core/) | Default node/tool/hook SPI implementations |
 
 ## Requirements
 
-- Java 17+
+- Java 21 (toolchain configured in `build.gradle`)
 - Gradle 8.12+ (wrapper included)
 
 ## Build
 
+From this directory:
+
 ```bash
 ./gradlew build
 ```
+
+From the monorepo parent, use the module wrapper here or publish via Maven local (see [docs/MODULES.md](../docs/MODULES.md)).
 
 Windows:
 
@@ -37,7 +46,7 @@ Windows:
 gradlew.bat build
 ```
 
-The build generates workflow samples under `samples/` (see `gradlew generateSamples`).
+The build generates workflow samples under `samples/` (`./gradlew generateSamples`).
 
 ## License
 

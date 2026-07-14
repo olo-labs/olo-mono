@@ -9,7 +9,7 @@ Builds an in-memory cache of workflow definitions from an `olo-configuration` fo
 ## API
 
 ```java
-Path scanFolder = Path.of("../olo-definition/olo-configuration/default");
+Path scanFolder = Path.of("../olo-definition/olo-configuration/current-active");
 
 // First call scans and caches; subsequent calls return the same registry.
 WorkflowDefinitionRegistry registry = OloBootstrap.load(scanFolder, false);

@@ -49,7 +49,7 @@ Registry order (specific first, fallback last):
 |----------|------|--------|-------|
 | `RemoteAgentExecutor` | `remote` | HTTP / external agent service | Stub (`supports` false) |
 | `HumanAgentExecutor` | `human` | HUMAN gate, `WAITING` + resume | Stub |
-| `ChildWorkflowAgentExecutor` | `child-workflow` | Delegates to `ChildWorkflowCoordinator` | Stub (`DISPATCH_ENABLED = false`) |
+| `ChildWorkflowAgentExecutor` | `child-workflow` | Delegates to `ChildWorkflowCoordinator` | **Implemented** |
 | `LocalLlmAgentExecutor` | `local-llm` | Workflow prompt + model | **Implemented** |
 
 Tool, Workflow, and Human **canvas node types** remain separate handlers (`SpiNodeTypeHandler` or future dedicated handlers). `AgentExecutor` covers **how an AGENT node runs**, not the full orchestration catalog.
@@ -59,7 +59,7 @@ Tool, Workflow, and Human **canvas node types** remain separate handlers (`SpiNo
 | Phase | Deliverable |
 |-------|-------------|
 | **O0** (now) | `LocalLlmAgentExecutor`, `AgentNodeTypeHandler`, registry |
-| **O1** | `ChildWorkflowCoordinator` + enable `ChildWorkflowAgentExecutor` |
+| **O1** | ~~`ChildWorkflowCoordinator` + enable `ChildWorkflowAgentExecutor`~~ — **done** |
 | **O2** | `HumanAgentExecutor` + sync/async `WAITING` traversal |
 | **O3** | `RemoteAgentExecutor` |
 | **O4** | Dedicated handlers for non-AGENT orchestration types where SPI is insufficient |

@@ -24,6 +24,14 @@ public final class StudioDesignerAssertions {
     }
 
     public static void assertStudioBuildReady(WorkflowDefinition workflow) {
+        assertStudioBuildReady(workflow, "START", "AGENT", "END");
+    }
+
+    public static void assertStudioToolPipelineBuildReady(WorkflowDefinition workflow) {
+        assertStudioBuildReady(workflow, "START", "TOOL", "END");
+    }
+
+    private static void assertStudioBuildReady(WorkflowDefinition workflow, String... expectedNodeTypes) {
         DesignerDefinition designer = workflow.getDesigner();
         assertThat(designer).isNotNull();
         assertThat(designer.getNodeSize()).isNotNull();
@@ -32,11 +40,16 @@ public final class StudioDesignerAssertions {
         assertThat(designer.getLayout()).isEqualTo(StudioDesignerDefaults.layout());
         assertThat(designer.getCanvas()).isEqualTo(StudioDesignerDefaults.canvas());
         assertThat(designer.getPortColors()).isEqualTo(StudioDesignerDefaults.portColors());
-        assertThat(designer.getNodeTypes().keySet()).containsExactlyInAnyOrder("START", "AGENT", "END");
+        assertThat(designer.getNodeTypes().keySet()).containsExactlyInAnyOrder(expectedNodeTypes);
         assertThat(designer.getNodeTypes().get("START").getInlineProperties()).isNotEmpty();
-        assertThat(designer.getNodeTypes().get("AGENT").getInlineProperties()).isNotEmpty();
         assertThat(designer.getNodeTypes().get("END").getInlineProperties()).isNotEmpty();
-        assertThat(designer.getNodeTypes().get("AGENT").getEmoji()).isEqualTo(workflow.getEmoji());
+        if (java.util.Arrays.asList(expectedNodeTypes).contains("AGENT")) {
+            assertThat(designer.getNodeTypes().get("AGENT").getInlineProperties()).isNotEmpty();
+            assertThat(designer.getNodeTypes().get("AGENT").getEmoji()).isEqualTo(workflow.getEmoji());
+        }
+        if (java.util.Arrays.asList(expectedNodeTypes).contains("TOOL")) {
+            assertThat(designer.getNodeTypes().get("TOOL").getInlineProperties()).isNotEmpty();
+        }
 
         List<NodeDefinition> nodes = workflow.getNodes();
         assertThat(nodes).isNotEmpty();

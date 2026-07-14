@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 
 **All worker runtime configuration routes through this module.**
 
-Worker processes, `olo-runtime`, and worker-facing services must not read deployment settings from environment variables, Spring `application.properties`, or hard-coded constants. They call `WorkerConfigurationProvider` instead.
+Worker processes and worker-facing services must not read deployment settings from environment variables, Spring `application.properties`, or hard-coded constants. They call `WorkerConfigurationProvider` instead.
 
 This isolates storage concerns: swap file → database → Redis → GitHub by changing `ConfigurationSource` implementations and bootstrap variables, not worker code.
 
@@ -86,7 +86,7 @@ org.olo.worker.config
 ## 7. Dependency rule
 
 ```
-olo-worker-configuration  ←  worker apps / olo-runtime
+olo-worker-configuration  ←  worker apps / olo-kernel
 olo-definition            ←  (separate) workflow graphs from scanFolder
 olo-workflow-input        ←  receives maxLocalMessageSize from worker via provider
 ```

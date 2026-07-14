@@ -107,22 +107,31 @@ dist/
 
 ### Nodes (`CoreNodeTypes`)
 
+Global type ids use the `olo-core:` prefix.
+
 | Type | Class | Behavior |
 |------|-------|----------|
-| `PROMPT` | `PromptNode` | Renders `{{input}}` template |
-| `AGENT` | `AgentNode` | Stub agent (until extensions) |
-| `PARALLEL` | `ParallelNode` | Fan-out marker |
-| `LOOP` | `LoopNode` | Iteration counter |
-| `SWITCH` | `SwitchNode` | Branch selection |
-| `APPROVAL` | `ApprovalNode` | Human gate → `WAITING` |
+| `olo-core:PROMPT` | `PromptNode` | Renders `{{input}}` template |
+| `olo-core:AGENT` | `AgentNode` | SPI stub; LLM execution in `olo-kernel` (`LocalLlmAgentExecutor`) |
+| `olo-core:PARALLEL` | `ParallelNode` | Fan-out marker |
+| `olo-core:LOOP` | `LoopNode` | Iteration counter |
+| `olo-core:SWITCH` | `SwitchNode` | Branch selection |
+| `olo-core:APPROVAL` | `ApprovalNode` | Human gate → `WAITING` |
 
 ### Tools (`CoreToolIds`)
 
+Global tool ids use the `olo-core:` prefix. Representative built-ins:
+
 | Id | Class |
 |----|-------|
-| `http-tool` | `HttpTool` |
-| `calculator` | `CalculatorTool` |
-| `web-search` | `WebSearchTool` (stub) |
+| `olo-core:http-tool` | `HttpTool` |
+| `olo-core:calculator` | `CalculatorTool` |
+| `olo-core:web-search` | `WebSearchTool` (stub) |
+| `olo-core:rag-ingest` / `olo-core:rag-query` | RAG ingest and query |
+| `olo-core:conversation-load` / `olo-core:conversation-store` | Conversation history |
+| `olo-core:log-reader`, `olo-core:cpu-usage`, `olo-core:memory-usage`, … | Observability and scenario tools |
+
+See `org.olo.core.tool.CoreToolIds` for the full list.
 
 ### Hooks (`CoreHookIds`)
 
@@ -141,7 +150,7 @@ dist/
 | `ExecutionEngine` | `executeNode`, `invokeTool`, `runHook` |
 | `Core` | `defaultEngine()` factory |
 
-`ExecutionEngine` executes **individual steps** today. Full graph traversal will live in a future `olo-runtime` module that uses this engine.
+`ExecutionEngine` executes **individual node/tool/hook steps**. Full graph traversal is implemented in **`olo-kernel`** (`GraphTraversalEngine`), which delegates per-step execution to this engine and kernel handlers.
 
 ## Extension
 

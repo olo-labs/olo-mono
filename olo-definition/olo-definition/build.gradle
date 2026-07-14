@@ -58,6 +58,7 @@ def releaseReadinessReviewDir = rootProject.layout.projectDirectory.dir('olo-con
 def apiIntegrationTriageDir = rootProject.layout.projectDirectory.dir('olo-configuration/api-integration-triage')
 def capacityPlanningDir = rootProject.layout.projectDirectory.dir('olo-configuration/capacity-planning')
 def literatureReviewDir = rootProject.layout.projectDirectory.dir('olo-configuration/literature-review')
+def documentsIndexDir = rootProject.layout.projectDirectory.dir('olo-configuration/documents-index')
 
 tasks.register('generateSamples', Test) {
     group = 'build'
@@ -215,12 +216,26 @@ tasks.register('generateLiteratureReview', Test) {
     }
 }
 
+tasks.register('generateDocumentsIndex', Test) {
+    group = 'build'
+    description = 'Regenerate olo-configuration/documents-index RAG vector ingest pipeline'
+    dependsOn compileTestJava
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    workingDir = rootProject.projectDir
+    systemProperty 'olo.documentsIndex.configuration.dir', documentsIndexDir.asFile.absolutePath
+    filter {
+        includeTestsMatching 'org.olo.definition.configuration.documentsindex.DocumentsIndexRegenerationTest'
+    }
+}
+
 tasks.register('generateAllScenarios') {
     group = 'build'
     description = 'Regenerate all multi-agent scenario collections under olo-configuration/'
     dependsOn generateResearchPlanner, generateTravelPlanner, generateLogRcaAnalysis,
             generatePerformanceTriage, generateSecurityIncidentResponse, generateReleaseReadinessReview,
-            generateApiIntegrationTriage, generateCapacityPlanning, generateLiteratureReview
+            generateApiIntegrationTriage, generateCapacityPlanning, generateLiteratureReview,
+            generateDocumentsIndex
 }
 
 tasks.named('test', Test) {
@@ -238,6 +253,7 @@ tasks.named('test', Test) {
     systemProperty 'olo.apiIntegrationTriage.configuration.dir', apiIntegrationTriageDir.asFile.absolutePath
     systemProperty 'olo.capacityPlanning.configuration.dir', capacityPlanningDir.asFile.absolutePath
     systemProperty 'olo.literatureReview.configuration.dir', literatureReviewDir.asFile.absolutePath
+    systemProperty 'olo.documentsIndex.configuration.dir', documentsIndexDir.asFile.absolutePath
     filter {
         excludeTestsMatching 'org.olo.definition.samples.SampleWorkflowRegenerationTest'
         excludeTestsMatching 'org.olo.definition.configuration.DefaultConfigurationRegenerationTest'
@@ -251,6 +267,7 @@ tasks.named('test', Test) {
         excludeTestsMatching 'org.olo.definition.configuration.apiintegrationtriage.ApiIntegrationTriageRegenerationTest'
         excludeTestsMatching 'org.olo.definition.configuration.capacityplanning.CapacityPlanningRegenerationTest'
         excludeTestsMatching 'org.olo.definition.configuration.literaturereview.LiteratureReviewRegenerationTest'
+        excludeTestsMatching 'org.olo.definition.configuration.documentsindex.DocumentsIndexRegenerationTest'
     }
 }
 

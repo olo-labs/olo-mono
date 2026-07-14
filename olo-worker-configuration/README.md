@@ -10,9 +10,8 @@ SPDX-License-Identifier: Apache-2.0
 
 | Do | Don't |
 |----|-------|
-| `WorkerConfigurationProvider.settings().serverPort()` | `System.getenv("SERVER_PORT")` |
-| `WorkerConfigurationProvider.settings().maxLocalMessageSize()` | `MaxLocalMessageSize.fromEnvironment()` in worker apps |
-| `WorkerConfigurationProvider.settings().workflowDefinitionsScanFolder()` | Hard-coded paths in worker bootstrap |
+| `WorkerConfigurationProvider.load()` → `WorkerSettings` | `System.getenv("SERVER_PORT")` |
+| `settings.serverPort()`, `settings.workflowDefinitionsScanFolder()`, etc. | Hard-coded paths or env vars in worker bootstrap |
 
 Bootstrap environment variables locate **where** configuration is stored — not the settings themselves:
 
@@ -36,11 +35,11 @@ workflowDefinitions:
   recursive: false
 temporal:
   namespace: "default"
-  target: "localhost:7233"
+  target: "localhost:47233"
 cache:
   enabled: true
   host: "localhost"
-  port: 6379
+  port: 46379
 input:
   maxLocalMessageSize: 50
 ```

@@ -81,7 +81,7 @@ See also [olo-mono/docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) for the ful
 olo-worker/
 ├── src/main/java/org/olo/worker/
 │   ├── WorkerApplication.java       ← JVM entry point (main)
-│   ├── WorkerBootstrap.java         ← 4-step bootstrap + cache
+│   ├── WorkerBootstrap.java         ← 5-step bootstrap + cache
 │   ├── WorkerBootstrapStep.java     ← failure messages for operators
 │   ├── WorkerRuntimeContext.java    ← settings + registry snapshot
 │   ├── WorkerRefreshMonitor.java    ← Redis poll → hot reload
@@ -169,16 +169,18 @@ Shutdown is cooperative and idempotent (used by tests and the JVM hook):
 
 ```mermaid
 flowchart TD
-    A["Step 1/4: WorkerConfigurationProvider.load(refresh)"]
-    B["Step 2/4: resolveScanFolder(settings)"]
-    C["Step 3/4: OloBootstrap.load(scanFolder, recursive, refresh)"]
-    D["Step 4/4: TemporalWorkerFactory.start(settings, registry)"]
-    E["WorkerRuntimeContext(settings, registry)"]
+    A["Step 1/5: WorkerConfigurationProvider.load(refresh)"]
+    B["Step 2/5: resolveScanFolder(settings)"]
+    C["Step 3/5: OloBootstrap.load(scanFolder, recursive, refresh)"]
+    D["Step 4/5: verifyLlmEndpoints(registry)"]
+    E["Step 5/5: TemporalWorkerFactory.start(settings, registry)"]
+    F["WorkerRuntimeContext(settings, registry)"]
 
     A --> B
     B --> C
     C --> D
     D --> E
+    E --> F
 ```
 
 | Step | Class | Output | Failure hint (`WorkerBootstrapStep`) |
@@ -186,13 +188,14 @@ flowchart TD
 | 1 | `WorkerConfigurationProvider` | `WorkerSettings` | Check `OLO_WORKER_CONFIG_PATH` or pass config as first arg |
 | 2 | `WorkerSettings.resolvedWorkflowDefinitionsScanFolder` | Absolute `Path` to workflow JSON | `scanFolder` must exist on disk |
 | 3 | `OloBootstrap` | `WorkflowDefinitionRegistry` | Valid JSON/YAML, unique ids/queues |
-| 4 | `TemporalWorkerFactory` | Running `WorkerFactory` | Temporal reachable at configured target |
+| 4 | `WorkerLlmHealthCheck` | Verified model endpoints | Check LLM provider URLs in workflow presets |
+| 5 | `TemporalWorkerFactory` | Running `WorkerFactory` | Temporal reachable at configured target |
 
 After step 3, bootstrap logs each loaded workflow with **node activity names** (`id:label` format from `NodeActivityNaming`) — useful when verifying Temporal activity registration.
 
 ### Skipping Temporal in tests
 
-Set system property `-Dolo.worker.skipTemporal=true` (Gradle test task sets this automatically). Steps 1–3 still run; step 4 is skipped with a warning. Tests assert configuration and registry loading without a live Temporal server.
+Set system property `-Dolo.worker.skipTemporal=true` (Gradle test task sets this automatically). Steps 1–4 still run; step 5 is skipped with a warning. Tests assert configuration and registry loading without a live Temporal server.
 
 ---
 
@@ -448,7 +451,7 @@ Logging uses SLF4J with `simplelogger.properties`:
 - Default level: `info`
 - Worker packages: `org.olo.worker=info`
 
-Bootstrap emits structured **Step 1/4 … Step 4/4** lines. On failure, `WorkerBootstrapStep` appends operator remediation text (config path, scan folder, Temporal target).
+Bootstrap emits structured **Step 1/5 … Step 5/5** lines. On failure, `WorkerBootstrapStep` appends operator remediation text (config path, scan folder, Temporal target, LLM endpoints).
 
 For deeper kernel traversal logs, set:
 

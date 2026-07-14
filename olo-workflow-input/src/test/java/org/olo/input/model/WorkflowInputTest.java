@@ -117,4 +117,25 @@ class WorkflowInputTest {
         assertEquals("1.0", input.getVersion());
         assertEquals("agent-pipeline", input.getRouting().getPipeline());
     }
+    @Test
+    void fromJson_acceptsCapabilitySourceAsRagTagAlias() {
+        String json = """
+                {
+                  "version": "1.0",
+                  "inputs": [],
+                  "routing": {
+                    "pipeline": "rag-chat",
+                    "transactionType": "QUESTION_ANSWER",
+                    "transactionId": "tx-1"
+                  },
+                  "metadata": {
+                    "capabilitySource": "md3"
+                  }
+                }
+                """;
+
+        WorkflowInput input = WorkflowInput.fromJson(json);
+
+        assertThat(input.getMetadata().getRagTag()).isEqualTo("md3");
+    }
 }

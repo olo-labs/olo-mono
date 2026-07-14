@@ -4,6 +4,7 @@
  */
 package org.olo.input.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -19,7 +20,7 @@ public final class Metadata {
 
     @JsonCreator
     public Metadata(
-            @JsonProperty("ragTag") String ragTag,
+            @JsonProperty("ragTag") @JsonAlias({"capabilitySource", "knowledgeSource", "ragSource"}) String ragTag,
             @JsonProperty("timestamp") long timestamp) {
         this.ragTag = ragTag;
         this.timestamp = timestamp;

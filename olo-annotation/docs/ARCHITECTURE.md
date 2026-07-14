@@ -19,7 +19,7 @@ Workflow editor UIs use this metadata to render palettes, property forms, and po
 | `@OloNode`, `@OloTool`, `@OloHook` | SPI execution interfaces (`olo-spi`) |
 | `@OloPort`, `@OloProperty` | Annotation processor implementation |
 | `OloCatalogLocations` | Workflow graph POJOs (`olo-definition`) |
-| `ExtensionCatalogLoader` | Graph execution (`olo-runtime`) |
+| `ExtensionCatalogLoader` | Graph execution (`olo-kernel` + `olo-core`) |
 
 ## Position in the stack
 

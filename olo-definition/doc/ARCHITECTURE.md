@@ -28,10 +28,19 @@ OLO treats an AI workflow as a **portable artifact**—similar to BPMN diagrams,
 
 ```
 olo-mono/
-├── doc/                    # Architecture and design docs (this file)
-├── olo-definition/         # Serializable workflow graphs (implemented)
-├── olo-runtime/            # Execution engine (planned)
-└── olo-extensions/         # Provider integrations (planned)
+├── doc/                         # Architecture and design docs (this file)
+├── olo-definition/              # Serializable workflow graphs
+├── olo-workflow-input/          # Per-run WorkflowInput payload
+├── olo-worker-configuration/    # Worker deployment settings
+├── olo-bootstrap/               # Load olo-configuration into registry
+├── olo-kernel-context/          # KernelRuntimeContext builder
+├── olo-kernel/                  # Graph traversal + Temporal entry point
+├── olo-core/                    # Default SPI implementations
+├── olo-spi/                     # Runtime contracts
+├── olo-annotation/              # Extension metadata annotations
+├── olo-annotation-processor/    # Compile-time catalog JSON
+├── olo-worker/                  # Runnable Temporal worker
+└── olo-extensions/              # Additional providers (planned)
 ```
 
 ```mermaid
@@ -42,14 +51,12 @@ flowchart TB
         VAL[WorkflowValidator]
     end
 
-    subgraph runtime ["olo-runtime (planned)"]
-        CTX[RuntimeContext]
-        EX[WorkflowExecutor]
-        AE[ActivityExecutor]
-        CW[ChildWorkflowExecutor]
-        HT[HumanTaskExecutor]
-        EV[EventExecutor]
-        ST[ExecutionState]
+    subgraph runtime ["olo-kernel + olo-core (implemented)"]
+        CTX[KernelRuntimeContext]
+        TRAV[GraphTraversalEngine]
+        EX[ExecutionEngine]
+        CW[ChildWorkflowCoordinator]
+        HT[HumanInputResumeSupport]
     end
 
     subgraph extensions ["olo-extensions (planned)"]
@@ -57,7 +64,6 @@ flowchart TB
         OLL[Ollama]
         MCP[MCP]
         VS[Vector stores]
-        TOOL[Tools]
     end
 
     WD --> SER
@@ -72,16 +78,17 @@ flowchart TB
 | Module | Responsibility | Must not contain |
 |--------|----------------|------------------|
 | **olo-definition** | POJOs, builders, JSON/YAML, structural validation | Execution, model API calls, runtime state, Spring |
-| **olo-runtime** | Execute graphs, manage state, invoke node handlers | Provider-specific SDKs (delegated to extensions) |
-| **olo-extensions** | OpenAI, Ollama, Temporal, Kafka, MCP, vector DBs, tools | Core graph model (uses definition types only) |
+| **olo-kernel** | Graph traversal, Temporal orchestration, UI callbacks | Provider-specific SDKs (delegated to olo-core / extensions) |
+| **olo-core** | Default node/tool/hook SPI implementations, registries | Workflow graph model |
+| **olo-extensions** | Additional OpenAI, Ollama, Temporal, Kafka, MCP, vector DBs, tools | Core graph model (uses definition types only) |
 
 ### Dependency rules
 
 ```
-olo-definition  ←  olo-runtime  ←  olo-extensions
+olo-definition  ←  olo-kernel  ←  olo-core / olo-extensions
      ↑                ↑
-     │                └── may also read definitions directly for config
-     └── NEVER imports olo-runtime or olo-extensions
+     │                └── reads definitions via bootstrap registry
+     └── NEVER imports olo-kernel, olo-worker, or provider SDKs
 ```
 
 Violating this direction creates circular dependencies and couples stored workflows to a single engine.
@@ -1112,9 +1119,9 @@ gradlew.bat generateSamples
 | `parallel-agent-fan-out` | `PARALLEL` + `join: ALL` → multiple agents |
 | `research-agent` | Full `capability` contract for planner discovery |
 
-## 10. Planned: `olo-runtime`
+## 10. Runtime execution (`olo-kernel`)
 
-Execution module (not yet in the repo). **Do not bury everything in a single `NodeExecutor`**—map `executionKind` and `type` to focused executors (Temporal-native shape):
+Graph execution is implemented in **`olo-kernel`** (not a separate `olo-runtime` module). The design below describes the target executor shape; see [olo-kernel/docs/traversal.md](../../olo-kernel/docs/traversal.md) for the current contract.
 
 | Component | Responsibility |
 |-----------|----------------|
@@ -1141,7 +1148,7 @@ The runtime **reads** structured definition fields; it does not redefine them:
 sequenceDiagram
     participant Repo as Workflow repository
     participant Def as olo-definition
-    participant RT as olo-runtime
+    participant RT as olo-kernel
     participant Ext as olo-extensions
 
     Repo->>Def: load JSON/YAML
@@ -1152,7 +1159,7 @@ sequenceDiagram
     RT->>RT: update ExecutionState
 ```
 
-`olo-runtime` depends on `olo-definition` only for graph shape and configuration—not for serialization, unless the runtime also loads files directly.
+`olo-kernel` depends on `olo-definition` for graph shape and configuration—not for serialization, unless the kernel also loads files directly via bootstrap.
 
 ## 11. Planned: `olo-extensions`
 
@@ -1168,7 +1175,7 @@ Extensions implement runtime contracts (e.g. `NodeExecutor` for `type=MODEL`) an
 
 | System | Declarative layer | Runtime layer |
 |--------|-------------------|---------------|
-| **OLO** | `olo-definition` (JSON/YAML POJOs) | `olo-runtime` + `olo-extensions` |
+| **OLO** | `olo-definition` (JSON/YAML POJOs) | `olo-kernel` + `olo-core` + `olo-extensions` |
 | BPMN | `.bpmn` XML | Process engine (Camunda, etc.) |
 | Temporal | Workflow code / DSL | Temporal worker |
 | LangGraph | Graph spec / code | Python runtime |

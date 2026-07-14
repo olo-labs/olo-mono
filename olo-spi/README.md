@@ -20,11 +20,12 @@ SPDX-License-Identifier: Apache-2.0
 ```
 olo-definition     Workflow graph JSON (declarative)
 olo-spi            Runtime execution contracts (this module)
-olo-runtime        Graph engine + default executors (planned)
-olo-extensions     Provider implementations — OpenAI, tools, hooks (planned)
+olo-core           Default node/tool/hook implementations + ExecutionEngine
+olo-kernel         Graph traversal + Temporal orchestration
+olo-extensions     Additional provider implementations (planned)
 ```
 
-`olo-spi` has **zero dependencies** on other OLO modules. Implementations in `olo-runtime` / `olo-extensions` depend on `olo-spi`, not the other way around.
+`olo-spi` has **zero dependencies** on other OLO modules. Implementations in `olo-core` / `olo-extensions` depend on `olo-spi`, not the other way around.
 
 ## Example (implementation belongs in olo-extensions)
 

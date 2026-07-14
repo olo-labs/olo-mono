@@ -25,7 +25,9 @@ Deeper design for individual Gradle projects:
 | olo-worker | [olo-worker/README.md](../olo-worker/README.md) |
 | olo-spi | [olo-spi/README.md](../olo-spi/README.md), [docs/ARCHITECTURE.md](../olo-spi/docs/ARCHITECTURE.md) |
 | olo-core | [olo-core/README.md](../olo-core/README.md), [docs/ARCHITECTURE.md](../olo-core/docs/ARCHITECTURE.md) |
-| olo-kernel | [olo-kernel/README.md](../olo-kernel/README.md) |
+| olo-kernel | [olo-kernel/README.md](../olo-kernel/README.md), [docs/traversal.md](../olo-kernel/docs/traversal.md) |
+| olo-annotation | [olo-annotation/README.md](../olo-annotation/README.md) |
+| olo-annotation-processor | [olo-annotation-processor/README.md](../olo-annotation-processor/README.md) |
 | olo-kernel-context | [olo-kernel-context/README.md](../olo-kernel-context/README.md) |
 | olo-bootstrap | [olo-bootstrap/README.md](../olo-bootstrap/README.md) |
 
@@ -38,7 +40,11 @@ olo-workflow-input/    Per-run invocation payload (WorkflowInput)
 olo-worker-configuration/  Worker deployment settings (port, Temporal, scanFolder)
 olo-bootstrap/         Load workflow JSON into an in-memory registry
 olo-kernel-context/    Build runtime context + UI callbacks
-olo-kernel/            Temporal entry point (OloKernelWorkflow)
+olo-spi/               Runtime SPI contracts (Node, Tool, Hook)
+olo-annotation/        Extension metadata annotations
+olo-annotation-processor/  Compile-time catalog JSON generator
+olo-core/              Default SPI implementations + ExecutionEngine
+olo-kernel/            Graph traversal + Temporal entry point (OloKernelWorkflow)
 olo-worker/            Runnable Temporal worker application
 ```
 

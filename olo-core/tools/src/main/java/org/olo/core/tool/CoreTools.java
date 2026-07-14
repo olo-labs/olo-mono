@@ -34,6 +34,8 @@ public final class CoreTools {
                 new CreatePullRequestTool(),
                 new BookTicketTool(),
                 new ConversationLoadTool(),
-                new ConversationStoreTool());
+                new ConversationStoreTool(),
+                new org.olo.core.tool.rag.RagIngestTool(),
+                new org.olo.core.tool.rag.RagVectorQueryTool());
     }
 }

@@ -12,6 +12,9 @@ dependencies {
     implementation 'org.olo:olo-annotation:0.1.0-SNAPSHOT'
     implementation 'org.slf4j:slf4j-api:2.0.17'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
+
+    testImplementation project(':runtime')
 
 }
 

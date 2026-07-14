@@ -10,7 +10,7 @@ OLO separates **what a workflow is** (a portable graph definition), **how a work
 
 1. **Definition vs invocation vs deployment** — `WorkflowDefinition`, `WorkflowInput`, and worker settings are three different artifacts with different lifecycles.
 2. **Standalone Gradle modules** — Each library has its own `settings.gradle`, wrapper, and `publishToMavenLocal` coordinates (`org.olo:*:0.1.0-SNAPSHOT`). There is no single root Gradle build yet.
-3. **Dependency direction** — Data flows inward: `olo-definition` has no knowledge of workers; `olo-kernel` orchestrates context building but does not own graph execution (planned in `olo-runtime`).
+3. **Dependency direction** — Data flows inward: `olo-definition` has no knowledge of workers; `olo-kernel` owns graph traversal and Temporal orchestration; `olo-core` executes individual node/tool/hook steps via SPI.
 4. **Configuration on disk** — Scenario presets live under `olo-definition/olo-configuration/<scenario>/`. Runtime active folder is `current-active/` — activate via **olo-ui Administration → Scenarios** or copy manually. Docker dev may mount a separate copy under `olo-docker/dev/configuration/olo-configuration`.
 
 ## Layer model
@@ -53,7 +53,6 @@ flowchart TB
     end
 
     subgraph planned [Planned]
-        OR[olo-runtime]
         OE[olo-extensions]
     end
 
@@ -71,11 +70,10 @@ flowchart TB
     API --> TMP
     API --> UI
     OW -->|UI callback| API
+    OC --> OK
     SPI --> OC
-    OC -.-> OR
     SPI -.-> OE
-    OR -.-> OK
-    OE -.-> OR
+    OE -.-> OC
 ```
 
 | Layer | Responsibility | Mutable at runtime? |
@@ -85,7 +83,7 @@ flowchart TB
 | **Deployment** | Worker port, Temporal target, cache, `scanFolder` | Yes (config refresh) |
 | **Bootstrap** | In-memory index of definitions by id / queue | Yes (`load(..., refresh)`) |
 | **Kernel context** | Isolated graph copy + variable map + UI events | Per Temporal task |
-| **Kernel** | Queue entry, return message resolution | Per Temporal task |
+| **Kernel** | Queue entry, graph traversal, return message resolution | Per Temporal task |
 | **Worker process** | Temporal pollers, one per task queue | Long-lived |
 
 ## End-to-end chat flow
@@ -154,8 +152,9 @@ On `WorkerBootstrap.start()`:
 flowchart LR
     A[1. WorkerConfigurationProvider.load] --> B[2. Resolve scanFolder]
     B --> C[3. OloBootstrap.load]
-    C --> D[4. TemporalWorkerFactory — one worker per queue]
-    D --> E[5. Register OloKernelWorkflow per queue]
+    C --> D[4. Verify LLM endpoints]
+    D --> E[5. TemporalWorkerFactory — one worker per queue]
+    E --> F[Register OloKernelWorkflow per queue]
 ```
 
 | Step | Module | Output |
@@ -163,7 +162,8 @@ flowchart LR
 | 1 | olo-worker-configuration | `WorkerSettings` (Temporal target, scan path, cache, port) |
 | 2 | olo-worker | Absolute path to `olo-definition/olo-configuration/current-active` (or override) |
 | 3 | olo-bootstrap | `WorkflowDefinitionRegistry` (all JSON under scan folder, including child-agent presets) |
-| 4–5 | olo-worker + olo-kernel | Temporal `Worker` per queue, `workflowType=olo` |
+| 4 | olo-worker | LLM endpoint health check for model references in loaded workflows |
+| 5 | olo-worker + olo-kernel | Temporal `Worker` per queue, `workflowType=olo` |
 
 `start(true)` refreshes configuration and the definition registry without restarting the JVM.
 
@@ -216,11 +216,11 @@ Worker config: `olo-worker-configuration/samples/worker-config.local-debug.yaml`
 
 | Module | Role |
 |--------|------|
-| **olo-runtime** | Traverse and execute the workflow graph; write node outputs and `ReturnValue` |
-| **olo-extensions** | LLM providers, tools, vector stores, MCP |
-| **olo-annotation** / **olo-annotation-processor** | Extension metadata annotations + compile-time catalog JSON for plug-and-play workflow editing UIs |
+| **olo-extensions** | Additional LLM providers, tools, vector stores, MCP beyond olo-core defaults |
 
-The kernel and kernel-context APIs are shaped so runtime execution can plug in after context build without changing the Temporal contract (`WorkflowInput` in, `String` message out).
+**olo-annotation** and **olo-annotation-processor** are active modules — compile-time extension metadata and catalog JSON for workflow editing UIs.
+
+Graph traversal is implemented in **olo-kernel** (`GraphTraversalEngine`, `KernelEntryPoint`). The Temporal contract remains `WorkflowInput` in, `String` message out.
 
 ## Related repositories
 

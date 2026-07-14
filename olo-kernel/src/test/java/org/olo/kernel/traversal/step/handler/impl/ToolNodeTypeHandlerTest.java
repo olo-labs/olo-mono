@@ -13,9 +13,12 @@ import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.context.variables.WorkflowRuntimeVariables;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
+import org.olo.input.model.InputItem;
+import org.olo.input.model.InputType;
+import org.olo.input.model.Metadata;
+import org.olo.input.model.Storage;
+import org.olo.input.model.StorageMode;
 import org.olo.input.model.WorkflowInput;
-
-import java.util.List;
 import org.olo.kernel.traversal.context.impl.KernelExecutionContextFactory;
 import org.olo.kernel.traversal.input.impl.MessageVariableInputBinder;
 import org.olo.spi.node.NodeStatus;
@@ -66,5 +69,36 @@ class ToolNodeTypeHandlerTest {
         ToolNodeTypeHandler.enrichObservabilityArguments(CoreToolIds.LOG_READER, args);
         assertThat(args).containsEntry("startTime", "2026-06-14T14:30:00Z");
         assertThat(args).containsEntry("endTime", "2026-06-14T14:31:00Z");
+    }
+
+    @Test
+    void passesCapabilitySourceFromWorkflowMetadataRagTag() {
+        ExecutionEngine engine = ExecutionEngine.withDefaults();
+        ToolNodeTypeHandler handler = new ToolNodeTypeHandler(engine, new KernelExecutionContextFactory());
+        WorkflowDefinition graph = WorkflowBuilder.create("test").id("test").queue("test").build();
+        WorkflowInput input = new WorkflowInput(
+                "1.0",
+                List.of(new InputItem(
+                        "userQuery",
+                        "RAG ingest request",
+                        InputType.STRING,
+                        new Storage(StorageMode.LOCAL, null, null),
+                        "{}")),
+                null,
+                null,
+                new Metadata("finance-rag", System.currentTimeMillis()),
+                null);
+        KernelRuntimeContext context = new KernelRuntimeContext(
+                "test", input, graph, true, WorkflowRuntimeVariables.fromDefinition(graph));
+
+        NodeDefinition node = NodeDefinition.builder()
+                .id("rag-ingest")
+                .type(NodeType.TOOL.name())
+                .putConfiguration(ToolNodeTypeHandler.CONFIG_TOOL_ID, CoreToolIds.RAG_INGEST)
+                .build();
+
+        var result = handler.execute(context, node);
+
+        assertThat(result.message()).doesNotContain("capabilitySource is required");
     }
 }

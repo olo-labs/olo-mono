@@ -38,6 +38,31 @@ public final class WorkflowBuilderCanvas {
         this.nodes = nodes;
     }
 
+    /** Dedicated RAG ingest canvas: START → rag-ingest TOOL → END (no human step). */
+    public WorkflowBuilder ragIngestCanvasPipeline() {
+        String ingestNodeId = "rag-ingest";
+        return nodes.startNodeWithMessageInput("start")
+                .canvasToolNode(ingestNodeId, "RAG Ingest")
+                .putNodeConfiguration(
+                        ingestNodeId,
+                        Map.of(
+                                "toolId", "olo-core:rag-ingest",
+                                "extensionRef", "pgvector-store",
+                                "vectorTable", "documents",
+                                "driver", "qdrant",
+                                "connectionRef", "http://localhost:46333",
+                                "collection", "documents",
+                                "vectorSize", 384,
+                                "distance", "Cosine",
+                                "chunkSize", 512))
+                .endNode("end")
+                .connect("start", "out", ingestNodeId, "in")
+                .connect(ingestNodeId, "out", "end", "in")
+                .nodeCanvasLayout("start", 0)
+                .nodeCanvasLayout(ingestNodeId, 1)
+                .nodeCanvasLayout("end", 2);
+    }
+
     /** Leaf agent canvas: START → conversation-load → AGENT (inline local LLM) → conversation-store → END. */
     public WorkflowBuilder localAgentCanvasPipeline(String workflowId) {
         Objects.requireNonNull(workflowId, "workflowId is required");

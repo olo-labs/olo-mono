@@ -70,9 +70,12 @@ Each Gradle module is **standalone** (own `settings.gradle`, wrapper, `publishTo
 When `olo-worker` starts:
 
 1. **`WorkerConfigurationProvider.load()`** — load worker settings from JSON/YAML (cached; `load(true)` refreshes)
-2. **`OloBootstrap.load(scanFolder)`** — scan `olo-configuration` path from config into memory
-3. **Temporal workers** — one per queue; each registers **`olo-kernel`** as the execution entry point
-4. **Queue task** → kernel → **`KernelContextBuilder`** → deserialize input, copy graph, notify UI callback
+2. **Resolve `scanFolder`** — absolute path to `olo-configuration/current-active` (or override)
+3. **`OloBootstrap.load(scanFolder)`** — scan workflow JSON into `WorkflowDefinitionRegistry`
+4. **LLM health check** — verify model endpoints referenced by loaded workflows
+5. **Temporal workers** — one per queue; each registers **`olo-kernel`** as the execution entry point
+
+On each queue task: kernel → **`KernelContextBuilder`** → graph traversal (`GraphTraversalEngine`) → UI callback → return message.
 
 See [olo-worker/README.md](olo-worker/README.md) for run instructions.
 
@@ -121,14 +124,15 @@ Sample worker config: [`olo-worker-configuration/samples/worker-config.yaml`](ol
 
 - Java 21 (toolchain configured in modules)
 - Gradle 8.12+ (wrapper included per module)
-- Temporal server (for `olo-worker run` — `localhost:7233` by default)
+- Temporal server (for `olo-worker run` — `localhost:47233` in olo-docker dev; `localhost:7233` when unset)
 
 ## Planned
 
 | Module | Role |
 |--------|------|
-| olo-runtime | Graph execution engine |
-| olo-extensions | Provider integrations (OpenAI, Ollama, MCP, vector stores) |
+| olo-extensions | Provider integrations (OpenAI, Ollama, MCP, vector stores) beyond olo-core defaults |
+
+Graph traversal and Temporal orchestration are implemented in **`olo-kernel`**; per-step SPI execution uses **`olo-core`** `ExecutionEngine`.
 
 ## License
 

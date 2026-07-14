@@ -172,6 +172,14 @@ public final class ToolNodeTypeHandler implements NodeTypeHandler {
             }
         }
 
+        if (context.getInput() != null && context.getInput().getMetadata() != null) {
+            String ragTag = context.getInput().getMetadata().getRagTag();
+            if (ragTag != null && !ragTag.isBlank()) {
+                arguments.putIfAbsent("capabilitySource", ragTag.trim());
+                arguments.putIfAbsent("ragTag", ragTag.trim());
+            }
+        }
+
         enrichObservabilityArguments(toolId, arguments);
         return arguments;
     }

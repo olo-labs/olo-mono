@@ -23,6 +23,7 @@ public final class MessageVariableInputBinder implements WorkflowInputBinder {
                     message,
                     false,
                     "no non-blank user message found in WorkflowInput");
+            bindRagTagFromMetadata(context);
             return;
         }
         if (!context.getVariables().has(MESSAGE_VARIABLE)) {
@@ -32,9 +33,28 @@ public final class MessageVariableInputBinder implements WorkflowInputBinder {
                     message,
                     false,
                     "graph does not declare variable '" + MESSAGE_VARIABLE + "'");
+            bindRagTagFromMetadata(context);
             return;
         }
         context.getVariables().set(MESSAGE_VARIABLE, message);
         TraversalDiagnostics.logInputBind("start", MESSAGE_VARIABLE, message, true, null);
+        bindRagTagFromMetadata(context);
+    }
+
+    private static void bindRagTagFromMetadata(KernelRuntimeContext context) {
+        if (context.getInput() == null || context.getInput().getMetadata() == null) {
+            return;
+        }
+        String ragTag = context.getInput().getMetadata().getRagTag();
+        if (ragTag == null || ragTag.isBlank()) {
+            return;
+        }
+        String trimmed = ragTag.trim();
+        if (context.getVariables().has("ragTag")) {
+            context.getVariables().set("ragTag", trimmed);
+        }
+        if (context.getVariables().has("capabilitySource")) {
+            context.getVariables().set("capabilitySource", trimmed);
+        }
     }
 }

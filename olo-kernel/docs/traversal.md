@@ -32,14 +32,14 @@ Each step:
 
 Execution and orchestration are intentionally separate so linear pipelines, conditional branches, parallel fan-out/join, and child-workflow resume can evolve independently.
 
-Traversal runs inside `KernelEntryPoint.finish()` **after** context construction and **before** `WorkflowReturnResolver` and `UiCallbackReporter`.
+Traversal runs inside `KernelEntryPoint` **after** context construction and **before** `WorkflowReturnResolver` and `UiCallbackReporter`.
 
 ```mermaid
 flowchart TD
     A[WorkflowInput on queue] --> B[KernelContextBuilder]
-    B --> C[KernelRuntimeContext]
+    B --> C[KernelExecutionSnapshot]
     C --> D[UiCallbackReporter.reportContextReady]
-    D --> E[GraphTraverser.traverse]
+    D --> E[GraphTraversalEngine.executeSingleStep loop]
     E --> S[ExecutionStrategyRegistry]
     S --> H[NodeTypeHandler]
     H --> S
@@ -52,25 +52,27 @@ flowchart TD
 
 ## Entry point integration
 
-`KernelEntryPoint` owns the default traverser:
+`KernelEntryPoint` owns the default traversal engine:
 
 ```java
-private static final GraphTraverser GRAPH_TRAVERSER = GraphTraverserFactory.withDefaults();
+private static final GraphTraversalEngine TRAVERSAL_ENGINE = GraphTraverserFactory.defaultEngine();
 ```
 
-`finish()` sequence:
+Production flow (sync `execute()` or Temporal step activities):
 
 | Step | Component | Purpose |
 |------|-----------|---------|
-| 1 | `context.isGraphReady()` | Fail fast if graph failed readiness during context build |
-| 2 | `TraversalDiagnostics.logContextReady` | Log queue, workflow id, input message, variables |
-| 3 | `UiCallbackReporter.reportContextReady` | Notify UI that execution started |
-| 4 | `GRAPH_TRAVERSER.traverse(context)` | Run START → … → END |
+| 1 | `buildContextAndNotifyUi` | Build `KernelRuntimeContext`, validate graph readiness, notify UI |
+| 2 | `context.isGraphReady()` | Fail fast if graph failed readiness during context build |
+| 3 | `TraversalDiagnostics.logContextReady` | Log queue, workflow id, input message, variables |
+| 4 | `traverse(snapshot)` | Loop `executeTraversalStep` until completed, waiting, or failed |
 | 5 | `WorkflowReturnResolver.resolveDetails` | Read `metadata.returnVariable` / `ReturnValue` |
 | 6 | `UiCallbackReporter.reportWorkflowResult` | Send final message to callback URL |
 | 7 | Return `resolution.message()` | Temporal activity / queue caller result |
 
-If traversal returns `completed == false`, `KernelEntryPoint` throws `KernelException` with the failing node id and message.
+`executeTraversalStep` delegates to `TRAVERSAL_ENGINE.executeSingleStep(snapshot)`. The Temporal workflow path calls `buildContextAndNotifyUi` and `executeTraversalStep` as separate activities for long-running graphs and human-input resume.
+
+If traversal status is not `COMPLETED`, `reportWorkflowResult` throws `KernelException` (including `WAITING` on the sync path).
 
 ---
 

@@ -27,7 +27,7 @@ class DefaultConfigurationRegenerationTest {
         assertThat(configurationRoot.resolve("agent.json")).exists();
         assertThat(configurationRoot.resolve("workflow.json")).exists();
         try (var files = Files.list(configurationRoot)) {
-            assertThat(files.filter(path -> path.toString().endsWith(".json")).count()).isEqualTo(12);
+            assertThat(files.filter(path -> path.toString().endsWith(".json")).count()).isEqualTo(13);
         }
     }
 }

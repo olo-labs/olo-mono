@@ -29,7 +29,7 @@ Related:
 | Catalog `scope` on `VariableDefinition` | Validated at load | **Ignored at runtime** in kernel |
 | `WorkflowStatus` enum | `ChatRunStore` string statuses | No shared enum in kernel/SPI |
 | `CANCELLED` | Reserved | Not implemented |
-| `WAITING` traversal | `TraversalResult.failed` on `WAITING` | No checkpoint / resume in sync traverser |
+| `WAITING` traversal | `TraversalResult.waiting()` on WAITING; sync `execute()` cannot complete | Temporal path resumes via `OloKernelWorkflowImpl` + `HumanInputResumeSupport`; checkpoint gaps remain |
 
 **Planned home for status:** `org.olo.kernel.runtime.WorkflowStatus` (or shared SPI) consumed by `olo` API, Temporal workflow, and UI event derivation.
 

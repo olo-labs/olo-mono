@@ -93,13 +93,20 @@ public final class WorkflowBuilderNodes {
     }
 
     public WorkflowBuilder canvasToolNode(String id) {
-        return addNode(NodeDefinition.builder()
+        return canvasToolNode(id, null);
+    }
+
+    public WorkflowBuilder canvasToolNode(String id, String label) {
+        NodeDefinitionBuilder node = NodeDefinition.builder()
                 .id(id)
                 .type(NodeType.TOOL)
                 .addPort(WorkflowBuilderPorts.optionalMessagePort("in", PortDirection.INPUT))
                 .addPort(WorkflowBuilderPorts.defaultPort("out", "out", PortDirection.OUTPUT))
-                .addPort(WorkflowBuilderPorts.pluginPort("capabilities", PortWireType.CAPABILITIES, PortDirection.OUTPUT))
-                .build());
+                .addPort(WorkflowBuilderPorts.pluginPort("capabilities", PortWireType.CAPABILITIES, PortDirection.OUTPUT));
+        if (label != null) {
+            node.label(label);
+        }
+        return addNode(node.build());
     }
 
     public WorkflowBuilder canvasChildAgentPluginNode(String id, String childWorkflowId, String label) {

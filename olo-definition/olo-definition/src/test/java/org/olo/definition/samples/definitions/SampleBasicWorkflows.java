@@ -38,12 +38,13 @@ public final class SampleBasicWorkflows {
                 .metadata("description", "Smallest valid " + OloProductTerminology.WORKFLOW + ": passes input through to output."));
     }
 
+
     public static WorkflowDefinition ragChat() {
         return buildSample(WorkflowBuilder.create("RAG Chat")
                 .id("rag-chat")
                 .version("1.0.0")
                 .capability(passThroughCapability(
-                        "RAG Chat", "Retrieve-augmented generation over a vector store."))
+                        "RAG Chat", "Retrieve-augmented generation over a Qdrant vector store."))
                 .inputNode("input")
                 .addNode(nodeWithDefaultPorts("embed", NodeType.MODEL)
                         .subtype("EMBEDDING")
@@ -51,8 +52,13 @@ public final class SampleBasicWorkflows {
                         .build())
                 .addNode(nodeWithDefaultPorts("retrieve", NodeType.VECTOR_SEARCH)
                         .putConfiguration("extensionRef", "pgvector-store")
+                        .putConfiguration("driver", "qdrant")
+                        .putConfiguration("connectionRef", "http://localhost:46333")
+                        .putConfiguration("collection", "documents")
+                        .putConfiguration("vectorSize", 384)
+                        .putConfiguration("distance", "Cosine")
                         .putConfiguration("topK", 5)
-                        .putConfiguration("scoreThreshold", 0.75)
+                        .putConfiguration("scoreThreshold", 0.25)
                         .build())
                 .addNode(nodeWithDefaultPorts("llm1", NodeType.MODEL)
                         .subtype("CHAT")
@@ -86,13 +92,16 @@ public final class SampleBasicWorkflows {
                 .extension(ExtensionDefinition.builder()
                         .id("pgvector-store")
                         .type("VECTOR_STORE")
-                        .putConfiguration("driver", "postgresql")
-                        .putConfiguration("connectionRef", "${env:VECTOR_DB_URL}")
+                        .putConfiguration("driver", "qdrant")
+                        .putConfiguration("connectionRef", "http://localhost:46333")
                         .putConfiguration("table", "documents")
+                        .putConfiguration("collection", "documents")
+                        .putConfiguration("vectorSize", 384)
+                        .putConfiguration("distance", "Cosine")
                         .build())
                 .metadata(
                         "description",
-                        "Retrieve-augmented generation over a vector store."));
+                        "Retrieve-augmented generation over a Qdrant vector store."));
     }
 
     public static WorkflowDefinition analysisBase() {

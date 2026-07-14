@@ -78,7 +78,7 @@ Defined in `olo-spi` (`org.olo.spi.node.NodeStatus`):
 
 1. A single node `COMPLETED` does **not** mean the workflow is `COMPLETED`.
 2. A node `WAITING` promotes the workflow to `WAITING` and records the suspending `nodeId`.
-3. Synchronous kernel traversal today treats `WAITING` as a failed traversal (`TraversalResult.failed`); async/Temporal paths must persist `WAITING` and resume later.
+3. Synchronous `KernelEntryPoint.execute()` returns `TraversalResult.waiting()` on human gates but fails at `reportWorkflowResult` when status is not `COMPLETED`. The Temporal workflow path persists `WAITING` and resumes via `HumanInputResumeSupport`.
 4. `TraversalResult.completed == true` with a resolved return variable is the kernel’s signal for workflow `COMPLETED` on inline queue runs.
 
 ### Implementation today (mapping)
@@ -298,8 +298,9 @@ Planned deliverables and phases: [runtime-roadmap.md](./runtime-roadmap.md).
 WorkflowInput received          → CREATED
 KernelContextBuilder.build()    → READY
 UiCallbackReporter context      → READY (observable)
-GraphTraverser.traverse()       → RUNNING (implicit)
-NodeResult.WAITING              → WAITING (target; sync kernel fails today)
+GraphTraversalEngine loop         → RUNNING (implicit)
+NodeResult.WAITING              → WAITING (Temporal path resumes; sync execute() fails at report)
+TraversalResult.waiting         → WAITING
 TraversalResult.completed       → COMPLETED
 TraversalResult.failed          → FAILED
 ```

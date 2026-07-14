@@ -22,13 +22,15 @@ SPDX-License-Identifier: Apache-2.0
 
 ```mermaid
 flowchart LR
-    RT[olo-runtime]
+    KERNEL[olo-kernel]
     SPI[olo-spi]
+    CORE[olo-core]
     EXT[olo-extensions]
 
-    RT --> SPI
+    KERNEL --> SPI
+    KERNEL --> CORE
+    CORE --> SPI
     EXT --> SPI
-    RT --> EXT
 ```
 
 ### ExecutionContext
@@ -58,7 +60,7 @@ Maps to `HookActionDefinition.implementationId`. `HookRequest` includes `HookPha
 | `ToolProvider` | `toolId()` |
 | `HookProvider` | `implementationId()` |
 
-Runtime registries (planned in `olo-runtime`) resolve providers via `ServiceLoader`, classpath scanning, or explicit module wiring.
+Runtime registries live in **`olo-core`** (`NodeRegistry`, `ToolRegistry`, `HookRegistry`). `olo-kernel` uses them via `ExecutionEngine` and traversal handlers.
 
 ### Annotations
 
@@ -75,8 +77,9 @@ Compile-time registration may later use `olo-annotation-processor`.
 ```
 olo-definition  (declarative, serialization)
 olo-spi         (runtime contracts)  ← no dependency on olo-definition
-olo-runtime     → olo-spi, olo-definition
-olo-extensions  → olo-spi
+olo-core        → olo-spi  (default implementations + registries)
+olo-kernel      → olo-spi, olo-core, olo-definition  (graph traversal)
+olo-extensions  → olo-spi  (planned — additional providers)
 ```
 
 Keeping `olo-spi` independent allows extension JARs to stay small and avoids pulling Jackson or graph POJOs into provider code that only needs execution contracts.

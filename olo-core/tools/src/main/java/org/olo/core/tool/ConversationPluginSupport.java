@@ -27,6 +27,7 @@ public final class ConversationPluginSupport {
     public static final String CONVERSATION_HISTORY_VARIABLE = "conversationHistory";
     public static final String MESSAGE_VARIABLE = "message";
     public static final String RETURN_VALUE_VARIABLE = "ReturnValue";
+    public static final String RAG_CONTEXT_VARIABLE = "ragContext";
 
     public static final String DEFAULT_CONVERSATION_FOLDER = "demo-data/conversations";
     public static final String DEFAULT_SESSION_ID = "demo-session";

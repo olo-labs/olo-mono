@@ -8,7 +8,7 @@ Pure Java library for **serializable Open LLM Orchestrator (OLO) workflow graphs
 
 ## Build
 
-From the monorepo root (Java 17+):
+From the monorepo root (Java 21):
 
 ```bash
 ./gradlew :olo-definition:build
@@ -57,10 +57,11 @@ YamlWorkflowSerializer yaml = new YamlWorkflowSerializer();
 | Module           | Responsibility                          |
 |------------------|-----------------------------------------|
 | `olo-definition` | Declarative workflow POJOs + serializers  |
-| `olo-runtime`    | Execution (future; depends on definition) |
-| `olo-extensions` | Provider integrations (future)          |
+| `olo-kernel`     | Graph traversal + Temporal orchestration |
+| `olo-core`       | Default SPI node/tool/hook implementations |
+| `olo-extensions` | Additional provider integrations (planned) |
 
-`olo-definition` must never depend on `olo-runtime`.
+`olo-definition` must never depend on `olo-kernel` or worker code.
 
 ## Package layout
 

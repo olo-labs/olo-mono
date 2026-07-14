@@ -114,6 +114,7 @@ public final class WorkflowBuilder {
     public WorkflowBuilder modelNode(String id, String subtype) { return nodes.modelNode(id, subtype); }
     public WorkflowBuilder toolNode(String id) { return nodes.toolNode(id); }
     public WorkflowBuilder canvasToolNode(String id) { return nodes.canvasToolNode(id); }
+    public WorkflowBuilder canvasToolNode(String id, String label) { return nodes.canvasToolNode(id, label); }
     public WorkflowBuilder canvasChildAgentPluginNode(String id, String childWorkflowId, String label) {
         return nodes.canvasChildAgentPluginNode(id, childWorkflowId, label);
     }
@@ -140,6 +141,7 @@ public final class WorkflowBuilder {
     @Deprecated public WorkflowBuilder variable(VariableDefinition variable) { return nodes.variable(variable); }
 
     // --- canvas: pipelines, layout, ports ---
+    public WorkflowBuilder ragIngestCanvasPipeline() { return canvas.ragIngestCanvasPipeline(); }
     public WorkflowBuilder localAgentCanvasPipeline(String workflowId) { return canvas.localAgentCanvasPipeline(workflowId); }
     public WorkflowBuilder agentCanvasPipeline(String workflowId) { return canvas.agentCanvasPipeline(workflowId); }
     public WorkflowBuilder nodeCanvasLayout(String nodeId, int columnIndex) { return canvas.nodeCanvasLayout(nodeId, columnIndex); }

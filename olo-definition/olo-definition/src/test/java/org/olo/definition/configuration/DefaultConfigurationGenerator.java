@@ -30,6 +30,7 @@ public final class DefaultConfigurationGenerator {
             new PresetEntry("detailed", DefaultConfigurationDefinitions::detailed),
             new PresetEntry("fast", DefaultConfigurationDefinitions::fast),
             new PresetEntry("planner", DefaultConfigurationDefinitions::planner),
+            new PresetEntry("rag-chat", DefaultConfigurationDefinitions::ragChat),
             new PresetEntry("reviewer", DefaultConfigurationDefinitions::reviewer),
             new PresetEntry("strict", DefaultConfigurationDefinitions::strict),
             new PresetEntry("summary", DefaultConfigurationDefinitions::summary),

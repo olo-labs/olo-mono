@@ -6,12 +6,12 @@ package org.olo.core.tool;
 
 import java.util.Map;
 
-final class ToolArgs {
+public final class ToolArgs {
 
     private ToolArgs() {
     }
 
-    static String string(Map<String, Object> map, String key, String defaultValue) {
+    public static String string(Map<String, Object> map, String key, String defaultValue) {
         if (map == null || map.isEmpty()) {
             return defaultValue;
         }
