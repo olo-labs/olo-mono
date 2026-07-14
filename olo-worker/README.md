@@ -68,6 +68,17 @@ export OLO_WORKER_CONFIG_PATH=../olo-worker-configuration/samples/worker-config.
 
 When the worker runs **inside Docker** on `olo-net`, set `OLO_CHAT_CALLBACK_BASE_URL=http://olo:7080` on the `olo` service and use Temporal target `temporal:7233` in worker config.
 
+## Docker image
+
+Build the worker image from the monorepo root:
+
+```bash
+docker build -f olo-worker/Dockerfile -t olo-worker:latest .
+```
+
+The image starts `olo-worker` with `/app/worker-config.yaml`, which points at the Docker network services (`temporal:7233`, `redis:6379`, `ollama:11434`). Override `OLO_WORKER_CONFIG_PATH` or mount a different config file if you want a custom deployment.
+
+
 ### Windows: `Unable to delete ... olo-definition.jar` / shared library jars
 
 Composite builds used to share the same `olo-definition` and `olo-workflow-input` jar outputs between **olo-worker** and **olo backend**, which causes Windows file-lock failures. Those modules now publish to **`olo-mono/build/repo`** and are consumed as Maven dependencies (same pattern as `olo-spi` / `olo-annotation`).
