@@ -4,7 +4,7 @@ WORKDIR /build
 
 COPY . .
 
-RUN chmod +x publish-libs.sh && ./publish-libs.sh
+RUN find . -name gradlew -exec chmod +x {} + && chmod +x publish-libs.sh && ./publish-libs.sh
 RUN gradle -p olo-worker installDist --no-daemon -x test
 
 FROM eclipse-temurin:21-jre
