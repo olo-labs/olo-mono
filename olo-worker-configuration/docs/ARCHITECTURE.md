@@ -98,3 +98,7 @@ olo-workflow-input        ←  receives maxLocalMessageSize from worker via prov
 - Deserializing `WorkflowDefinition` graphs (use `olo-definition` + `scanFolder`)
 - Workflow execution
 - Secret resolution
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

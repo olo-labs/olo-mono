@@ -308,3 +308,7 @@ Each implementation module uses `annotationProcessor olo-annotation-processor` s
 | `olo-extensions` | `olo-spi` | Additional provider adapters (OpenAI, Ollama, Qdrant, …) beyond olo-core defaults |
 
 Graph traversal is implemented in **olo-kernel** (`GraphTraversalEngine`). Per-step SPI execution uses **olo-core** `ExecutionEngine`.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../CONTRIBUTING.md), use the [contributor guide](../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../CREDITS.md).

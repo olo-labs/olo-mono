@@ -62,3 +62,7 @@ Optional arguments: `limit` (default 5), `pullRequestNumber` (e.g. `842` to filt
 ## Multi-agent scenarios
 
 Observability scenarios (`log-rca-analysis`, `performance-triage`, `security-incident-response`, `release-readiness-review`, `api-integration-triage`, `capacity-planning`) use this data. Research and literature scenarios use `research-literature` mock fixtures. Activate a scenario in **olo-ui → Administration → Scenarios**, then run the orchestrator on `oloQueue2`. See [`olo-configuration/README.md`](../../../olo-definition/olo-configuration/README.md).
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../../CONTRIBUTING.md), use the [contributor guide](../../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../../CREDITS.md).

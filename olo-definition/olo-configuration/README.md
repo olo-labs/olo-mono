@@ -90,3 +90,7 @@ Each orchestrator:
 Child workflows run as **Temporal child workflows** when dispatched from the parent workflow thread. Worker logs include `childWorkflowId`, `parentWorkflowId`, and shared `transactionId` for correlation (see [olo-worker/README.md](../../olo-worker/README.md#logging)).
 
 Programmatic builders live under `olo-definition/src/test/java/org/olo/definition/configuration/<scenario>/`.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

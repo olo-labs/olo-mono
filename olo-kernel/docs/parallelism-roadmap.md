@@ -305,3 +305,7 @@ RUNNING (planner)
 | Outputs | `ExecutionOutputs` per branch slot | + barrier merge into `merged` / reviewer input |
 
 Define graphs and presets against this roadmap so `Planner → [A,B] → [C,D] → Reviewer` remains valid as implementation catches up.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

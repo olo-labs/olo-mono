@@ -572,3 +572,7 @@ Example queue `fast`, message `"quick question"`:
 6. **Resolver** — `message = ReturnValue`.
 7. **Callback** — same string sent to `execution.callbackUrl` / context callback base URL.
 8. **Caller** — `KernelEntryPoint.execute` returns that string.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

@@ -501,3 +501,7 @@ This separation keeps the worker deployable as a single process while the kernel
 | Multiple worker instances | Distinct worker `id`, same Temporal target; queues must not overlap per queue name |
 
 The Temporal contract remains stable: **`WorkflowInput` in, `String` user-visible message out**, with run events posted asynchronously to the backend during execution.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

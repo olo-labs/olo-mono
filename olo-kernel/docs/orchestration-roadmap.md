@@ -143,3 +143,7 @@ If traversal logs contain `"child workflow dispatch pending"`, the olo-core `Age
 | Navigation after child | `ChildWorkflowExecutionStrategy` → first edge | Coordinator `nextNodeId` |
 
 Define presets and Studio graphs against this roadmap so orchestration types do not diverge as implementation catches up.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

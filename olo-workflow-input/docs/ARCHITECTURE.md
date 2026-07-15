@@ -271,3 +271,7 @@ When developed beside `olo-definition` in **olo-mono**, `settings.gradle` may us
 - Module README: [../README.md](../README.md)
 - Workflow definitions: [olo-definition](https://github.com/olo-labs/olo-mono/tree/main/olo-definition) / `org.olo:olo-definition`
 - Monorepo architecture: `olo-definition/doc/ARCHITECTURE.md`
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

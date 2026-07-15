@@ -346,3 +346,7 @@ The v1 model already supports palette generation, search, categorization, proper
 `min`, `max`, `pattern`, `subcategory`, `difficulty`, `priority`, `icon`, `color`, …
 
 Reserved directions: [V1.md](V1.md).
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

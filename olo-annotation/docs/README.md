@@ -24,3 +24,7 @@ Runtime API: `ExtensionCatalog`, `NodeDescriptor`, `ToolDescriptor`, `HookDescri
 | [olo-definition](../../olo-definition/) | Workflow graph model that UIs build using catalog metadata |
 
 Generated JSON schema: [olo-annotation-processor/docs/CATALOG_SCHEMA.md](../../olo-annotation-processor/docs/CATALOG_SCHEMA.md)
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

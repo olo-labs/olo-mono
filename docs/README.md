@@ -49,3 +49,7 @@ olo-worker/            Runnable Temporal worker application
 ```
 
 Start with [ARCHITECTURE.md](ARCHITECTURE.md) for the big picture, then [MODULES.md](MODULES.md) when implementing or extending a specific layer.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../CONTRIBUTING.md), use the [contributor guide](../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../CREDITS.md).

@@ -79,3 +79,7 @@ When a new **OLO-AP-*** rule ships in a processor release:
 3. **CI** — treat `[OLO-AP-…]` messages as build failures; grep logs by code when triaging multi-module builds.
 
 New rules will be appended to this document with their code, examples, and fix steps before the processor enforces them.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

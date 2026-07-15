@@ -73,3 +73,7 @@ YamlWorkflowSerializer yaml = new YamlWorkflowSerializer();
 - `org.olo.definition.extension` — `ExtensionDefinition`
 - `org.olo.definition.serializer` — JSON/YAML serializers
 - `org.olo.definition.validation` — `WorkflowValidator`
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

@@ -46,3 +46,7 @@ WorkflowInput input = WorkflowInput.fromJson(Files.readString(path));
 Optional scratch output from E2E tests: `samples/generated/` (gitignored).
 
 `SampleWorkflowInputCopyTest` writes `workflow-input-copy.json` beside each sample (via `WorkflowInput.copy()`) and asserts it is byte-identical to the original. Copy sidecars are gitignored.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

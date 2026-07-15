@@ -19,3 +19,7 @@ SPDX-License-Identifier: Apache-2.0
 | [olo-spi](../../olo-spi/) | Runtime SPI contracts (`Node`, `Tool`, `Hook`) |
 | [olo-core](../../olo-core/) | Reference implementations that use this processor |
 | [olo-definition](../../olo-definition/) | Workflow graph POJOs that UIs edit using catalog metadata |
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

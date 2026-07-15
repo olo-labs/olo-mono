@@ -51,3 +51,7 @@ The build generates workflow samples under `samples/` (`./gradlew generateSample
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE).
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../CONTRIBUTING.md), use the [contributor guide](../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../CREDITS.md).

@@ -137,3 +137,7 @@ Graph traversal and Temporal orchestration are implemented in **`olo-kernel`**; 
 ## License
 
 Apache License 2.0 — see [olo-definition/LICENSE](olo-definition/LICENSE) if present in your checkout.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), use the [contributor guide](docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](CREDITS.md).

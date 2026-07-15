@@ -56,3 +56,7 @@ public final class EchoNode implements Node {
 Maven coordinates: `org.olo:olo-spi:0.1.0-SNAPSHOT`
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../CONTRIBUTING.md), use the [contributor guide](../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../CREDITS.md).

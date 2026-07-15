@@ -89,3 +89,7 @@ Resolution algorithm (target) is documented in [runtime-model.md](./runtime-mode
 | Variable scope | Catalog validated; runtime flat map | Enforced scope stack |
 | Suspension | Sync kernel fails on `WAITING` | Checkpoint + resume |
 | Child isolation | Shared parent map | `AGENT` scope fork/merge |
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

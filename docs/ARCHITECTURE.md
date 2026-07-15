@@ -230,3 +230,7 @@ Graph traversal is implemented in **olo-kernel** (`GraphTraversalEngine`, `Kerne
 | [olo-docker](../../olo-docker/) | Dev/prod Docker Compose stacks |
 | [olo-chat](../olo-chat/) | Chat UI |
 | [olo-ui](../olo-ui/) | Studio UI — workflow builder, scenario activation, tenant admin |
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../CONTRIBUTING.md), use the [contributor guide](../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../CREDITS.md).

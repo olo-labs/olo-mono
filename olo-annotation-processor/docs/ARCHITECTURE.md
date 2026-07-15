@@ -413,3 +413,7 @@ Not implemented yet. Full codes, examples, and migration guidance: **[VALIDATION
 - [olo-annotation README](../../olo-annotation/README.md) — annotation API
 - [olo-core ARCHITECTURE](../../olo-core/docs/ARCHITECTURE.md) — default implementations
 - [olo-mono MODULES](../../docs/MODULES.md) — monorepo module index
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

@@ -280,3 +280,7 @@ The annotation model for v1 is effectively **complete**; further investment belo
 - [olo-annotation-processor CATALOG_SCHEMA](../../olo-annotation-processor/docs/CATALOG_SCHEMA.md)
 - [olo-spi ARCHITECTURE](../../olo-spi/docs/ARCHITECTURE.md)
 - [olo-core ARCHITECTURE](../../olo-core/docs/ARCHITECTURE.md)
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

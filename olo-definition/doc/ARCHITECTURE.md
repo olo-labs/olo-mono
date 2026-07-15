@@ -1213,3 +1213,7 @@ The following are explicitly **out of scope** for `olo-definition`:
 - Samples: [samples/README.md](../samples/README.md)
 - Monorepo README: [README.md](../README.md)
 - License: [LICENSE](../LICENSE) (Apache 2.0)
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

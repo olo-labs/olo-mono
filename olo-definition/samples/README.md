@@ -52,3 +52,7 @@ WorkflowValidator.validateOrThrow(workflow);
 Optional scratch output from E2E tests: `samples/generated/` (gitignored).
 
 `SampleWorkflowCopyTest` writes `workflow-copy.json` / `workflow-copy.yaml` beside each sample (via `WorkflowDefinition.copy()`) and asserts they are byte-identical to the originals. Copy sidecars are gitignored.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

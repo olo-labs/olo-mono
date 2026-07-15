@@ -511,3 +511,7 @@ Property panels should already ignore unknown keys on individual properties (see
 | `1.0` | Initial schema; processor and loader in `olo-annotation` / `olo-annotation-processor` |
 
 Breaking changes should bump `schemaVersion` and update both the processor and `ExtensionCatalogLoader` consumers (for example `olo-ui`). The loader accepts legacy `version` → `schemaVersion` and `module` → `moduleId` as aliases during migration.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

@@ -29,3 +29,7 @@ Callback URL resolution: `execution.callbackUrl` (full POST URL) → `context.ca
 `reportWorkflowResult` posts sequence `2` with `output.response` (workflow return message), `output.returnVariable`, `output.returnValue`, and `output.variables`.
 
 Return variable resolution (`WorkflowReturnVariable`): `metadata.returnVariable` on the workflow → single variable with `metadata.role = "return"` → legacy `ReturnValue` name.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../CONTRIBUTING.md), use the [contributor guide](../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../CREDITS.md).

@@ -90,3 +90,7 @@ Post-1.0 additions require **`schemaVersion` bump** and coordinated processor + 
 | **AI-assisted workflow generation** | Planner and copilot use catalog capabilities + workflow definition |
 
 The metadata platform is done enough. Build on top of it.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).

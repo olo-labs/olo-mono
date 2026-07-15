@@ -282,3 +282,7 @@ Always emitted on every node, tool, and hook descriptor.
 5. `compileOnly olo-annotation` + `annotationProcessor olo-annotation-processor`.
 6. `-Aolo.catalog.module=<artifact-name>` and `-Aolo.catalog.provider=<plugin-id>` (e.g. `olo-core`, `acme-aws`).
 7. Verify `META-INF/olo/catalog/*.json` in the JAR.
+
+## Contributors and owners
+
+Contributions are welcome. Start with [CONTRIBUTING.md](../../CONTRIBUTING.md), use the [contributor guide](../../docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](../../OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](../../CREDITS.md).
