@@ -30,12 +30,12 @@ class WorkerLlmHealthCheckTest {
     private static WorkflowDefinitionRegistry registryWithLocalProvider(String baseUrl, String model) {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("wf1")
-                .modelProviders(ModelProviderDefinition.builder()
+                .modelProviders(List.of(ModelProviderDefinition.builder()
                         .id("model-provider")
                         .provider("local")
                         .model(model)
                         .putConfiguration("baseUrl", baseUrl)
-                        .build())
+                        .build()))
                 .build();
         return WorkflowDefinitionRegistry.of(
                 Path.of("test"),

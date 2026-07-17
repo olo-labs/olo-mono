@@ -151,44 +151,80 @@ public final class RagIngestTool implements Tool {
                     + result.capabilitySource();
             return ToolResult.success(message, output);
         } catch (Exception e) {
-            return ToolResult.failure("RAG ingest failed: " + e.getMessage(), e);
+            return ToolResult.failure("RAG ingest failed: " + failureMessage(e), e);
         }
     }
 
     @SuppressWarnings("unchecked")
     private static void mergeMessagePayload(Map<String, Object> arguments, ExecutionContext context) {
-        String message = ToolArgs.string(arguments, "message", "");
-        if (message.isBlank()) {
-            message = ToolArgs.string(arguments, "userQuery", "");
+        Object rawMessage = firstPresent(arguments, "message", "userQuery", "query", "text");
+        if (rawMessage instanceof Map<?, ?> payload) {
+            mergePayloadMap(arguments, (Map<String, Object>) payload);
+            return;
         }
-        if (message.isBlank() || !message.trim().startsWith("{")) {
-            Object ragTag = arguments.get("ragTag");
-            if (ragTag == null || String.valueOf(ragTag).isBlank()) {
-                ragTag = arguments.get("capabilitySource");
-            }
-            if (ragTag == null || String.valueOf(ragTag).isBlank()) {
-                ragTag = context.getVariable("ragTag");
-            }
-            if (ragTag == null || String.valueOf(ragTag).isBlank()) {
-                ragTag = context.getVariable("capabilitySource");
-            }
-            if (ragTag != null && !String.valueOf(ragTag).isBlank()) {
-                arguments.putIfAbsent("capabilitySource", String.valueOf(ragTag));
-                arguments.putIfAbsent("ragTag", String.valueOf(ragTag));
-            }
+
+        String message = rawMessage == null ? "" : String.valueOf(rawMessage);
+        if (message.isBlank()) {
+            mergeRagTagFallback(arguments, context);
+            return;
+        }
+        if (!message.trim().startsWith("{")) {
+            mergeRagTagFallback(arguments, context);
             return;
         }
         try {
             Map<String, Object> payload = MAPPER.readValue(message.trim(), new TypeReference<>() {});
-            for (Map.Entry<String, Object> entry : payload.entrySet()) {
-                arguments.putIfAbsent(entry.getKey(), entry.getValue());
-            }
-            Object files = payload.get("fileNames");
-            if (files instanceof List<?> list && !list.isEmpty()) {
-                arguments.put("fileNames", list);
-            }
+            mergePayloadMap(arguments, payload);
         } catch (Exception ignored) {
             // keep explicit arguments
+        }
+    }
+
+    private static Object firstPresent(Map<String, Object> arguments, String... keys) {
+        for (String key : keys) {
+            Object value = arguments.get(key);
+            if (value != null && !String.valueOf(value).isBlank()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static void mergePayloadMap(Map<String, Object> arguments, Map<String, Object> payload) {
+        for (Map.Entry<String, Object> entry : payload.entrySet()) {
+            arguments.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+        Object files = payload.get("fileNames");
+        if (files instanceof List<?> list && !list.isEmpty()) {
+            arguments.put("fileNames", list);
+        }
+    }
+
+    private static String failureMessage(Exception e) {
+        if (e.getMessage() != null && !e.getMessage().isBlank()) {
+            return e.getMessage();
+        }
+        Throwable cause = e.getCause();
+        if (cause != null && cause.getMessage() != null && !cause.getMessage().isBlank()) {
+            return cause.getMessage();
+        }
+        return e.getClass().getSimpleName();
+    }
+
+    private static void mergeRagTagFallback(Map<String, Object> arguments, ExecutionContext context) {
+        Object ragTag = arguments.get("ragTag");
+        if (ragTag == null || String.valueOf(ragTag).isBlank()) {
+            ragTag = arguments.get("capabilitySource");
+        }
+        if (ragTag == null || String.valueOf(ragTag).isBlank()) {
+            ragTag = context.getVariable("ragTag");
+        }
+        if (ragTag == null || String.valueOf(ragTag).isBlank()) {
+            ragTag = context.getVariable("capabilitySource");
+        }
+        if (ragTag != null && !String.valueOf(ragTag).isBlank()) {
+            arguments.putIfAbsent("capabilitySource", String.valueOf(ragTag));
+            arguments.putIfAbsent("ragTag", String.valueOf(ragTag));
         }
     }
 

@@ -48,12 +48,12 @@ public final class WorkflowBuilderCanvas {
                         Map.of(
                                 "toolId", "olo-core:rag-ingest",
                                 "extensionRef", "pgvector-store",
-                                "vectorTable", "documents",
-                                "driver", "qdrant",
-                                "connectionRef", "http://localhost:46333",
-                                "collection", "documents",
-                                "vectorSize", 384,
-                                "distance", "Cosine",
+                                "vectorTable", "${env:OLO_VECTOR_STORE_TABLE}",
+                                "driver", "${env:OLO_VECTOR_STORE_DRIVER}",
+                                "connectionRef", "${env:OLO_VECTOR_STORE_URL}",
+                                "collection", "${env:OLO_VECTOR_STORE_COLLECTION}",
+                                "vectorSize", "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
+                                "distance", "${env:OLO_VECTOR_STORE_DISTANCE}",
                                 "chunkSize", 512))
                 .endNode("end")
                 .connect("start", "out", ingestNodeId, "in")

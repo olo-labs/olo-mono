@@ -69,12 +69,12 @@ public final class DocumentsIndexDefinitions {
                 .id(VECTOR_STORE_EXTENSION_ID)
                 .type("VECTOR_STORE")
                 .configuration(Map.of(
-                        "driver", "qdrant",
-                        "connectionRef", "http://localhost:46333",
-                        "table", "documents",
-                        "collection", "documents",
-                        "vectorSize", 384,
-                        "distance", "Cosine"))
+                        "driver", "${env:OLO_VECTOR_STORE_DRIVER}",
+                        "connectionRef", "${env:OLO_VECTOR_STORE_URL}",
+                        "table", "${env:OLO_VECTOR_STORE_TABLE}",
+                        "collection", "${env:OLO_VECTOR_STORE_COLLECTION}",
+                        "vectorSize", "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
+                        "distance", "${env:OLO_VECTOR_STORE_DISTANCE}"))
                 .build();
     }
 

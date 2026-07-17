@@ -59,6 +59,24 @@ class RagIngestToolTest {
     }
 
     @Test
+    void mergesCapabilitySourceFromStructuredMessage() {
+        RagIngestTool tool = new RagIngestTool();
+        DefaultExecutionContext context = new DefaultExecutionContext("documents-index", "run-1", "oloQueue2", "corr");
+
+        var result = tool.invoke(
+                new ToolRequest(
+                        "olo-core:rag-ingest",
+                        "rag-ingest",
+                        Map.of("message", Map.of(
+                                "capabilitySource", "policy-rag",
+                                "fileNames", List.of("a.txt"))),
+                        Map.of("extensionRef", "pgvector-store", "vectorTable", "documents")),
+                context);
+
+        assertThat(result.message()).doesNotContain("capabilitySource is required");
+    }
+
+    @Test
     void indexesPdfUploads() throws Exception {
         Path uploadBase = tempDir.resolve("uploads");
         Path sourceDir = uploadBase.resolve("finance-rag");

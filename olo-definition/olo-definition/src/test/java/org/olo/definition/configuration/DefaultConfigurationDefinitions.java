@@ -218,12 +218,12 @@ final class DefaultConfigurationDefinitions {
                 .putNodeConfiguration(ragQueryNodeId, java.util.Map.of(
                         "toolId", "olo-core:rag-query",
                         "extensionRef", "pgvector-store",
-                        "vectorTable", "documents",
-                        "driver", "qdrant",
-                        "connectionRef", "http://localhost:46333",
-                        "collection", "documents",
-                        "vectorSize", 384,
-                        "distance", "Cosine",
+                        "vectorTable", "${env:OLO_VECTOR_STORE_TABLE}",
+                        "driver", "${env:OLO_VECTOR_STORE_DRIVER}",
+                        "connectionRef", "${env:OLO_VECTOR_STORE_URL}",
+                        "collection", "${env:OLO_VECTOR_STORE_COLLECTION}",
+                        "vectorSize", "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
+                        "distance", "${env:OLO_VECTOR_STORE_DISTANCE}",
                         "topK", 5,
                         "scoreThreshold", 0.25))
                 .addNode(NodeDefinition.builder()
@@ -252,12 +252,12 @@ final class DefaultConfigurationDefinitions {
                         .id("pgvector-store")
                         .type("VECTOR_STORE")
                         .configuration(java.util.Map.of(
-                                "driver", "qdrant",
-                                "connectionRef", "http://localhost:46333",
-                                "table", "documents",
-                                "collection", "documents",
-                                "vectorSize", 384,
-                                "distance", "Cosine"))
+                                "driver", "${env:OLO_VECTOR_STORE_DRIVER}",
+                                "connectionRef", "${env:OLO_VECTOR_STORE_URL}",
+                                "table", "${env:OLO_VECTOR_STORE_TABLE}",
+                                "collection", "${env:OLO_VECTOR_STORE_COLLECTION}",
+                                "vectorSize", "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
+                                "distance", "${env:OLO_VECTOR_STORE_DISTANCE}"))
                         .build())
                 .tool(ToolDefinition.builder()
                         .id("rag-query")

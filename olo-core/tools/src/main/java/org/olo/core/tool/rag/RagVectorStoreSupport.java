@@ -255,7 +255,7 @@ public final class RagVectorStoreSupport {
 
     private static boolean isQdrant(Map<String, Object> extensionConfig) {
         Object driver = extensionConfig == null ? null : extensionConfig.get("driver");
-        return driver != null && "qdrant".equalsIgnoreCase(String.valueOf(driver).trim());
+        return driver != null && "qdrant".equalsIgnoreCase(resolveConfigValue(driver).trim());
     }
 
     private static String upsertQdrant(
@@ -372,9 +372,9 @@ public final class RagVectorStoreSupport {
             HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url))
                     .header("Content-Type", "application/json")
                     .method(method, HttpRequest.BodyPublishers.ofString(MAPPER.writeValueAsString(body)));
-            Object apiKey = extensionConfig == null ? null : extensionConfig.get("apiKey");
-            if (apiKey != null && !String.valueOf(apiKey).isBlank()) {
-                builder.header("api-key", String.valueOf(apiKey));
+            String apiKey = resolveConfigValue(extensionConfig == null ? null : extensionConfig.get("apiKey"));
+            if (!apiKey.isBlank()) {
+                builder.header("api-key", apiKey);
             }
             HttpResponse<String> response = HttpClient.newHttpClient().send(
                     builder.build(),
@@ -386,6 +386,11 @@ public final class RagVectorStoreSupport {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IOException("Qdrant request interrupted", e);
+        } catch (IOException e) {
+            String detail = e.getMessage() == null || e.getMessage().isBlank()
+                    ? e.getClass().getSimpleName()
+                    : e.getMessage();
+            throw new IOException("Qdrant request failed for " + url + ": " + detail, e);
         }
     }
 
@@ -394,9 +399,10 @@ public final class RagVectorStoreSupport {
         if (ref == null || String.valueOf(ref).isBlank()) {
             ref = extensionConfig == null ? null : extensionConfig.get("url");
         }
-        String value = ref == null || String.valueOf(ref).isBlank()
+        String resolved = resolveConfigValue(ref);
+        String value = resolved.isBlank()
                 ? "http://localhost:6333"
-                : String.valueOf(ref).trim();
+                : resolved;
         while (value.endsWith("/")) {
             value = value.substring(0, value.length() - 1);
         }
@@ -408,9 +414,10 @@ public final class RagVectorStoreSupport {
         if (collection == null || String.valueOf(collection).isBlank()) {
             collection = extensionConfig == null ? null : extensionConfig.get("table");
         }
-        return safeSegment(collection == null || String.valueOf(collection).isBlank()
+        String resolved = resolveConfigValue(collection);
+        return safeSegment(resolved.isBlank()
                 ? fallback
-                : String.valueOf(collection));
+                : resolved);
     }
 
     private static int qdrantVectorSize(Map<String, Object> extensionConfig) {
@@ -418,9 +425,10 @@ public final class RagVectorStoreSupport {
         if (raw instanceof Number n) {
             return Math.max(16, n.intValue());
         }
-        if (raw != null) {
+        String resolved = resolveConfigValue(raw);
+        if (!resolved.isBlank()) {
             try {
-                return Math.max(16, Integer.parseInt(String.valueOf(raw)));
+                return Math.max(16, Integer.parseInt(resolved));
             } catch (NumberFormatException ignored) {
                 // fall through
             }
@@ -430,7 +438,20 @@ public final class RagVectorStoreSupport {
 
     private static String qdrantDistance(Map<String, Object> extensionConfig) {
         Object raw = extensionConfig == null ? null : extensionConfig.get("distance");
-        return raw == null || String.valueOf(raw).isBlank() ? "Cosine" : String.valueOf(raw).trim();
+        String resolved = resolveConfigValue(raw);
+        return resolved.isBlank() ? "Cosine" : resolved;
+    }
+
+    private static String resolveConfigValue(Object raw) {
+        if (raw == null) {
+            return "";
+        }
+        String value = String.valueOf(raw).trim();
+        if (value.startsWith("${env:") && value.endsWith("}")) {
+            String envKey = value.substring("${env:".length(), value.length() - 1).trim();
+            return System.getenv().getOrDefault(envKey, "").trim();
+        }
+        return value;
     }
 
     private static String qdrantPointId(Map<String, Object> entry) {
