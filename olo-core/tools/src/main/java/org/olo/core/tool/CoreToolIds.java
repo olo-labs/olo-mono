@@ -34,6 +34,7 @@ public final class CoreToolIds {
     public static final String CONVERSATION_STORE = "olo-core:conversation-store";
 
     public static final String RAG_INGEST = "olo-core:rag-ingest";
+    public static final String RAG_DELETE = "olo-core:rag-delete";
     public static final String RAG_QUERY = "olo-core:rag-query";
 
     private CoreToolIds() {

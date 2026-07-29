@@ -34,7 +34,7 @@ class FileConfigurationSourceTest {
         assertThat(configuration.getServer().getHost()).isEqualTo("0.0.0.0");
         assertThat(configuration.getWorkflowDefinitions().getScanFolder())
                 .isEqualTo("../../olo-definition/olo-configuration/current-active");
-        assertThat(configuration.getWorkflowDefinitions().getRecursive()).isFalse();
+        assertThat(configuration.getWorkflowDefinitions().getRecursive()).isTrue();
         assertThat(configuration.getInput().resolveMaxLocalMessageSize()).isEqualTo(50);
         assertThat(configuration.getCache().isEnabled()).isTrue();
     }

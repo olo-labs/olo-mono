@@ -19,13 +19,13 @@ import java.util.Map;
 @OloTool(
         id = CoreToolIds.CONVERSATION_LOAD,
         name = "Conversation Load",
-        description = "Loads prior conversation turns and attaches a summary to the workflow message",
+        description = "Loads prior conversation turns as reference-only context for the workflow message",
         category = "conversation",
         emoji = "💬",
         tags = {"conversation", "memory", "plugin", "summary"},
         examples = {
-            "Restore chat context for a returning operator session",
-            "Attach prior incident triage summary before the planner runs"
+            "Restore chat context for a returning operator session without echoing history",
+            "Provide prior incident triage as reference before the planner runs"
         },
         arguments = {
             @OloProperty(

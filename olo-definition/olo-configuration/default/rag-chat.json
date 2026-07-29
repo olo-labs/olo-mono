@@ -1,7 +1,7 @@
 {
   "id" : "rag-chat",
   "enabled" : true,
-  "isDefault" : false,
+  "isDefault" : true,
   "label" : "RAG Chat",
   "role" : "RAG Chat",
   "shortDescription" : "Answers using retrieved knowledge from an indexed capability source",
@@ -30,8 +30,6 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "agent-plug" : "#a855f7",
-      "any" : "#94a3b8",
       "message" : "#ef4444",
       "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
@@ -39,9 +37,26 @@
       "string" : "#a3e635",
       "object" : "#c084fc",
       "number" : "#38bdf8",
-      "array" : "#f472b6"
+      "array" : "#f472b6",
+      "agent-plug" : "#a855f7",
+      "any" : "#94a3b8"
     },
     "nodeTypes" : {
+      "END" : {
+        "emoji" : "⏹",
+        "typeLabel" : "End",
+        "description" : "Workflow exit — maps a workflow variable to the caller result",
+        "palette" : {
+          "name" : "End",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "outputVariable",
+          "widget" : "VARIABLE_SELECT",
+          "label" : "Output variable",
+          "binding" : "outputVariableMapping"
+        } ]
+      },
       "START" : {
         "emoji" : "▶",
         "typeLabel" : "Start",
@@ -68,21 +83,6 @@
           "id" : "model",
           "widget" : "MODEL_SELECTOR",
           "label" : "Model"
-        } ]
-      },
-      "END" : {
-        "emoji" : "⏹",
-        "typeLabel" : "End",
-        "description" : "Workflow exit — maps a workflow variable to the caller result",
-        "palette" : {
-          "name" : "End",
-          "category" : "control"
-        },
-        "inlineProperties" : [ {
-          "id" : "outputVariable",
-          "widget" : "VARIABLE_SELECT",
-          "label" : "Output variable",
-          "binding" : "outputVariableMapping"
         } ]
       }
     }
@@ -116,6 +116,15 @@
   },
   "state" : { },
   "parameters" : {
+    "temperature" : {
+      "type" : "number",
+      "defaultValue" : 0.2,
+      "ui" : {
+        "widget" : "SLIDER",
+        "group" : "Model Settings",
+        "order" : 1
+      }
+    },
     "maxIterations" : {
       "type" : "integer",
       "defaultValue" : 6,
@@ -128,20 +137,11 @@
     "systemPrompt" : {
       "type" : "string",
       "label" : "System Prompt",
-      "defaultValue" : "You answer using the retrieved knowledge context when provided.\n\nRetrieved context:\n{ragContext}\n\nQuestion:\n{message}\n\nPrevious conversation summary:\n{conversationSummary}\n\nAnswer concisely and cite the retrieved context when relevant.",
+      "defaultValue" : "You answer using the retrieved knowledge context when provided.\n\nRetrieved context:\n{ragContext}\n\nQuestion:\n{message}\n\nReference-only prior conversation context:\n{conversationSummary}\n\nUse prior context only for continuity. Do not quote, summarize, mention, or answer it unless the current question explicitly asks about prior conversation.\n\nAnswer concisely and cite the retrieved context when relevant.",
       "ui" : {
         "widget" : "TEXTAREA",
         "group" : "Model Settings",
         "order" : 0
-      }
-    },
-    "temperature" : {
-      "type" : "number",
-      "defaultValue" : 0.2,
-      "ui" : {
-        "widget" : "SLIDER",
-        "group" : "Model Settings",
-        "order" : 1
       }
     }
   },
@@ -165,7 +165,13 @@
     "reads" : [ "input.message" ],
     "writes" : [ ],
     "configuration" : {
-      "inputVariableMappings" : [ "message" ]
+      "inputVariableMappings" : [ "message" ],
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 80
+        }
+      }
     }
   }, {
     "id" : "conversation-load",
@@ -214,7 +220,13 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "toolId" : "olo-core:conversation-load"
+      "toolId" : "olo-core:conversation-load",
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 440
+        }
+      }
     }
   }, {
     "id" : "rag-query",
@@ -264,16 +276,22 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "scoreThreshold" : 0.25,
-      "extensionRef" : "pgvector-store",
-      "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}",
-      "distance" : "${env:OLO_VECTOR_STORE_DISTANCE}",
       "toolId" : "olo-core:rag-query",
       "vectorTable" : "${env:OLO_VECTOR_STORE_TABLE}",
       "connectionRef" : "${env:OLO_VECTOR_STORE_URL}",
       "driver" : "${env:OLO_VECTOR_STORE_DRIVER}",
       "topK" : 5,
-      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}"
+      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
+      "scoreThreshold" : 0.25,
+      "extensionRef" : "pgvector-store",
+      "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}",
+      "distance" : "${env:OLO_VECTOR_STORE_DISTANCE}",
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 800
+        }
+      }
     }
   }, {
     "id" : "agent",
@@ -292,6 +310,34 @@
       "ui" : {
         "position" : "LEFT",
         "color" : "#ef4444"
+      }
+    }, {
+      "id" : "capabilities",
+      "label" : "available tools",
+      "schema" : "capabilities",
+      "type" : "capabilities",
+      "acceptType" : "capabilities",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Tools and hooks registered for runtime prompt assembly (0 or more)",
+      "ui" : {
+        "position" : "BOTTOM",
+        "color" : "#22c55e"
+      }
+    }, {
+      "id" : "agentPlug",
+      "label" : "available agents",
+      "schema" : "agent-plug",
+      "type" : "agent-plug",
+      "acceptType" : "agent-plug",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Child workflows registered for runtime prompt assembly (0 or more)",
+      "ui" : {
+        "position" : "BOTTOM",
+        "color" : "#a855f7"
       }
     }, {
       "id" : "out",
@@ -320,7 +366,14 @@
     },
     "reads" : [ ],
     "writes" : [ ],
-    "configuration" : { }
+    "configuration" : {
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 1160
+        }
+      }
+    }
   }, {
     "id" : "conversation-store",
     "type" : "TOOL",
@@ -368,7 +421,13 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "toolId" : "olo-core:conversation-store"
+      "toolId" : "olo-core:conversation-store",
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 1520
+        }
+      }
     }
   }, {
     "id" : "end",
@@ -391,7 +450,14 @@
     } ],
     "reads" : [ ],
     "writes" : [ ],
-    "configuration" : { }
+    "configuration" : {
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 1880
+        }
+      }
+    }
   } ],
   "edges" : [ {
     "sourceNodeId" : "start",
@@ -488,20 +554,20 @@
     "id" : "pgvector-store",
     "type" : "VECTOR_STORE",
     "configuration" : {
-      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
-      "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}",
       "driver" : "${env:OLO_VECTOR_STORE_DRIVER}",
       "distance" : "${env:OLO_VECTOR_STORE_DISTANCE}",
       "table" : "${env:OLO_VECTOR_STORE_TABLE}",
-      "connectionRef" : "${env:OLO_VECTOR_STORE_URL}"
+      "connectionRef" : "${env:OLO_VECTOR_STORE_URL}",
+      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
+      "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}"
     }
   } ],
   "metadata" : {
     "returnVariable" : "ReturnValue",
     "role" : "rag-chat",
     "plannerContext" : {
-      "selectedVariables" : [ "message", "conversationSummary", "ragContext" ],
-      "injectCapabilities" : false
+      "injectCapabilities" : false,
+      "selectedVariables" : [ "message", "conversationSummary", "ragContext" ]
     },
     "description" : "Answers using retrieved knowledge from an indexed capability source"
   }

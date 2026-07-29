@@ -51,8 +51,8 @@ public final class WorkflowConversationPluginSupport {
                 .id(CONVERSATION_LOAD_NODE_ID)
                 .capability(CapabilityDefinition.builder()
                         .name("Conversation Load")
-                        .description("Loads prior conversation and attaches summary to the workflow message")
-                        .addExample("Restore operator chat context before triage begins")
+                        .description("Loads prior conversation as reference-only context for the workflow message")
+                        .addExample("Restore operator chat context before triage begins without echoing history")
                         .build())
                 .runtimeBinding(RuntimeBindingDefinition.builder()
                         .implementationId(CONVERSATION_LOAD_TOOL_ID)
@@ -97,8 +97,10 @@ public final class WorkflowConversationPluginSupport {
     public static String conversationContextPromptBlock() {
         return """
 
-                Previous conversation summary (from conversation-load plugin):
+                Reference-only prior conversation context (from conversation-load plugin):
                 {conversationSummary}
+
+                Use this context only for continuity. Do not quote, summarize, mention, or answer it unless the current request explicitly asks about prior conversation.
                 """;
     }
 }

@@ -30,6 +30,8 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
+      "agent-plug" : "#a855f7",
+      "any" : "#94a3b8",
       "message" : "#ef4444",
       "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
@@ -37,26 +39,9 @@
       "string" : "#a3e635",
       "object" : "#c084fc",
       "number" : "#38bdf8",
-      "array" : "#f472b6",
-      "agent-plug" : "#a855f7",
-      "any" : "#94a3b8"
+      "array" : "#f472b6"
     },
     "nodeTypes" : {
-      "END" : {
-        "emoji" : "⏹",
-        "typeLabel" : "End",
-        "description" : "Workflow exit — maps a workflow variable to the caller result",
-        "palette" : {
-          "name" : "End",
-          "category" : "control"
-        },
-        "inlineProperties" : [ {
-          "id" : "outputVariable",
-          "widget" : "VARIABLE_SELECT",
-          "label" : "Output variable",
-          "binding" : "outputVariableMapping"
-        } ]
-      },
       "START" : {
         "emoji" : "▶",
         "typeLabel" : "Start",
@@ -83,6 +68,21 @@
           "id" : "model",
           "widget" : "MODEL_SELECTOR",
           "label" : "Model"
+        } ]
+      },
+      "END" : {
+        "emoji" : "⏹",
+        "typeLabel" : "End",
+        "description" : "Workflow exit — maps a workflow variable to the caller result",
+        "palette" : {
+          "name" : "End",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "outputVariable",
+          "widget" : "VARIABLE_SELECT",
+          "label" : "Output variable",
+          "binding" : "outputVariableMapping"
         } ]
       }
     }
@@ -145,19 +145,6 @@
   },
   "state" : { },
   "parameters" : {
-    "model" : {
-      "type" : "string",
-      "label" : "Model",
-      "description" : "Default model identifier",
-      "defaultValue" : "",
-      "required" : false,
-      "ui" : {
-        "widget" : "MODEL_SELECTOR",
-        "group" : "Model Settings",
-        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
-        "order" : 2
-      }
-    },
     "temperature" : {
       "type" : "number",
       "label" : "Temperature",
@@ -180,7 +167,7 @@
       "type" : "string",
       "label" : "System Prompt",
       "description" : "System prompt for the agent",
-      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}\nPrevious conversation summary (from conversation-load plugin):\n{conversationSummary}\n",
+      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}\nReference-only prior conversation context (from conversation-load plugin):\n{conversationSummary}\n\nUse this context only for continuity. Do not quote, summarize, mention, or answer it unless the current request explicitly asks about prior conversation.\n",
       "required" : false,
       "ui" : {
         "widget" : "TEXTAREA",
@@ -207,6 +194,19 @@
         "help" : "Caps how many planner/tool loops the agent may run.",
         "order" : 1
       }
+    },
+    "model" : {
+      "type" : "string",
+      "label" : "Model",
+      "description" : "Default model identifier",
+      "defaultValue" : "",
+      "required" : false,
+      "ui" : {
+        "widget" : "MODEL_SELECTOR",
+        "group" : "Model Settings",
+        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
+        "order" : 2
+      }
     }
   },
   "nodes" : [ {
@@ -232,8 +232,8 @@
       "inputVariableMappings" : [ "message" ],
       "designer" : {
         "position" : {
-          "x" : 80,
-          "y" : 80
+          "y" : 80,
+          "x" : 80
         }
       }
     }
@@ -287,8 +287,8 @@
       "toolId" : "olo-core:conversation-load",
       "designer" : {
         "position" : {
-          "x" : 440,
-          "y" : 80
+          "y" : 80,
+          "x" : 440
         }
       }
     }
@@ -342,8 +342,8 @@
       "toolId" : "olo-core:conversation-store",
       "designer" : {
         "position" : {
-          "x" : 1520,
-          "y" : 80
+          "y" : 80,
+          "x" : 1520
         }
       }
     }
@@ -386,6 +386,7 @@
       "approval" : {
         "title" : "Approve publish pull request",
         "description" : "Review the request and add any missing context, constraints, or priorities before Literature Review Orchestrator runs. Runs mock literature search and delegates synthesis to specialist child workflows For the final human-approved action (publish pull request), provide: title and headBranch for the research brief PR.",
+        "inputPluginId" : "olo-core:human-input-create-pull-request",
         "approvers" : [ "operator" ],
         "timeoutSeconds" : 3600,
         "requireCommentOnReject" : false
@@ -396,8 +397,8 @@
     "configuration" : {
       "designer" : {
         "position" : {
-          "x" : 800,
-          "y" : 80
+          "y" : 80,
+          "x" : 800
         }
       }
     }
@@ -474,11 +475,11 @@
       "outputVariable" : "toolCallSequenceJson",
       "maxInvalidJsonRetries" : 3,
       "continueNodeId" : "conversation-store",
-      "promptTemplate" : "You are a structured literature review and research brief production agent for the Open LLM Orchestrator (OLO).\nPrevious conversation summary (from conversation-load plugin):\n{conversationSummary}\n\nUser request:\n{message}\n\nAvailable tools (strict allow-list — use only these toolId values):\n{availableToolsJson}\n\nAvailable agents (strict allow-list — delegate only to these agentId values):\n{availableAgentsJson}\n\nPrior agent results (JSON array — empty on first pass):\n{agentResultsJson}\n\nInvestigation playbook (execute in order across planner passes):\n1. Paper discovery — use olo-core:research-literature with the user's topic (mock paper summaries).\n   Delegate to paper-discovery-agent to list key papers, authors, and findings.\n2. Broader context — use olo-core:web-search (query argument) for recent news or survey stubs.\n   Delegate to evidence-synthesis-agent to combine literature and web findings.\n3. Gap analysis — delegate to gap-analysis-agent to identify open questions and conflicting evidence.\n4. Research brief — delegate to research-brief-agent for an executive summary with citations and next steps.\nFinal step (human-approved mock action) — after investigation agents have completed:\n- Callolo-core:create-pull-request with arguments supplied by the operator at human-input (e.g. { \"title\": \"docs: literature review brief\", \"headBranch\": \"research/literature-brief\" }).\n  Purpose: open a pull request to publish the approved research brief\n  The tool records a mock execution entry; include confirmationId, logPath, and summary in directResponse.\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Schema:\n{\n  \"toolCalls\": [],\n  \"agentCalls\": [\n    { \"agentId\": \"<agent-id>\", \"message\": \"<task for child workflow>\" }\n  ],\n  \"directResponse\": null\n}\n3. Each agentCall runs as a blocking child workflow (executorId=child-workflow) in order; execution then continues forward.\n4. Never repeat agentCalls for an agentId that already appears in agentResultsJson.\n5. If no tools or agents are needed, set both arrays to [] and put the final answer in \"directResponse\".\n\nIf a previous attempt failed validation, fix it:\n{toolCallSequenceJsonValidationError}\n\nRespond with JSON only.",
+      "promptTemplate" : "You are a structured literature review and research brief production agent for the Open LLM Orchestrator (OLO).\nReference-only prior conversation context (from conversation-load plugin):\n{conversationSummary}\n\nUse this context only for continuity. Do not quote, summarize, mention, or answer it unless the current request explicitly asks about prior conversation.\n\nUser request:\n{message}\n\nAvailable tools (strict allow-list — use only these toolId values):\n{availableToolsJson}\n\nAvailable agents (strict allow-list — delegate only to these agentId values):\n{availableAgentsJson}\n\nPrior agent results (JSON array — empty on first pass):\n{agentResultsJson}\n\nInvestigation playbook (execute in order across planner passes):\n1. Paper discovery — use olo-core:research-literature with the user's topic (mock paper summaries).\n   Delegate to paper-discovery-agent to list key papers, authors, and findings.\n2. Broader context — use olo-core:web-search (query argument) for recent news or survey stubs.\n   Delegate to evidence-synthesis-agent to combine literature and web findings.\n3. Gap analysis — delegate to gap-analysis-agent to identify open questions and conflicting evidence.\n4. Research brief — delegate to research-brief-agent for an executive summary with citations and next steps.\nFinal step (human-approved mock action) — after investigation agents have completed:\n- Callolo-core:create-pull-request with arguments supplied by the operator at human-input (e.g. { \"title\": \"docs: literature review brief\", \"headBranch\": \"research/literature-brief\" }).\n  Purpose: open a pull request to publish the approved research brief\n  The tool records a mock execution entry; include confirmationId, logPath, and summary in directResponse.\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Schema:\n{\n  \"toolCalls\": [],\n  \"agentCalls\": [\n    { \"agentId\": \"<agent-id>\", \"message\": \"<task for child workflow>\" }\n  ],\n  \"directResponse\": null\n}\n3. Each agentCall runs as a blocking child workflow (executorId=child-workflow) in order; execution then continues forward.\n4. Never repeat agentCalls for an agentId that already appears in agentResultsJson.\n5. If no tools or agents are needed, set both arrays to [] and put the final answer in \"directResponse\".\n\nIf a previous attempt failed validation, fix it:\n{toolCallSequenceJsonValidationError}\n\nRespond with JSON only.",
       "designer" : {
         "position" : {
-          "x" : 1160,
-          "y" : 80
+          "y" : 80,
+          "x" : 1160
         }
       }
     }
@@ -506,8 +507,8 @@
     "configuration" : {
       "designer" : {
         "position" : {
-          "x" : 1880,
-          "y" : 80
+          "y" : 80,
+          "x" : 1880
         }
       }
     }
@@ -573,8 +574,8 @@
       "delegateAgentId" : "paper-discovery-agent",
       "designer" : {
         "position" : {
-          "x" : 80,
-          "y" : 80
+          "y" : 80,
+          "x" : 80
         }
       }
     }
@@ -640,8 +641,8 @@
       "delegateAgentId" : "evidence-synthesis-agent",
       "designer" : {
         "position" : {
-          "x" : 440,
-          "y" : 80
+          "y" : 80,
+          "x" : 440
         }
       }
     }
@@ -707,8 +708,8 @@
       "delegateAgentId" : "gap-analysis-agent",
       "designer" : {
         "position" : {
-          "x" : 800,
-          "y" : 80
+          "y" : 80,
+          "x" : 800
         }
       }
     }
@@ -774,8 +775,8 @@
       "delegateAgentId" : "research-brief-agent",
       "designer" : {
         "position" : {
-          "x" : 1160,
-          "y" : 80
+          "y" : 80,
+          "x" : 1160
         }
       }
     }
@@ -829,8 +830,8 @@
       "toolId" : "olo-core:research-literature",
       "designer" : {
         "position" : {
-          "x" : 1520,
-          "y" : 80
+          "y" : 80,
+          "x" : 1520
         }
       }
     }
@@ -884,8 +885,8 @@
       "toolId" : "olo-core:web-search",
       "designer" : {
         "position" : {
-          "x" : 1880,
-          "y" : 80
+          "y" : 80,
+          "x" : 1880
         }
       }
     }
@@ -939,8 +940,8 @@
       "toolId" : "olo-core:create-pull-request",
       "designer" : {
         "position" : {
-          "x" : 2240,
-          "y" : 80
+          "y" : 80,
+          "x" : 2240
         }
       }
     }
@@ -1103,9 +1104,9 @@
     "type" : "TOOL",
     "capability" : {
       "name" : "Conversation Load",
-      "description" : "Loads prior conversation and attaches summary to the workflow message",
+      "description" : "Loads prior conversation as reference-only context for the workflow message",
       "tags" : [ ],
-      "examples" : [ "Restore operator chat context before triage begins" ],
+      "examples" : [ "Restore operator chat context before triage begins without echoing history" ],
       "required_inputs" : [ ],
       "required_outputs" : [ ],
       "tool_requirements" : [ ],
@@ -1202,25 +1203,25 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
+    "role" : "literature-review-orchestrator",
     "dynamicToolExecution" : {
+      "availableAgentsVariable" : "availableAgentsJson",
+      "plannerNodeId" : "agent",
       "continueNodeId" : "conversation-store",
       "outputVariable" : "toolCallSequenceJson",
-      "availableToolsVariable" : "availableToolsJson",
-      "availableAgentsVariable" : "availableAgentsJson",
-      "plannerNodeId" : "agent"
+      "availableToolsVariable" : "availableToolsJson"
     },
     "planningStrategy" : "react",
     "agentType" : "autonomous",
     "returnVariable" : "ReturnValue",
     "plannerContext" : {
+      "selectedVariables" : [ "message", "conversationSummary", "availableToolsJson", "availableAgentsJson", "agentResultsJson", "toolCallSequenceJson" ],
+      "injectCapabilities" : false,
       "injectAgents" : true,
       "selectedAgents" : [ "paper-discovery-agent", "evidence-synthesis-agent", "gap-analysis-agent", "research-brief-agent" ],
-      "selectedTools" : [ "olo-core:research-literature", "olo-core:web-search", "olo-core:create-pull-request" ],
-      "selectedVariables" : [ "message", "conversationSummary", "availableToolsJson", "availableAgentsJson", "agentResultsJson", "toolCallSequenceJson" ],
-      "injectCapabilities" : false
+      "selectedTools" : [ "olo-core:research-literature", "olo-core:web-search", "olo-core:create-pull-request" ]
     },
     "description" : "Runs mock literature search and delegates synthesis to specialist child workflows",
-    "agentSelectionStrategy" : "dynamic",
-    "role" : "literature-review-orchestrator"
+    "agentSelectionStrategy" : "dynamic"
   }
 }

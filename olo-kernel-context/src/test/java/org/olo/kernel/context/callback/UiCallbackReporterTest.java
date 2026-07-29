@@ -4,13 +4,20 @@
  */
 package org.olo.kernel.context.callback;
 
+import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
+import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.input.model.Context;
 import org.olo.input.model.Execution;
 import org.olo.input.model.WorkflowInput;
+import org.olo.kernel.context.KernelRuntimeContext;
+import org.olo.kernel.context.variables.WorkflowRuntimeVariables;
 
+import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class UiCallbackReporterTest {
@@ -63,5 +70,42 @@ class UiCallbackReporterTest {
         assertThat(UiCallbackReporter.isSuccessfulCallbackStatus(200)).isTrue();
         assertThat(UiCallbackReporter.isSuccessfulCallbackStatus(409)).isTrue();
         assertThat(UiCallbackReporter.isSuccessfulCallbackStatus(500)).isFalse();
+    }
+
+    @Test
+    void callbackHttpFailureDoesNotFailWorkflow() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/api/runs/run-500/events", exchange -> {
+            exchange.sendResponseHeaders(500, -1);
+            exchange.close();
+        });
+        server.start();
+        try {
+            WorkflowInput input = new WorkflowInput(
+                    "1.0",
+                    List.of(),
+                    new Context(
+                            "tenant",
+                            "group",
+                            List.of(),
+                            List.of(),
+                            "sess",
+                            "run-500",
+                            "http://127.0.0.1:" + server.getAddress().getPort(),
+                            "corr"),
+                    null,
+                    null,
+                    null);
+            KernelRuntimeContext context = new KernelRuntimeContext(
+                    "oloQueue2",
+                    input,
+                    WorkflowDefinition.builder().id("callback-test").build(),
+                    true,
+                    WorkflowRuntimeVariables.fromMap(Map.of("message", "hello")));
+
+            assertThatCode(() -> UiCallbackReporter.reportContextReady(context)).doesNotThrowAnyException();
+        } finally {
+            server.stop(0);
+        }
     }
 }

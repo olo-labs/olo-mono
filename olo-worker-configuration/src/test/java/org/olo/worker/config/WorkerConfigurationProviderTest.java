@@ -31,7 +31,7 @@ class WorkerConfigurationProviderTest {
         assertThat(settings.serverPort()).isEqualTo(8080);
         assertThat(settings.workflowDefinitionsScanFolder().normalize().toString())
                 .contains("olo-configuration")
-                .endsWith("default");
+                .endsWith("current-active");
         assertThat(settings.maxLocalMessageSize()).isEqualTo(50);
         assertThat(settings.cache().isEnabled()).isTrue();
         assertThat(settings.temporal().getNamespace()).isEqualTo("default");

@@ -1,14 +1,14 @@
 {
-  "id" : "documents-index",
+  "id" : "documents-delete",
   "enabled" : true,
   "isDefault" : false,
-  "label" : "Documents Index",
-  "role" : "Documents Index",
-  "shortDescription" : "Index uploaded files into the vector store (single rag-ingest step)",
-  "emoji" : "📚",
+  "label" : "Documents Delete",
+  "role" : "Documents Delete",
+  "shortDescription" : "Delete tokenized knowledge entries from the vector store (single rag-delete step)",
+  "emoji" : "X",
   "designer" : {
     "paletteGroup" : "Knowledge",
-    "searchKeywords" : [ "rag", "ingest", "documents-index" ],
+    "searchKeywords" : [ "rag", "delete", "documents-delete" ],
     "nodeSize" : {
       "width" : 300,
       "height" : 120
@@ -30,7 +30,6 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "message" : "#ef4444",
       "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
       "integer" : "#38bdf8",
@@ -39,39 +38,10 @@
       "number" : "#38bdf8",
       "array" : "#f472b6",
       "agent-plug" : "#a855f7",
-      "any" : "#94a3b8"
+      "any" : "#94a3b8",
+      "message" : "#ef4444"
     },
     "nodeTypes" : {
-      "TOOL" : {
-        "emoji" : "🔧",
-        "typeLabel" : "Tool",
-        "description" : "Executes a registered tool plugin (e.g. RAG ingest)",
-        "palette" : {
-          "name" : "Tool",
-          "category" : "plugins"
-        },
-        "inlineProperties" : [ {
-          "id" : "toolId",
-          "widget" : "STRING",
-          "label" : "Tool",
-          "binding" : "toolId"
-        }, {
-          "id" : "extensionRef",
-          "widget" : "STRING",
-          "label" : "Vector store",
-          "binding" : "extensionRef"
-        }, {
-          "id" : "vectorTable",
-          "widget" : "STRING",
-          "label" : "Collection table",
-          "binding" : "vectorTable"
-        }, {
-          "id" : "chunkSize",
-          "widget" : "NUMBER",
-          "label" : "Chunk size",
-          "binding" : "chunkSize"
-        } ]
-      },
       "END" : {
         "emoji" : "⏹",
         "typeLabel" : "End",
@@ -101,6 +71,36 @@
           "label" : "Input variables",
           "binding" : "inputVariableMappings"
         } ]
+      },
+      "TOOL" : {
+        "emoji" : "🔧",
+        "typeLabel" : "Tool",
+        "description" : "Executes a registered tool plugin (e.g. RAG ingest)",
+        "palette" : {
+          "name" : "Tool",
+          "category" : "plugins"
+        },
+        "inlineProperties" : [ {
+          "id" : "toolId",
+          "widget" : "STRING",
+          "label" : "Tool",
+          "binding" : "toolId"
+        }, {
+          "id" : "extensionRef",
+          "widget" : "STRING",
+          "label" : "Vector store",
+          "binding" : "extensionRef"
+        }, {
+          "id" : "vectorTable",
+          "widget" : "STRING",
+          "label" : "Collection table",
+          "binding" : "vectorTable"
+        }, {
+          "id" : "chunkSize",
+          "widget" : "NUMBER",
+          "label" : "Chunk size",
+          "binding" : "chunkSize"
+        } ]
       }
     }
   },
@@ -110,9 +110,9 @@
   "availableAgents" : [ ],
   "version" : "1.0.0",
   "capability" : {
-    "name" : "Documents Index",
-    "description" : "Ingest uploaded documents into the configured vector store.",
-    "tags" : [ "rag", "ingest", "documents" ],
+    "name" : "Documents Delete",
+    "description" : "Remove tokenized knowledge entries from the configured vector store.",
+    "tags" : [ "rag", "delete", "documents" ],
     "examples" : [ ],
     "required_inputs" : [ "input" ],
     "required_outputs" : [ "output" ],
@@ -155,15 +155,15 @@
       "inputVariableMappings" : [ "message" ],
       "designer" : {
         "position" : {
-          "x" : 80,
-          "y" : 80
+          "y" : 80,
+          "x" : 80
         }
       }
     }
   }, {
-    "id" : "rag-ingest",
+    "id" : "rag-delete",
     "type" : "TOOL",
-    "label" : "RAG Ingest",
+    "label" : "RAG Delete",
     "ports" : [ {
       "id" : "in",
       "label" : "message in",
@@ -208,19 +208,18 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
-      "chunkSize" : 512,
-      "driver" : "${env:OLO_VECTOR_STORE_DRIVER}",
-      "extensionRef" : "pgvector-store",
       "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}",
-      "distance" : "${env:OLO_VECTOR_STORE_DISTANCE}",
-      "connectionRef" : "${env:OLO_VECTOR_STORE_URL}",
       "vectorTable" : "${env:OLO_VECTOR_STORE_TABLE}",
-      "toolId" : "olo-core:rag-ingest",
+      "driver" : "${env:OLO_VECTOR_STORE_DRIVER}",
+      "distance" : "${env:OLO_VECTOR_STORE_DISTANCE}",
+      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
+      "connectionRef" : "${env:OLO_VECTOR_STORE_URL}",
+      "extensionRef" : "pgvector-store",
+      "toolId" : "olo-core:rag-delete",
       "designer" : {
         "position" : {
-          "x" : 440,
-          "y" : 80
+          "y" : 80,
+          "x" : 440
         }
       }
     }
@@ -248,8 +247,8 @@
     "configuration" : {
       "designer" : {
         "position" : {
-          "x" : 800,
-          "y" : 80
+          "y" : 80,
+          "x" : 800
         }
       }
     }
@@ -257,10 +256,10 @@
   "edges" : [ {
     "sourceNodeId" : "start",
     "sourcePortId" : "out",
-    "targetNodeId" : "rag-ingest",
+    "targetNodeId" : "rag-delete",
     "targetPortId" : "in"
   }, {
-    "sourceNodeId" : "rag-ingest",
+    "sourceNodeId" : "rag-delete",
     "sourcePortId" : "out",
     "targetNodeId" : "end",
     "targetPortId" : "in"
@@ -283,20 +282,20 @@
     }
   } ],
   "tools" : [ {
-    "id" : "rag-ingest",
+    "id" : "rag-delete",
     "type" : "TOOL",
     "capability" : {
-      "name" : "RAG Ingest",
-      "description" : "Chunks uploaded files and writes vector index entries",
+      "name" : "RAG Delete",
+      "description" : "Deletes tokenized knowledge entries from the vector store",
       "tags" : [ ],
-      "examples" : [ "Index selected documents for capabilitySource my-knowledge-base" ],
+      "examples" : [ "Delete knowledge source my-knowledge-base" ],
       "required_inputs" : [ ],
       "required_outputs" : [ ],
       "tool_requirements" : [ ],
       "required_context" : [ ]
     },
     "runtimeBinding" : {
-      "implementationId" : "olo-core:rag-ingest"
+      "implementationId" : "olo-core:rag-delete"
     },
     "configuration" : { }
   } ],
@@ -308,17 +307,17 @@
     "id" : "pgvector-store",
     "type" : "VECTOR_STORE",
     "configuration" : {
-      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
-      "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}",
       "driver" : "${env:OLO_VECTOR_STORE_DRIVER}",
       "distance" : "${env:OLO_VECTOR_STORE_DISTANCE}",
       "table" : "${env:OLO_VECTOR_STORE_TABLE}",
-      "connectionRef" : "${env:OLO_VECTOR_STORE_URL}"
+      "connectionRef" : "${env:OLO_VECTOR_STORE_URL}",
+      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
+      "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}"
     }
   } ],
   "metadata" : {
-    "description" : "Dedicated ingest pipeline — creates vector DB entries only",
-    "role" : "documents-index",
-    "returnVariable" : "ReturnValue"
+    "role" : "documents-delete",
+    "returnVariable" : "ReturnValue",
+    "description" : "Dedicated delete pipeline - removes vector DB entries only"
   }
 }

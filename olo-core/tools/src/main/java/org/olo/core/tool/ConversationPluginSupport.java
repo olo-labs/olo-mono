@@ -26,6 +26,7 @@ public final class ConversationPluginSupport {
     public static final String CONVERSATION_SUMMARY_VARIABLE = "conversationSummary";
     public static final String CONVERSATION_HISTORY_VARIABLE = "conversationHistory";
     public static final String MESSAGE_VARIABLE = "message";
+    public static final String CURRENT_MESSAGE_VARIABLE = "currentMessage";
     public static final String RETURN_VALUE_VARIABLE = "ReturnValue";
     public static final String RAG_CONTEXT_VARIABLE = "ragContext";
 
@@ -109,7 +110,15 @@ public final class ConversationPluginSupport {
         if (summary == null || summary.isBlank() || "No prior conversation.".equals(summary)) {
             return current;
         }
-        return "Previous conversation summary:\n" + summary + "\n\nCurrent request:\n" + current;
+        return """
+                Current request:
+                %s
+
+                Reference-only prior conversation context:
+                %s
+
+                Use the reference context only to understand continuity. Do not quote, summarize, mention, or answer the reference context unless the current request explicitly asks about prior conversation.
+                """.formatted(current, summary).trim();
     }
 
     public static Map<String, Object> loadConversationContext(
@@ -120,12 +129,14 @@ public final class ConversationPluginSupport {
         String enrichedMessage = attachSummaryToMessage(summary, currentMessage);
 
         context.setVariable("sessionId", sessionId);
+        context.setVariable(CURRENT_MESSAGE_VARIABLE, currentMessage);
         context.setVariable(CONVERSATION_SUMMARY_VARIABLE, summary);
         context.setVariable(CONVERSATION_HISTORY_VARIABLE, JSON.writeValueAsString(history));
         context.setVariable(MESSAGE_VARIABLE, enrichedMessage);
 
         Map<String, Object> output = new LinkedHashMap<>();
         output.put("sessionId", sessionId);
+        output.put(CURRENT_MESSAGE_VARIABLE, currentMessage);
         output.put(CONVERSATION_SUMMARY_VARIABLE, summary);
         output.put("turnCount", history.size());
         output.put("storagePath", resolveConversationFile(sessionId).toAbsolutePath().normalize().toString());
@@ -137,7 +148,11 @@ public final class ConversationPluginSupport {
             ToolRequest request, ExecutionContext context) throws IOException {
         String sessionId = resolveSessionId(request, context);
         List<Map<String, Object>> history = new ArrayList<>(readHistory(sessionId));
-        String userMessage = ToolArgs.string(request.arguments(), MESSAGE_VARIABLE, "");
+        Object currentMessage = context.getVariable(CURRENT_MESSAGE_VARIABLE);
+        String userMessage = currentMessage == null ? "" : String.valueOf(currentMessage);
+        if (userMessage.isBlank()) {
+            userMessage = ToolArgs.string(request.arguments(), MESSAGE_VARIABLE, "");
+        }
         if (userMessage.isBlank()) {
             Object messageVariable = context.getVariable(MESSAGE_VARIABLE);
             userMessage = messageVariable == null ? "" : String.valueOf(messageVariable);

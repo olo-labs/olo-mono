@@ -36,6 +36,7 @@ public final class CoreTools {
                 new ConversationLoadTool(),
                 new ConversationStoreTool(),
                 new org.olo.core.tool.rag.RagIngestTool(),
+                new org.olo.core.tool.rag.RagDeleteTool(),
                 new org.olo.core.tool.rag.RagVectorQueryTool());
     }
 }

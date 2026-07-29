@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,14 @@ public final class RagVectorStoreSupport {
             int hits,
             String ragContext,
             List<Map<String, Object>> matches) {
+    }
+
+    public record DeleteResult(
+            String knowledgeName,
+            List<String> deletedSources,
+            int chunksDeleted,
+            int filesAffected,
+            String indexPath) {
     }
 
     public static IngestResult ingestDocuments(
@@ -226,6 +235,62 @@ public final class RagVectorStoreSupport {
         return new SearchResult(capabilitySource, query, matches.size(), context.toString(), matches);
     }
 
+    public static DeleteResult deleteKnowledge(
+            Path vectorIndexDir,
+            String knowledgeName,
+            String sourceCollection,
+            Map<String, Object> extensionConfig) throws IOException {
+
+        String target = knowledgeName == null ? "" : knowledgeName.trim();
+        if (target.isBlank()) {
+            throw new IOException("knowledgeName is required for RAG delete");
+        }
+        List<String> targets = deleteTargets(target, sourceCollection);
+        if (isQdrant(extensionConfig)) {
+            return deleteQdrant(extensionConfig, target, targets);
+        }
+
+        Path indexRoot = resolveIndexRoot(vectorIndexDir, extensionConfig);
+        int chunksDeleted = 0;
+        java.util.Set<String> filesAffected = new java.util.LinkedHashSet<>();
+        List<String> deletedSources = new ArrayList<>();
+
+        for (String source : targets) {
+            Path sourceDir = indexRoot.resolve(safeSegment(source));
+            Path indexFile = sourceDir.resolve(INDEX_FILE);
+            List<Map<String, Object>> index = readIndex(indexFile);
+            if (index.isEmpty()) {
+                continue;
+            }
+            List<Map<String, Object>> remaining = new ArrayList<>();
+            int before = index.size();
+            for (Map<String, Object> entry : index) {
+                String entrySource = String.valueOf(entry.getOrDefault("capabilitySource", ""));
+                if (targets.stream().anyMatch(t -> t.equals(entrySource))) {
+                    Object fileName = entry.get("fileName");
+                    if (fileName != null && !String.valueOf(fileName).isBlank()) {
+                        filesAffected.add(String.valueOf(fileName));
+                    }
+                } else {
+                    remaining.add(entry);
+                }
+            }
+            int deleted = before - remaining.size();
+            if (deleted <= 0) {
+                continue;
+            }
+            chunksDeleted += deleted;
+            deletedSources.add(source);
+            if (remaining.isEmpty()) {
+                deleteDirectory(sourceDir);
+            } else {
+                MAPPER.writerWithDefaultPrettyPrinter().writeValue(indexFile.toFile(), remaining);
+            }
+        }
+
+        return new DeleteResult(target, deletedSources, chunksDeleted, filesAffected.size(), indexRoot.toString());
+    }
+
     private record ScoredChunk(double score, Map<String, Object> entry) {
     }
 
@@ -339,6 +404,31 @@ public final class RagVectorStoreSupport {
                     .append(text);
         }
         return new SearchResult(capabilitySource, query, matches.size(), context.toString(), matches);
+    }
+
+    private static DeleteResult deleteQdrant(
+            Map<String, Object> extensionConfig,
+            String knowledgeName,
+            List<String> targets) throws IOException {
+        String baseUrl = qdrantBaseUrl(extensionConfig);
+        String collection = qdrantCollection(extensionConfig, safeSegment(knowledgeName));
+        List<Map<String, Object>> should = new ArrayList<>();
+        for (String target : targets) {
+            should.add(Map.of(
+                    "key", "capabilitySource",
+                    "match", Map.of("value", target)));
+        }
+        sendQdrant(
+                "POST",
+                baseUrl + "/collections/" + collection + "/points/delete?wait=true",
+                Map.of("filter", Map.of("should", should)),
+                extensionConfig);
+        return new DeleteResult(
+                knowledgeName,
+                targets,
+                0,
+                0,
+                baseUrl + "/collections/" + collection + "#" + knowledgeName);
     }
 
     private static void ensureQdrantCollection(
@@ -564,6 +654,29 @@ public final class RagVectorStoreSupport {
             return "invalid-name";
         }
         return n.isBlank() ? "unnamed.bin" : n;
+    }
+
+    private static List<String> deleteTargets(String knowledgeName, String sourceCollection) {
+        List<String> targets = new ArrayList<>();
+        if (knowledgeName != null && !knowledgeName.isBlank()) {
+            targets.add(knowledgeName.trim());
+        }
+        if (sourceCollection != null && !sourceCollection.isBlank()
+                && targets.stream().noneMatch(t -> t.equals(sourceCollection.trim()))) {
+            targets.add(sourceCollection.trim());
+        }
+        return targets;
+    }
+
+    private static void deleteDirectory(Path dir) throws IOException {
+        if (!Files.isDirectory(dir)) {
+            return;
+        }
+        try (var stream = Files.walk(dir)) {
+            for (Path path : stream.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(path);
+            }
+        }
     }
 
     public static Map<String, Object> extensionConfigFrom(Map<String, Object> toolConfiguration) {

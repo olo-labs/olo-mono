@@ -30,18 +30,31 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "number" : "#38bdf8",
-      "object" : "#c084fc",
-      "string" : "#a3e635",
+      "message" : "#ef4444",
+      "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
       "integer" : "#38bdf8",
-      "boolean" : "#fb923c",
-      "message" : "#ef4444",
-      "any" : "#94a3b8",
+      "string" : "#a3e635",
+      "object" : "#c084fc",
+      "number" : "#38bdf8",
+      "array" : "#f472b6",
       "agent-plug" : "#a855f7",
-      "array" : "#f472b6"
+      "any" : "#94a3b8"
     },
     "nodeTypes" : {
+      "AGENT" : {
+        "emoji" : "🔍",
+        "typeLabel" : "Agent",
+        "inlineProperties" : [ {
+          "id" : "parameters",
+          "widget" : "WORKFLOW_PARAMETERS",
+          "label" : "Parameters"
+        }, {
+          "id" : "model",
+          "widget" : "MODEL_SELECTOR",
+          "label" : "Model"
+        } ]
+      },
       "END" : {
         "emoji" : "⏹",
         "typeLabel" : "End",
@@ -55,19 +68,6 @@
           "widget" : "VARIABLE_SELECT",
           "label" : "Output variable",
           "binding" : "outputVariableMapping"
-        } ]
-      },
-      "AGENT" : {
-        "emoji" : "🔍",
-        "typeLabel" : "Agent",
-        "inlineProperties" : [ {
-          "id" : "parameters",
-          "widget" : "WORKFLOW_PARAMETERS",
-          "label" : "Parameters"
-        }, {
-          "id" : "model",
-          "widget" : "MODEL_SELECTOR",
-          "label" : "Model"
         } ]
       },
       "START" : {
@@ -129,38 +129,6 @@
         "order" : 2
       }
     },
-    "maxIterations" : {
-      "type" : "integer",
-      "label" : "Max Iterations",
-      "description" : "Maximum agent reasoning iterations",
-      "defaultValue" : 10,
-      "required" : false,
-      "validation" : {
-        "minimum" : 1.0,
-        "maximum" : 100.0,
-        "step" : 1.0
-      },
-      "ui" : {
-        "widget" : "NUMBER",
-        "group" : "Model Settings",
-        "help" : "Caps how many planner/tool loops the agent may run.",
-        "order" : 1
-      }
-    },
-    "systemPrompt" : {
-      "type" : "string",
-      "label" : "System Prompt",
-      "description" : "System prompt for the agent",
-      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}\nPrevious conversation summary (from conversation-load plugin):\n{conversationSummary}\n",
-      "required" : false,
-      "ui" : {
-        "widget" : "TEXTAREA",
-        "group" : "Model Settings",
-        "help" : "Include {message} to inject the workflow input into the system prompt.",
-        "placeholder" : "You are a helpful assistant…\n\n{message}",
-        "order" : 0
-      }
-    },
     "temperature" : {
       "type" : "number",
       "label" : "Temperature",
@@ -177,6 +145,38 @@
         "group" : "Model Settings",
         "help" : "Higher values increase response creativity.",
         "order" : 3
+      }
+    },
+    "systemPrompt" : {
+      "type" : "string",
+      "label" : "System Prompt",
+      "description" : "System prompt for the agent",
+      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}\nReference-only prior conversation context (from conversation-load plugin):\n{conversationSummary}\n\nUse this context only for continuity. Do not quote, summarize, mention, or answer it unless the current request explicitly asks about prior conversation.\n",
+      "required" : false,
+      "ui" : {
+        "widget" : "TEXTAREA",
+        "group" : "Model Settings",
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
+        "order" : 0
+      }
+    },
+    "maxIterations" : {
+      "type" : "integer",
+      "label" : "Max Iterations",
+      "description" : "Maximum agent reasoning iterations",
+      "defaultValue" : 10,
+      "required" : false,
+      "validation" : {
+        "minimum" : 1.0,
+        "maximum" : 100.0,
+        "step" : 1.0
+      },
+      "ui" : {
+        "widget" : "NUMBER",
+        "group" : "Model Settings",
+        "help" : "Caps how many planner/tool loops the agent may run.",
+        "order" : 1
       }
     }
   },
@@ -490,9 +490,9 @@
     "type" : "TOOL",
     "capability" : {
       "name" : "Conversation Load",
-      "description" : "Loads prior conversation and attaches summary to the workflow message",
+      "description" : "Loads prior conversation as reference-only context for the workflow message",
       "tags" : [ ],
-      "examples" : [ "Restore operator chat context before triage begins" ],
+      "examples" : [ "Restore operator chat context before triage begins without echoing history" ],
       "required_inputs" : [ ],
       "required_outputs" : [ ],
       "tool_requirements" : [ ],
@@ -538,14 +538,14 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
-    "role" : "forensics-agent",
     "returnVariable" : "ReturnValue",
-    "description" : "Traces breach vector using logs and recent code changes",
+    "role" : "forensics-agent",
     "plannerContext" : {
-      "injectCapabilities" : false,
-      "selectedTools" : [ ],
       "selectedAgents" : [ ],
+      "selectedTools" : [ ],
+      "injectCapabilities" : false,
       "selectedVariables" : [ "message", "conversationSummary" ]
-    }
+    },
+    "description" : "Traces breach vector using logs and recent code changes"
   }
 }

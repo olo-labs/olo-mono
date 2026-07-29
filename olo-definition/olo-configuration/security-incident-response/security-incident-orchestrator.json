@@ -30,18 +30,31 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "number" : "#38bdf8",
-      "object" : "#c084fc",
-      "string" : "#a3e635",
+      "message" : "#ef4444",
+      "boolean" : "#fb923c",
       "capabilities" : "#22c55e",
       "integer" : "#38bdf8",
-      "boolean" : "#fb923c",
-      "message" : "#ef4444",
-      "any" : "#94a3b8",
+      "string" : "#a3e635",
+      "object" : "#c084fc",
+      "number" : "#38bdf8",
+      "array" : "#f472b6",
       "agent-plug" : "#a855f7",
-      "array" : "#f472b6"
+      "any" : "#94a3b8"
     },
     "nodeTypes" : {
+      "AGENT" : {
+        "emoji" : "🛡️",
+        "typeLabel" : "Agent",
+        "inlineProperties" : [ {
+          "id" : "parameters",
+          "widget" : "WORKFLOW_PARAMETERS",
+          "label" : "Parameters"
+        }, {
+          "id" : "model",
+          "widget" : "MODEL_SELECTOR",
+          "label" : "Model"
+        } ]
+      },
       "END" : {
         "emoji" : "⏹",
         "typeLabel" : "End",
@@ -55,19 +68,6 @@
           "widget" : "VARIABLE_SELECT",
           "label" : "Output variable",
           "binding" : "outputVariableMapping"
-        } ]
-      },
-      "AGENT" : {
-        "emoji" : "🛡️",
-        "typeLabel" : "Agent",
-        "inlineProperties" : [ {
-          "id" : "parameters",
-          "widget" : "WORKFLOW_PARAMETERS",
-          "label" : "Parameters"
-        }, {
-          "id" : "model",
-          "widget" : "MODEL_SELECTOR",
-          "label" : "Model"
         } ]
       },
       "START" : {
@@ -158,38 +158,6 @@
         "order" : 2
       }
     },
-    "maxIterations" : {
-      "type" : "integer",
-      "label" : "Max Iterations",
-      "description" : "Maximum agent reasoning iterations",
-      "defaultValue" : 10,
-      "required" : false,
-      "validation" : {
-        "minimum" : 1.0,
-        "maximum" : 100.0,
-        "step" : 1.0
-      },
-      "ui" : {
-        "widget" : "NUMBER",
-        "group" : "Model Settings",
-        "help" : "Caps how many planner/tool loops the agent may run.",
-        "order" : 1
-      }
-    },
-    "systemPrompt" : {
-      "type" : "string",
-      "label" : "System Prompt",
-      "description" : "System prompt for the agent",
-      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}\nPrevious conversation summary (from conversation-load plugin):\n{conversationSummary}\n",
-      "required" : false,
-      "ui" : {
-        "widget" : "TEXTAREA",
-        "group" : "Model Settings",
-        "help" : "Include {message} to inject the workflow input into the system prompt.",
-        "placeholder" : "You are a helpful assistant…\n\n{message}",
-        "order" : 0
-      }
-    },
     "temperature" : {
       "type" : "number",
       "label" : "Temperature",
@@ -206,6 +174,38 @@
         "group" : "Model Settings",
         "help" : "Higher values increase response creativity.",
         "order" : 3
+      }
+    },
+    "systemPrompt" : {
+      "type" : "string",
+      "label" : "System Prompt",
+      "description" : "System prompt for the agent",
+      "defaultValue" : "Address the request clearly and helpfully.\n\nRequest:\n{message}\nReference-only prior conversation context (from conversation-load plugin):\n{conversationSummary}\n\nUse this context only for continuity. Do not quote, summarize, mention, or answer it unless the current request explicitly asks about prior conversation.\n",
+      "required" : false,
+      "ui" : {
+        "widget" : "TEXTAREA",
+        "group" : "Model Settings",
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
+        "order" : 0
+      }
+    },
+    "maxIterations" : {
+      "type" : "integer",
+      "label" : "Max Iterations",
+      "description" : "Maximum agent reasoning iterations",
+      "defaultValue" : 10,
+      "required" : false,
+      "validation" : {
+        "minimum" : 1.0,
+        "maximum" : 100.0,
+        "step" : 1.0
+      },
+      "ui" : {
+        "widget" : "NUMBER",
+        "group" : "Model Settings",
+        "help" : "Caps how many planner/tool loops the agent may run.",
+        "order" : 1
       }
     }
   },
@@ -386,6 +386,7 @@
       "approval" : {
         "title" : "Approve container restart",
         "description" : "Review the request and add any missing context, constraints, or priorities before Security Incident Orchestrator runs. Triages security incidents using mock logs, code changes, and specialist child workflows For the final human-approved action (container restart), provide: containerId and namespace for the workload to restart or isolate.",
+        "inputPluginId" : "olo-core:human-input-restart-container",
         "approvers" : [ "operator" ],
         "timeoutSeconds" : 3600,
         "requireCommentOnReject" : false
@@ -474,7 +475,7 @@
       "outputVariable" : "toolCallSequenceJson",
       "maxInvalidJsonRetries" : 3,
       "continueNodeId" : "conversation-store",
-      "promptTemplate" : "You are a security incident response and breach triage agent for the Open LLM Orchestrator (OLO).\nPrevious conversation summary (from conversation-load plugin):\n{conversationSummary}\n\nUser request:\n{message}\n\nAvailable tools (strict allow-list — use only these toolId values):\n{availableToolsJson}\n\nAvailable agents (strict allow-list — delegate only to these agentId values):\n{availableAgentsJson}\n\nPrior agent results (JSON array — empty on first pass):\n{agentResultsJson}\n\nInvestigation playbook (execute in order across planner passes):\n1. Detection — scan logs for suspicious activity (olo-core:log-reader with ISO-8601 window).\n   Optionally search threat intel stubs (olo-core:web-search with query argument).\n   Delegate to threat-detection-agent for structured threat classification.\n2. Forensics — delegate to forensics-agent; use olo-core:recently-changed-code (pullRequestNumber optional)\n   to inspect recent changes that may explain the breach vector.\n3. Containment — delegate to containment-agent with recommended immediate actions.\n4. Executive report — delegate to security-report-agent with timeline, blast radius, and remediation plan.\nFinal step (human-approved mock action) — after investigation agents have completed:\n- Callolo-core:restart-container with arguments supplied by the operator at human-input (e.g. { \"containerId\": \"compromised-api-pod\", \"namespace\": \"production\" }).\n  Purpose: restart or isolate the compromised workload after containment review\n  The tool records a mock execution entry; include confirmationId, logPath, and summary in directResponse.\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Schema:\n{\n  \"toolCalls\": [],\n  \"agentCalls\": [\n    { \"agentId\": \"<agent-id>\", \"message\": \"<task for child workflow>\" }\n  ],\n  \"directResponse\": null\n}\n3. Each agentCall runs as a blocking child workflow (executorId=child-workflow) in order; execution then continues forward.\n4. Never repeat agentCalls for an agentId that already appears in agentResultsJson.\n5. If no tools or agents are needed, set both arrays to [] and put the final answer in \"directResponse\".\n\nIf a previous attempt failed validation, fix it:\n{toolCallSequenceJsonValidationError}\n\nRespond with JSON only.",
+      "promptTemplate" : "You are a security incident response and breach triage agent for the Open LLM Orchestrator (OLO).\nReference-only prior conversation context (from conversation-load plugin):\n{conversationSummary}\n\nUse this context only for continuity. Do not quote, summarize, mention, or answer it unless the current request explicitly asks about prior conversation.\n\nUser request:\n{message}\n\nAvailable tools (strict allow-list — use only these toolId values):\n{availableToolsJson}\n\nAvailable agents (strict allow-list — delegate only to these agentId values):\n{availableAgentsJson}\n\nPrior agent results (JSON array — empty on first pass):\n{agentResultsJson}\n\nInvestigation playbook (execute in order across planner passes):\n1. Detection — scan logs for suspicious activity (olo-core:log-reader with ISO-8601 window).\n   Optionally search threat intel stubs (olo-core:web-search with query argument).\n   Delegate to threat-detection-agent for structured threat classification.\n2. Forensics — delegate to forensics-agent; use olo-core:recently-changed-code (pullRequestNumber optional)\n   to inspect recent changes that may explain the breach vector.\n3. Containment — delegate to containment-agent with recommended immediate actions.\n4. Executive report — delegate to security-report-agent with timeline, blast radius, and remediation plan.\nFinal step (human-approved mock action) — after investigation agents have completed:\n- Callolo-core:restart-container with arguments supplied by the operator at human-input (e.g. { \"containerId\": \"compromised-api-pod\", \"namespace\": \"production\" }).\n  Purpose: restart or isolate the compromised workload after containment review\n  The tool records a mock execution entry; include confirmationId, logPath, and summary in directResponse.\nOutput rules (strict):\n1. Return ONLY a single JSON object — no markdown, no code fences, no commentary, no trailing text.\n2. Schema:\n{\n  \"toolCalls\": [],\n  \"agentCalls\": [\n    { \"agentId\": \"<agent-id>\", \"message\": \"<task for child workflow>\" }\n  ],\n  \"directResponse\": null\n}\n3. Each agentCall runs as a blocking child workflow (executorId=child-workflow) in order; execution then continues forward.\n4. Never repeat agentCalls for an agentId that already appears in agentResultsJson.\n5. If no tools or agents are needed, set both arrays to [] and put the final answer in \"directResponse\".\n\nIf a previous attempt failed validation, fix it:\n{toolCallSequenceJsonValidationError}\n\nRespond with JSON only.",
       "designer" : {
         "position" : {
           "x" : 1160,
@@ -1163,9 +1164,9 @@
     "type" : "TOOL",
     "capability" : {
       "name" : "Conversation Load",
-      "description" : "Loads prior conversation and attaches summary to the workflow message",
+      "description" : "Loads prior conversation as reference-only context for the workflow message",
       "tags" : [ ],
-      "examples" : [ "Restore operator chat context before triage begins" ],
+      "examples" : [ "Restore operator chat context before triage begins without echoing history" ],
       "required_inputs" : [ ],
       "required_outputs" : [ ],
       "tool_requirements" : [ ],
@@ -1279,25 +1280,25 @@
   } ],
   "extensions" : [ ],
   "metadata" : {
-    "description" : "Triages security incidents using mock logs, code changes, and specialist child workflows",
-    "plannerContext" : {
-      "selectedTools" : [ "olo-core:log-reader", "olo-core:recently-changed-code", "olo-core:web-search", "olo-core:restart-container" ],
-      "selectedAgents" : [ "threat-detection-agent", "forensics-agent", "containment-agent", "security-report-agent" ],
-      "injectAgents" : true,
-      "injectCapabilities" : false,
-      "selectedVariables" : [ "message", "conversationSummary", "availableToolsJson", "availableAgentsJson", "agentResultsJson", "toolCallSequenceJson" ]
-    },
-    "returnVariable" : "ReturnValue",
-    "agentType" : "autonomous",
-    "planningStrategy" : "react",
     "dynamicToolExecution" : {
-      "outputVariable" : "toolCallSequenceJson",
       "continueNodeId" : "conversation-store",
-      "plannerNodeId" : "agent",
+      "outputVariable" : "toolCallSequenceJson",
+      "availableToolsVariable" : "availableToolsJson",
       "availableAgentsVariable" : "availableAgentsJson",
-      "availableToolsVariable" : "availableToolsJson"
+      "plannerNodeId" : "agent"
     },
-    "role" : "security-incident-orchestrator",
-    "agentSelectionStrategy" : "dynamic"
+    "planningStrategy" : "react",
+    "agentType" : "autonomous",
+    "returnVariable" : "ReturnValue",
+    "plannerContext" : {
+      "injectAgents" : true,
+      "selectedAgents" : [ "threat-detection-agent", "forensics-agent", "containment-agent", "security-report-agent" ],
+      "selectedTools" : [ "olo-core:log-reader", "olo-core:recently-changed-code", "olo-core:web-search", "olo-core:restart-container" ],
+      "selectedVariables" : [ "message", "conversationSummary", "availableToolsJson", "availableAgentsJson", "agentResultsJson", "toolCallSequenceJson" ],
+      "injectCapabilities" : false
+    },
+    "description" : "Triages security incidents using mock logs, code changes, and specialist child workflows",
+    "agentSelectionStrategy" : "dynamic",
+    "role" : "security-incident-orchestrator"
   }
 }

@@ -156,13 +156,24 @@ public final class UiCallbackReporter {
                 }
                 return;
             }
-            throw new KernelContextException(
-                    "UI callback failed with status " + response.statusCode() + " for " + eventPostUrl);
+            log.warn(
+                    "UI callback failed with status {} for url={}, sequenceNumber={}",
+                    response.statusCode(),
+                    eventPostUrl,
+                    payload.getSequenceNumber());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new KernelContextException("failed to deliver UI callback to " + eventPostUrl, e);
+            log.warn(
+                    "UI callback delivery interrupted for url={}, sequenceNumber={}",
+                    eventPostUrl,
+                    payload.getSequenceNumber(),
+                    e);
         } catch (IOException e) {
-            throw new KernelContextException("failed to deliver UI callback to " + eventPostUrl, e);
+            log.warn(
+                    "Failed to deliver UI callback to url={}, sequenceNumber={}",
+                    eventPostUrl,
+                    payload.getSequenceNumber(),
+                    e);
         }
     }
 

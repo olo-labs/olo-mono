@@ -40,7 +40,7 @@ class DefaultConfigurationPresetsTest {
                         DefaultConfigurationDefinitions.OLO_QUEUE_1,
                         DefaultConfigurationDefinitions.OLO_QUEUE_2);
         assertThat(byQueue.get(DefaultConfigurationDefinitions.OLO_QUEUE_1)).isEqualTo(6);
-        assertThat(byQueue.get(DefaultConfigurationDefinitions.OLO_QUEUE_2)).isEqualTo(6);
+        assertThat(byQueue.get(DefaultConfigurationDefinitions.OLO_QUEUE_2)).isEqualTo(7);
     }
 
     @ParameterizedTest(name = "{0}")

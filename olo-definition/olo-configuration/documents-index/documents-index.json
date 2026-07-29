@@ -30,18 +30,33 @@
       "minimapNodeColor" : "#52525b"
     },
     "portColors" : {
-      "message" : "#ef4444",
-      "boolean" : "#fb923c",
-      "capabilities" : "#22c55e",
-      "integer" : "#38bdf8",
-      "string" : "#a3e635",
-      "object" : "#c084fc",
+      "any" : "#94a3b8",
+      "agent-plug" : "#a855f7",
       "number" : "#38bdf8",
       "array" : "#f472b6",
-      "agent-plug" : "#a855f7",
-      "any" : "#94a3b8"
+      "object" : "#c084fc",
+      "string" : "#a3e635",
+      "capabilities" : "#22c55e",
+      "integer" : "#38bdf8",
+      "boolean" : "#fb923c",
+      "message" : "#ef4444"
     },
     "nodeTypes" : {
+      "END" : {
+        "emoji" : "⏹",
+        "typeLabel" : "End",
+        "description" : "Workflow exit — maps a workflow variable to the caller result",
+        "palette" : {
+          "name" : "End",
+          "category" : "control"
+        },
+        "inlineProperties" : [ {
+          "id" : "outputVariable",
+          "widget" : "VARIABLE_SELECT",
+          "label" : "Output variable",
+          "binding" : "outputVariableMapping"
+        } ]
+      },
       "TOOL" : {
         "emoji" : "🔧",
         "typeLabel" : "Tool",
@@ -70,21 +85,6 @@
           "widget" : "NUMBER",
           "label" : "Chunk size",
           "binding" : "chunkSize"
-        } ]
-      },
-      "END" : {
-        "emoji" : "⏹",
-        "typeLabel" : "End",
-        "description" : "Workflow exit — maps a workflow variable to the caller result",
-        "palette" : {
-          "name" : "End",
-          "category" : "control"
-        },
-        "inlineProperties" : [ {
-          "id" : "outputVariable",
-          "widget" : "VARIABLE_SELECT",
-          "label" : "Output variable",
-          "binding" : "outputVariableMapping"
         } ]
       },
       "START" : {
@@ -208,15 +208,15 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
-      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
-      "chunkSize" : 512,
-      "driver" : "${env:OLO_VECTOR_STORE_DRIVER}",
-      "extensionRef" : "pgvector-store",
-      "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}",
-      "distance" : "${env:OLO_VECTOR_STORE_DISTANCE}",
-      "connectionRef" : "${env:OLO_VECTOR_STORE_URL}",
-      "vectorTable" : "${env:OLO_VECTOR_STORE_TABLE}",
       "toolId" : "olo-core:rag-ingest",
+      "vectorTable" : "${env:OLO_VECTOR_STORE_TABLE}",
+      "connectionRef" : "${env:OLO_VECTOR_STORE_URL}",
+      "distance" : "${env:OLO_VECTOR_STORE_DISTANCE}",
+      "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}",
+      "extensionRef" : "pgvector-store",
+      "driver" : "${env:OLO_VECTOR_STORE_DRIVER}",
+      "chunkSize" : 512,
+      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
       "designer" : {
         "position" : {
           "x" : 440,
@@ -308,17 +308,17 @@
     "id" : "pgvector-store",
     "type" : "VECTOR_STORE",
     "configuration" : {
-      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
-      "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}",
-      "driver" : "${env:OLO_VECTOR_STORE_DRIVER}",
-      "distance" : "${env:OLO_VECTOR_STORE_DISTANCE}",
+      "connectionRef" : "${env:OLO_VECTOR_STORE_URL}",
       "table" : "${env:OLO_VECTOR_STORE_TABLE}",
-      "connectionRef" : "${env:OLO_VECTOR_STORE_URL}"
+      "distance" : "${env:OLO_VECTOR_STORE_DISTANCE}",
+      "driver" : "${env:OLO_VECTOR_STORE_DRIVER}",
+      "collection" : "${env:OLO_VECTOR_STORE_COLLECTION}",
+      "vectorSize" : "${env:OLO_VECTOR_STORE_VECTOR_SIZE}"
     }
   } ],
   "metadata" : {
-    "description" : "Dedicated ingest pipeline — creates vector DB entries only",
     "role" : "documents-index",
+    "description" : "Dedicated ingest pipeline — creates vector DB entries only",
     "returnVariable" : "ReturnValue"
   }
 }

@@ -19,3 +19,12 @@ includeBuild('../olo-definition') {
         substitute module('org.olo:olo-definition') using project(':olo-definition')
     }
 }
+if (file('../olo-kernel-context/settings.gradle').isFile()) {
+    includeBuild('../olo-kernel-context')
+}
+if (file('../olo-bootstrap/settings.gradle').isFile()) {
+    includeBuild('../olo-bootstrap')
+}
+if (file('../olo-workflow-input/settings.gradle').isFile()) {
+    includeBuild('../olo-workflow-input')
+}
