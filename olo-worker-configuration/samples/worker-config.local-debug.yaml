@@ -43,3 +43,10 @@ toolgate:
   credentialsDir: "../../debug/toolgate/credentials"
   timeoutMs: 60000
   maxToolRounds: 8
+  # Operator-controlled: which agent identities each workflow may use. Workflow authors can't change this.
+  # An AGENT node whose agentName isn't listed for its tenant and workflow fails before any ToolGate call.
+  # "olo-platform-service" is reserved and can never be listed.
+  agentMappings:
+    - tenant: "*"
+      workflow: "log-rca-orchestrator"
+      agents: ["log-rca-orchestrator", "log-failure-agent", "metrics-rca-agent", "code-change-rca-agent", "incident-summary-agent"]

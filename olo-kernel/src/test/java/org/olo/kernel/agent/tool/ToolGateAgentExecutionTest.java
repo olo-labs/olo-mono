@@ -33,6 +33,12 @@ import static org.olo.kernel.agent.tool.AgentToolTestSupport.tool;
  */
 class ToolGateAgentExecutionTest {
 
+    /** Operator mappings for these tests: workflow triage-agent may act as triage-agent or incident-report-agent. */
+    private static final AgentIdentityPolicy MAPPED = new MappedAgentIdentityPolicy(
+            List.of(new MappedAgentIdentityPolicy.Mapping("*", "triage-agent",
+                    List.of("triage-agent", "incident-report-agent"))),
+            List.of("olo-platform-service"));
+
     private static final PromptRenderer PROMPT = new PromptRenderer() {
         @Override
         public String render(WorkflowDefinition graph, WorkflowRuntimeVariables variables) {
@@ -68,7 +74,7 @@ class ToolGateAgentExecutionTest {
         var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of(
                 "triage-agent", List.of(tool("incidents.host-status")),
                 "incident-report-agent", List.of(tool("incidents.update-incident"))));
-        var access = new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8));
+        var access = new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8, MAPPED));
 
         var triageLlm = new AgentToolTestSupport.ScriptedLlm().reply(
                 callTool("incidents_host-status", "{\"host\":\"app-02\"}"), answer("OOM on app-02"));
@@ -95,12 +101,44 @@ class ToolGateAgentExecutionTest {
     }
 
     @Test
+    void unmappedAgentNameFailsBeforeAnyToolGateCall() {
+        var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("payments-admin", List.of(tool("payments.refund"))));
+        NodeDefinition node = agentNode("agent", Map.of("agentName", "payments-admin"));
+
+        NodeResult result = executor(new AgentToolTestSupport.ScriptedLlm(),
+                new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8, MAPPED)))
+                .execute(context(graph("triage-agent", node), "run-1"), node);
+
+        assertThat(result.status()).isEqualTo(NodeStatus.FAILED);
+        assertThat(result.message()).contains("'payments-admin' is not authorized").contains("toolgate.agentMappings");
+        assertThat(toolGate.listedFor).isEmpty();
+        assertThat(toolGate.calls).isEmpty();
+    }
+
+    @Test
+    void reservedServicePrincipalCannotBeUsedByAWorkflow() {
+        var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of());
+        NodeDefinition node = agentNode("agent", Map.of("agentName", "olo-platform-service"));
+        AgentIdentityPolicy listsReserved = new MappedAgentIdentityPolicy(
+                List.of(new MappedAgentIdentityPolicy.Mapping("*", "triage-agent", List.of("olo-platform-service"))),
+                List.of("olo-platform-service"));
+
+        NodeResult result = executor(new AgentToolTestSupport.ScriptedLlm(),
+                new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8, listsReserved)))
+                .execute(context(graph("triage-agent", node), "run-1"), node);
+
+        assertThat(result.status()).isEqualTo(NodeStatus.FAILED);
+        assertThat(result.message()).contains("reserved platform principal");
+        assertThat(toolGate.listedFor).isEmpty();
+    }
+
+    @Test
     void plannerAgentsKeepAnsweringWithAPlan() {
         var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("planner", List.of(tool("incidents.host-status"))));
         var llm = new AgentToolTestSupport.ScriptedLlm();
         NodeDefinition planner = agentNode("agent", Map.of(ToolCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true));
 
-        executor(llm, new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8)))
+        executor(llm, new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8, MAPPED)))
                 .execute(context(graph("planner", planner), "run-1"), planner);
 
         assertThat(toolGate.listedFor).isEmpty();
@@ -119,7 +157,7 @@ class ToolGateAgentExecutionTest {
         NodeDefinition node = agentNode("agent", Map.of());
 
         NodeResult result = executor(new AgentToolTestSupport.ScriptedLlm(),
-                new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8)))
+                new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8, MAPPED)))
                 .execute(context(graph("triage-agent", node), "run-1"), node);
 
         assertThat(result.status()).isEqualTo(NodeStatus.FAILED);

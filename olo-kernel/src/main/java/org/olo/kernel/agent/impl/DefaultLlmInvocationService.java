@@ -64,7 +64,20 @@ public final class DefaultLlmInvocationService implements LlmInvocationService {
         }
 
         AgentToolSettings settings = AgentToolSettings.resolve(context.getGraph(), node, access.defaultMaxToolRounds());
+        // M1-R2: only operator-mapped identities; never whatever name the workflow author typed.
+        access.identityPolicy().authorize(tenantId(context), context.getGraph().getId(), settings.agentName());
         AgentToolLoopResult result = toolLoop.run(context, node, modelCall, renderedPrompt, access.client(), settings);
         return new LlmInvocationResult(modelCall, renderedPrompt, result.response(), result);
+    }
+
+    /**
+     * The run's tenant. Until M3.3 delivers a verified identity context, this is the tenant in the workflow input,
+     * so mappings scoped to a specific tenant are only as trustworthy as that input.
+     */
+    private static String tenantId(KernelRuntimeContext context) {
+        if (context.getInput() == null || context.getInput().getContext() == null) {
+            return null;
+        }
+        return context.getInput().getContext().getTenantId();
     }
 }

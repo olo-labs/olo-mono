@@ -7,17 +7,21 @@ package org.olo.worker.toolgate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.olo.kernel.KernelRuntimeHolder;
+import org.olo.kernel.agent.tool.AgentIdentityDeniedException;
 import org.olo.kernel.agent.tool.AgentToolAccess;
 import org.olo.toolgate.client.ToolGateException;
 import org.olo.worker.config.WorkerSettings;
+import org.olo.worker.config.model.AgentMappingSettings;
 import org.olo.worker.config.model.ServerSettings;
 import org.olo.worker.config.model.ToolGateSettings;
 import org.olo.worker.config.model.WorkerConfiguration;
 import org.olo.worker.config.model.WorkflowDefinitionsSettings;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WorkerToolGateSetupTest {
@@ -61,6 +65,32 @@ class WorkerToolGateSetupTest {
                 .build()), Path.of(".")))
                 .isInstanceOf(ToolGateException.class);
         assertThat(KernelRuntimeHolder.toolAccess().isEnabled()).isFalse();
+    }
+
+    @Test
+    void agentMappingsBecomeTheIdentityPolicy() {
+        AgentToolAccess access = WorkerToolGateSetup.install(settings(ToolGateSettings.builder()
+                .enabled(true)
+                .mcpUrl("https://localhost:18451/mcp")
+                .agentMappings(List.of(AgentMappingSettings.builder()
+                        .tenant("*").workflow("triage-agent").agents(List.of("triage-agent")).build()))
+                .build()), Path.of("."));
+
+        assertThatCode(() -> access.identityPolicy().authorize("t1", "triage-agent", "triage-agent"))
+                .doesNotThrowAnyException();
+        assertThatThrownBy(() -> access.identityPolicy().authorize("t1", "triage-agent", "payments-admin"))
+                .isInstanceOf(AgentIdentityDeniedException.class);
+        assertThatThrownBy(() -> access.identityPolicy().authorize("t1", "triage-agent", "olo-platform-service"))
+                .isInstanceOf(AgentIdentityDeniedException.class);
+    }
+
+    @Test
+    void noMappingsRefusesEveryIdentity() {
+        AgentToolAccess access = WorkerToolGateSetup.install(settings(ToolGateSettings.builder()
+                .enabled(true).mcpUrl("https://localhost:18451/mcp").build()), Path.of("."));
+
+        assertThatThrownBy(() -> access.identityPolicy().authorize("t1", "triage-agent", "triage-agent"))
+                .isInstanceOf(AgentIdentityDeniedException.class);
     }
 
     @Test

@@ -5,6 +5,7 @@
 package org.olo.worker.config.validation;
 
 import org.olo.worker.config.exception.WorkerConfigurationException;
+import org.olo.worker.config.model.AgentMappingSettings;
 import org.olo.worker.config.model.CacheSettings;
 import org.olo.worker.config.model.InputSettings;
 import org.olo.worker.config.model.ServerSettings;
@@ -14,12 +15,19 @@ import org.olo.worker.config.model.WorkflowDefinitionsSettings;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Structural validation for a loaded {@link WorkerConfiguration}.
  */
 public final class WorkerConfigurationValidator {
+
+    /** Same rule as {@code org.olo.toolgate.client.AgentNames}; this module doesn't depend on the client. */
+    private static final Pattern AGENT_NAME = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._-]{0,127}");
 
     private WorkerConfigurationValidator() {
     }
@@ -122,6 +130,46 @@ public final class WorkerConfigurationValidator {
         }
         if (toolgate.getCredentialsDir() != null && toolgate.getCredentialsDir().isBlank()) {
             errors.add("toolgate.credentialsDir must not be blank when set");
+        }
+        validateAgentMappings(toolgate, errors);
+    }
+
+    private static void validateAgentMappings(ToolGateSettings toolgate, List<String> errors) {
+        Set<String> reserved = new HashSet<>();
+        for (String principal : toolgate.resolveReservedPrincipals()) {
+            if (isBlank(principal)) {
+                errors.add("toolgate.reservedPrincipals must not contain blank names");
+            } else {
+                reserved.add(principal.trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        Set<String> scopes = new HashSet<>();
+        for (int i = 0; i < toolgate.getAgentMappings().size(); i++) {
+            AgentMappingSettings mapping = toolgate.getAgentMappings().get(i);
+            String where = "toolgate.agentMappings[" + i + "]";
+            if (mapping == null) {
+                errors.add(where + " must not be null");
+                continue;
+            }
+            if (isBlank(mapping.getTenant())) {
+                errors.add(where + ".tenant is required (use \"*\" only for single-tenant installations)");
+            }
+            if (isBlank(mapping.getWorkflow()) || mapping.getWorkflow().contains("*")) {
+                errors.add(where + ".workflow must be an exact workflow id");
+            }
+            if (!scopes.add(mapping.getTenant() + "\u0000" + mapping.getWorkflow())) {
+                errors.add(where + " repeats an earlier tenant and workflow; list each pair once");
+            }
+            if (mapping.getAgents().isEmpty()) {
+                errors.add(where + ".agents must list at least one agent name");
+            }
+            for (String agent : mapping.getAgents()) {
+                if (agent == null || !AGENT_NAME.matcher(agent).matches()) {
+                    errors.add(where + ".agents contains an invalid agent name: " + agent);
+                } else if (reserved.contains(agent.toLowerCase(Locale.ROOT))) {
+                    errors.add(where + ".agents may not contain the reserved principal " + agent);
+                }
+            }
         }
     }
 

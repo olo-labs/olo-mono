@@ -10,11 +10,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
  * OLO ToolGate Gateway settings. When enabled, every LLM agent asks ToolGate for the tools its agent
  * name may use and calls them through the Gateway.
+ *
+ * <p>An AGENT node's {@code agentName} is used only if {@code agentMappings} authorizes it for the run's tenant and
+ * workflow. Names in {@code reservedPrincipals} (the platform service principal) can never be mapped.
  *
  * <p>Relative {@code caCertificate} and {@code credentialsDir} paths resolve against the configuration file's folder.
  */
@@ -25,6 +29,7 @@ public final class ToolGateSettings {
 
     public static final int DEFAULT_TIMEOUT_MS = 60_000;
     public static final int DEFAULT_MAX_TOOL_ROUNDS = 8;
+    public static final List<String> DEFAULT_RESERVED_PRINCIPALS = List.of("olo-platform-service");
 
     private final Boolean enabled;
     private final String mcpUrl;
@@ -32,6 +37,8 @@ public final class ToolGateSettings {
     private final String credentialsDir;
     private final Integer timeoutMs;
     private final Integer maxToolRounds;
+    private final List<AgentMappingSettings> agentMappings;
+    private final List<String> reservedPrincipals;
 
     private ToolGateSettings(Builder builder) {
         this.enabled = builder.enabled;
@@ -40,6 +47,8 @@ public final class ToolGateSettings {
         this.credentialsDir = builder.credentialsDir;
         this.timeoutMs = builder.timeoutMs;
         this.maxToolRounds = builder.maxToolRounds;
+        this.agentMappings = builder.agentMappings == null ? List.of() : List.copyOf(builder.agentMappings);
+        this.reservedPrincipals = builder.reservedPrincipals == null ? null : List.copyOf(builder.reservedPrincipals);
     }
 
     public static Builder builder() {
@@ -80,6 +89,18 @@ public final class ToolGateSettings {
         return maxToolRounds;
     }
 
+    /** Server-authorized agent identities per tenant and workflow. Empty means no agent may use ToolGate. */
+    @JsonProperty("agentMappings")
+    public List<AgentMappingSettings> getAgentMappings() {
+        return agentMappings;
+    }
+
+    /** Principals that can never be mapped to a workflow agent. Unset means {@link #DEFAULT_RESERVED_PRINCIPALS}. */
+    @JsonProperty("reservedPrincipals")
+    public List<String> getReservedPrincipals() {
+        return reservedPrincipals;
+    }
+
     public boolean isEnabled() {
         return Boolean.TRUE.equals(enabled);
     }
@@ -90,6 +111,10 @@ public final class ToolGateSettings {
 
     public int resolveMaxToolRounds() {
         return maxToolRounds == null ? DEFAULT_MAX_TOOL_ROUNDS : maxToolRounds;
+    }
+
+    public List<String> resolveReservedPrincipals() {
+        return reservedPrincipals == null ? DEFAULT_RESERVED_PRINCIPALS : reservedPrincipals;
     }
 
     @Override
@@ -105,12 +130,15 @@ public final class ToolGateSettings {
                 && Objects.equals(caCertificate, that.caCertificate)
                 && Objects.equals(credentialsDir, that.credentialsDir)
                 && Objects.equals(timeoutMs, that.timeoutMs)
-                && Objects.equals(maxToolRounds, that.maxToolRounds);
+                && Objects.equals(maxToolRounds, that.maxToolRounds)
+                && Objects.equals(agentMappings, that.agentMappings)
+                && Objects.equals(reservedPrincipals, that.reservedPrincipals);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, mcpUrl, caCertificate, credentialsDir, timeoutMs, maxToolRounds);
+        return Objects.hash(enabled, mcpUrl, caCertificate, credentialsDir, timeoutMs, maxToolRounds,
+                agentMappings, reservedPrincipals);
     }
 
     @JsonPOJOBuilder(withPrefix = "")
@@ -122,6 +150,8 @@ public final class ToolGateSettings {
         private String credentialsDir;
         private Integer timeoutMs;
         private Integer maxToolRounds;
+        private List<AgentMappingSettings> agentMappings;
+        private List<String> reservedPrincipals;
 
         @JsonProperty("enabled")
         public Builder enabled(Boolean enabled) {
@@ -156,6 +186,18 @@ public final class ToolGateSettings {
         @JsonProperty("maxToolRounds")
         public Builder maxToolRounds(Integer maxToolRounds) {
             this.maxToolRounds = maxToolRounds;
+            return this;
+        }
+
+        @JsonProperty("agentMappings")
+        public Builder agentMappings(List<AgentMappingSettings> agentMappings) {
+            this.agentMappings = agentMappings;
+            return this;
+        }
+
+        @JsonProperty("reservedPrincipals")
+        public Builder reservedPrincipals(List<String> reservedPrincipals) {
+            this.reservedPrincipals = reservedPrincipals;
             return this;
         }
 

@@ -23,22 +23,30 @@ empty application stores (conversations, memory, documents, ToolGate state).
 Fresh installation simplifies removal (M9) and deployment (M10). It does not relax the authorization, retry or
 deletion requirements.
 
-**Status (2026-10-23): 3% counted, 20% implemented.**
-- **Counted:** M0 is complete.
-- **Implemented, not yet counted:** M1 is in review as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2)
-  on branch `feature/toolgate-integration`. It counts once the PR is merged.
+**Status (2026-10-23): 13% counted, 21% implemented.**
+- **Counted:** M0, and M1 (merged as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2)).
+- **Implemented, not yet counted:**
+  - M2, which is merged but not signed off
+  - M3.9, server-authorized agent mappings, in review on branch `feature/toolgate-m3-agent-mapping`
 - **Plan revisions:** four security reviews are folded in. They set the user/resource authorization model and the
   deterministic memory/RAG flow, and cover fresh-install scope, service-job identity, payload protection,
   unknown-outcome reconciliation, revocation of derived context, authorization evidence for services (tied to the
   revocation bound), credential renewal, and a dedup record that turns changed arguments into a conflict.
 - **M1 remediation:** tracked as M1-R1 to M1-R6.
-- **M2 drafted:** all contracts, decisions and targets are proposed in
-  [docs/toolgate-integration/m2](docs/toolgate-integration/m2/README.md), on branch `feature/toolgate-integration-m2`.
-  M2 counts only after olo, olo-mono and ToolGate sign them off. ToolGate's half of the threat model (2.9) is in
-  olo-toolgate at `docs/security/threat-models/olo-integration.md`, on branch `docs/olo-integration-threat-model`.
+- **M2 merged, not accepted:** all contracts, decisions and targets are in
+  [docs/toolgate-integration/m2](docs/toolgate-integration/m2/README.md) (merged in
+  [olo-labs/olo-mono#4](https://github.com/olo-labs/olo-mono/pull/4)). ToolGate's half of the threat model is in
+  olo-toolgate at `docs/security/threat-models/olo-integration.md` (merged in
+  [olo-labs/olo-toolgate#186](https://github.com/olo-labs/olo-toolgate/pull/186)). They remain **proposed**. M2
+  counts only after the owners of olo, olo-mono and ToolGate approve them explicitly. The documents are then marked
+  Accepted, and D4–D7 are closed.
 - **Critical path found by the gap matrix:** user-bound Gateway authentication (G1) and the trusted executor context
   (G7) are both missing in ToolGate today.
-- **Next:** sign-off of M2, especially the three P1 contracts (2.4, 2.5, 2.10). Then M3.
+- **Next:**
+  - M2 sign-off, especially the three P1 contracts (2.4, 2.5, 2.10)
+  - In parallel, M3 steps that don't depend on those contracts: 3.9 is done, and 3.1–3.2 (verified identity in the
+    olo backend) are next
+  - Steps 3.3, 3.4 and 3.10 wait for the 2.5 contract and D4
 
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
 identities, and empty application stores. No migration tools, legacy readers, compatibility modes, or support for
@@ -50,9 +58,9 @@ that replaces D8.
 | # | Milestone | Repos | Weight | Implemented | Counted | Status |
 |---|---|---|---:|---:|---:|---|
 | M0 | Discovery, plan and security reviews | all | 3 | 100% | 100% | ✅ Done |
-| M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 0% | 🟨 In review (PR #2); remediation in M3, M5 |
+| M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 100% | ✅ Merged (PR #2); remediation in M3, M5 |
 | M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 0% | 🟨 Drafted; awaiting sign-off |
-| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 0% | 0% | ⬜ |
+| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 9% | 0% | 🟨 3.9 implemented (in review) |
 | M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 0% | 0% | ⬜ |
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 0% | 0% | ⬜ |
 | M6 | Memory and RAG services and ToolGate packages | ToolGate, services | 12 | 0% | 0% | ⬜ |
@@ -60,7 +68,7 @@ that replaces D8.
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **20%** | **3%** | |
+| | **Overall** | | **100** | **21%** | **13%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -299,10 +307,9 @@ still has to supply that filter and enforce it.
 - [x] Fold in the fourth review: the dedup lookup key no longer includes the fingerprint (which is stored and checked
       instead), and signed permits are tied to the revocation bound
 
-## M1 — ToolGate client and agent tool loop (weight 10) 🟨 implemented, in review
+## M1 — ToolGate client and agent tool loop (weight 10) ✅ merged
 
-Implemented in [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2), which isn't merged yet, so it
-isn't counted. It remains the basis for path B.
+Merged in [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2). It remains the basis for path B.
 
 - [x] **1.1** `olo-toolgate-client`: MCP 2026-07-28 client (`McpToolGateClient`) for `tools/list` and `tools/call`.
       Mirrored headers, JSON/SSE replies, CA-pinned TLS, typed fail-closed `ToolGateException`s.
@@ -316,7 +323,7 @@ isn't counted. It remains the basis for path B.
       shown to the model; outages fail the node.
 - [x] **1.8** 53 new tests across four modules, all passing
 
-The boxes mark the steps as implemented. They count toward progress once PR #2 is merged.
+All steps are merged and counted.
 
 **M1 remediation.** These gaps were found by the reviews. Each is done in, and counted by, the milestone named.
 
@@ -448,8 +455,14 @@ The ToolGate documentation describes the identity modes we need, but its
 - [ ] **3.7** [ToolGate] Object-level authorization for conversations, memory namespaces, knowledge bases and documents
       that reaches execution, beyond the fixed `tool://<tool-id>` resource
 - [ ] **3.8** [ToolGate] Separate operation permissions as defined in *Permissions*. Wildcard grants are refused.
-- [ ] **3.9** [olo-mono] **M1-R2:** server-authorized workload mappings for path B. A workflow's `agentName` must be in
+- [x] **3.9** [olo-mono] **M1-R2:** server-authorized workload mappings for path B. A workflow's `agentName` must be in
       the allowlist for that tenant and workflow, or the call fails. The path C principal can never be mapped.
+      *Implemented:*
+      - The `toolgate.agentMappings` worker config (operator-controlled), validated at load: exact workflow ids,
+        no wildcard agents, no duplicate pairs, and `toolgate.reservedPrincipals` (default `olo-platform-service`)
+        refused
+      - `MappedAgentIdentityPolicy`, checked before any ToolGate call. No mappings means every identity is refused.
+      - The tenant comes from the workflow input until M3.3 provides a verified identity context
 - [ ] **3.10** [olo-mono, ToolGate] **M1-R3:** delegated mode for path B, with the user as subject and the agent as actor.
       Deny when the agent may use a tool but the user may not.
 - [ ] **3.11** [olo] The same checks on every alternate endpoint: uploads, document downloads, knowledge-source
