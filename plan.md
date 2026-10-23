@@ -23,7 +23,7 @@ empty application stores (conversations, memory, documents, ToolGate state).
 Fresh installation simplifies removal (M9) and deployment (M10). It does not relax the authorization, retry or
 deletion requirements.
 
-**Status (2026-10-23): 3% counted, 13% implemented.**
+**Status (2026-10-23): 3% counted, 19% implemented.**
 - **Counted:** M0 is complete.
 - **Implemented, not yet counted:** M1 is in review as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2)
   on branch `feature/toolgate-integration`. It counts once the PR is merged.
@@ -32,9 +32,13 @@ deletion requirements.
   unknown-outcome reconciliation, revocation of derived context, authorization evidence for services (tied to the
   revocation bound), credential renewal, and a dedup record that turns changed arguments into a conflict.
 - **M1 remediation:** tracked as M1-R1 to M1-R6.
-- **Next:** M2. The architecture is cleared to proceed. Three contracts must be agreed in M2 before anything that
-  depends on them is built: derived-context revocation (M2.4), authorization evidence (M2.10) and credential renewal
-  (M2.5).
+- **M2 drafted:** all contracts, decisions and targets are proposed in
+  [docs/toolgate-integration/m2](docs/toolgate-integration/m2/README.md), on branch `feature/toolgate-integration-m2`.
+  M2 counts only after olo, olo-mono and ToolGate sign them off. ToolGate's half of the threat model (2.9) still has
+  to be filed in that repo.
+- **Critical path found by the gap matrix:** user-bound Gateway authentication (G1) and the trusted executor context
+  (G7) are both missing in ToolGate today.
+- **Next:** sign-off of M2, especially the three P1 contracts (2.4, 2.5, 2.10). Then M3.
 
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
 identities, and empty application stores. No migration tools, legacy readers, compatibility modes, or support for
@@ -47,7 +51,7 @@ that replaces D8.
 |---|---|---|---:|---:|---:|---|
 | M0 | Discovery, plan and security reviews | all | 3 | 100% | 100% | ✅ Done |
 | M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 0% | 🟨 In review (PR #2); remediation in M3, M5 |
-| M2 | Capability gaps, contracts and open decisions | all | 7 | 0% | 0% | ⬜ Next |
+| M2 | Capability gaps, contracts and open decisions | all | 7 | 92% | 0% | 🟨 Drafted; awaiting sign-off (2.9 ToolGate half open) |
 | M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 0% | 0% | ⬜ |
 | M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 0% | 0% | ⬜ |
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 0% | 0% | ⬜ |
@@ -56,7 +60,7 @@ that replaces D8.
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **13%** | **3%** | |
+| | **Overall** | | **100** | **19%** | **3%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -336,7 +340,10 @@ The ToolGate documentation describes the identity modes we need, but its
 [enterprise access-control design](../../git/olo-toolgate/docs/security/enterprise-access-control.md) calls itself a
 "target design" and is not a claim that the features exist. Readiness has to be shown by code and tests.
 
-- [ ] **2.1** Gap matrix, with evidence (code paths and tests, not docs), for each required ToolGate capability:
+**Deliverables:** [docs/toolgate-integration/m2](docs/toolgate-integration/m2/README.md). Ticked steps are drafted
+(implemented). They are counted after sign-off.
+
+- [x] **2.1** Gap matrix, with evidence (code paths and tests, not docs), for each required ToolGate capability:
       user-bound Gateway authentication; service-principal authentication; credential lifecycle; user and team
       permission resolution independent of OLO agents; object-level resource authorization; trusted executor
       context; revocation during calls, approvals, jobs and result retrieval; durable invocation status, cancellation
@@ -346,11 +353,11 @@ The ToolGate documentation describes the identity modes we need, but its
       - The SDK's `Invocation.userId()` is optional, and there is no tenant accessor. `StandaloneContext.userId()`
         always returns empty.
       - Package tools have a fixed `tool://<tool-id>` resource, which can't tell one conversation or document from another.
-- [ ] **2.2** Identity context contract (the table above), for user-bound paths A and B and for path C: fields,
+- [x] **2.2** Identity context contract (the table above), for user-bound paths A and B and for path C: fields,
       provenance, signing or binding, and the expiry and audience rules. Agreed across olo, olo-mono and ToolGate.
-- [ ] **2.3** Resource and permission model: resource identifiers; owner, membership and sharing semantics; the
+- [x] **2.3** Resource and permission model: resource identifiers; owner, membership and sharing semantics; the
       permission set from *Permissions*, with no wildcard grants
-- [ ] **2.4** Invocation lifecycle and revocation contract (**P1**):
+- [x] **2.4** Invocation lifecycle and revocation contract (**P1**):
       - **Dedup record.** The fingerprint is *stored*, not part of the key, so changed arguments can't produce a new
         invocation:
 
@@ -373,7 +380,7 @@ The ToolGate documentation describes the identity modes we need, but its
       - Cancellation, approval resume, and result retrieval
       - **The revocation bound** (a number of seconds), the three check points, and **source-dependency tracking for
         derived context** (what is recorded, how a derived item is discarded or rebuilt), from *Revocation timing*
-- [ ] **2.5** Credential lifecycle and renewal contract (**P1**), for user-bound and service credentials:
+- [x] **2.5** Credential lifecycle and renewal contract (**P1**), for user-bound and service credentials:
       - Issuance, audience, expiry, revocation and tenant binding
       - Renewal during long-running workflows and approvals: the non-secret binding reference the run stores, the
         trusted mechanism that issues fresh credentials, and rechecking current authority
@@ -382,11 +389,11 @@ The ToolGate documentation describes the identity modes we need, but its
       - Misuse protection: impersonation, use outside the audience, tenant or session, and whether sender binding is
         required
       - Decide D4
-- [ ] **2.6** Decide D5: who owns the memory and RAG services, and where they are deployed
-- [ ] **2.7** Decide D6: whether long-term user memory ships in the first release
-- [ ] **2.8** Decide D7: payload codec or references, and key management for it
+- [x] **2.6** Decide D5: who owns the memory and RAG services, and where they are deployed
+- [x] **2.7** Decide D6: whether long-term user memory ships in the first release
+- [x] **2.8** Decide D7: payload codec or references, and key management for it
 - [ ] **2.9** Threat-model update for paths A, B and C, in ToolGate's `docs/security` and in OLO
-- [ ] **2.10** Authorization evidence contract (**P1**): how a memory or RAG service validates what was authorized.
+- [x] **2.10** Authorization evidence contract (**P1**): how a memory or RAG service validates what was authorized.
       - The format: a Control-signed permit with key discovery and rotation, or authenticated verification against ToolGate
       - The required claims: audience, tenant, subject or service principal, operation, resource, request
         fingerprint, expiry
@@ -396,11 +403,11 @@ The ToolGate documentation describes the identity modes we need, but its
         the bound. The proof is written down, not assumed.
       - What happens to permits across queueing, approvals and long-running operations: re-authorized at the effect,
         or re-issued after the wait
-- [ ] **2.11** Conversation turn contract:
+- [x] **2.11** Conversation turn contract:
       - How the accepted user message reaches the prompt exactly once
       - What happens when persisting the response fails after it was generated
       - When a turn counts as complete (M7.2)
-- [ ] **2.12** RAG quality and performance targets, each with a measurement method and an evaluation set:
+- [x] **2.12** RAG quality and performance targets, each with a measurement method and an evaluation set:
       - Retrieval relevance within the authorized scope (for example recall@k on a labelled set)
       - Citation correctness: every citation names an authorized source and version that contains the cited text
       - Indexing freshness: time from ingest to searchable
