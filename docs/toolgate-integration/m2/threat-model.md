@@ -1,7 +1,9 @@
 # M2.9 — Threat model (OLO side)
 
-**Status: proposed, awaiting sign-off.** ToolGate's half belongs in `olo-toolgate/docs/security/threat-models/`. That
-change is drafted from the ToolGate rows below and filed in that repo separately.
+**Status: proposed, awaiting sign-off.** ToolGate's half is in olo-toolgate at
+`docs/security/threat-models/olo-integration.md` (branch `docs/olo-integration-threat-model`). It expands the
+ToolGate rows below into ToolGate's threat-model format, with adversaries, conformance cases, and a list of gaps against
+current code.
 
 ## Assets
 

@@ -23,7 +23,7 @@ empty application stores (conversations, memory, documents, ToolGate state).
 Fresh installation simplifies removal (M9) and deployment (M10). It does not relax the authorization, retry or
 deletion requirements.
 
-**Status (2026-10-23): 3% counted, 19% implemented.**
+**Status (2026-10-23): 3% counted, 20% implemented.**
 - **Counted:** M0 is complete.
 - **Implemented, not yet counted:** M1 is in review as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2)
   on branch `feature/toolgate-integration`. It counts once the PR is merged.
@@ -34,8 +34,8 @@ deletion requirements.
 - **M1 remediation:** tracked as M1-R1 to M1-R6.
 - **M2 drafted:** all contracts, decisions and targets are proposed in
   [docs/toolgate-integration/m2](docs/toolgate-integration/m2/README.md), on branch `feature/toolgate-integration-m2`.
-  M2 counts only after olo, olo-mono and ToolGate sign them off. ToolGate's half of the threat model (2.9) still has
-  to be filed in that repo.
+  M2 counts only after olo, olo-mono and ToolGate sign them off. ToolGate's half of the threat model (2.9) is in
+  olo-toolgate at `docs/security/threat-models/olo-integration.md`, on branch `docs/olo-integration-threat-model`.
 - **Critical path found by the gap matrix:** user-bound Gateway authentication (G1) and the trusted executor context
   (G7) are both missing in ToolGate today.
 - **Next:** sign-off of M2, especially the three P1 contracts (2.4, 2.5, 2.10). Then M3.
@@ -51,7 +51,7 @@ that replaces D8.
 |---|---|---|---:|---:|---:|---|
 | M0 | Discovery, plan and security reviews | all | 3 | 100% | 100% | ✅ Done |
 | M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 0% | 🟨 In review (PR #2); remediation in M3, M5 |
-| M2 | Capability gaps, contracts and open decisions | all | 7 | 92% | 0% | 🟨 Drafted; awaiting sign-off (2.9 ToolGate half open) |
+| M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 0% | 🟨 Drafted; awaiting sign-off |
 | M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 0% | 0% | ⬜ |
 | M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 0% | 0% | ⬜ |
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 0% | 0% | ⬜ |
@@ -60,7 +60,7 @@ that replaces D8.
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **19%** | **3%** | |
+| | **Overall** | | **100** | **20%** | **3%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -392,7 +392,7 @@ The ToolGate documentation describes the identity modes we need, but its
 - [x] **2.6** Decide D5: who owns the memory and RAG services, and where they are deployed
 - [x] **2.7** Decide D6: whether long-term user memory ships in the first release
 - [x] **2.8** Decide D7: payload codec or references, and key management for it
-- [ ] **2.9** Threat-model update for paths A, B and C, in ToolGate's `docs/security` and in OLO
+- [x] **2.9** Threat-model update for paths A, B and C, in ToolGate's `docs/security` and in OLO
 - [x] **2.10** Authorization evidence contract (**P1**): how a memory or RAG service validates what was authorized.
       - The format: a Control-signed permit with key discovery and rotation, or authenticated verification against ToolGate
       - The required claims: audience, tenant, subject or service principal, operation, resource, request

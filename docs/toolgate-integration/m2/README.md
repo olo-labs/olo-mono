@@ -12,7 +12,7 @@ decisions below.
 | 2.4 | [invocation-lifecycle.md](invocation-lifecycle.md): dedup record, states, reconciliation, revocation, derived context | ✔ | Proposed |
 | 2.5 | [credentials.md](credentials.md): lifecycle, renewal, misuse, **D4** | ✔ | Proposed |
 | 2.6–2.8 | [decisions.md](decisions.md): **D5, D6, D7** | | Proposed |
-| 2.9 | [threat-model.md](threat-model.md) (OLO side; ToolGate rows to file in olo-toolgate) | | Proposed |
+| 2.9 | [threat-model.md](threat-model.md) (OLO side). ToolGate side: olo-toolgate `docs/security/threat-models/olo-integration.md` | | Proposed |
 | 2.10 | [authorization-evidence.md](authorization-evidence.md): service permits and the revocation bound | ✔ | Proposed |
 | 2.11 | [conversation-turn.md](conversation-turn.md) | | Proposed |
 | 2.12 | [rag-targets.md](rag-targets.md) | | Proposed |
