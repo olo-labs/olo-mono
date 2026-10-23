@@ -5,7 +5,7 @@ olo-mono. An agent asks ToolGate which tools it may use, and the LLM can call on
 All tool code, annotations, call schemas and tool nodes are removed from olo-mono, with no backward compatibility.
 A new multi-agent pipeline proves the design end to end against ToolGate's mocked tools.
 
-**Status (2026-10-23): 31% of target work done.** M0 and M1 are complete on branch `feature/toolgate-m1`.
+**Status (2026-10-23): 31% of target work done.** M0 and M1 are complete on branch `feature/toolgate-integration`.
 D1 is decided (conversation memory and RAG move into ToolGate). Next up: M2.
 
 ## Progress
