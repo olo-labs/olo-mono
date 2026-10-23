@@ -27,10 +27,10 @@ deletion requirements.
 - **Counted:** M0 is complete.
 - **Implemented, not yet counted:** M1 is in review as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2)
   on branch `feature/toolgate-integration`. It counts once the PR is merged.
-- **Plan revisions:** three security reviews are folded in. They set the user/resource authorization model and the
+- **Plan revisions:** four security reviews are folded in. They set the user/resource authorization model and the
   deterministic memory/RAG flow, and cover fresh-install scope, service-job identity, payload protection,
-  unknown-outcome reconciliation, revocation of derived context, authorization evidence for services, and
-  credential renewal.
+  unknown-outcome reconciliation, revocation of derived context, authorization evidence for services (tied to the
+  revocation bound), credential renewal, and a dedup record that turns changed arguments into a conflict.
 - **M1 remediation:** tracked as M1-R1 to M1-R6.
 - **Next:** M2. The architecture is cleared to proceed. Three contracts must be agreed in M2 before anything that
   depends on them is built: derived-context revocation (M2.4), authorization evidence (M2.10) and credential renewal
@@ -204,6 +204,21 @@ from the OLO worker, the backend or the model. Two separate checks apply (contra
    resource, a request fingerprint (a hash of the exact request), and an expiry. The service refuses the request if
    any of them is missing, expired, or doesn't match the request it received.
 
+**A valid signature is not current permission.** A signed permit checked offline proves what was authorized when it
+was issued, not that it is still authorized after a revocation. So M2.10 must choose how the evidence meets the
+revocation bound (M2.4), and show that it does:
+
+- **(a) Online at the effect.** The service authorizes the permit online, or consumes it, with ToolGate immediately
+  before it performs the protected effect. A permit revoked since issue is refused. *Recommended* for writes,
+  deletes, shares and exports.
+- **(b) Bounded offline validity.** The permit's lifetime, plus any invalidation the services subscribe to (for
+  example a pushed revocation list), demonstrably stays within the revocation bound. This is only acceptable where
+  that can be proven, for example short reads.
+
+Either way, **queued and long-running operations** don't carry a permit across the wait. A permit issued before
+queueing, before an approval, or before a long-running step is either re-authorized at the effect under option (a),
+or re-issued after the wait under option (b).
+
 ### Revocation timing
 
 Revoking a grant, membership, share or session takes effect within a **defined bound**. M2.4 sets the number, and
@@ -277,6 +292,8 @@ still has to supply that filter and enforce it.
 - [x] Fold in the third review: revocation of derived context, authorization evidence that services verify,
       credential renewal, dedup scope and retention, turn assembly and completion, RAG quality and performance
       targets, a fixed installation boundary
+- [x] Fold in the fourth review: the dedup lookup key no longer includes the fingerprint (which is stored and checked
+      instead), and signed permits are tied to the revocation bound
 
 ## M1 — ToolGate client and agent tool loop (weight 10) 🟨 implemented, in review
 
@@ -334,9 +351,22 @@ The ToolGate documentation describes the identity modes we need, but its
 - [ ] **2.3** Resource and permission model: resource identifiers; owner, membership and sharing semantics; the
       permission set from *Permissions*, with no wildcard grants
 - [ ] **2.4** Invocation lifecycle and revocation contract (**P1**):
-      - **Dedup key:** tenant + subject or service principal + logical-operation id + request fingerprint (a hash of
-        the operation, resource and exact arguments). Credential rotation doesn't change the key. Reusing the key
-        with a different fingerprint is a conflict.
+      - **Dedup record.** The fingerprint is *stored*, not part of the key, so changed arguments can't produce a new
+        invocation:
+
+        ```
+        Lookup key   = tenant + subject or service principal + logical-operation id
+        Stored value = request fingerprint + invocation state and result
+        ```
+
+        The request fingerprint is a hash of the operation, resource and exact arguments. Credential rotation and
+        renewal change neither the key nor the fingerprint.
+
+        | Submission | Result |
+        |---|---|
+        | Same key, same fingerprint | Resume or return the existing invocation. Never execute twice. |
+        | Same key, different fingerprint | **Conflict.** Rejected, never executed. |
+        | Concurrent submissions of the same key | Created atomically: exactly one invocation exists, and every other submission gets that invocation (or a conflict, if its fingerprint differs). |
       - **Dedup retention:** at least the longest workflow lifetime plus the approval expiry. Once a record has
         expired, recovery treats the operation as `OUTCOME_UNKNOWN` and reconciles it (M5.4); it never re-sends blindly.
       - Statuses, including `OUTCOME_UNKNOWN`
@@ -361,6 +391,11 @@ The ToolGate documentation describes the identity modes we need, but its
       - The required claims: audience, tenant, subject or service principal, operation, resource, request
         fingerprint, expiry
       - How replay within the expiry is bounded
+      - **How the evidence meets the M2.4 revocation bound**, for each operation type: (a) online authorization or
+        permit consumption at the protected effect, or (b) permit lifetimes plus invalidation that provably stay within
+        the bound. The proof is written down, not assumed.
+      - What happens to permits across queueing, approvals and long-running operations: re-authorized at the effect,
+        or re-issued after the wait
 - [ ] **2.11** Conversation turn contract:
       - How the accepted user message reaches the prompt exactly once
       - What happens when persisting the response fails after it was generated
@@ -436,6 +471,10 @@ The ToolGate documentation describes the identity modes we need, but its
       - **Authorization evidence:** every request carries a Control-signed permit, or a reference the service
         verifies with ToolGate. The service checks audience, tenant, subject or service principal, operation,
         resource, request fingerprint and expiry against the request it actually received.
+      - **Current permission at the effect:** the M2.10 choice is applied for each operation type. Under option (a)
+        the service authorizes online, or consumes the permit, just before the effect. Under option (b) permit
+        lifetimes and invalidation stay within the bound. Permits are never carried across queueing, approvals or
+        long-running steps without being re-authorized or re-issued.
       - Network policy keeps the services unreachable from the OLO worker, the backend and the model
 
 **Acceptance.**
@@ -444,6 +483,9 @@ The ToolGate documentation describes the identity modes we need, but its
 - A direct call to a memory or RAG service that bypasses ToolGate is refused.
 - A genuine executor is refused if it sends a scope, resource, operation or request body that doesn't match its
   authorization evidence, or evidence that is expired or meant for another service.
+- **Revocation after the permit is issued but before the service performs the effect** is honoured within the M2.4
+  bound. The test covers a direct call, a call that was queued, a call waiting for approval, and a long-running
+  operation.
 
 ## M5 — Durable invocation, payload protection, retries and approvals (weight 12)
 
@@ -454,10 +496,12 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       operation. On recovery, recorded operations are resumed, never regenerated.
 - [ ] **5.2** [olo-mono] **M1-R6:** payload protection (D7) ships together with 5.1. Sensitive arguments, prompts,
       retrieved content and results are encrypted or stored by reference. Bearer and refresh tokens are never persisted.
-- [ ] **5.3** [ToolGate, olo-mono] Dedup on the M2.4 key: tenant + subject or service principal + logical-operation id
-      + request fingerprint.
-      - Credential rotation and renewal don't change the key.
-      - Reusing the key with a different fingerprint is a conflict, not a silent replay.
+- [ ] **5.3** [ToolGate, olo-mono] Dedup to the M2.4 record: look up by tenant + subject or service principal +
+      logical-operation id, and store the request fingerprint with the invocation state and result.
+      - Same key and same fingerprint: resume or return the existing invocation.
+      - Same key and different fingerprint: conflict, never executed.
+      - Concurrent submissions: an atomic create (a unique constraint or compare-and-set) leaves exactly one invocation.
+      - Credential rotation and renewal change neither the key nor the fingerprint.
       - Records are kept for the M2.4 retention period. After expiry, a recovering operation becomes `OUTCOME_UNKNOWN`
         and goes through reconciliation (5.4).
 - [ ] **5.4** [olo-mono, ToolGate] **M1-R5: unknown outcomes.** Transport dedup is separate from executor and business
@@ -480,6 +524,8 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       - an unknown outcome that stays undispatched until reconciled
       - a dedup record that has expired, then recovery
       - a credential rotated mid-operation, keeping the same dedup key
+      - **changed arguments under the same logical-operation id:** rejected as a conflict, and the tool never runs
+      - concurrent submissions of one key: exactly one invocation is created
       - approve, deny and expire
       - a grant revoked while waiting
       - a session that expires during an approval
@@ -718,6 +764,8 @@ restore test and a credential rotation.
 | Revocation lags behind already-loaded context or in-flight work | A user keeps seeing or affecting data after losing access | A defined bound (M2.4), three check points (M5.5, M7.3, M6.4), measured in M8.2 |
 | Revoked information survives in derived context (an earlier response, summary or child-agent output) | Revoked content keeps reaching the model or the user | Source-dependency tracking, discard or rebuild before the next model call and before release (M2.4, M6.1, M7.3), tested in M8.2 |
 | A genuine executor sends a scope it wasn't authorized for | Services trust a forged user or resource scope | Services verify signed or ToolGate-verified authorization evidence bound to the request, not just mTLS (M2.10, M4.6) |
+| A signed permit stays valid after its grant is revoked | Effects still run on revoked authority | Online authorization at the effect, or permit lifetimes provably within the revocation bound; no permit carried across a wait (M2.10, M4.6); tested before the effect |
+| Changed arguments reuse a logical-operation id | A different effect runs under an old operation's identity | The fingerprint is stored, not keyed: a mismatch is a conflict and never executes (M2.4, M5.3, M5.7) |
 | A long workflow or approval outlives the user's credential | Calls fail mid-run, or worse, fall back to a broader identity | Non-secret binding reference, fresh credentials and an authority recheck; re-authenticate or terminate, never fall back (M2.5, M3.3, M5.5) |
 | Dedup records expire before a slow recovery | A duplicate effect after the window | Retention covers the longest workflow plus approval expiry; after expiry → `OUTCOME_UNKNOWN` and reconciliation (M2.4, M5.3) |
 | Secure RAG that retrieves poorly or slowly | The platform is safe but not usable | Quality and performance targets set in M2.12, measured in M8.2a and load-tested in M10.4 |
