@@ -23,13 +23,15 @@ empty application stores (conversations, memory, documents, ToolGate state).
 Fresh installation simplifies removal (M9) and deployment (M10). It does not relax the authorization, retry or
 deletion requirements.
 
-**Status (2026-10-23): 17% counted, 21% implemented.**
+**Status (2026-10-23): 17% counted, 24% implemented.**
 - **Counted:**
   - M0
   - M1 (merged as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2))
   - The accepted M2 steps: 2.6–2.8 (D5–D7) and 2.12 (RAG targets)
   - M3.9 (merged as [olo-labs/olo-mono#5](https://github.com/olo-labs/olo-mono/pull/5))
-- **Implemented, not yet counted:** the M2 contracts still awaiting approval (2.1–2.5, 2.9–2.11)
+- **Implemented, not yet counted:**
+  - the M2 contracts still awaiting approval (2.1–2.5, 2.9–2.11)
+  - M3.1–3.2, verified identity in the olo backend, in review as [olo-labs/olo#1](https://github.com/olo-labs/olo/pull/1)
 - **Plan revisions:** four security reviews are folded in. They set the user/resource authorization model and the
   deterministic memory/RAG flow, and cover fresh-install scope, service-job identity, payload protection,
   unknown-outcome reconciliation, revocation of derived context, authorization evidence for services (tied to the
@@ -50,7 +52,7 @@ deletion requirements.
 - **Next:**
   - Approval of the remaining M2 contracts, especially the three P1 contracts (2.4, 2.5, 2.10)
   - In parallel, M3 steps that don't depend on those contracts: 3.9 is merged, and 3.1–3.2 (verified identity in the
-    olo backend) are next
+    olo backend) are in review. Next are 3.11 (the same checks on the remaining backend endpoints) and the olo-chat and olo-ui changes to send tokens.
   - Steps 3.3, 3.4 and 3.10 wait for the 2.5 contract (D4 is accepted)
 
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
@@ -65,7 +67,7 @@ that replaces D8.
 | M0 | Discovery, plan and security reviews | all | 3 | 100% | 100% | ✅ Done |
 | M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 100% | ✅ Merged (PR #2); remediation in M3, M5 |
 | M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 33% | 🟨 D4–D7, revocation bound and RAG targets accepted; contracts await approval |
-| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 9% | 9% | 🟨 3.9 merged (PR #5) |
+| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 27% | 9% | 🟨 3.9 merged (PR #5); 3.1–3.2 in review (olo#1) |
 | M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 0% | 0% | ⬜ |
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 0% | 0% | ⬜ |
 | M6 | Memory and RAG services and ToolGate packages | ToolGate, services | 12 | 0% | 0% | ⬜ |
@@ -73,7 +75,7 @@ that replaces D8.
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **21%** | **17%** | |
+| | **Overall** | | **100** | **24%** | **17%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -435,10 +437,16 @@ The ToolGate documentation describes the identity modes we need, but its
 
 ## M3 — Verified user and service identity; resource authorization (weight 15)
 
-- [ ] **3.1** [olo] Replace the demo JWT handling. `JwtTenantIdDecoder` and `DefaultJwtTenantExtractor` decode claims
+- [x] **3.1** [olo] Replace the demo JWT handling. `JwtTenantIdDecoder` and `DefaultJwtTenantExtractor` decode claims
       without checking signatures, and fall back from `tenantId` to `sub`. Verify issuer, signature, audience and
       expiry; map to a stable internal user id; resolve tenant from trusted membership; remove the `sub` fallback.
-- [ ] **3.2** [olo] Session binding and revocation
+- [x] **3.2** [olo] Session binding and revocation
+      *Implemented in [olo-labs/olo#1](https://github.com/olo-labs/olo/pull/1) (3.1 and 3.2):*
+      - Spring Security resource server: JWKS signature (RS256/ES256), exact `iss`, required `aud`, `exp`/`nbf`, `sub` and `sid`; issuer and audience required at startup
+      - A stable user id from `(iss, sub)`; tenant only from the membership store (`X-OLO-Tenant` picks one); path and body tenants must match; another tenant's sessions and runs are not found
+      - `sid` sessions with epochs; logout, revoke-all and admin revocation; bootstrap memberships for a fresh install
+      - Demo decoders, `olo.ws.jwt.required` and the default tenant removed
+      - Left for 3.11: the worker callback `POST /api/runs/{id}/events`, and the upload and knowledge-source endpoints
 - [ ] **3.3** [olo → olo-mono] Carry the verified identity context into the run as a **non-secret binding reference**
       (server-bound data). Never as client fields, never as stored tokens.
       - Before each user-scoped call, the kernel gets a fresh credential through the M2.5 mechanism and rechecks
