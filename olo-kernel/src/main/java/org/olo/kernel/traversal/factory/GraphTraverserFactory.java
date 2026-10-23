@@ -16,6 +16,7 @@ import org.olo.kernel.traversal.strategy.impl.DynamicGraphExpansionExecutionStra
 import org.olo.kernel.traversal.strategy.impl.ToolCallExpansionExecutionStrategy;
 import org.olo.kernel.traversal.strategy.impl.LinearExecutionStrategy;
 import org.olo.kernel.traversal.strategy.impl.ParallelExecutionStrategy;
+import org.olo.kernel.KernelRuntimeHolder;
 import org.olo.kernel.agent.LlmInvocationService;
 import org.olo.kernel.agent.client.LlmClient;
 import org.olo.kernel.agent.client.impl.OllamaLlmClient;
@@ -81,8 +82,8 @@ public final class GraphTraverserFactory {
     private static GraphTraversalEngine withLlmClientEngine(LlmClient llmClient) {
         PromptRenderer promptRenderer = new WorkflowPromptRenderer();
         ModelProviderResolver modelProviderResolver = new WorkflowModelProviderResolver();
-        LlmInvocationService llmInvocationService =
-                new DefaultLlmInvocationService(promptRenderer, modelProviderResolver, llmClient);
+        LlmInvocationService llmInvocationService = new DefaultLlmInvocationService(
+                promptRenderer, modelProviderResolver, llmClient, KernelRuntimeHolder::toolAccess);
         return buildEngine(llmInvocationService);
     }
 

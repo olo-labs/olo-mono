@@ -5,6 +5,7 @@
 package org.olo.kernel;
 
 import org.olo.bootstrap.registry.WorkflowDefinitionRegistry;
+import org.olo.kernel.agent.tool.AgentToolAccess;
 
 import java.util.Objects;
 
@@ -14,6 +15,7 @@ import java.util.Objects;
 public final class KernelRuntimeHolder {
 
     private static volatile WorkflowDefinitionRegistry registry;
+    private static volatile AgentToolAccess toolAccess = AgentToolAccess.disabled();
 
     private KernelRuntimeHolder() {
     }
@@ -30,7 +32,18 @@ public final class KernelRuntimeHolder {
         return current;
     }
 
+    /** Installs worker-wide ToolGate access for LLM agents. */
+    public static void setToolAccess(AgentToolAccess access) {
+        toolAccess = Objects.requireNonNull(access, "access");
+    }
+
+    /** ToolGate access for LLM agents; {@link AgentToolAccess#disabled()} until the worker installs it. */
+    public static AgentToolAccess toolAccess() {
+        return toolAccess;
+    }
+
     public static void reset() {
         registry = null;
+        toolAccess = AgentToolAccess.disabled();
     }
 }

@@ -18,6 +18,7 @@ import org.olo.worker.llm.WorkerLlmHealthCheck;
 import org.olo.worker.temporal.TemporalConnectionErrors;
 import org.olo.worker.temporal.TemporalServerUnavailableException;
 import org.olo.worker.temporal.TemporalWorkerFactory;
+import org.olo.worker.toolgate.WorkerToolGateSetup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +67,7 @@ public final class WorkerBootstrap {
             Path scanFolder = resolveScanFolder(settings);
             WorkflowDefinitionRegistry registry = loadWorkflowRegistry(scanFolder, settings, refresh);
             verifyLlmEndpoints(registry);
+            configureToolGate(settings);
             startTemporalWorkers(settings, registry);
 
             context = new WorkerRuntimeContext(settings, registry);
@@ -159,6 +161,17 @@ public final class WorkerBootstrap {
             return registry;
         } catch (RuntimeException e) {
             log.error(WorkerBootstrapStep.WORKFLOW_REGISTRY.failureMessage() + " scanFolder=" + scanFolder, e);
+            throw e;
+        }
+    }
+
+    private static void configureToolGate(WorkerSettings settings) {
+        log.info("Step 4/5 (ToolGate): Configuring ToolGate access for LLM agents");
+        try {
+            WorkerToolGateSetup.install(settings, WorkerConfigurationProvider.configurationBaseDirectory());
+            log.info("Step 4/5 (ToolGate) complete: ToolGate access configured");
+        } catch (RuntimeException e) {
+            log.error("ToolGate is enabled but not usable; the worker will not start without it: {}", e.getMessage());
             throw e;
         }
     }

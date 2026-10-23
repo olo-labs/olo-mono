@@ -53,6 +53,7 @@ tasks.withType(Test).configureEach {
     useJUnitPlatform()
     systemProperty 'olo.worker.skipTemporal', 'true'
     systemProperty 'olo.worker.skipLlmHealthCheck', 'true'
+    systemProperty 'olo.worker.skipToolGateProbe', 'true'
 }
 
 tasks.named('javadoc').configure {

@@ -8,9 +8,11 @@ import org.olo.worker.config.exception.WorkerConfigurationException;
 import org.olo.worker.config.model.CacheSettings;
 import org.olo.worker.config.model.InputSettings;
 import org.olo.worker.config.model.ServerSettings;
+import org.olo.worker.config.model.ToolGateSettings;
 import org.olo.worker.config.model.WorkerConfiguration;
 import org.olo.worker.config.model.WorkflowDefinitionsSettings;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +36,7 @@ public final class WorkerConfigurationValidator {
         validateWorkflowDefinitions(configuration.getWorkflowDefinitions(), errors);
         validateInput(configuration.getInput(), errors);
         validateCache(configuration.getCache(), errors);
+        validateToolGate(configuration.getToolgate(), errors);
         return errors.isEmpty()
                 ? WorkerConfigurationValidationResult.success()
                 : WorkerConfigurationValidationResult.failure(errors);
@@ -89,6 +92,36 @@ public final class WorkerConfigurationValidator {
         }
         if (cache.getPort() != null && (cache.getPort() < 1 || cache.getPort() > 65535)) {
             errors.add("cache.port must be between 1 and 65535");
+        }
+    }
+
+    private static void validateToolGate(ToolGateSettings toolgate, List<String> errors) {
+        if (toolgate == null || !toolgate.isEnabled()) {
+            return;
+        }
+        if (isBlank(toolgate.getMcpUrl())) {
+            errors.add("toolgate.mcpUrl is required when toolgate.enabled is true");
+        } else {
+            try {
+                String scheme = URI.create(toolgate.getMcpUrl()).getScheme();
+                if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
+                    errors.add("toolgate.mcpUrl must be an http(s) URL");
+                }
+            } catch (IllegalArgumentException e) {
+                errors.add("toolgate.mcpUrl is not a valid URL");
+            }
+        }
+        if (toolgate.getTimeoutMs() != null && toolgate.getTimeoutMs() < 1) {
+            errors.add("toolgate.timeoutMs must be at least 1");
+        }
+        if (toolgate.getMaxToolRounds() != null && toolgate.getMaxToolRounds() < 0) {
+            errors.add("toolgate.maxToolRounds must not be negative");
+        }
+        if (toolgate.getCaCertificate() != null && toolgate.getCaCertificate().isBlank()) {
+            errors.add("toolgate.caCertificate must not be blank when set");
+        }
+        if (toolgate.getCredentialsDir() != null && toolgate.getCredentialsDir().isBlank()) {
+            errors.add("toolgate.credentialsDir must not be blank when set");
         }
     }
 

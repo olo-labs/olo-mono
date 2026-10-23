@@ -18,3 +18,12 @@ input:
 metadata:
   environment: "docker"
   oloApiBaseUrl: "http://olo:7080"
+# OLO ToolGate: LLM agents ask ToolGate which tools their agentName may use and call them through the Gateway.
+# Tokens: OLO_TOOLGATE_TOKEN_<AGENT_NAME> env vars, or <credentialsDir>/<agentName>.token files.
+toolgate:
+  enabled: false
+  mcpUrl: "https://toolgate-gateway:8451/mcp"
+  caCertificate: "/app/worker/toolgate/gateway-ca.crt"
+  credentialsDir: "/app/worker/toolgate/credentials"
+  timeoutMs: 60000
+  maxToolRounds: 8

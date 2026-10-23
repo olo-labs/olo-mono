@@ -34,3 +34,12 @@ input:
 metadata:
   environment: "local-debug"
   oloApiBaseUrl: "http://localhost:47080"
+
+# OLO ToolGate (see worker-config.docker.yaml). Relative paths resolve against this file's folder.
+toolgate:
+  enabled: false
+  mcpUrl: "https://localhost:18451/mcp"
+  caCertificate: "../../debug/toolgate/gateway-ca.crt"
+  credentialsDir: "../../debug/toolgate/credentials"
+  timeoutMs: 60000
+  maxToolRounds: 8

@@ -19,6 +19,7 @@ includeBuild('../olo-definition') {
         substitute module('org.olo:olo-definition') using project(':olo-definition')
     }
 }
+includeBuild('../olo-toolgate-client')
 if (file('../olo-kernel-context/settings.gradle').isFile()) {
     includeBuild('../olo-kernel-context')
 }
