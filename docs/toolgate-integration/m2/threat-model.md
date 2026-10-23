@@ -9,7 +9,7 @@ current code.
 
 - Conversation history
 - Documents, chunks and embeddings
-- Long-term memory (reserved)
+- Working state (temporary run state)
 - Credentials: user-bound tokens, the service credential, codec keys, database credentials
 - The integrity of effects: tool calls and their downstream changes
 

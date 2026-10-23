@@ -1,21 +1,28 @@
 # M2.5 — Credential lifecycle and renewal contract (P1), and D4
 
-**Status: proposed, awaiting sign-off.** This contract must be agreed before M3 implements it.
+**Status:**
+- **D4 is accepted** (2026-10-23, by the project owner; see the [approval record](README.md#approval-record)).
+- The rest of this contract (lifecycle, renewal and misuse rules) is **still proposed**, awaiting sign-off.
 
-## D4: how OLO gets user-bound ToolGate credentials
+## D4: how OLO gets user-bound ToolGate credentials — Accepted
 
-| Option | How it works | ToolGate work | Assessment |
-|---|---|---|---|
-| **(a) Token exchange** (RFC 8693) | The OLO backend sends ToolGate the user's verified session assertion and receives a short-lived, ToolGate-audience token with `sub` = user and, for path B, `act` = agent | A token endpoint, plus a JWT credential validator on the Gateway (`CredentialKind.JWT` exists in the contract only, gap G1) | Standard; clean subject/actor separation |
-| **(b) Server binding with introspection** | The OLO backend registers a session binding with ToolGate and gets an opaque reference. The Gateway introspects each call. | A binding registry, plus an `INTROSPECTION` validator (contract only, gap G1) | Revocation is immediate; more calls to Control |
-| (c) Static credentials per user | Provision a credential-file entry per user | None | **Rejected.** It doesn't scale, it can't represent `HUMAN` (the Gateway refuses that mode), and it needs a restart or reload per user. |
+**Decision: RFC 8693 token exchange, implemented in ToolGate.** This is ToolGate implementation work (gap G1): a
+token endpoint, plus a JWT credential validator on the Gateway.
 
-**Recommendation: (a) token exchange**, with ToolGate as the issuer.
-- Lifetime is 5 minutes or less.
-- The token is bound to tenant, user, `sessionEpoch` and audience.
-- For path B the `act` claim names the mapped agent.
+- **Who asks:** the authenticated OLO backend requests short-lived credentials with the ToolGate audience.
+- **Path A (memory and RAG):** `sub` is the user.
+- **Path B (business tools):** `sub` is the user, and `act` is the mapped agent (M3.9).
+- **Lifetime:** 5 minutes at most. Tokens are bound to tenant, user, `sessionEpoch` and audience, and are kept in
+  memory only.
+- **Renewal:** through the verified session binding, with current permissions rechecked each time (below).
+- **No fallback authentication mechanism** in the first release.
 
-Option (b) remains the fallback if ToolGate prefers stateful bindings.
+Alternatives considered and not chosen:
+
+| Option | Why not |
+|---|---|
+| Server binding with introspection | A second credential mechanism to build and secure. Excluded: no fallback in the first release. |
+| Static credentials per user | Doesn't scale, can't represent `HUMAN` (the Gateway refuses that mode), and needs a reload per user |
 
 ## Lifecycle
 
@@ -24,7 +31,7 @@ Option (b) remains the fallback if ToolGate prefers stateful bindings.
 | Issuance | Only the OLO backend's credential service may request a user-bound token, authenticated with its own mTLS workload identity. The OLO worker can't call the token endpoint directly. |
 | Audience | Exactly the ToolGate Gateway |
 | Tenant binding | The token's tenant must equal the user's verified membership. ToolGate refuses a mismatch. |
-| Expiry | 5 minutes or less (proposed). No refresh tokens are issued to OLO. |
+| Expiry | 5 minutes at most (D4). No refresh tokens are issued to OLO. |
 | Renewal | A new exchange each time, from the stored non-secret binding (below) |
 | Revocation | Revoking the session bumps `sessionEpoch` on both sides. A token carrying an older epoch is refused. Revoking a grant bumps `authorizationEpoch` (G9). |
 

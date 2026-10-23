@@ -9,7 +9,6 @@ Every resource is a ToolGate `ResourceDescriptor{kind: CUSTOM, locator}`, with a
 | Resource | Locator |
 |---|---|
 | Conversation | `olo://{tenantId}/conversation/{conversationId}` |
-| User memory namespace (long-term memory) | `olo://{tenantId}/memory/{userId}` |
 | Knowledge base | `olo://{tenantId}/kb/{kbId}` |
 | Document | `olo://{tenantId}/kb/{kbId}/doc/{docId}` |
 
@@ -27,9 +26,6 @@ Every resource is a ToolGate `ResourceDescriptor{kind: CUSTOM, locator}`, with a
 | Delete a conversation | `memory.delete` | Own conversations | Separate policy |
 | Share a conversation | `memory.share` | Own conversations | Separate policy |
 | Export a conversation | `memory.export` | Own conversations | Separate policy |
-| Read long-term memory | `ltm.read` | Own namespace | Separate policy (D6) |
-| Write or correct long-term memory | `ltm.write` | Own namespace | Separate policy (D6) |
-| Delete long-term memory | `ltm.delete` | Own namespace | Separate policy (D6) |
 | Query a knowledge base | `rag.query` | Knowledge bases the user may read | ALLOW |
 | Add documents | `rag.ingest` | Knowledge bases the user may write | Separate policy |
 | Replace a document version | `rag.update` | Documents the user may write | Separate policy |
@@ -37,6 +33,7 @@ Every resource is a ToolGate `ResourceDescriptor{kind: CUSTOM, locator}`, with a
 | Share a document or knowledge base | `rag.share` | Owner | Separate policy |
 
 - **No permission implies another.** `rag.query` never allows ingest or delete, and `memory.read` never allows export.
+- **No long-term memory permissions or locators exist** (D6, accepted). They are added only by a future decision.
 - **Wildcard grants (`memory.*`, `rag.*`, `allActions: true`, `match: ANY`) are refused** for these packages.
 - Each permission is a ToolGate action on the package tool. A grant's `EnterpriseScope.actions` lists exact actions only.
 
