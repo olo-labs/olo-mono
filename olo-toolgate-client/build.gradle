@@ -1,0 +1,58 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'org.olo'
+version = '0.1.0-SNAPSHOT'
+
+description = 'OLO ToolGate Gateway client: per-agent tool catalog and governed tool calls over MCP'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+apply from: rootProject.file('../gradle/olo-mono-repo.gradle')
+
+repositories {
+    configureOloMonoRepositories(repositories)
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    api 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core:3.27.3'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.17'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+tasks.named('javadoc').configure {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            groupId = 'org.olo'
+            artifactId = 'olo-toolgate-client'
+        }
+    }
+}

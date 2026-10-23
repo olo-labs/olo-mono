@@ -11,6 +11,7 @@ import org.olo.definition.node.NodeType;
 import org.olo.kernel.agent.LlmInvocationResult;
 import org.olo.kernel.agent.LlmInvocationService;
 import org.olo.kernel.agent.executor.AgentExecutor;
+import org.olo.kernel.agent.tool.AgentToolLoopResult;
 import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.traversal.log.TraversalDiagnostics;
 import org.olo.spi.node.NodeResult;
@@ -55,6 +56,14 @@ public final class LocalLlmAgentExecutor implements AgentExecutor {
             output.put("providerId", invocation.modelCall().providerId());
             output.put("agentExecutor", EXECUTOR_ID);
             output.put("agentMode", EXECUTOR_ID);
+
+            AgentToolLoopResult toolLoop = invocation.toolLoop();
+            if (toolLoop != null) {
+                output.put("agentName", toolLoop.agentName());
+                output.put("toolCatalog", toolLoop.catalog());
+                output.put("toolInvocations", toolLoop.invocationOutputs());
+                output.put("agentOutcome", toolLoop.outcome().name());
+            }
 
             context.getVariables().set("agentStatus", EXECUTOR_ID);
             if (DynamicGraphPlannerSupport.isDynamicGraphPlanner(node)) {

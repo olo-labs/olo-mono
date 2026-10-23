@@ -1,0 +1,81 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.olo.worker.toolgate;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.olo.kernel.KernelRuntimeHolder;
+import org.olo.kernel.agent.tool.AgentToolAccess;
+import org.olo.toolgate.client.ToolGateException;
+import org.olo.worker.config.WorkerSettings;
+import org.olo.worker.config.model.ServerSettings;
+import org.olo.worker.config.model.ToolGateSettings;
+import org.olo.worker.config.model.WorkerConfiguration;
+import org.olo.worker.config.model.WorkflowDefinitionsSettings;
+
+import java.nio.file.Path;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class WorkerToolGateSetupTest {
+
+    @AfterEach
+    void reset() {
+        KernelRuntimeHolder.setToolAccess(AgentToolAccess.disabled());
+        System.setProperty(WorkerToolGateSetup.SKIP_PROBE_PROPERTY, "true");
+    }
+
+    @Test
+    void disabledLeavesAgentsWithoutTools() {
+        AgentToolAccess access = WorkerToolGateSetup.install(settings(ToolGateSettings.builder().enabled(false).build()), Path.of("."));
+
+        assertThat(access.isEnabled()).isFalse();
+        assertThat(KernelRuntimeHolder.toolAccess().isEnabled()).isFalse();
+    }
+
+    @Test
+    void enabledInstallsAccessWithTheWorkerDefaultRounds() {
+        AgentToolAccess access = WorkerToolGateSetup.install(settings(ToolGateSettings.builder()
+                .enabled(true)
+                .mcpUrl("https://localhost:18451/mcp")
+                .credentialsDir("toolgate/credentials")
+                .maxToolRounds(5)
+                .build()), Path.of("config"));
+
+        assertThat(access.isEnabled()).isTrue();
+        assertThat(access.defaultMaxToolRounds()).isEqualTo(5);
+        assertThat(KernelRuntimeHolder.toolAccess()).isSameAs(access);
+    }
+
+    @Test
+    void unreachableGatewayStopsTheWorker() {
+        System.setProperty(WorkerToolGateSetup.SKIP_PROBE_PROPERTY, "false");
+
+        assertThatThrownBy(() -> WorkerToolGateSetup.install(settings(ToolGateSettings.builder()
+                .enabled(true)
+                .mcpUrl("http://127.0.0.1:1/mcp")
+                .timeoutMs(2000)
+                .build()), Path.of(".")))
+                .isInstanceOf(ToolGateException.class);
+        assertThat(KernelRuntimeHolder.toolAccess().isEnabled()).isFalse();
+    }
+
+    @Test
+    void relativePathsResolveAgainstTheConfigFolder() {
+        assertThat(WorkerSettings.resolveAgainst("toolgate/ca.crt", Path.of("/etc/olo")))
+                .isEqualTo(Path.of("/etc/olo/toolgate/ca.crt").normalize());
+        assertThat(WorkerSettings.resolveAgainst(null, Path.of("/etc/olo"))).isNull();
+    }
+
+    private static WorkerSettings settings(ToolGateSettings toolgate) {
+        return new WorkerSettings(WorkerConfiguration.builder()
+                .id("worker")
+                .server(ServerSettings.builder().port(8080).build())
+                .workflowDefinitions(WorkflowDefinitionsSettings.builder().scanFolder("/defs").build())
+                .toolgate(toolgate)
+                .build());
+    }
+}

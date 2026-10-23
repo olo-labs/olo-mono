@@ -8,6 +8,7 @@ import org.olo.worker.config.model.CacheSettings;
 import org.olo.worker.config.model.InputSettings;
 import org.olo.worker.config.model.ServerSettings;
 import org.olo.worker.config.model.TemporalSettings;
+import org.olo.worker.config.model.ToolGateSettings;
 import org.olo.worker.config.model.WorkerConfiguration;
 import org.olo.worker.config.model.WorkflowDefinitionsSettings;
 
@@ -88,6 +89,30 @@ public final class WorkerSettings {
 
     public CacheSettings cache() {
         return configuration.getCache();
+    }
+
+    public ToolGateSettings toolgate() {
+        return configuration.getToolgate();
+    }
+
+    public boolean toolgateEnabled() {
+        ToolGateSettings toolgate = configuration.getToolgate();
+        return toolgate != null && toolgate.isEnabled();
+    }
+
+    /**
+     * Resolves a ToolGate path setting ({@code caCertificate}, {@code credentialsDir}) against {@code baseDirectory}
+     * when it is relative; {@code null} stays {@code null}.
+     */
+    public static Path resolveAgainst(String path, Path baseDirectory) {
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+        Path value = Path.of(path);
+        if (value.isAbsolute()) {
+            return value.normalize();
+        }
+        return Objects.requireNonNull(baseDirectory, "baseDirectory").resolve(value).normalize();
     }
 
     public Map<String, Object> metadata() {

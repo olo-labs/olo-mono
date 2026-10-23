@@ -31,6 +31,7 @@ import java.util.Objects;
     "temporal",
     "cache",
     "input",
+    "toolgate",
     "metadata"
 })
 public final class WorkerConfiguration {
@@ -42,6 +43,7 @@ public final class WorkerConfiguration {
     private final TemporalSettings temporal;
     private final CacheSettings cache;
     private final InputSettings input;
+    private final ToolGateSettings toolgate;
     private final Map<String, Object> metadata;
 
     private WorkerConfiguration(Builder builder) {
@@ -52,6 +54,7 @@ public final class WorkerConfiguration {
         this.temporal = builder.temporal;
         this.cache = builder.cache;
         this.input = builder.input;
+        this.toolgate = builder.toolgate;
         this.metadata = builder.metadata == null
                 ? Map.of()
                 : Collections.unmodifiableMap(new LinkedHashMap<>(builder.metadata));
@@ -96,6 +99,11 @@ public final class WorkerConfiguration {
         return input;
     }
 
+    @JsonProperty("toolgate")
+    public ToolGateSettings getToolgate() {
+        return toolgate;
+    }
+
     @JsonProperty("metadata")
     public Map<String, Object> getMetadata() {
         return metadata;
@@ -116,12 +124,13 @@ public final class WorkerConfiguration {
                 && Objects.equals(temporal, that.temporal)
                 && Objects.equals(cache, that.cache)
                 && Objects.equals(input, that.input)
+                && Objects.equals(toolgate, that.toolgate)
                 && Objects.equals(metadata, that.metadata);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, server, workflowDefinitions, temporal, cache, input, metadata);
+        return Objects.hash(id, name, server, workflowDefinitions, temporal, cache, input, toolgate, metadata);
     }
 
     @JsonPOJOBuilder(withPrefix = "")
@@ -134,6 +143,7 @@ public final class WorkerConfiguration {
         private TemporalSettings temporal;
         private CacheSettings cache;
         private InputSettings input;
+        private ToolGateSettings toolgate;
         private Map<String, Object> metadata;
 
         @JsonProperty("id")
@@ -175,6 +185,12 @@ public final class WorkerConfiguration {
         @JsonProperty("input")
         public Builder input(InputSettings input) {
             this.input = input;
+            return this;
+        }
+
+        @JsonProperty("toolgate")
+        public Builder toolgate(ToolGateSettings toolgate) {
+            this.toolgate = toolgate;
             return this;
         }
 
