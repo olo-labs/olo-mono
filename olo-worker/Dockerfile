@@ -4,7 +4,9 @@ WORKDIR /build
 
 COPY . .
 
-RUN find . -name gradlew -exec chmod +x {} + && chmod +x publish-libs.sh && ./publish-libs.sh
+# Windows checkouts (core.autocrlf=true) give gradlew/*.sh CRLF endings, which break the shebang.
+RUN find . \( -name gradlew -o -name '*.sh' \) -type f -exec sed -i 's/\r$//' {} + \
+    && find . -name gradlew -exec chmod +x {} + && chmod +x publish-libs.sh && ./publish-libs.sh
 RUN gradle -p olo-worker installDist --no-daemon -x test
 
 FROM eclipse-temurin:21-jre

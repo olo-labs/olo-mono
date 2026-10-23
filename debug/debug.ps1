@@ -190,12 +190,18 @@ function Invoke-Compose {
 }
 
 function Get-ContainerState([string]$Name) {
-    $raw = Invoke-Docker inspect -f '{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{end}}|{{index .Config.Labels "com.docker.compose.project"}}' $Name
-    if ($LASTEXITCODE -ne 0 -or -not $raw -or $raw -match 'No such object') {
+    # Parse JSON rather than a Go template: PowerShell 5.1 strips the quotes a label lookup needs.
+    $raw = Invoke-Docker inspect $Name
+    if ($LASTEXITCODE -ne 0 -or -not $raw) {
         return @{ Exists = $false; Status = 'missing'; Health = ''; Project = '' }
     }
-    $parts = $raw.Trim().Split('|')
-    return @{ Exists = $true; Status = $parts[0]; Health = $parts[1]; Project = $parts[2] }
+    $info = @($raw | ConvertFrom-Json)[0]
+    $health = ''
+    if ($info.State.PSObject.Properties['Health'] -and $info.State.Health) { $health = $info.State.Health.Status }
+    $project = ''
+    $labels = $info.Config.Labels
+    if ($labels -and $labels.PSObject.Properties['com.docker.compose.project']) { $project = $labels.'com.docker.compose.project' }
+    return @{ Exists = $true; Status = $info.State.Status; Health = $health; Project = $project }
 }
 
 function Get-HttpText([string]$Url) {
@@ -383,8 +389,18 @@ function Confirm-Model {
         Write-Ok "$Model already present"
     } else {
         Write-Info "Pulling $Model (first run downloads a few GB)..."
-        & docker exec olo-ollama ollama pull $Model
-        if ($LASTEXITCODE -ne 0) { throw "ollama pull $Model failed." }
+        # ollama prints progress on stderr; don't let PowerShell 5.1 turn that into a terminating error.
+        $prev = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            & docker exec olo-ollama ollama pull $Model 2>&1 | ForEach-Object { "$_" } |
+                Where-Object { $_ -notmatch 'pulling [0-9a-f]+:\s+\d+%' -or $_ -match '100%' } |
+                ForEach-Object { Write-Host "         $_" }
+            $pullExit = $LASTEXITCODE
+        } finally {
+            $ErrorActionPreference = $prev
+        }
+        if ($pullExit -ne 0) { throw "ollama pull $Model failed (exit $pullExit)." }
         Write-Ok "$Model pulled"
     }
 
