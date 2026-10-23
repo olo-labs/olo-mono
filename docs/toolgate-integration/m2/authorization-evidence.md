@@ -1,6 +1,7 @@
 # M2.10 — Authorization evidence for memory and RAG services (P1)
 
-**Status: proposed, awaiting sign-off.** This contract must be agreed before M4.6 implements it.
+**Status: accepted** on 2026-10-23 by the project owner; see the [approval record](README.md#approval-record). M4.6
+implements it.
 
 ## The problem
 
