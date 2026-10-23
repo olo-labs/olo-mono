@@ -27,11 +27,19 @@ deletion requirements.
 - **Counted:** M0 is complete.
 - **Implemented, not yet counted:** M1 is in review as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2)
   on branch `feature/toolgate-integration`. It counts once the PR is merged.
-- **Plan revisions:** two security reviews are folded in. They set the user/resource authorization model and the
-  deterministic memory/RAG flow, and this revision also covers fresh-install scope, service-job identity, payload
-  protection, unknown-outcome reconciliation and revocation timing.
+- **Plan revisions:** three security reviews are folded in. They set the user/resource authorization model and the
+  deterministic memory/RAG flow, and cover fresh-install scope, service-job identity, payload protection,
+  unknown-outcome reconciliation, revocation of derived context, authorization evidence for services, and
+  credential renewal.
 - **M1 remediation:** tracked as M1-R1 to M1-R6.
-- **Next:** M2.
+- **Next:** M2. The architecture is cleared to proceed. Three contracts must be agreed in M2 before anything that
+  depends on them is built: derived-context revocation (M2.4), authorization evidence (M2.10) and credential renewal
+  (M2.5).
+
+**The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
+identities, and empty application stores. No migration tools, legacy readers, compatibility modes, or support for
+executions started under the old implementation will be built. A change to this boundary needs a new decision
+that replaces D8.
 
 ## Progress
 
@@ -138,6 +146,25 @@ Authenticated user
   Frontend tokens are never forwarded downstream: no token passthrough, per the MCP security guidance and the
   OAuth 2.0 Security Best Current Practice (RFC 9700).
 - **Bearer and refresh tokens are never persisted**: not in workflow state, Temporal history, logs or service storage.
+- **Protection is about misuse, not reuse.** A legitimate retry may present the same bearer credential again.
+  Credentials must resist:
+  - impersonation
+  - use outside their intended audience, tenant or session
+  - duplicate effects, which dedup (M5.3) prevents, not the credential
+
+  Sender binding (for example mTLS-bound or DPoP-style tokens) is required only if M2.5 decides so.
+
+### Credential renewal in long-running work
+
+Workflows and approvals can outlive a user credential. The rules (contract in M2.5):
+
+- The run stores only a **non-secret binding reference**: the verified session binding, tenant and user, never a token.
+- Before each user-scoped call, OLO gets a fresh short-lived credential through a trusted mechanism, either the OLO
+  backend's credential service or ToolGate token exchange (D4). It then rechecks that the user's current authority
+  still covers the operation and resource.
+- If the session has expired or been revoked, the user-scoped operation **pauses for re-authentication** or is
+  **terminated**. Which one is set per operation type in M2.5.
+- A user-scoped operation is **never silently switched** to the path C service principal, or to any other identity.
 
 ### Permissions
 
@@ -164,9 +191,18 @@ for approval. Delete, share, export and long-term memory changes each have their
 | OLO | Authenticated identity context, and deterministic orchestration of when memory loads, retrieval runs and turns persist |
 | Agents | Consuming the authorized context. They cannot widen it. |
 
-**No bypassing ToolGate.** The services accept calls only from ToolGate executors, authenticated with mTLS or
-audience-restricted service credentials, and they are not network-reachable from the OLO worker, the backend or the
-model. A request must carry a valid ToolGate permit reference and verified scope, or the service refuses it (M4.6).
+**No bypassing ToolGate.** The services accept calls only from ToolGate executors, and are not network-reachable
+from the OLO worker, the backend or the model. Two separate checks apply (contract in M2.10, built in M4.6):
+
+1. **Who is calling.** mTLS or audience-restricted service credentials prove the caller is a ToolGate executor.
+   That alone does not prove the user and resource scope it sends were authorized.
+2. **What was authorized.** Each request carries authorization evidence that the service verifies itself. Either:
+   - a permit **cryptographically signed by ToolGate Control**, checked against Control's published keys, or
+   - an authenticated verification call to ToolGate for the permit reference.
+
+   The evidence binds the audience (that specific service), tenant, subject or service principal, operation,
+   resource, a request fingerprint (a hash of the exact request), and an expiry. The service refuses the request if
+   any of them is missing, expired, or doesn't match the request it received.
 
 ### Revocation timing
 
@@ -177,6 +213,19 @@ M8 measures it. Authorization is checked again at three points:
    grants before each LLM call that would include them. Revoked items are dropped.
 2. **Before an effect executes.** In-flight and approved-but-not-run operations are re-authorized at dispatch.
 3. **Before a result is released.** Results and cached content are re-checked when they are fetched or returned.
+
+**Derived context counts too.** Dropping the original chunk or message isn't enough. An earlier model response, a
+summary, or a child agent's output may repeat revoked information. So:
+
+- Every piece of context the run builds carries its **source dependencies**: the message, document version and chunk
+  ids it was derived from. This covers model responses, summaries, child-agent outputs and tool results that
+  quoted protected content.
+- At check points 1 and 3, anything that depends on a revoked source is discarded or regenerated without it, before
+  the next model call and before any result is released.
+- Where dependencies can't be tracked precisely, the derived item is treated as depending on everything that was in
+  its prompt.
+- Stored conversation summaries are versioned with their dependencies (M6.1), and are rebuilt when a source is
+  revoked or deleted.
 
 ### Memory types
 
@@ -225,6 +274,9 @@ still has to supply that filter and enforce it.
 - [x] Fold in the second review: fresh-install scope, direct-user Gateway gap, service-job identity, payload
       protection timing, unknown-outcome reconciliation, explicit memory permissions, revocation timing, document
       consistency, executor-to-service calls
+- [x] Fold in the third review: revocation of derived context, authorization evidence that services verify,
+      credential renewal, dedup scope and retention, turn assembly and completion, RAG quality and performance
+      targets, a fixed installation boundary
 
 ## M1 — ToolGate client and agent tool loop (weight 10) 🟨 implemented, in review
 
@@ -281,21 +333,52 @@ The ToolGate documentation describes the identity modes we need, but its
       provenance, signing or binding, and the expiry and audience rules. Agreed across olo, olo-mono and ToolGate.
 - [ ] **2.3** Resource and permission model: resource identifiers; owner, membership and sharing semantics; the
       permission set from *Permissions*, with no wildcard grants
-- [ ] **2.4** Invocation lifecycle contract:
-      - Logical-operation ids, and an idempotency scope of subject + request (reusing an id with changed arguments is a conflict)
+- [ ] **2.4** Invocation lifecycle and revocation contract (**P1**):
+      - **Dedup key:** tenant + subject or service principal + logical-operation id + request fingerprint (a hash of
+        the operation, resource and exact arguments). Credential rotation doesn't change the key. Reusing the key
+        with a different fingerprint is a conflict.
+      - **Dedup retention:** at least the longest workflow lifetime plus the approval expiry. Once a record has
+        expired, recovery treats the operation as `OUTCOME_UNKNOWN` and reconciles it (M5.4); it never re-sends blindly.
       - Statuses, including `OUTCOME_UNKNOWN`
-      - Cancellation, and approval resume
-      - Result retrieval
-      - **The revocation bound** (a number of seconds), with the three check points from *Revocation timing*
-- [ ] **2.5** Credential lifecycle for user-bound and service credentials: issuance, audience, expiry, renewal,
-      revocation and tenant binding. Decide D4.
+      - Cancellation, approval resume, and result retrieval
+      - **The revocation bound** (a number of seconds), the three check points, and **source-dependency tracking for
+        derived context** (what is recorded, how a derived item is discarded or rebuilt), from *Revocation timing*
+- [ ] **2.5** Credential lifecycle and renewal contract (**P1**), for user-bound and service credentials:
+      - Issuance, audience, expiry, revocation and tenant binding
+      - Renewal during long-running workflows and approvals: the non-secret binding reference the run stores, the
+        trusted mechanism that issues fresh credentials, and rechecking current authority
+      - Behavior when the session has expired or been revoked: pause for re-authentication or terminate, per
+        operation type. Never fall back to the service principal.
+      - Misuse protection: impersonation, use outside the audience, tenant or session, and whether sender binding is
+        required
+      - Decide D4
 - [ ] **2.6** Decide D5: who owns the memory and RAG services, and where they are deployed
 - [ ] **2.7** Decide D6: whether long-term user memory ships in the first release
 - [ ] **2.8** Decide D7: payload codec or references, and key management for it
 - [ ] **2.9** Threat-model update for paths A, B and C, in ToolGate's `docs/security` and in OLO
+- [ ] **2.10** Authorization evidence contract (**P1**): how a memory or RAG service validates what was authorized.
+      - The format: a Control-signed permit with key discovery and rotation, or authenticated verification against ToolGate
+      - The required claims: audience, tenant, subject or service principal, operation, resource, request
+        fingerprint, expiry
+      - How replay within the expiry is bounded
+- [ ] **2.11** Conversation turn contract:
+      - How the accepted user message reaches the prompt exactly once
+      - What happens when persisting the response fails after it was generated
+      - When a turn counts as complete (M7.2)
+- [ ] **2.12** RAG quality and performance targets, each with a measurement method and an evaluation set:
+      - Retrieval relevance within the authorized scope (for example recall@k on a labelled set)
+      - Citation correctness: every citation names an authorized source and version that contains the cited text
+      - Indexing freshness: time from ingest to searchable
+      - Context limits respected
+      - Query and turn latency (p50 and p95)
+      - Expected concurrent users and documents
 
-**Acceptance.** All three repos sign off a written contract set (2.2–2.5). D4–D7 are decided. Every gap in 2.1 has an
-owner and a milestone.
+**Acceptance.**
+- All three repos sign off a written contract set (2.2–2.5, 2.10, 2.11).
+- The three P1 contracts (2.4 derived-context revocation, 2.5 renewal, 2.10 authorization evidence) are agreed
+  before M3–M7 implement them.
+- D4–D7 are decided, and the targets in 2.12 are set.
+- Every gap in 2.1 has an owner and a milestone.
 
 ## M3 — Verified user and service identity; resource authorization (weight 15)
 
@@ -303,13 +386,20 @@ owner and a milestone.
       without checking signatures, and fall back from `tenantId` to `sub`. Verify issuer, signature, audience and
       expiry; map to a stable internal user id; resolve tenant from trusted membership; remove the `sub` fallback.
 - [ ] **3.2** [olo] Session binding and revocation
-- [ ] **3.3** [olo → olo-mono] Carry the verified identity context into the run as server-bound data, never as client
-      fields and never as stored tokens. The kernel refuses user-scoped calls when the context is absent or expired.
+- [ ] **3.3** [olo → olo-mono] Carry the verified identity context into the run as a **non-secret binding reference**
+      (server-bound data). Never as client fields, never as stored tokens.
+      - Before each user-scoped call, the kernel gets a fresh credential through the M2.5 mechanism and rechecks
+        current authority.
+      - On an expired or revoked session it pauses for re-authentication or terminates the operation. It never
+        substitutes the service principal.
 - [ ] **3.4** [ToolGate] **Implement a user-bound Gateway path.**
       - A short-lived, audience-restricted, tenant-bound credential for the signed-in user that the Gateway accepts in
         `HUMAN` mode.
       - No OLO agent identity is required or consulted.
-      - Covered by tests that it can't be minted, replayed or widened by the OLO worker.
+      - Tests show the OLO worker can't mint the credential, can't impersonate another user with it, and can't use it
+        outside its audience, tenant or session. Legitimate retries may present it again; duplicate effects are
+        prevented by dedup (M5.3).
+      - Sender binding is included if M2.5 requires it.
 - [ ] **3.5** [ToolGate] Service-principal path for path C: a dedicated platform workload identity in `SERVICE` mode,
       separate from all OLO workflow agents, with explicit resource-scoped grants
 - [ ] **3.6** [ToolGate] Resolve the user's and team's current permissions independently of OLO workflow agents
@@ -340,15 +430,20 @@ owner and a milestone.
 - [ ] **4.4** [ToolGate] Audit records: subject, actor, workload, resource, operation, decision, policy version,
       invocation correlation and outcome
 - [ ] **4.5** [ToolGate] Qualification tests proving identity survives Gateway → Control → executor → service → storage
-- [ ] **4.6** [ToolGate, services] Authenticated executor-to-service calls:
-      - mTLS or audience-restricted service credentials, plus a permit reference and the verified scope on every request
-      - The services refuse anything else
+- [ ] **4.6** [ToolGate, services] Executor-to-service calls, to the M2.10 contract:
+      - **Caller authentication:** mTLS or audience-restricted service credentials prove the caller is a ToolGate
+        executor
+      - **Authorization evidence:** every request carries a Control-signed permit, or a reference the service
+        verifies with ToolGate. The service checks audience, tenant, subject or service principal, operation,
+        resource, request fingerprint and expiry against the request it actually received.
       - Network policy keeps the services unreachable from the OLO worker, the backend and the model
 
 **Acceptance.**
 - A test package sees exactly the verified principal and resource. A forged argument can't change it, and a missing
   identity is refused.
 - A direct call to a memory or RAG service that bypasses ToolGate is refused.
+- A genuine executor is refused if it sends a scope, resource, operation or request body that doesn't match its
+  authorization evidence, or evidence that is expired or meant for another service.
 
 ## M5 — Durable invocation, payload protection, retries and approvals (weight 12)
 
@@ -359,8 +454,12 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       operation. On recovery, recorded operations are resumed, never regenerated.
 - [ ] **5.2** [olo-mono] **M1-R6:** payload protection (D7) ships together with 5.1. Sensitive arguments, prompts,
       retrieved content and results are encrypted or stored by reference. Bearer and refresh tokens are never persisted.
-- [ ] **5.3** [ToolGate] Dedup is bound to the authenticated subject and the request. Reusing an id with changed
-      arguments is a conflict, not a silent replay.
+- [ ] **5.3** [ToolGate, olo-mono] Dedup on the M2.4 key: tenant + subject or service principal + logical-operation id
+      + request fingerprint.
+      - Credential rotation and renewal don't change the key.
+      - Reusing the key with a different fingerprint is a conflict, not a silent replay.
+      - Records are kept for the M2.4 retention period. After expiry, a recovering operation becomes `OUTCOME_UNKNOWN`
+        and goes through reconciliation (5.4).
 - [ ] **5.4** [olo-mono, ToolGate] **M1-R5: unknown outcomes.** Transport dedup is separate from executor and business
       idempotency. Polling the invocation status alone can't settle a timeout after an external effect, so:
       - Each side-effecting executor declares its reconciliation method: a downstream idempotency key where the
@@ -370,13 +469,20 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
 - [ ] **5.5** [olo-mono, ToolGate] **M1-R4:** approvals resume the original invocation. The run waits on an
       authenticated notification or bounded polling, then retrieves the result. Covers expiry, denial, cancellation,
       and re-authorizing at dispatch (*Revocation timing*, point 2).
+
+      Resuming after a long wait follows *Credential renewal*: a fresh credential comes from the stored binding
+      reference, and current authority is rechecked. An expired or revoked session means re-authentication or
+      termination, never the service principal.
 - [ ] **5.6** [olo-mono] Bounded retries, timeouts and cancellation propagated to ToolGate
 - [ ] **5.7** Tests:
       - a crash after dispatch but before recording
       - an activity retry
       - an unknown outcome that stays undispatched until reconciled
+      - a dedup record that has expired, then recovery
+      - a credential rotated mid-operation, keeping the same dedup key
       - approve, deny and expire
       - a grant revoked while waiting
+      - a session that expires during an approval
       - no tokens or cleartext sensitive payloads in Temporal history
 
 **Acceptance.**
@@ -398,7 +504,8 @@ The stores start empty (fresh install), so no import or migration is built.
       - Tenant, owner and membership on every record, with explicit sharing
       - Transactional, idempotent writes keyed by stable message ids, with concurrency control
       - Defined ordering for simultaneous turns
-      - Versioned summaries and context budgets
+      - Versioned summaries that record their source dependencies and are rebuilt when a source is revoked or deleted
+      - Context budgets
       - Deletion that also removes derived summaries and embeddings
 - [ ] **6.2** Working-state store with bounded retention
 - [ ] **6.3** Long-term user memory as a separate store, with provenance, correction, deletion and retention, if D6
@@ -425,13 +532,22 @@ document never reappears in search.
 
 - [ ] **7.1** [olo-mono] Governed-call abstraction for deterministic path A and path C operations. It is neither an
       AGENT node nor model-selected, and it runs on M5's durable dispatch.
-- [ ] **7.2** [olo-mono] Conversation lifecycle, replacing per-agent memory hooks:
+- [ ] **7.2** [olo-mono] Conversation lifecycle, replacing per-agent memory hooks (contract in M2.11):
       1. Authorize the conversation.
       2. **Persist each accepted user message** idempotently, under its stable message id, once it is accepted.
-      3. Load permitted history once for that turn, and pass the relevant context to the workflow's agents.
-      4. **Persist the finalized response** idempotently, under its stable message id, once the response is final.
+      3. Load permitted history once for that turn. Assemble the prompt so the accepted user message appears
+         **exactly once**: history is loaded up to, but not including, the current message id, and the current message
+         is added as the turn's input.
+      4. Pass the relevant context, with its source dependencies, to the workflow's agents.
+      5. **Persist the finalized response** idempotently, under its stable message id.
+      6. **Mark the turn complete only after the response is durably recorded.** The response is released to the user
+         as final only then.
+         - If persisting fails after the response was generated, the append is retried with the same message id.
+         - If it still fails within the retry bound, the turn ends as a failure. The unrecorded response is not
+           released as final.
 
-      Child agents and retries never write history. Lifecycle rules by outcome:
+      Only the conversation lifecycle writes history; child agents never do. Retries may repeat idempotent persistence
+      calls, but must never create duplicate records. Lifecycle rules by outcome:
 
       | Turn outcome | What is persisted |
       |---|---|
@@ -441,8 +557,12 @@ document never reappears in search.
       | Streaming | Nothing while streaming. The response is persisted once, when finalized. A broken stream follows the failure rule. |
       | Pending approval | The accepted user message, plus a pending marker. The response is persisted when the resumed invocation (M5.5) finishes. |
 
-- [ ] **7.3** [olo-mono] Context re-check before each LLM call (*Revocation timing*, point 1). Already-loaded history
-      and retrieved chunks are re-authorized, and revoked items are dropped.
+- [ ] **7.3** [olo-mono] Context re-check before each LLM call and before a result is released (*Revocation timing*,
+      points 1 and 3).
+      - Already-loaded history and retrieved chunks are re-authorized, and revoked items are dropped.
+      - **Derived context** is checked through its source dependencies: earlier model responses, summaries,
+        child-agent outputs and tool results. Anything that depends on a revoked source is discarded, or regenerated
+        without it, before the next model call and before release.
 - [ ] **7.4** [olo-mono] Document lifecycle: ingest and delete are governed calls under the user. Scheduled indexing
       runs on path C under the service principal, with resource-scoped grants.
 - [ ] **7.5** [olo-mono] RAG retrieval as a governed call. Results reach agents as untrusted, cited context.
@@ -452,7 +572,10 @@ document never reappears in search.
 **Acceptance.**
 - Each turn persists exactly the records the lifecycle table requires, with no duplicates under retries or
   concurrent turns.
+- The accepted user message appears in the prompt exactly once.
+- A turn is never reported complete before its response is durably recorded.
 - Changing the workflow's agent doesn't change what history or documents the user can reach.
+- A response or summary derived from a revoked source is not reused in a later prompt or released.
 
 ## M8 — Isolation, revocation, recovery and real-stack tests (weight 8)
 
@@ -469,8 +592,15 @@ pass for M8 to count.
       7. Crash recovery does not repeat completed side effects, and an unknown outcome is not redispatched.
       8. An approval resumes the original operation.
       9. Document ACL changes and deletion affect retrieval within the M2.4 bound, and a deleted document never reappears.
-- [ ] **8.2** Revocation timing, measured at all three check points, including already-loaded context and in-flight
-      operations, against the M2.4 bound
+- [ ] **8.2** Revocation timing, measured at all three check points against the M2.4 bound. Covers already-loaded
+      context, **derived context** (an earlier response, summary or child-agent output that quoted the revoked
+      source), and in-flight operations.
+- [ ] **8.2a** RAG quality and performance, measured against the M2.12 targets on the evaluation set:
+      - retrieval relevance within the authorized scope
+      - citation correctness
+      - indexing freshness
+      - context limits
+      - query and turn latency (p50 and p95) at the expected concurrent load
 - [ ] **8.3** Debug stack `debug.ps1 -ToolGate`: start or attach ToolGate and the memory/RAG services, add readiness
       probes, provision identities (old 6.1)
 - [ ] **8.4** Multi-agent `incident-recovery` pipeline on ToolGate's `server-recovery` mocks (old M5), on path B with
@@ -490,8 +620,11 @@ pass for M8 to count.
 - [ ] **8.5** Evidence kept: run transcripts, the ToolGate audit log, the test reports
 - [ ] **8.6** Re-run 8.1–8.5 after M9, on the stack without local tool code
 
-**Acceptance.** All nine cases pass and revocation is within the bound, in both runs. The incident-recovery run
-completes after approval, and every call is audited with the right subject, actor, resource and decision.
+**Acceptance.**
+- In both runs: all nine cases pass, revocation (including derived context) stays within the bound, and the RAG
+  quality and performance targets are met.
+- The incident-recovery run completes after approval, and every call is audited with the right subject, actor,
+  resource and decision.
 
 ## M9 — Remove legacy local tool code; coordinate backend and UI (weight 10)
 
@@ -536,11 +669,19 @@ then re-run (8.6).
 - [ ] **10.2** Credential rotation for user-bound, service, executor-to-service and database credentials, with tested
       rollover. Also rotation of the payload-protection keys (M5.2).
 - [ ] **10.3** Redacted diagnostics: no tokens, prompts or retrieved content in logs or errors
-- [ ] **10.4** Bounded retries, timeouts, cancellation, and per-user quotas
+- [ ] **10.4** Bounded retries, timeouts, cancellation, and per-user quotas. A load test at the M2.12 concurrency on
+      staging confirms the latency and freshness targets hold with quotas on.
 - [ ] **10.5** Backups, restore tests, and retention policies for conversations, working state, long-term memory and documents
 - [ ] **10.6** **Clean-install acceptance test.** On empty infrastructure, follow only the documented steps to provision
       identities, grants (including the path C service principal), the memory and RAG services, ToolGate packages and
-      the new workflows. Then run M8's smoke subset.
+      the new workflows. Then check:
+      - M8's smoke subset passes.
+      - A **newly created pipeline** runs end to end with all local tool execution removed. No local tool module is
+        on the classpath, and nothing falls back to one.
+      - Workflow JSON with legacy fields (`tools[]`, a TOOL node, `{availableToolsJson}`, `toolCalls`) is **rejected
+        with a clear validation error** naming the field. It is not accepted, converted or ignored.
+
+      This tests the new contract without supporting the old one.
 - [ ] **10.7** Grant guide: explicit `memory.read` and `memory.append` (ALLOW) for chat on the user's own conversations,
       plus separate policies for `memory.delete`, `memory.share`, `memory.export`, long-term memory changes and each
       RAG operation. No wildcard grants.
@@ -563,7 +704,7 @@ restore test and a credential rotation.
 | D5 | Who owns the memory and RAG services, and where do they run? | Separate services next to ToolGate's executors, never in the OLO worker. They own the database credentials. | Open, **decided in M2.6** |
 | D6 | Is long-term user memory in the first release? | The design covers it. Building it can follow conversation history and RAG. | Open, **decided in M2.7** |
 | D7 | How are sensitive Temporal payloads protected? | An encryption payload codec, or keeping only references in history. Implemented with durable state in M5.2. | Open, **decided in M2.8** |
-| D8 | Existing data and executions? | **Out of scope.** Fresh installation only: no migration, no compatibility readers, no support for old executions. | Decided |
+| D8 | Existing data and executions? | **Out of scope, and the boundary is fixed.** One new installation contract: no migration tools, legacy readers, compatibility modes, or support for executions started under the old implementation. Changing this needs a new decision that replaces D8. | Decided |
 
 ## Risks
 
@@ -575,6 +716,11 @@ restore test and a credential rotation.
 | A retry or crash repeats a side effect, or an unknown outcome is retried blindly | Double remediation, duplicate memory records | Durable recorded operations (M5.1), executor-specific reconciliation, no automatic redispatch (M5.4), tests (M8.1 cases 6–7) |
 | Sensitive data or tokens reach Temporal history before protection exists | Data exposure | Payload protection ships with durable state (M5.2), tokens are never persisted, redaction (M10.3) |
 | Revocation lags behind already-loaded context or in-flight work | A user keeps seeing or affecting data after losing access | A defined bound (M2.4), three check points (M5.5, M7.3, M6.4), measured in M8.2 |
+| Revoked information survives in derived context (an earlier response, summary or child-agent output) | Revoked content keeps reaching the model or the user | Source-dependency tracking, discard or rebuild before the next model call and before release (M2.4, M6.1, M7.3), tested in M8.2 |
+| A genuine executor sends a scope it wasn't authorized for | Services trust a forged user or resource scope | Services verify signed or ToolGate-verified authorization evidence bound to the request, not just mTLS (M2.10, M4.6) |
+| A long workflow or approval outlives the user's credential | Calls fail mid-run, or worse, fall back to a broader identity | Non-secret binding reference, fresh credentials and an authority recheck; re-authenticate or terminate, never fall back (M2.5, M3.3, M5.5) |
+| Dedup records expire before a slow recovery | A duplicate effect after the window | Retention covers the longest workflow plus approval expiry; after expiry → `OUTCOME_UNKNOWN` and reconciliation (M2.4, M5.3) |
+| Secure RAG that retrieves poorly or slowly | The platform is safe but not usable | Quality and performance targets set in M2.12, measured in M8.2a and load-tested in M10.4 |
 | A deletion races an indexing job | Deleted content reappears | Tombstones and version checks (M6.4), tested in M6.7 and M8.1 case 9 |
 | Services reachable without ToolGate | Authorization bypassed | Authenticated executor-to-service calls and network policy (M4.6) |
 | Memory and RAG depend on ToolGate and the services being up | No chat history or retrieval during an outage | Fail closed with a clear error, readiness probes (M8.3), timeouts and quotas (M10.4) |
