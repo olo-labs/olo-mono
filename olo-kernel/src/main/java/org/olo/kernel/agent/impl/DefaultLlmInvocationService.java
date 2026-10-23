@@ -15,7 +15,11 @@ import org.olo.kernel.agent.prompt.PromptRenderer;
 import org.olo.kernel.agent.tool.AgentToolAccess;
 import org.olo.kernel.agent.tool.AgentToolLoop;
 import org.olo.kernel.agent.tool.AgentToolLoopResult;
+import org.olo.kernel.agent.tool.AgentIdentityDeniedException;
 import org.olo.kernel.agent.tool.AgentToolSettings;
+import org.olo.input.model.IdentityBinding;
+import org.olo.toolgate.client.ToolGateClient;
+import org.olo.toolgate.client.UserBinding;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -66,8 +70,27 @@ public final class DefaultLlmInvocationService implements LlmInvocationService {
         AgentToolSettings settings = AgentToolSettings.resolve(context.getGraph(), node, access.defaultMaxToolRounds());
         // M1-R2: only operator-mapped identities; never whatever name the workflow author typed.
         access.identityPolicy().authorize(tenantId(context), context.getGraph().getId(), settings.agentName());
-        AgentToolLoopResult result = toolLoop.run(context, node, modelCall, renderedPrompt, access.client(), settings);
+        AgentToolLoopResult result = toolLoop.run(context, node, modelCall, renderedPrompt, caller(context, access, settings), settings);
         return new LlmInvocationResult(modelCall, renderedPrompt, result.response(), result);
+    }
+
+    /**
+     * M3.3: in user-scoped mode the client authenticates as the run's verified user. A run without a complete binding, or
+     * one whose binding names another tenant, is refused; there is no fallback to the agent or service principal.
+     */
+    private static ToolGateClient caller(KernelRuntimeContext context, AgentToolAccess access, AgentToolSettings settings) {
+        if (!access.userScoped()) {
+            return access.client();
+        }
+        String tenant = tenantId(context);
+        IdentityBinding identity = context.getInput() == null || context.getInput().getContext() == null
+                ? null : context.getInput().getContext().getIdentity();
+        if (identity == null || !identity.complete() || !identity.tenantId().equals(tenant)) {
+            throw new AgentIdentityDeniedException(tenant, context.getGraph().getId(), settings.agentName(),
+                    "tools run as the run's user and this run carries no verified user for its tenant");
+        }
+        return access.client().forUser(new UserBinding(identity.tenantId(), identity.userId(), identity.issuer(),
+                identity.sessionId(), identity.sessionEpoch()));
     }
 
     /**

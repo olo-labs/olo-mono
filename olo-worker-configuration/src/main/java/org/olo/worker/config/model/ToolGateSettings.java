@@ -39,6 +39,7 @@ public final class ToolGateSettings {
     private final Integer maxToolRounds;
     private final List<AgentMappingSettings> agentMappings;
     private final List<String> reservedPrincipals;
+    private final String userCredentialsUrl;
 
     private ToolGateSettings(Builder builder) {
         this.enabled = builder.enabled;
@@ -49,6 +50,7 @@ public final class ToolGateSettings {
         this.maxToolRounds = builder.maxToolRounds;
         this.agentMappings = builder.agentMappings == null ? List.of() : List.copyOf(builder.agentMappings);
         this.reservedPrincipals = builder.reservedPrincipals == null ? null : List.copyOf(builder.reservedPrincipals);
+        this.userCredentialsUrl = builder.userCredentialsUrl;
     }
 
     public static Builder builder() {
@@ -101,6 +103,20 @@ public final class ToolGateSettings {
         return reservedPrincipals;
     }
 
+    /**
+     * OLO backend base URL that issues ToolGate user credentials for a run's user (M3.3), for example
+     * {@code https://olo-backend:8080}. When set, every tool call runs as the run's verified user and a run without one
+     * is refused; agent workload tokens are never used instead.
+     */
+    @JsonProperty("userCredentialsUrl")
+    public String getUserCredentialsUrl() {
+        return userCredentialsUrl;
+    }
+
+    public boolean isUserScoped() {
+        return userCredentialsUrl != null && !userCredentialsUrl.isBlank();
+    }
+
     public boolean isEnabled() {
         return Boolean.TRUE.equals(enabled);
     }
@@ -132,13 +148,14 @@ public final class ToolGateSettings {
                 && Objects.equals(timeoutMs, that.timeoutMs)
                 && Objects.equals(maxToolRounds, that.maxToolRounds)
                 && Objects.equals(agentMappings, that.agentMappings)
-                && Objects.equals(reservedPrincipals, that.reservedPrincipals);
+                && Objects.equals(reservedPrincipals, that.reservedPrincipals)
+                && Objects.equals(userCredentialsUrl, that.userCredentialsUrl);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(enabled, mcpUrl, caCertificate, credentialsDir, timeoutMs, maxToolRounds,
-                agentMappings, reservedPrincipals);
+                agentMappings, reservedPrincipals, userCredentialsUrl);
     }
 
     @JsonPOJOBuilder(withPrefix = "")
@@ -152,6 +169,7 @@ public final class ToolGateSettings {
         private Integer maxToolRounds;
         private List<AgentMappingSettings> agentMappings;
         private List<String> reservedPrincipals;
+        private String userCredentialsUrl;
 
         @JsonProperty("enabled")
         public Builder enabled(Boolean enabled) {
@@ -198,6 +216,12 @@ public final class ToolGateSettings {
         @JsonProperty("reservedPrincipals")
         public Builder reservedPrincipals(List<String> reservedPrincipals) {
             this.reservedPrincipals = reservedPrincipals;
+            return this;
+        }
+
+        @JsonProperty("userCredentialsUrl")
+        public Builder userCredentialsUrl(String userCredentialsUrl) {
+            this.userCredentialsUrl = userCredentialsUrl;
             return this;
         }
 
