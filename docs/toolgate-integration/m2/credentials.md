@@ -1,8 +1,7 @@
 # M2.5 — Credential lifecycle and renewal contract (P1), and D4
 
-**Status:**
-- **D4 is accepted** (2026-10-23, by the project owner; see the [approval record](README.md#approval-record)).
-- The rest of this contract (lifecycle, renewal and misuse rules) is **still proposed**, awaiting sign-off.
+**Status: accepted.** D4 and this whole contract (lifecycle, renewal and misuse rules) were approved on 2026-10-23 by the
+project owner; see the [approval record](README.md#approval-record).
 
 ## D4: how OLO gets user-bound ToolGate credentials — Accepted
 

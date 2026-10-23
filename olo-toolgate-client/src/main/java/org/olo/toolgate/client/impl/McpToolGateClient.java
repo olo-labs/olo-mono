@@ -14,6 +14,8 @@ import org.olo.toolgate.client.ToolGateCredentialResolver;
 import org.olo.toolgate.client.ToolGateException;
 import org.olo.toolgate.client.ToolGateSettings;
 import org.olo.toolgate.client.ToolGateTool;
+import org.olo.toolgate.client.UserBinding;
+import org.olo.toolgate.client.UserCredentialProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,15 +56,27 @@ public final class McpToolGateClient implements ToolGateClient {
     private final ToolGateSettings settings;
     private final ToolGateCredentialResolver credentials;
     private final HttpClient httpClient;
+    private final UserCredentialProvider users;
 
     public McpToolGateClient(ToolGateSettings settings, ToolGateCredentialResolver credentials) {
         this(settings, credentials, buildHttpClient(settings));
     }
 
+    /** Agent workload tokens, plus {@code users} for {@link #forUser}; {@code users} may be null. */
+    public McpToolGateClient(ToolGateSettings settings, ToolGateCredentialResolver credentials, UserCredentialProvider users) {
+        this(settings, credentials, buildHttpClient(settings), users);
+    }
+
     McpToolGateClient(ToolGateSettings settings, ToolGateCredentialResolver credentials, HttpClient httpClient) {
+        this(settings, credentials, httpClient, null);
+    }
+
+    McpToolGateClient(ToolGateSettings settings, ToolGateCredentialResolver credentials, HttpClient httpClient,
+                      UserCredentialProvider users) {
         this.settings = Objects.requireNonNull(settings, "settings");
         this.credentials = Objects.requireNonNull(credentials, "credentials");
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
+        this.users = users;
     }
 
     @Override
@@ -125,6 +139,16 @@ public final class McpToolGateClient implements ToolGateClient {
                 structured,
                 state,
                 invocationId);
+    }
+
+    @Override
+    public ToolGateClient forUser(UserBinding binding) {
+        Objects.requireNonNull(binding, "binding");
+        if (users == null) {
+            throw new ToolGateException(ToolGateException.Kind.CREDENTIAL_MISSING, "ToolGate user credentials are not configured");
+        }
+        // Every token this view sends is the user's; the agent name only selects the catalog route.
+        return new McpToolGateClient(settings, agentName -> users.credential(binding), httpClient, null);
     }
 
     @Override

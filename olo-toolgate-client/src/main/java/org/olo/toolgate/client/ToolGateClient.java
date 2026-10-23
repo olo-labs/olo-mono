@@ -28,6 +28,16 @@ public interface ToolGateClient {
     ToolGateCallResult callTool(String agentName, String requestId, String toolName, JsonNode arguments);
 
     /**
+     * The same Gateway, authenticated as the run's verified user with a fresh ToolGate user credential instead of an agent
+     * workload token (M3.3). There is no fallback: without user credentials every call fails.
+     *
+     * @throws ToolGateException {@link ToolGateException.Kind#CREDENTIAL_MISSING} when user credentials are not configured
+     */
+    default ToolGateClient forUser(UserBinding binding) {
+        throw new ToolGateException(ToolGateException.Kind.CREDENTIAL_MISSING, "ToolGate user credentials are not configured");
+    }
+
+    /**
      * Checks that the Gateway answers HTTP. No token is sent; any HTTP response, including 401, counts as reachable.
      */
     void probe();

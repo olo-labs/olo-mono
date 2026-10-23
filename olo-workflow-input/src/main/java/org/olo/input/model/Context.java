@@ -24,6 +24,7 @@ public final class Context {
     private final String runId;
     private final String callbackBaseUrl;
     private final String correlationId;
+    private final IdentityBinding identity;
 
     @JsonCreator
     public Context(
@@ -34,7 +35,8 @@ public final class Context {
             @JsonProperty("sessionId") String sessionId,
             @JsonProperty("runId") String runId,
             @JsonProperty("callbackBaseUrl") String callbackBaseUrl,
-            @JsonProperty("correlationId") String correlationId) {
+            @JsonProperty("correlationId") String correlationId,
+            @JsonProperty("identity") IdentityBinding identity) {
         this.tenantId = tenantId;
         this.groupId = groupId;
         this.roles = roles != null ? List.copyOf(roles) : List.of();
@@ -43,11 +45,18 @@ public final class Context {
         this.runId = runId != null ? runId : "";
         this.callbackBaseUrl = callbackBaseUrl != null ? callbackBaseUrl : "";
         this.correlationId = correlationId != null ? correlationId : "";
+        this.identity = identity;
+    }
+
+    /** Without a verified user (M3.3), for callers that do not run user-scoped tools. */
+    public Context(String tenantId, String groupId, List<String> roles, List<String> permissions, String sessionId,
+                   String runId, String callbackBaseUrl, String correlationId) {
+        this(tenantId, groupId, roles, permissions, sessionId, runId, callbackBaseUrl, correlationId, null);
     }
 
     /** Convenience constructor without runId/callbackBaseUrl/correlationId (e.g. for producer examples). */
     public Context(String tenantId, String groupId, List<String> roles, List<String> permissions, String sessionId) {
-        this(tenantId, groupId, roles, permissions, sessionId, null, null, null);
+        this(tenantId, groupId, roles, permissions, sessionId, null, null, null, null);
     }
 
     public String getTenantId() {
@@ -82,6 +91,11 @@ public final class Context {
         return correlationId;
     }
 
+    /** The verified user the run acts for, or {@code null} when the backend started it without one. */
+    public IdentityBinding getIdentity() {
+        return identity;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -94,11 +108,12 @@ public final class Context {
                 && Objects.equals(sessionId, context.sessionId)
                 && Objects.equals(runId, context.runId)
                 && Objects.equals(callbackBaseUrl, context.callbackBaseUrl)
-                && Objects.equals(correlationId, context.correlationId);
+                && Objects.equals(correlationId, context.correlationId)
+                && Objects.equals(identity, context.identity);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tenantId, groupId, roles, permissions, sessionId, runId, callbackBaseUrl, correlationId);
+        return Objects.hash(tenantId, groupId, roles, permissions, sessionId, runId, callbackBaseUrl, correlationId, identity);
     }
 }

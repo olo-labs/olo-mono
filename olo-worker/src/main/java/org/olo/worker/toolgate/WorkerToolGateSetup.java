@@ -53,7 +53,8 @@ public final class WorkerToolGateSetup {
                 caCertificate,
                 credentialsDir,
                 Duration.ofMillis(config.resolveTimeoutMs()));
-        ToolGateClient client = new McpToolGateClient(clientSettings, new FileAndEnvCredentialResolver(credentialsDir));
+        org.olo.toolgate.client.UserCredentialProvider users = config.isUserScoped() ? userCredentials(config) : null;
+        ToolGateClient client = new McpToolGateClient(clientSettings, new FileAndEnvCredentialResolver(credentialsDir), users);
 
         if (Boolean.getBoolean(SKIP_PROBE_PROPERTY)) {
             log.warn("ToolGate probe skipped ({}=true)", SKIP_PROBE_PROPERTY);
@@ -61,10 +62,13 @@ public final class WorkerToolGateSetup {
             client.probe();
         }
 
-        AgentToolAccess access = AgentToolAccess.enabled(client, config.resolveMaxToolRounds(), identityPolicy(config));
+        AgentToolAccess access = config.isUserScoped()
+                ? AgentToolAccess.userScoped(client, config.resolveMaxToolRounds(), identityPolicy(config))
+                : AgentToolAccess.enabled(client, config.resolveMaxToolRounds(), identityPolicy(config));
         KernelRuntimeHolder.setToolAccess(access);
-        log.info("ToolGate enabled: gateway={}, credentialsDir={}, caCertificate={}, maxToolRounds={}, agentMappings={}",
+        log.info("ToolGate enabled: gateway={}, userCredentials={}, credentialsDir={}, caCertificate={}, maxToolRounds={}, agentMappings={}",
                 clientSettings.mcpUrl(),
+                config.isUserScoped() ? config.getUserCredentialsUrl() : "(agent workload tokens)",
                 credentialsDir != null ? credentialsDir : "(env vars only)",
                 caCertificate != null ? caCertificate : "(JVM trust store)",
                 access.defaultMaxToolRounds(),
@@ -73,6 +77,19 @@ public final class WorkerToolGateSetup {
             log.warn("ToolGate has no agentMappings: every agent identity is refused until operators map them");
         }
         return access;
+    }
+
+    /**
+     * User credentials come from the OLO backend, requested with the worker callback key. Without that key the worker
+     * refuses to start rather than run user-scoped tools under another identity.
+     */
+    static org.olo.toolgate.client.UserCredentialProvider userCredentials(ToolGateSettings config) {
+        org.olo.kernel.context.callback.CallbackSigner signer = org.olo.kernel.context.callback.CallbackSigner.fromEnvironment()
+                .orElseThrow(() -> new IllegalStateException("toolgate.userCredentialsUrl needs "
+                        + org.olo.kernel.context.callback.CallbackSigner.ENV_KEY_ID + " and "
+                        + org.olo.kernel.context.callback.CallbackSigner.ENV_KEY + " to sign credential requests"));
+        return new org.olo.toolgate.client.impl.BackendUserCredentialProvider(URI.create(config.getUserCredentialsUrl()),
+                signer::sign, Duration.ofMillis(config.resolveTimeoutMs()));
     }
 
     /** Operator-controlled (tenant, workflow) → agents mappings. Workflow definitions can't change them. */

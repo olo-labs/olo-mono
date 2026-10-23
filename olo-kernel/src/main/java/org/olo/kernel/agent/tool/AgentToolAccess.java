@@ -16,9 +16,10 @@ import java.util.Optional;
  * @param defaultMaxToolRounds tool rounds per agent turn when the AGENT node does not set {@code maxToolRounds}
  * @param identityPolicy       which agent identities a run may use; required when enabled
  */
-public record AgentToolAccess(ToolGateClient client, int defaultMaxToolRounds, AgentIdentityPolicy identityPolicy) {
+public record AgentToolAccess(ToolGateClient client, int defaultMaxToolRounds, AgentIdentityPolicy identityPolicy,
+                              boolean userScoped) {
 
-    private static final AgentToolAccess DISABLED = new AgentToolAccess(null, 0, AgentIdentityPolicy.denyAll());
+    private static final AgentToolAccess DISABLED = new AgentToolAccess(null, 0, AgentIdentityPolicy.denyAll(), false);
 
     public AgentToolAccess {
         if (defaultMaxToolRounds < 0) {
@@ -27,12 +28,24 @@ public record AgentToolAccess(ToolGateClient client, int defaultMaxToolRounds, A
         Objects.requireNonNull(identityPolicy, "identityPolicy");
     }
 
+    public AgentToolAccess(ToolGateClient client, int defaultMaxToolRounds, AgentIdentityPolicy identityPolicy) {
+        this(client, defaultMaxToolRounds, identityPolicy, false);
+    }
+
     public static AgentToolAccess disabled() {
         return DISABLED;
     }
 
     public static AgentToolAccess enabled(ToolGateClient client, int defaultMaxToolRounds, AgentIdentityPolicy identityPolicy) {
         return new AgentToolAccess(Objects.requireNonNull(client, "client"), defaultMaxToolRounds, identityPolicy);
+    }
+
+    /**
+     * Tools run as the run's verified user (M3.3): a run without one is refused, and agent workload tokens are never used
+     * in its place.
+     */
+    public static AgentToolAccess userScoped(ToolGateClient client, int defaultMaxToolRounds, AgentIdentityPolicy identityPolicy) {
+        return new AgentToolAccess(Objects.requireNonNull(client, "client"), defaultMaxToolRounds, identityPolicy, true);
     }
 
     public boolean isEnabled() {

@@ -138,6 +138,7 @@ final class AgentToolTestSupport {
         final Map<String, List<ToolGateTool>> catalogs;
         final List<String> listedFor = new ArrayList<>();
         final List<Call> calls = new ArrayList<>();
+        final List<org.olo.toolgate.client.UserBinding> users = new ArrayList<>();
         Function<Call, ToolGateCallResult> results = call ->
                 new ToolGateCallResult(false, "ok", json("{\"tool\":\"" + call.tool() + "\"}"), null, null);
 
@@ -160,6 +161,13 @@ final class AgentToolTestSupport {
 
         @Override
         public void probe() {
+        }
+
+        /** Records the user and keeps recording calls on the same fake. */
+        @Override
+        public ToolGateClient forUser(org.olo.toolgate.client.UserBinding binding) {
+            users.add(binding);
+            return this;
         }
     }
 
