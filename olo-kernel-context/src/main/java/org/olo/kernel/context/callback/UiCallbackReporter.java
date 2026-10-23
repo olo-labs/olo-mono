@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Delivers execution state to the olo backend using the callback URL from the workflow input.
@@ -138,13 +139,21 @@ public final class UiCallbackReporter {
     }
 
     private static void postPayload(String eventPostUrl, RunEventCallbackPayload payload) {
+        // The backend refuses unsigned callbacks, so don't send one (M3.11).
+        Optional<CallbackSigner> signer = CallbackSigner.fromEnvironment();
+        if (signer.isEmpty()) {
+            log.error("UI callback not sent: {} and {} are not configured (url={}, sequenceNumber={})",
+                    CallbackSigner.ENV_KEY_ID, CallbackSigner.ENV_KEY, eventPostUrl, payload.getSequenceNumber());
+            return;
+        }
         try {
-            String body = MAPPER.writeValueAsString(payload);
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(eventPostUrl))
-                    .timeout(Duration.ofSeconds(10))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
+            byte[] body = MAPPER.writeValueAsBytes(payload);
+            URI uri = URI.create(eventPostUrl);
+            HttpRequest request = signer.get().sign(HttpRequest.newBuilder()
+                            .uri(uri)
+                            .timeout(Duration.ofSeconds(10))
+                            .header("Content-Type", "application/json")
+                            .POST(HttpRequest.BodyPublishers.ofByteArray(body)), uri, body)
                     .build();
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             if (isSuccessfulCallbackStatus(response.statusCode())) {
