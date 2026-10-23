@@ -1,6 +1,6 @@
 # M2.12 — RAG quality and performance targets
 
-**Status: proposed, awaiting sign-off.** The numbers are starting targets for the first release, and should be revised
+**Status: accepted** on 2026-10-23 by the project owner (see the [approval record](README.md#approval-record)). The numbers are the first release's targets, and should be revised
 after the first measurement in M8.2a.
 
 ## Evaluation set

@@ -23,30 +23,35 @@ empty application stores (conversations, memory, documents, ToolGate state).
 Fresh installation simplifies removal (M9) and deployment (M10). It does not relax the authorization, retry or
 deletion requirements.
 
-**Status (2026-10-23): 13% counted, 21% implemented.**
-- **Counted:** M0, and M1 (merged as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2)).
-- **Implemented, not yet counted:**
-  - M2, which is merged but not signed off
-  - M3.9, server-authorized agent mappings, in review on branch `feature/toolgate-m3-agent-mapping`
+**Status (2026-10-23): 17% counted, 21% implemented.**
+- **Counted:**
+  - M0
+  - M1 (merged as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2))
+  - The accepted M2 steps: 2.6–2.8 (D5–D7) and 2.12 (RAG targets)
+  - M3.9 (merged as [olo-labs/olo-mono#5](https://github.com/olo-labs/olo-mono/pull/5))
+- **Implemented, not yet counted:** the M2 contracts still awaiting approval (2.1–2.5, 2.9–2.11)
 - **Plan revisions:** four security reviews are folded in. They set the user/resource authorization model and the
   deterministic memory/RAG flow, and cover fresh-install scope, service-job identity, payload protection,
   unknown-outcome reconciliation, revocation of derived context, authorization evidence for services (tied to the
   revocation bound), credential renewal, and a dedup record that turns changed arguments into a conflict.
 - **M1 remediation:** tracked as M1-R1 to M1-R6.
-- **M2 merged, not accepted:** all contracts, decisions and targets are in
+- **M2 partly accepted:** all contracts, decisions and targets are in
   [docs/toolgate-integration/m2](docs/toolgate-integration/m2/README.md) (merged in
   [olo-labs/olo-mono#4](https://github.com/olo-labs/olo-mono/pull/4)). ToolGate's half of the threat model is in
   olo-toolgate at `docs/security/threat-models/olo-integration.md` (merged in
-  [olo-labs/olo-toolgate#186](https://github.com/olo-labs/olo-toolgate/pull/186)). They remain **proposed**. M2
-  counts only after the owners of olo, olo-mono and ToolGate approve them explicitly. The documents are then marked
-  Accepted, and D4–D7 are closed.
+  [olo-labs/olo-toolgate#186](https://github.com/olo-labs/olo-toolgate/pull/186)).
+  - **Accepted by the project owner (2026-10-23):** D4–D7, the 30-second revocation bound, and the RAG quality and
+    performance targets. See the [approval record](docs/toolgate-integration/m2/README.md#approval-record).
+  - **Still proposed:** the contracts in 2.2–2.5, 2.10 and 2.11 (including the evidence options, dedup retention, the
+    object-authorization split, and sender binding), plus the gap matrix (2.1) and the threat model (2.9). M2 counts
+    fully once they are approved.
 - **Critical path found by the gap matrix:** user-bound Gateway authentication (G1) and the trusted executor context
   (G7) are both missing in ToolGate today.
 - **Next:**
-  - M2 sign-off, especially the three P1 contracts (2.4, 2.5, 2.10)
-  - In parallel, M3 steps that don't depend on those contracts: 3.9 is done, and 3.1–3.2 (verified identity in the
+  - Approval of the remaining M2 contracts, especially the three P1 contracts (2.4, 2.5, 2.10)
+  - In parallel, M3 steps that don't depend on those contracts: 3.9 is merged, and 3.1–3.2 (verified identity in the
     olo backend) are next
-  - Steps 3.3, 3.4 and 3.10 wait for the 2.5 contract and D4
+  - Steps 3.3, 3.4 and 3.10 wait for the 2.5 contract (D4 is accepted)
 
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
 identities, and empty application stores. No migration tools, legacy readers, compatibility modes, or support for
@@ -59,8 +64,8 @@ that replaces D8.
 |---|---|---|---:|---:|---:|---|
 | M0 | Discovery, plan and security reviews | all | 3 | 100% | 100% | ✅ Done |
 | M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 100% | ✅ Merged (PR #2); remediation in M3, M5 |
-| M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 0% | 🟨 Drafted; awaiting sign-off |
-| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 9% | 0% | 🟨 3.9 implemented (in review) |
+| M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 33% | 🟨 D4–D7, revocation bound and RAG targets accepted; contracts await approval |
+| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 9% | 9% | 🟨 3.9 merged (PR #5) |
 | M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 0% | 0% | ⬜ |
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 0% | 0% | ⬜ |
 | M6 | Memory and RAG services and ToolGate packages | ToolGate, services | 12 | 0% | 0% | ⬜ |
@@ -68,7 +73,7 @@ that replaces D8.
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **21%** | **13%** | |
+| | **Overall** | | **100** | **21%** | **17%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -232,7 +237,7 @@ or re-issued after the wait under option (b).
 
 ### Revocation timing
 
-Revoking a grant, membership, share or session takes effect within a **defined bound**. M2.4 sets the number, and
+Revoking a grant, membership, share or session takes effect within a **defined bound: 30 seconds** (accepted 2026-10-23). M2.4 records it, and
 M8 measures it. Authorization is checked again at three points:
 
 1. **Before context reaches the model.** Already-loaded history or retrieved chunks are re-checked against current
@@ -347,7 +352,7 @@ The ToolGate documentation describes the identity modes we need, but its
 "target design" and is not a claim that the features exist. Readiness has to be shown by code and tests.
 
 **Deliverables:** [docs/toolgate-integration/m2](docs/toolgate-integration/m2/README.md). Ticked steps are drafted
-(implemented). They are counted after sign-off.
+(implemented). Each step counts once it is approved: 2.6–2.8 and 2.12 so far.
 
 - [x] **2.1** Gap matrix, with evidence (code paths and tests, not docs), for each required ToolGate capability:
       user-bound Gateway authentication; service-principal authentication; credential lifecycle; user and team
@@ -413,7 +418,7 @@ The ToolGate documentation describes the identity modes we need, but its
       - How the accepted user message reaches the prompt exactly once
       - What happens when persisting the response fails after it was generated
       - When a turn counts as complete (M7.2)
-- [x] **2.12** RAG quality and performance targets, each with a measurement method and an evaluation set:
+- [x] **2.12** RAG quality and performance targets, each with a measurement method and an evaluation set (**accepted** 2026-10-23, as in [rag-targets.md](docs/toolgate-integration/m2/rag-targets.md)):
       - Retrieval relevance within the authorized scope (for example recall@k on a labelled set)
       - Citation correctness: every citation names an authorized source and version that contains the cited text
       - Indexing freshness: time from ingest to searchable

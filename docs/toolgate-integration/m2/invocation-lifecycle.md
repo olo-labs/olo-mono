@@ -61,7 +61,7 @@ version.
 
 ## Revocation
 
-- **Bound (proposed): 30 seconds.** Revoking a grant, membership, share or session stops new effects, context use and
+- **Bound: 30 seconds** (accepted 2026-10-23; see the [approval record](README.md#approval-record)). Revoking a grant, membership, share or session stops new effects, context use and
   result release within that time.
 - **The three check points:**
   1. Before context reaches the model
