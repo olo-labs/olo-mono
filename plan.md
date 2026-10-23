@@ -148,7 +148,7 @@ Authenticated user
 | User | A stable internal user id, mapped from the verified issuer and subject. Absent for path C. |
 | Session | A validated authenticated session, with revocation handling |
 | Authentication expiry and audience | Present and checked. Credentials are issued for ToolGate's audience only. |
-| Resource | Conversation, memory namespace, knowledge base or document id. A locator, not a permission; ownership is checked server-side. |
+| Resource | Conversation, knowledge base or document id. A locator, not a permission; ownership is checked server-side. |
 | Operation | An explicit permission (see *Permissions*) |
 | Correlation | Run, turn, invocation and logical-operation ids, for tracing and idempotency |
 
@@ -171,8 +171,8 @@ Authenticated user
 Workflows and approvals can outlive a user credential. The rules (contract in M2.5):
 
 - The run stores only a **non-secret binding reference**: the verified session binding, tenant and user, never a token.
-- Before each user-scoped call, OLO gets a fresh short-lived credential through a trusted mechanism, either the OLO
-  backend's credential service or ToolGate token exchange (D4). It then rechecks that the user's current authority
+- Before each user-scoped call, OLO gets a fresh short-lived credential through a trusted mechanism: the OLO
+  backend credential service, which uses ToolGate token exchange (D4, accepted). It then rechecks that the user's current authority
   still covers the operation and resource.
 - If the session has expired or been revoked, the user-scoped operation **pauses for re-authentication** or is
   **terminated**. Which one is set per operation type in M2.5.
@@ -185,12 +185,11 @@ Each operation is its own permission, and none implies another.
 | Area | Permissions |
 |---|---|
 | Conversation memory | `memory.read`, `memory.append`; separately `memory.delete`, `memory.share`, `memory.export` |
-| Long-term user memory | `ltm.read`, `ltm.write`, `ltm.delete` (if D6 puts it in scope) |
 | RAG | `rag.query`; separately `rag.ingest`, `rag.update`, `rag.delete`, `rag.share` |
 
 Policies grant exactly the operations a role needs. There is no blanket `memory.*` or `rag.*` grant. Ordinary chat
 needs only `memory.read` and `memory.append` on the user's own conversations, granted as ALLOW so a turn never waits
-for approval. Delete, share, export and long-term memory changes each have their own policy.
+for approval. Delete, share and export each have their own policy. There are no long-term memory permissions (D6).
 
 ### Responsibilities
 
@@ -260,7 +259,7 @@ summary, or a child agent's output may repeat revoked information. So:
 |---|---|
 | Conversation history | Private conversation records. Sharing is explicit. Default access requires tenant plus owner or membership. |
 | Working state | Temporary run state with bounded retention |
-| Long-term user memory | Separate, controlled facts and preferences, with provenance, correction, deletion and retention (in scope per D6) |
+| Long-term user memory | **Excluded from the first release (D6).** No endpoints, permissions or storage. Needs a future decision on consent, provenance, correction and deletion. |
 
 ### RAG controls
 
@@ -285,7 +284,7 @@ still has to supply that filter and enforce it.
 
 - Sensitive arguments, prompts, retrieved content and tool results are protected in Temporal from the moment
   durable workflow state is introduced (M5), not later.
-- D7 (decided in M2) chooses between an encryption payload codec and storing references instead of content.
+- D7 (accepted): an AES-256-GCM payload codec with tenant keys managed outside Temporal (by key id), on **every** client and worker that serializes sensitive payloads, including the olo backend's Temporal client. Large content travels as authorized references. Decryption tools need authenticated, tenant-scoped access.
 - Tokens are never part of any payload.
 
 ---
@@ -395,10 +394,10 @@ The ToolGate documentation describes the identity modes we need, but its
         operation type. Never fall back to the service principal.
       - Misuse protection: impersonation, use outside the audience, tenant or session, and whether sender binding is
         required
-      - Decide D4
-- [x] **2.6** Decide D5: who owns the memory and RAG services, and where they are deployed
-- [x] **2.7** Decide D6: whether long-term user memory ships in the first release
-- [x] **2.8** Decide D7: payload codec or references, and key management for it
+      - D4 is accepted: RFC 8693 token exchange, with no fallback mechanism
+- [x] **2.6** D5 accepted: `olo-knowledge` (`olo-memory`, `olo-rag`), PostgreSQL plus Qdrant, callable only by ToolGate executors
+- [x] **2.7** D6 accepted: no long-term user memory in the first release, and no unused endpoints
+- [x] **2.8** D7 accepted: AES-256-GCM codec with tenant keys, on every client and worker, plus references for large content
 - [x] **2.9** Threat-model update for paths A, B and C, in ToolGate's `docs/security` and in OLO
 - [x] **2.10** Authorization evidence contract (**P1**): how a memory or RAG service validates what was authorized.
       - The format: a Control-signed permit with key discovery and rotation, or authenticated verification against ToolGate
@@ -452,7 +451,7 @@ The ToolGate documentation describes the identity modes we need, but its
 - [ ] **3.5** [ToolGate] Service-principal path for path C: a dedicated platform workload identity in `SERVICE` mode,
       separate from all OLO workflow agents, with explicit resource-scoped grants
 - [ ] **3.6** [ToolGate] Resolve the user's and team's current permissions independently of OLO workflow agents
-- [ ] **3.7** [ToolGate] Object-level authorization for conversations, memory namespaces, knowledge bases and documents
+- [ ] **3.7** [ToolGate] Object-level authorization for conversations, knowledge bases and documents
       that reaches execution, beyond the fixed `tool://<tool-id>` resource
 - [ ] **3.8** [ToolGate] Separate operation permissions as defined in *Permissions*. Wildcard grants are refused.
 - [x] **3.9** [olo-mono] **M1-R2:** server-authorized workload mappings for path B. A workflow's `agentName` must be in
@@ -515,7 +514,7 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       operation, with a stable logical-operation id, in workflow state. A separate activity dispatches each recorded
       operation. On recovery, recorded operations are resumed, never regenerated.
 - [ ] **5.2** [olo-mono] **M1-R6:** payload protection (D7) ships together with 5.1. Sensitive arguments, prompts,
-      retrieved content and results are encrypted or stored by reference. Bearer and refresh tokens are never persisted.
+      retrieved content and results are encrypted or stored by reference. Bearer and refresh tokens are never persisted. The codec is configured on **every** Temporal client and worker that serializes sensitive payloads, including the olo backend's client that starts workflows. The Temporal UI and CLI codec server needs authenticated, tenant-scoped access.
 - [ ] **5.3** [ToolGate, olo-mono] Dedup to the M2.4 record: look up by tenant + subject or service principal +
       logical-operation id, and store the request fingerprint with the invocation state and result.
       - Same key and same fingerprint: resume or return the existing invocation.
@@ -574,8 +573,7 @@ The stores start empty (fresh install), so no import or migration is built.
       - Context budgets
       - Deletion that also removes derived summaries and embeddings
 - [ ] **6.2** Working-state store with bounded retention
-- [ ] **6.3** Long-term user memory as a separate store, with provenance, correction, deletion and retention, if D6
-      puts it in the first release
+- **6.3** *Removed by D6:* no long-term user memory in the first release, and no unused endpoints. It is not counted as a step.
 - [ ] **6.4** RAG service:
       - Chunk metadata, mandatory authorized filters on query/fetch/update/delete, and a release-time re-check
       - Atomic version publication
@@ -737,7 +735,7 @@ then re-run (8.6).
 - [ ] **10.3** Redacted diagnostics: no tokens, prompts or retrieved content in logs or errors
 - [ ] **10.4** Bounded retries, timeouts, cancellation, and per-user quotas. A load test at the M2.12 concurrency on
       staging confirms the latency and freshness targets hold with quotas on.
-- [ ] **10.5** Backups, restore tests, and retention policies for conversations, working state, long-term memory and documents
+- [ ] **10.5** Backups, restore tests, and retention policies for conversations, working state and documents
 - [ ] **10.6** **Clean-install acceptance test.** On empty infrastructure, follow only the documented steps to provision
       identities, grants (including the path C service principal), the memory and RAG services, ToolGate packages and
       the new workflows. Then check:
@@ -749,7 +747,7 @@ then re-run (8.6).
 
       This tests the new contract without supporting the old one.
 - [ ] **10.7** Grant guide: explicit `memory.read` and `memory.append` (ALLOW) for chat on the user's own conversations,
-      plus separate policies for `memory.delete`, `memory.share`, `memory.export`, long-term memory changes and each
+      plus separate policies for `memory.delete`, `memory.share`, `memory.export`, and each
       RAG operation. No wildcard grants.
 - [ ] **10.8** Docs: architecture, the identity and permission model, an operations runbook (including
       `OUTCOME_UNKNOWN` handling), and the incident-recovery walkthrough (old 6.4)
@@ -766,10 +764,10 @@ restore test and a credential rotation.
 | D1 | Where do conversation memory and RAG go? | ToolGate *governs* them, as user-authorized platform capabilities. Separate memory and RAG services *store* the data and enforce scope. OLO orchestrates them deterministically (path A). They are not agent-selected tools, and agent identities don't authorize them. | Decided 2026-10-23, revised after review |
 | D2 | What happens after an ASK approval? | Resume the original invocation (M5.5), with expiry, denial, cancellation and re-authorization at dispatch. M1's "run it again" is temporary and is removed in M5. | Decided; implementation in M5 |
 | D3 | Is end-user identity required? | **Required scope.** Memory and RAG are authorized for the signed-in user. Agent-selected tools are authorized for user plus delegated actor. Scheduled jobs run as a ToolGate service principal with resource-scoped grants. | Decided |
-| D4 | How does OLO obtain user-bound, audience-restricted ToolGate credentials? | Token exchange if ToolGate supports it, otherwise an authenticated server binding. Never token passthrough, never persisted. | Open, **decided in M2.5** |
-| D5 | Who owns the memory and RAG services, and where do they run? | Separate services next to ToolGate's executors, never in the OLO worker. They own the database credentials. | Open, **decided in M2.6** |
-| D6 | Is long-term user memory in the first release? | The design covers it. Building it can follow conversation history and RAG. | Open, **decided in M2.7** |
-| D7 | How are sensitive Temporal payloads protected? | An encryption payload codec, or keeping only references in history. Implemented with durable state in M5.2. | Open, **decided in M2.8** |
+| D4 | How does OLO obtain user-bound, audience-restricted ToolGate credentials? | **RFC 8693 token exchange, implemented in ToolGate.** The authenticated OLO backend requests ToolGate-audience credentials: the user for memory and RAG; the user plus the mapped agent actor for business tools. Lifetime 5 minutes at most, in memory only, renewed through the verified session binding with current permissions rechecked. **No fallback mechanism** in the first release. Never token passthrough, never persisted. | **Accepted 2026-10-23** |
+| D5 | Who owns the memory and RAG services, and where do they run? | **`olo-knowledge`, owned by the OLO team**, with independently deployed `olo-memory` and `olo-rag`. PostgreSQL for conversation records, working state and resource ACLs; Qdrant for vectors. Only ToolGate executors may call them, and database credentials stay inside the services. ToolGate owns execution governance; the services enforce ownership and sharing. | **Accepted 2026-10-23** |
+| D6 | Is long-term user memory in the first release? | **No.** The first release ships persistent conversation history, temporary working state and document RAG. Preferences or facts carried across conversations need a future decision covering consent, provenance, correction and deletion. No unused long-term memory endpoints are built. | **Accepted 2026-10-23** |
+| D7 | How are sensitive Temporal payloads protected? | **An AES-256-GCM payload codec**, with tenant keys managed outside Temporal and identified by key id, configured on every client and worker that serializes sensitive payloads. Authorized references for large content. No authentication credentials in payloads. Decryption tools need authenticated, tenant-scoped access. Implemented with durable state in M5.2. | **Accepted 2026-10-23** |
 | D8 | Existing data and executions? | **Out of scope, and the boundary is fixed.** One new installation contract: no migration tools, legacy readers, compatibility modes, or support for executions started under the old implementation. Changing this needs a new decision that replaces D8. | Decided |
 
 ## Risks
