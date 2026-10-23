@@ -1,0 +1,4 @@
+# Optional overlay (debug.ps1 -Cpu): run Ollama without the NVIDIA GPU reservation.
+services:
+  ollama:
+    deploy: !reset {}

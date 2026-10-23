@@ -1,0 +1,7 @@
+# Build olo-ui from the sibling olo-ui repo (D:\olo\olo-ui by default).
+services:
+  olo-ui:
+    image: olo-ui:debug
+    build:
+      context: ${OLO_UI_ROOT}
+      dockerfile: Dockerfile

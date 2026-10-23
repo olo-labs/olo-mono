@@ -1,0 +1,71 @@
+# Debug overlay for olo-docker/dev. Applied on top of the dev compose files by debug.ps1.
+#
+# Adds health checks to the infrastructure containers so the debug script (and depends_on)
+# can tell "running" apart from "ready", and wires olo-worker to wait for them.
+
+services:
+  db:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-pguser} -d $${POSTGRES_DB:-pgdb} || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  redis:
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  qdrant:
+    healthcheck:
+      # qdrant image has no curl/wget; probe the HTTP port with bash.
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  temporal:
+    depends_on:
+      db:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "tctl --address $$(hostname -i | cut -d' ' -f1):7233 cluster health | grep -q SERVING"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+
+  ollama:
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 10s
+
+  olo:
+    environment:
+      OLO_CHAT_CALLBACK_BASE_URL: ${OLO_CHAT_CALLBACK_BASE_URL:-http://olo:7080}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  olo-worker:
+    environment:
+      OLO_LLM_BASE_URL: http://ollama:11434
+    depends_on:
+      olo:
+        condition: service_started
+      temporal:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
