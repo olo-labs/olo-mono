@@ -68,15 +68,15 @@ that replaces D8.
 | M0 | Discovery, plan and security reviews | all | 3 | 100% | 100% | ✅ Done |
 | M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 100% | ✅ Merged (PR #2); remediation in M3, M5 |
 | M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 50% | 🟨 D4–D7, 2.5, 2.10, revocation bound and RAG targets accepted; 2.2–2.4 and 2.11 await approval |
-| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 73% | 27% | 🟨 3.1–3.2 and 3.9 merged; 3.3–3.5, 3.8 and 3.11 in review; 3.6, 3.7, 3.10 open |
-| M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 50% | 0% | 🟨 4.1–4.3 and part of 4.4 in review; 4.5, 4.6 open |
+| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 91% | 73% | 🟨 3.1–3.5, 3.8, 3.9 and 3.11 merged; 3.6 and 3.10 in review; 3.7 waits on contract 2.3 |
+| M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 67% | 50% | 🟨 4.1–4.3 merged; 4.4 and the Python SDK principal in review; 4.5, 4.6 need M6 services |
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 0% | 0% | ⬜ |
 | M6 | Memory and RAG services and ToolGate packages | ToolGate, services | 12 | 0% | 0% | ⬜ |
 | M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 0% | 0% | ⬜ |
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **35%** | **21%** | |
+| | **Overall** | | **100** | **39%** | **31%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -482,8 +482,12 @@ The ToolGate documentation describes the identity modes we need, but its
       separate from all OLO workflow agents, with explicit resource-scoped grants
       *Implemented (olo-labs/olo-toolgate#189):* `toolgate.control.olo.reserved-agents` agents have only `SERVICE`
       workload bindings, and `DELEGATED` calls naming them as agent or chain hop are refused.
-- [ ] **3.6** [ToolGate] Resolve the user's and team's current permissions independently of OLO workflow agents
-- [ ] **3.7** [ToolGate] Object-level authorization for conversations, knowledge bases and documents
+- [x] **3.6** [ToolGate] Resolve the user's and team's current permissions independently of OLO workflow agents
+      *Implemented (olo-labs/olo-toolgate#190):* the evaluator already decides `HUMAN` calls from the user's teams and HUMAN
+      grants only; a conformance test shows a call allowed with no agent, agent group or workload record, and untouched by
+      agent-group policies.
+- [ ] **3.7** [ToolGate] *(waits on contract 2.3 approval: needs a tool-descriptor declaration of argument-derived resources
+      in both SDKs, the processor and Control)* Object-level authorization for conversations, knowledge bases and documents
       that reaches execution, beyond the fixed `tool://<tool-id>` resource
 - [x] **3.8** [ToolGate] Separate operation permissions as defined in *Permissions*. Wildcard grants are refused.
       *Implemented (olo-labs/olo-toolgate#189):* `toolgate.control.olo.protected-tool-groups` refuses `allActions` and
@@ -496,8 +500,13 @@ The ToolGate documentation describes the identity modes we need, but its
         refused
       - `MappedAgentIdentityPolicy`, checked before any ToolGate call. No mappings means every identity is refused.
       - The tenant comes from the workflow input until M3.3 provides a verified identity context
-- [ ] **3.10** [olo-mono, ToolGate] **M1-R3:** delegated mode for path B, with the user as subject and the agent as actor.
+- [x] **3.10** [olo-mono, ToolGate] **M1-R3:** delegated mode for path B, with the user as subject and the agent as actor.
       Deny when the agent may use a tool but the user may not.
+      *Implemented (olo-labs/olo-toolgate#190, this repo's `feature/m3-10-delegated-agents`):*
+      - On-behalf-of workload bindings (`DELEGATED` with no fixed user); the Gateway combines the user credential with the
+        agent's token (`X-ToolGate-Actor-Credential`) into a `DELEGATED` context, accepted only from the trusted issuer
+      - The evaluator still needs the user's grant, the delegation, the agent's capability and the current session epoch
+      - Worker: `toolgate.delegatedAgents=true` with `userCredentialsUrl` sends both; a run without a verified user is refused
 - [x] **3.11** [olo] The same checks on every alternate endpoint: uploads, document downloads, knowledge-source
       listings, session APIs, exports and result retrieval
       *Implemented:*
@@ -519,9 +528,11 @@ The ToolGate documentation describes the identity modes we need, but its
       exact arguments and expiry.
 - [x] **4.3** [ToolGate] Scoped tools refuse to run without a trusted identity. This includes standalone runtimes, where
       `userId()` is empty today.
-- [ ] **4.4** [ToolGate] *(partly: the Tool Host admission record has tenant, mode, user, agent, chain, operation,
-      resources and authorization epoch; Control's audit fields are still to do)* Audit records: subject, actor, workload, resource, operation, decision, policy version,
+- [x] **4.4** [ToolGate] Audit records: subject, actor, workload, resource, operation, decision, policy version,
       invocation correlation and outcome
+      *Implemented (olo-labs/olo-toolgate#190):* invocation audit rows carry `ControlAuditEvidence` (mode, subject, actor,
+      chain, workload, tool, operation, resources, decision, state, authorization epoch, policy revision); the Tool Host
+      admission record has the same identity facts. Arguments, payloads and credentials are never audited.
 - [ ] **4.5** [ToolGate] Qualification tests proving identity survives Gateway → Control → executor → service → storage
 - [ ] **4.6** [ToolGate, services] Executor-to-service calls, to the M2.10 contract:
       - **Caller authentication:** mTLS or audience-restricted service credentials prove the caller is a ToolGate
@@ -538,7 +549,7 @@ The ToolGate documentation describes the identity modes we need, but its
 *4.1–4.3 implemented in olo-labs/olo-toolgate#189:* the Tool Host passes the principal Control signed into the permit
 (tenant, mode, user, agent, chain, operation, resources) as a reserved `toolgate` claim, refusing permits whose pass-through
 claims use it. The Java SDK `Invocation` exposes it, and `requireUser()` refuses without a verified user, including
-standalone runs. Session epochs stay with Control. The Python SDK accessors are still to do.
+standalone runs. Session epochs stay with Control. The Python SDK has the same accessors and `require_user()` (olo-labs/olo-toolgate#190).
 
 **Acceptance.**
 - A test package sees exactly the verified principal and resource. A forged argument can't change it, and a missing
