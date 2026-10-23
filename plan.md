@@ -67,16 +67,16 @@ that replaces D8.
 |---|---|---|---:|---:|---:|---|
 | M0 | Discovery, plan and security reviews | all | 3 | 100% | 100% | ✅ Done |
 | M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 100% | ✅ Merged (PR #2); remediation in M3, M5 |
-| M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 33% | 🟨 D4–D7, revocation bound and RAG targets accepted; contracts await approval |
-| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 36% | 9% | 🟨 3.9 merged (PR #5); 3.1–3.2 and 3.11 in review |
-| M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 0% | 0% | ⬜ |
+| M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 50% | 🟨 D4–D7, 2.5, 2.10, revocation bound and RAG targets accepted; 2.2–2.4 and 2.11 await approval |
+| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 73% | 27% | 🟨 3.1–3.2 and 3.9 merged; 3.3–3.5, 3.8 and 3.11 in review; 3.6, 3.7, 3.10 open |
+| M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 50% | 0% | 🟨 4.1–4.3 and part of 4.4 in review; 4.5, 4.6 open |
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 0% | 0% | ⬜ |
 | M6 | Memory and RAG services and ToolGate packages | ToolGate, services | 12 | 0% | 0% | ⬜ |
 | M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 0% | 0% | ⬜ |
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **25%** | **17%** | |
+| | **Overall** | | **100** | **35%** | **21%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -355,7 +355,7 @@ The ToolGate documentation describes the identity modes we need, but its
 "target design" and is not a claim that the features exist. Readiness has to be shown by code and tests.
 
 **Deliverables:** [docs/toolgate-integration/m2](docs/toolgate-integration/m2/README.md). Ticked steps are drafted
-(implemented). Each step counts once it is approved: 2.6–2.8 and 2.12 so far.
+(implemented). Each step counts once it is approved: 2.5–2.8, 2.10 and 2.12 so far.
 
 - [x] **2.1** Gap matrix, with evidence (code paths and tests, not docs), for each required ToolGate capability:
       user-bound Gateway authentication; service-principal authentication; credential lifecycle; user and team
@@ -448,13 +448,21 @@ The ToolGate documentation describes the identity modes we need, but its
       - `sid` sessions with epochs; logout, revoke-all and admin revocation; bootstrap memberships for a fresh install
       - Demo decoders, `olo.ws.jwt.required` and the default tenant removed
       - Left for 3.11: the worker callback `POST /api/runs/{id}/events`, and the upload and knowledge-source endpoints
-- [ ] **3.3** [olo → olo-mono] Carry the verified identity context into the run as a **non-secret binding reference**
+- [x] **3.3** [olo → olo-mono] Carry the verified identity context into the run as a **non-secret binding reference**
       (server-bound data). Never as client fields, never as stored tokens.
       - Before each user-scoped call, the kernel gets a fresh credential through the M2.5 mechanism and rechecks
         current authority.
       - On an expired or revoked session it pauses for re-authentication or terminates the operation. It never
         substitutes the service principal.
-- [ ] **3.4** [ToolGate] **Implement a user-bound Gateway path.**
+      *Implemented (kernel side, this repo; backend side in olo-labs/olo#4):*
+      - `Context.identity` (`IdentityBinding`: tenant, user, issuer, IdP session, epoch) in the workflow input; not a credential
+      - `ToolGateClient.forUser(binding)`: every token is a user credential from the backend's worker-signed
+        `POST /api/internal/toolgate/credentials`, which rechecks session, epoch and membership; reused until 30 s before expiry
+      - With `toolgate.userCredentialsUrl` set, a run without a complete binding for its tenant fails the node; agent
+        workload tokens are never used instead. The worker refuses to start in that mode without the callback key.
+      - Still to do: the backend puts `identity` into the workflow input when it starts a run (needs this
+        `olo-workflow-input` published first). The node fails rather than pausing for re-authentication; pausing is M5.5.
+- [x] **3.4** [ToolGate] **Implement a user-bound Gateway path.**
       - A short-lived, audience-restricted, tenant-bound credential for the signed-in user that the Gateway accepts in
         `HUMAN` mode.
       - No OLO agent identity is required or consulted.
@@ -462,12 +470,24 @@ The ToolGate documentation describes the identity modes we need, but its
         outside its audience, tenant or session. Legitimate retries may present it again; duplicate effects are
         prevented by dedup (M5.3).
       - Sender binding is included if M2.5 requires it.
-- [ ] **3.5** [ToolGate] Service-principal path for path C: a dedicated platform workload identity in `SERVICE` mode,
+      *Implemented in olo-labs/olo-toolgate#189 and olo-labs/olo#4:*
+      - Control: RFC 8693 `/oauth/token-exchange` for the backend's service role. A pinned-key session assertion maps
+        `(iss, sub)` to a ToolGate user (unknown users start disabled) and yields a credential of at most 300 s, signed with
+        a dedicated key, binding tenant, session epoch and execution binding. `/oauth/sessions/revoke` bumps the epoch.
+      - Gateway: pinned-kid RS256 verification into a `HUMAN` `JWT` context; Control accepts `HUMAN` only from that
+        issuer with a credential digest, then checks the identity binding's epoch.
+      - Backend: assertion signer, exchange client, and every session revocation and membership removal passed on to
+        ToolGate (30 s bound). The worker can't mint: it has no assertion key and no token-exchange role.
+- [x] **3.5** [ToolGate] Service-principal path for path C: a dedicated platform workload identity in `SERVICE` mode,
       separate from all OLO workflow agents, with explicit resource-scoped grants
+      *Implemented (olo-labs/olo-toolgate#189):* `toolgate.control.olo.reserved-agents` agents have only `SERVICE`
+      workload bindings, and `DELEGATED` calls naming them as agent or chain hop are refused.
 - [ ] **3.6** [ToolGate] Resolve the user's and team's current permissions independently of OLO workflow agents
 - [ ] **3.7** [ToolGate] Object-level authorization for conversations, knowledge bases and documents
       that reaches execution, beyond the fixed `tool://<tool-id>` resource
-- [ ] **3.8** [ToolGate] Separate operation permissions as defined in *Permissions*. Wildcard grants are refused.
+- [x] **3.8** [ToolGate] Separate operation permissions as defined in *Permissions*. Wildcard grants are refused.
+      *Implemented (olo-labs/olo-toolgate#189):* `toolgate.control.olo.protected-tool-groups` refuses `allActions` and
+      `match: ANY` in grants and delegations reaching those groups, including through the tool-group wildcard.
 - [x] **3.9** [olo-mono] **M1-R2:** server-authorized workload mappings for path B. A workflow's `agentName` must be in
       the allowlist for that tenant and workflow, or the call fails. The path C principal can never be mapped.
       *Implemented:*
@@ -493,13 +513,14 @@ The ToolGate documentation describes the identity modes we need, but its
 
 ## M4 — Trusted SDK, executor context and executor-to-service calls (weight 8)
 
-- [ ] **4.1** [ToolGate] Complete principal contract in the SDK `Invocation`: tenant, user (or service principal),
+- [x] **4.1** [ToolGate] Complete principal contract in the SDK `Invocation`: tenant, user (or service principal),
       session, resource, operation and correlation, required for scoped tools (including a tenant accessor)
-- [ ] **4.2** [ToolGate] Propagate it from Gateway → Control → executor. Permits bind identity, operation, resource,
+- [x] **4.2** [ToolGate] Propagate it from Gateway → Control → executor. Permits bind identity, operation, resource,
       exact arguments and expiry.
-- [ ] **4.3** [ToolGate] Scoped tools refuse to run without a trusted identity. This includes standalone runtimes, where
+- [x] **4.3** [ToolGate] Scoped tools refuse to run without a trusted identity. This includes standalone runtimes, where
       `userId()` is empty today.
-- [ ] **4.4** [ToolGate] Audit records: subject, actor, workload, resource, operation, decision, policy version,
+- [ ] **4.4** [ToolGate] *(partly: the Tool Host admission record has tenant, mode, user, agent, chain, operation,
+      resources and authorization epoch; Control's audit fields are still to do)* Audit records: subject, actor, workload, resource, operation, decision, policy version,
       invocation correlation and outcome
 - [ ] **4.5** [ToolGate] Qualification tests proving identity survives Gateway → Control → executor → service → storage
 - [ ] **4.6** [ToolGate, services] Executor-to-service calls, to the M2.10 contract:
@@ -513,6 +534,11 @@ The ToolGate documentation describes the identity modes we need, but its
         lifetimes and invalidation stay within the bound. Permits are never carried across queueing, approvals or
         long-running steps without being re-authorized or re-issued.
       - Network policy keeps the services unreachable from the OLO worker, the backend and the model
+
+*4.1–4.3 implemented in olo-labs/olo-toolgate#189:* the Tool Host passes the principal Control signed into the permit
+(tenant, mode, user, agent, chain, operation, resources) as a reserved `toolgate` claim, refusing permits whose pass-through
+claims use it. The Java SDK `Invocation` exposes it, and `requireUser()` refuses without a verified user, including
+standalone runs. Session epochs stay with Control. The Python SDK accessors are still to do.
 
 **Acceptance.**
 - A test package sees exactly the verified principal and resource. A forged argument can't change it, and a missing
