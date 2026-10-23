@@ -40,6 +40,7 @@ public final class ToolGateSettings {
     private final List<AgentMappingSettings> agentMappings;
     private final List<String> reservedPrincipals;
     private final String userCredentialsUrl;
+    private final Boolean delegatedAgents;
 
     private ToolGateSettings(Builder builder) {
         this.enabled = builder.enabled;
@@ -51,6 +52,7 @@ public final class ToolGateSettings {
         this.agentMappings = builder.agentMappings == null ? List.of() : List.copyOf(builder.agentMappings);
         this.reservedPrincipals = builder.reservedPrincipals == null ? null : List.copyOf(builder.reservedPrincipals);
         this.userCredentialsUrl = builder.userCredentialsUrl;
+        this.delegatedAgents = builder.delegatedAgents;
     }
 
     public static Builder builder() {
@@ -113,6 +115,19 @@ public final class ToolGateSettings {
         return userCredentialsUrl;
     }
 
+    /**
+     * With {@link #getUserCredentialsUrl()}: call as the mapped agent acting for the run's user (path B, M3.10), sending the
+     * agent's on-behalf-of workload token beside the user credential. Unset or false calls as the user alone (path A).
+     */
+    @JsonProperty("delegatedAgents")
+    public Boolean getDelegatedAgents() {
+        return delegatedAgents;
+    }
+
+    public boolean isDelegatedAgents() {
+        return isUserScoped() && Boolean.TRUE.equals(delegatedAgents);
+    }
+
     public boolean isUserScoped() {
         return userCredentialsUrl != null && !userCredentialsUrl.isBlank();
     }
@@ -149,13 +164,14 @@ public final class ToolGateSettings {
                 && Objects.equals(maxToolRounds, that.maxToolRounds)
                 && Objects.equals(agentMappings, that.agentMappings)
                 && Objects.equals(reservedPrincipals, that.reservedPrincipals)
-                && Objects.equals(userCredentialsUrl, that.userCredentialsUrl);
+                && Objects.equals(userCredentialsUrl, that.userCredentialsUrl)
+                && Objects.equals(delegatedAgents, that.delegatedAgents);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(enabled, mcpUrl, caCertificate, credentialsDir, timeoutMs, maxToolRounds,
-                agentMappings, reservedPrincipals, userCredentialsUrl);
+                agentMappings, reservedPrincipals, userCredentialsUrl, delegatedAgents);
     }
 
     @JsonPOJOBuilder(withPrefix = "")
@@ -170,6 +186,7 @@ public final class ToolGateSettings {
         private List<AgentMappingSettings> agentMappings;
         private List<String> reservedPrincipals;
         private String userCredentialsUrl;
+        private Boolean delegatedAgents;
 
         @JsonProperty("enabled")
         public Builder enabled(Boolean enabled) {
@@ -222,6 +239,12 @@ public final class ToolGateSettings {
         @JsonProperty("userCredentialsUrl")
         public Builder userCredentialsUrl(String userCredentialsUrl) {
             this.userCredentialsUrl = userCredentialsUrl;
+            return this;
+        }
+
+        @JsonProperty("delegatedAgents")
+        public Builder delegatedAgents(Boolean delegatedAgents) {
+            this.delegatedAgents = delegatedAgents;
             return this;
         }
 

@@ -89,8 +89,9 @@ public final class DefaultLlmInvocationService implements LlmInvocationService {
             throw new AgentIdentityDeniedException(tenant, context.getGraph().getId(), settings.agentName(),
                     "tools run as the run's user and this run carries no verified user for its tenant");
         }
-        return access.client().forUser(new UserBinding(identity.tenantId(), identity.userId(), identity.issuer(),
-                identity.sessionId(), identity.sessionEpoch()));
+        UserBinding user = new UserBinding(identity.tenantId(), identity.userId(), identity.issuer(),
+                identity.sessionId(), identity.sessionEpoch());
+        return access.viaAgent() ? access.client().forUserViaAgent(user) : access.client().forUser(user);
     }
 
     /**

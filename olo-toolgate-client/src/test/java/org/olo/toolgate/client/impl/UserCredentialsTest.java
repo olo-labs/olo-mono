@@ -113,6 +113,11 @@ class UserCredentialsTest {
             new McpToolGateClient(settings, agentTokens, provider).forUser(ALICE).listTools("memory-agent");
             assertThat(gateway.received().get(0).header("Authorization")).isEqualTo("Bearer user-token-1");
 
+            new McpToolGateClient(settings, agentTokens, provider).forUserViaAgent(ALICE).listTools("memory-agent");
+            assertThat(gateway.received().get(1).header("Authorization")).isEqualTo("Bearer user-token-1");
+            assertThat(gateway.received().get(1).header(McpToolGateClient.ACTOR_CREDENTIAL_HEADER)).isEqualTo("agent-token");
+            assertThat(gateway.received().get(0).header(McpToolGateClient.ACTOR_CREDENTIAL_HEADER)).isNull();
+
             assertThatThrownBy(() -> new McpToolGateClient(settings, agentTokens, (org.olo.toolgate.client.UserCredentialProvider) null).forUser(ALICE))
                     .isInstanceOf(ToolGateException.class)
                     .extracting(e -> ((ToolGateException) e).kind()).isEqualTo(ToolGateException.Kind.CREDENTIAL_MISSING);
