@@ -5,7 +5,9 @@
 package org.olo.worker.toolgate;
 
 import org.olo.kernel.KernelRuntimeHolder;
+import org.olo.kernel.agent.tool.AgentIdentityPolicy;
 import org.olo.kernel.agent.tool.AgentToolAccess;
+import org.olo.kernel.agent.tool.MappedAgentIdentityPolicy;
 import org.olo.toolgate.client.ToolGateClient;
 import org.olo.toolgate.client.ToolGateException;
 import org.olo.toolgate.client.impl.FileAndEnvCredentialResolver;
@@ -18,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 
 /**
  * Installs worker-wide OLO ToolGate access into the kernel from the {@code toolgate} config section.
@@ -58,13 +61,28 @@ public final class WorkerToolGateSetup {
             client.probe();
         }
 
-        AgentToolAccess access = AgentToolAccess.enabled(client, config.resolveMaxToolRounds());
+        AgentToolAccess access = AgentToolAccess.enabled(client, config.resolveMaxToolRounds(), identityPolicy(config));
         KernelRuntimeHolder.setToolAccess(access);
-        log.info("ToolGate enabled: gateway={}, credentialsDir={}, caCertificate={}, maxToolRounds={}",
+        log.info("ToolGate enabled: gateway={}, credentialsDir={}, caCertificate={}, maxToolRounds={}, agentMappings={}",
                 clientSettings.mcpUrl(),
                 credentialsDir != null ? credentialsDir : "(env vars only)",
                 caCertificate != null ? caCertificate : "(JVM trust store)",
-                access.defaultMaxToolRounds());
+                access.defaultMaxToolRounds(),
+                config.getAgentMappings().size());
+        if (config.getAgentMappings().isEmpty()) {
+            log.warn("ToolGate has no agentMappings: every agent identity is refused until operators map them");
+        }
         return access;
+    }
+
+    /** Operator-controlled (tenant, workflow) → agents mappings. Workflow definitions can't change them. */
+    static AgentIdentityPolicy identityPolicy(ToolGateSettings config) {
+        if (config.getAgentMappings().isEmpty()) {
+            return AgentIdentityPolicy.denyAll();
+        }
+        List<MappedAgentIdentityPolicy.Mapping> mappings = config.getAgentMappings().stream()
+                .map(m -> new MappedAgentIdentityPolicy.Mapping(m.getTenant(), m.getWorkflow(), m.getAgents()))
+                .toList();
+        return new MappedAgentIdentityPolicy(mappings, config.resolveReservedPrincipals());
     }
 }
