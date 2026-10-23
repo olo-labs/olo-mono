@@ -1,245 +1,439 @@
-# Plan: ToolGate-governed tools for OLO agents
+# Plan: ToolGate-governed tools, memory and RAG for OLO
 
-**Goal.** Every OLO agent gets its tools from [OLO ToolGate](../../git/olo-toolgate) instead of from Java code in
-olo-mono. An agent asks ToolGate which tools it may use, and the LLM can call only those, through ToolGate.
-All tool code, annotations, call schemas and tool nodes are removed from olo-mono, with no backward compatibility.
-A new multi-agent pipeline proves the design end to end against ToolGate's mocked tools.
+**Goal.** OLO stops shipping tool code. Everything that reaches data or causes an effect goes through
+[OLO ToolGate](../../git/olo-toolgate), under the identity that should be authorized for it:
 
-**Status (2026-10-23): 31% of target work done.** M0 and M1 are complete on branch `feature/toolgate-integration`.
-D1 is decided (conversation memory and RAG move into ToolGate). Next up: M2.
+- **Conversation memory and RAG** are platform capabilities. OLO runs them deterministically. ToolGate authorizes
+  them for the **signed-in user** and the specific resource. Separate memory and RAG services store the data and
+  enforce the authorized scope.
+- **Business tools chosen by a model** are authorized for the user *plus* the delegated agent actor. The agent's
+  grants are a ceiling, never a substitute for the user's.
+- All tool code, annotations, call schemas and TOOL nodes are removed from olo-mono, with no backward compatibility.
+- A multi-agent pipeline on ToolGate's mocked tools proves the design end to end.
+
+**Status (2026-10-23): 13% of target work done.** A security review (folded into this revision) found that the
+previous plan authorized memory and RAG through agent identities. The plan now requires user authorization,
+resource-level permissions, durable invocations and deterministic platform orchestration, and it adds the
+ToolGate work this needs. The scope is much larger, so progress was recalculated: M0 and M1 are done, everything
+else is open. M1 is in review as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2) on branch
+`feature/toolgate-integration`. The remediation it needs is tracked below (M1-R1 to M1-R6). **Next:** M2.
 
 ## Progress
 
-| # | Milestone | Weight | Done | Status |
-|---|---|---:|---:|---|
-| M0 | Discovery and plan | 5 | 100% | ✅ Done |
-| M1 | ToolGate client and agent tool loop | 25 | 100% | ✅ Done (fake Gateway; real ToolGate run is M5) |
-| M2 | Separate agent delegation from tool calls | 10 | 0% | ⬜ Not started |
-| M3 | Remove all tool code from olo-mono | 25 | 0% | ⬜ Not started |
-| M4 | Move conversation memory and RAG into ToolGate tool packages | 10 | 14% | 🟨 D1 decided (1 of 7 steps) |
-| M5 | Multi-agent `incident-recovery` pipeline on ToolGate mocks | 15 | 0% | ⬜ Not started |
-| M6 | Debug stack, docs and cross-repo follow-ups | 10 | 0% | ⬜ Not started |
-| | **Overall** | **100** | **31%** | |
+| # | Milestone | Repos | Weight | Done | Status |
+|---|---|---|---:|---:|---|
+| M0 | Discovery, plan and security review | all | 3 | 100% | ✅ Done |
+| M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | ✅ Done; remediation in M3, M5, M10 |
+| M2 | Capability gaps and cross-repo contracts | all | 7 | 0% | ⬜ Next |
+| M3 | Verified user identity and resource authorization | olo, ToolGate, olo-mono | 15 | 0% | ⬜ |
+| M4 | Trusted SDK and executor context | ToolGate | 8 | 0% | ⬜ |
+| M5 | Durable invocation, retries and approvals | olo-mono, ToolGate | 12 | 0% | ⬜ |
+| M6 | Memory and RAG services and ToolGate packages | ToolGate, services | 12 | 0% | ⬜ |
+| M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 0% | ⬜ |
+| M8 | Isolation, recovery and real-stack tests | all | 8 | 0% | ⬜ |
+| M9 | Remove old tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | ⬜ |
+| M10 | Deployment and operational qualification | all | 5 | 0% | ⬜ |
+| | **Overall** | | **100** | **13%** | |
 
 **How the percentages work.** A milestone's weight is its share of the total effort. Inside a milestone, every
-step has the same share. Overall % = Σ (weight × milestone done %) / 100. Tick a step's box when its PR is merged
-and its acceptance check passes, then update the table above.
+step has the same share. Overall % = Σ (weight × milestone done %) / 100. Tick a step when its PR is merged and its
+acceptance check passes, then update this table.
 
-Planned order: M1 → M2 → M4 → M3 → M5 → M6. M3 deletes the old path, so the new one (M1, M2, M4) must be in
-place first. That way the build and the tests stay green on every PR.
+**Order.** M2 → M3 → M4 → M5 → M6 → M7 → M8 → M9 → M10. No memory or RAG code (M6) is written before the identity,
+authorization and executor-context contracts (M2 to M4) exist and are qualified. The old tool code is deleted (M9)
+only once the governed paths have passed M8, so every PR keeps the build green.
+
+**Where the earlier milestones went.** Old M2 (split agent delegation) and old M3 (remove tool code) → M9. Old M4
+(memory/RAG as agent tools) is replaced by M6 + M7. Old M5 (incident-recovery demo) → M8.3. Old M6 (debug stack,
+docs, cross-repo) → M8.2, M9.6–M9.8 and M10.7.
 
 ---
 
 ## Target design
 
+### Two call paths
+
+| Path | What | Who decides to call | Authorization subject | Role of `agentName` |
+|---|---|---|---|---|
+| **A. Governed platform calls** | Load conversation, append turn, RAG query, ingest, delete | OLO runtime, deterministically | The signed-in user (direct-human mode) | None |
+| **B. Agent tool calls** | Business tools in the agent's catalog | The model, inside the M1 tool loop | User **and** delegated agent actor | Capability ceiling and audit |
+| **C. Service jobs** | Scheduled indexing, maintenance | OLO runtime | An explicit service principal | None; no made-up user |
+
+Path A never goes through an LLM decision, and it is not an AGENT node. Removing TOOL nodes does not mean making
+every operation an agent: OLO keeps an internal **governed-call** abstraction for path A and path C (M7.1).
+
+### Memory and RAG flow (path A)
+
 ```
-AGENT node  (agentName = "triage-agent"; defaults to the agent's id, user-editable)
-  all of this runs inside the node's traversal-step Temporal activity
-  ├─ ToolGate tools/list                     bearer token resolved for agentName
-  └─ loop up to maxToolRounds:
-       ├─ LLM chat with native tool calling   tool schemas = MCP inputSchema from the catalog
-       ├─ ToolGate tools/call                 same identity, deterministic JSON-RPC id per call
-       └─ tool result appended to the chat; stops when the model returns a final answer
+Authenticated user
+  → OLO backend verifies identity, tenant membership and session                  [olo, M3]
+  → OLO runtime calls ToolGate with verified user context                         [olo-mono, M3/M7]
+  → ToolGate authorizes the user, the operation and the resource                  [ToolGate, M3/M4]
+  → Memory/RAG executor gets that authorized scope through a protected context    [ToolGate, M4]
+  → Memory/RAG service enforces the scope in storage                              [services, M6]
+  → Authorized context is handed to the workflow's agents, as untrusted data      [olo-mono, M7]
+  → OLO appends the final conversation turn through ToolGate                      [olo-mono, M7]
 ```
 
-**ToolGate facts this design relies on**
-- Identity comes **only** from the runtime bearer token. The Gateway ignores identity in the request body or
-  forwarded headers.
-- Each ToolGate agent has a *workload binding* that issues its token. The groups and grants on that agent decide
-  what `tools/list` returns.
-- `POST /mcp` (MCP 2026-07-28) supports `tools/list` and `tools/call`.
-- A tool outside the agent's catalog returns `403`. A tool under an ASK policy returns `PENDING_APPROVAL` and does
-  not run until someone approves it.
-- If Control is unavailable, ToolGate fails closed, and cached metadata never grants execution.
+### Identity model
 
-**OLO-side rules**
-- **Agent identity.** Every AGENT node has `configuration.agentName`. It defaults to the agent's id (for example
-  `log-failure-agent`), and users can change it, so the same workflow can run under different identities with
-  different tool sets.
-- **Credentials.** A `ToolGateCredentialResolver` maps `agentName` to a bearer token. The first implementation
-  reads `<credentialsDir>/<agentName>.token` or the env var `OLO_TOOLGATE_TOKEN_<AGENT_NAME>`. Tokens never
-  appear in workflow JSON, logs or Temporal history.
-- **Temporal safety.** Each traversal step already runs as one Temporal activity, so `tools/list` and
-  `tools/call` never run in workflow code. On `/mcp` the JSON-RPC `id` is ToolGate's idempotency key: a retry
-  with the same `id` and caller maps to the same invocation, and a finished result is returned, not re-run.
-  The kernel sends `id = olo-<sha256(runId, workflow/node, pass, round, index, tool, canonical arguments)>`,
-  so an activity retry repeats the same ids, while a later pass of the node or different arguments is a new
-  invocation.
-- **No cross-run caching.** The catalog is fetched fresh for every agent run.
-- **Fail closed.** If ToolGate is unreachable or the token is missing, the agent run fails with a clear error. It
-  never carries on without tools.
+| Flow | Authorization subject | Role of the agent identity |
+|---|---|---|
+| Conversation memory | Signed-in user | Not involved |
+| User document retrieval | Signed-in user | Not involved |
+| User ingest or delete request | Signed-in user | Not involved |
+| Other tools the agent chooses | User plus delegated actor | Capability ceiling and audit |
+| Scheduled indexing | Explicit service principal | Not involved; no fabricated user identity |
+
+- **OLO's workload identity** still authenticates transport and gives service accountability. It never stands in
+  for the requesting user's permissions.
+- **Subject and actor stay separate** for delegated calls (RFC 8693 token exchange semantics).
+- **`agentName` never selects** a user's memory and never determines document permissions.
+
+### Identity context contract (agreed in M2.2)
+
+| Field | Requirement |
+|---|---|
+| Tenant | Derived from the verified identity and trusted tenant membership. Never a fallback to `sub`. |
+| User | A stable internal user id, mapped from the verified issuer and subject |
+| Session | A validated authenticated session, with revocation handling |
+| Authentication expiry and audience | Present and checked. Credentials are issued for ToolGate's audience only. |
+| Resource | Conversation, memory namespace, knowledge base or document id. A locator, not a permission; ownership is checked server-side. |
+| Operation | An explicit permission, for example `memory.read`, `memory.append`, `rag.query`, `rag.ingest`, `rag.delete` |
+| Correlation | Run, turn, invocation and logical-operation ids, for tracing and idempotency |
+
+- Hiding `userId` or `tenantId` from the model's schema does **not** make them trusted. ToolGate authenticates
+  where they came from, and the executor receives them only through a protected context.
+- Credentials are short-lived and audience-restricted, or an equivalent authenticated server binding.
+  Frontend tokens are never forwarded downstream: no token passthrough, per the MCP security guidance and the
+  OAuth 2.0 Security Best Current Practice (RFC 9700).
+
+### Responsibilities
+
+| Party | Owns |
+|---|---|
+| ToolGate | Policy decisions, execution authorization, permits, approvals, audit |
+| Memory and RAG services | Storage, and enforcing the authorized resource scope on every read and write |
+| Databases | Extra isolation where they support it (for example tenant-scoped collections or row security) |
+| OLO | Authenticated identity context, and deterministic orchestration of when memory loads, retrieval runs and turns persist |
+| Agents | Consuming the authorized context. They cannot widen it. |
+
+Database credentials exist only in the trusted memory and RAG executors and services, never in the OLO worker or the model.
+
+### Memory types
+
+| Type | Scope and behavior |
+|---|---|
+| Conversation history | Private conversation records. Sharing is explicit. Default access requires tenant plus owner or membership. |
+| Working state | Temporary run state with bounded retention |
+| Long-term user memory | Separate, controlled facts and preferences, with provenance, correction, deletion and retention |
+
+### RAG controls
+
+- Every chunk stores tenant, document id, ownership and sharing metadata, document version and authorization metadata.
+- The authorized scope is a **mandatory filter** on query, fetch, update and delete. It is applied in vector search,
+  and checked again before content is released where needed. The model never builds or overrides the filter.
+- ACL changes propagate to the chunks and invalidate cached results. Deleting a document removes its source content,
+  chunks, embeddings and relevant caches.
+- Results carry source and version citations. Retrieved text is untrusted data, never instructions.
+- Ingestion is controlled: file limits, parser protections, and restricted outbound access.
+- The embedding model is versioned, with a reindexing process. The demo hash vectors are replaced.
+
+These follow the OWASP guidance for RAG applications. Qdrant supports tenant filtering, but OLO's authorization
+still has to supply that filter and enforce it.
 
 ---
 
-## M0 — Discovery and plan (weight 5) ✅
+## M0 — Discovery, plan and security review (weight 3) ✅
 
-- [x] Survey the ToolGate Gateway API, MCP surface, agent/workload-binding model and mocked tools
+- [x] Survey the ToolGate Gateway API, MCP surface, agent and workload-binding model, and mocked tools
 - [x] Inventory tool code across olo-mono (8 modules) and the workflow JSON (67 files)
 - [x] Confirm that agent delegation (`agentCalls`) shares the planner schema with `toolCalls`
-- [x] Write this plan
+- [x] Write the plan
+- [x] Fold in the security review: user authorization, resource permissions, durable invocations, deterministic
+      platform calls. The review's references were checked against the code (M2.1 records them as evidence).
 
-## M1 — ToolGate client and agent tool loop (weight 25)
+## M1 — ToolGate client and agent tool loop (weight 10) ✅ historical
 
-- [x] **1.1** New module `olo-toolgate-client` (`McpToolGateClient`): an MCP 2026-07-28 client for `tools/list` and
-      `tools/call`, with mirrored `MCP-Protocol-Version`/`Mcp-Method`/`Mcp-Name` headers, JSON or SSE replies, TLS
-      with ToolGate's CA, timeouts, and error mapping to typed `ToolGateException` kinds
-- [x] **1.2** `ToolGateCredentialResolver` plus `FileAndEnvCredentialResolver`: `OLO_TOOLGATE_TOKEN_<AGENT_NAME>`
-      first, then `<credentialsDir>/<agentName>.token`, re-read on every call so rotation applies at once. Agent
-      names are restricted to `[A-Za-z0-9._-]`, so a name can't escape the credentials folder.
-- [x] **1.3** Worker config section `toolgate: { enabled, mcpUrl, caCertificate, credentialsDir, timeoutMs,
-      maxToolRounds }`, validated at load, with relative paths resolved against the config folder. Bootstrap step
-      4/5 (ToolGate) installs access into the kernel and probes the Gateway; the worker won't start if ToolGate is
-      enabled but unreachable. Disabled sections were added to the docker and local-debug sample configs.
-- [x] **1.4** `agentName` and `maxToolRounds` on AGENT node `configuration` (`AgentToolSettings`), validated at run
-      time. `agentName` defaults to the workflow id for the primary agent (node `agent`, or the only AGENT node),
-      otherwise the node id. *The Studio property moved to M3.6, because adding it regenerates every workflow JSON.*
-- [x] **1.5** `LlmClient.chat(messages, tools)` with native tool calling in `OllamaLlmClient`: sends `tools`, parses
-      `message.tool_calls`, and accepts stringified-JSON arguments
-- [x] **1.6** `AgentToolLoop`, called from `DefaultLlmInvocationService` for non-planner LLM agents: list, then chat,
-      then call, with model-safe tool names (`incidents.host-status` → `incidents_host-status`), deterministic
-      JSON-RPC ids, results truncated to 8,000 characters, and a round limit followed by one final answer without
-      tools. An empty catalog runs the plain prompt exactly as before. Node output records `agentName`,
-      `toolCatalog`, `toolInvocations` (tool, request id, status, invocation id; no arguments or results) and
-      `agentOutcome`.
-- [x] **1.7** `PENDING_APPROVAL` ends the turn with outcome `WAITING_APPROVAL` and a notice naming the tool and the
-      invocation id (D2, option a). A tool outside the catalog, or one that fails in its executor, is shown to the
-      model as `ERROR: ...` instead of failing the run.
-- [x] **1.8** Tests, all passing:
-      - `olo-toolgate-client`: 18 (fake Gateway on the JDK HTTP server; exact frame and headers, per-agent tokens,
-        allowed/403/ASK/executor error/401/503/SSE/unreachable, token rotation, path-safe names)
-      - `olo-kernel`: 27 (`AgentToolLoopTest`, `AgentToolSettingsTest`, `ToolGateAgentExecutionTest`,
-        `OllamaToolCallParsingTest`)
-      - `olo-worker-configuration`: 4 validator tests
-      - `olo-worker`: 4 (`WorkerToolGateSetupTest`)
+Delivered in [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2). It remains the basis for path B.
 
-**Acceptance.** ✅ An AGENT node with `agentName=X` sees exactly X's catalog and calls tools through the Gateway
-client under X's token (`ToolGateAgentExecutionTest`). The fake-Gateway tests pass. A live ToolGate run is part of M5.
+- [x] **1.1** `olo-toolgate-client`: MCP 2026-07-28 client (`McpToolGateClient`) for `tools/list` and `tools/call`.
+      Mirrored headers, JSON/SSE replies, CA-pinned TLS, typed fail-closed `ToolGateException`s.
+- [x] **1.2** `FileAndEnvCredentialResolver`: per-agent workload tokens from `OLO_TOOLGATE_TOKEN_<AGENT_NAME>` or
+      `<credentialsDir>/<agentName>.token`, re-read on every call, with path-safe names
+- [x] **1.3** Worker `toolgate` config section, validated at load and probed at bootstrap
+- [x] **1.4** `agentName` and `maxToolRounds` on AGENT nodes (`AgentToolSettings`). The Studio property moved to M9.5.
+- [x] **1.5** Native tool calling in `OllamaLlmClient.chat`
+- [x] **1.6** `AgentToolLoop`: list, chat, call; model-safe names; deterministic JSON-RPC ids; a round limit
+- [x] **1.7** `PENDING_APPROVAL` ends the turn as `WAITING_APPROVAL` (to be replaced by M5.4). Tool errors are
+      shown to the model; outages fail the node.
+- [x] **1.8** 53 new tests across four modules, all passing
+
+**M1 remediation.** These gaps were found by the review. Each is done in, and counted by, the milestone named.
+
+| # | Gap in M1 | Fix | Done in |
+|---|---|---|---|
+| M1-R1 | An activity retry re-runs the whole LLM loop. The model may choose different calls or arguments, which produce new request ids and can repeat effects. | Persist each selected tool operation, with a stable logical-operation id, before dispatch. Recovery resumes it rather than regenerating it. | M5.1 |
+| M1-R2 | `agentName` is editable, so a workflow author can select any token mounted on the worker | Only server-authorized workload mappings (tenant, workflow → allowed agent identities). The worker stops resolving arbitrary names to tokens. | M3.8 |
+| M1-R3 | Path B calls ToolGate as the agent alone | Delegated mode: user subject plus agent actor | M3.9 |
+| M1-R4 | `WAITING_APPROVAL` tells the user to run the request again | Resume the original invocation | M5.4 |
+| M1-R5 | Transport dedup (the JSON-RPC id) is treated as if it were business idempotency | Separate the two; reconcile unknown outcomes | M5.3 |
+| M1-R6 | Prompts, tool results and outputs can land in Temporal history | Payload encryption or references | M10.5 |
 
 **Known unrelated failures.** 7 existing `olo-kernel` tests fail the same way on a clean `origin/main`. Five need
-`olo-workflow-input/samples/minimal-local/workflow-input.json`, which `.gitignore` (`*/samples/*/*.json`) keeps out
-of the repo. Two read conversation history that earlier tests leave in `olo-core/tools/demo-data/conversations`.
-M3 deletes that tool data; the missing sample needs its own fix.
+`olo-workflow-input/samples/minimal-local/workflow-input.json`, which `.gitignore` (`*/samples/*/*.json`) excludes.
+Two read conversation history that other tests leave in `olo-core/tools/demo-data/conversations`. M9 deletes that
+data; the missing sample needs its own fix.
 
-## M2 — Separate agent delegation from tool calls (weight 10)
+## M2 — Capability gaps and cross-repo contracts (weight 7)
 
-- [ ] **2.1** Rename `org.olo.kernel.toolcall` to `org.olo.kernel.agentcall`, keeping only the `agentCalls` parsing
-      and merging
-- [ ] **2.2** Rename `ToolCallExpansionExecutionStrategy` to `AgentCallExpansionExecutionStrategy` (agent subgraphs only)
-- [ ] **2.3** Planner JSON schema: only `agentCalls`. Strip `toolCalls` from the validator, the prompts and the retry
-      variables.
-- [ ] **2.4** Update the orchestrator tests (log-RCA and research) to use delegation only
+The ToolGate documentation describes the identity modes we need, but its
+[enterprise access-control design](../../git/olo-toolgate/docs/security/enterprise-access-control.md) calls itself a
+"target design" and is not a claim that the features exist. Readiness has to be shown by code and tests.
 
-**Acceptance.** Orchestrators still delegate to child agents, and the child agents use M1 tools.
+- [ ] **2.1** Gap matrix, with evidence (code paths and tests, not docs), for each required ToolGate capability:
+      direct-human runtime authentication; credential lifecycle; user and team permission resolution independent of
+      OLO agents; object-level resource authorization; trusted executor context; enforcing revocation during calls,
+      approvals, jobs and result retrieval; durable invocation status, cancellation and reconciliation; audit fields.
+      Known gaps so far:
+      - The SDK's `Invocation.userId()` is optional, and there is no tenant accessor.
+      - `StandaloneContext.userId()` always returns empty.
+      - Package tools have a fixed `tool://<tool-id>` resource, which can't tell one conversation or document from another.
+- [ ] **2.2** Identity context contract (the table above): fields, provenance, signing or binding, and the expiry and
+      audience rules. Agreed across olo, olo-mono and ToolGate.
+- [ ] **2.3** Resource and permission model:
+      - Resource identifiers for conversations, memory namespaces, knowledge bases and documents
+      - Owner, membership and sharing semantics
+      - Separate permissions: memory read/append/delete; long-term memory read/write/delete; RAG
+        query/ingest/update/delete/share. Query never implies ingest or delete.
+- [ ] **2.4** Invocation lifecycle contract:
+      - Logical-operation ids and the idempotency scope (subject + request; reusing an id with changed arguments is a conflict)
+      - Statuses, cancellation, reconciliation after an unknown outcome
+      - Approval resume, and result retrieval
+- [ ] **2.5** Credential lifecycle: issuance, audience, expiry, renewal, revocation and tenant binding. Choose the
+      mechanism (D4): token exchange if ToolGate supports it, otherwise an authenticated server binding.
+- [ ] **2.6** Threat-model update for paths A, B and C, in both ToolGate's `docs/security` and OLO
 
-## M3 — Remove all tool code from olo-mono (weight 25)
+**Acceptance.** All three repos sign off a written contract set (2.2–2.5). Every gap in 2.1 has an owner and a milestone.
+
+## M3 — Verified user identity and resource authorization (weight 15)
+
+- [ ] **3.1** [olo] Replace the demo JWT handling. `JwtTenantIdDecoder` and `DefaultJwtTenantExtractor` decode claims
+      without checking signatures, and fall back from `tenantId` to `sub`. Verify issuer, signature, audience and
+      expiry; map to a stable internal user id; resolve tenant from trusted membership; remove the `sub` fallback.
+- [ ] **3.2** [olo] Session binding and revocation
+- [ ] **3.3** [olo → olo-mono] Carry the verified identity context into the run as server-bound data, never as client
+      fields. The kernel refuses user-scoped calls when the context is absent or expired.
+- [ ] **3.4** [ToolGate] Qualify, or implement, a direct-human runtime credential path for OLO: short-lived,
+      audience-restricted and tenant-bound, with tests
+- [ ] **3.5** [ToolGate] Resolve the user's and team's current permissions independently of OLO workflow agents
+- [ ] **3.6** [ToolGate] Object-level authorization for conversations, memory namespaces, knowledge bases and documents
+      that reaches execution, beyond the fixed `tool://<tool-id>` resource
+- [ ] **3.7** [ToolGate] Separate operation permissions as defined in M2.3
+- [ ] **3.8** [olo-mono] **M1-R2:** server-authorized workload mappings for path B. A workflow's `agentName` must be in
+      the allowlist for that tenant and workflow, or the call fails.
+- [ ] **3.9** [olo-mono, ToolGate] **M1-R3:** delegated mode for path B, with the user as subject and the agent as actor.
+      Deny when the agent may use a tool but the user may not.
+- [ ] **3.10** [olo] The same checks on every alternate endpoint: uploads, document downloads, knowledge-source
+      listings, session APIs, exports and result retrieval
+
+**Acceptance.** Requests without a verified identity are rejected. A known resource id with the wrong tenant or user is
+denied by ToolGate. A workflow can't pick an agent identity it isn't mapped to.
+
+## M4 — Trusted SDK and executor context (weight 8)
+
+- [ ] **4.1** [ToolGate] Complete principal contract in the SDK `Invocation`: tenant, user, session, resource, operation
+      and correlation, required for user-scoped tools (including a tenant accessor)
+- [ ] **4.2** [ToolGate] Propagate it from Gateway → Control → executor. Permits bind identity, operation, resource,
+      exact arguments and expiry.
+- [ ] **4.3** [ToolGate] User-scoped tools refuse to run without a trusted identity. This includes standalone runtimes,
+      where `userId()` is empty today.
+- [ ] **4.4** [ToolGate] Audit records: subject, workload, resource, operation, decision, policy version, invocation
+      correlation and outcome
+- [ ] **4.5** [ToolGate] Qualification tests proving identity survives Gateway → Control → executor → storage
+
+**Acceptance.** A test package sees exactly the verified principal and resource. A forged argument can't change it, and
+a missing identity is refused.
+
+## M5 — Durable invocation, retries and approvals (weight 12)
+
+Temporal can run a failed activity again, so every effect has to be safe to replay.
+
+- [ ] **5.1** [olo-mono] **M1-R1:** split the agent turn. One activity gets the model's decision and records each selected
+      operation, with a stable logical-operation id, in workflow state. A separate activity dispatches each recorded
+      operation. On recovery, recorded operations are resumed, never regenerated.
+- [ ] **5.2** [ToolGate] Dedup is bound to the authenticated subject and the request. Reusing an id with changed
+      arguments is a conflict, not a silent replay.
+- [ ] **5.3** [olo-mono, ToolGate] **M1-R5:** transport dedup is separate from executor and business idempotency. A
+      timeout after an external effect triggers reconciliation (query the invocation status) before any retry.
+- [ ] **5.4** [olo-mono, ToolGate] **M1-R4:** approvals resume the original invocation. The run waits on an
+      authenticated notification or bounded polling, then retrieves the result. Covers expiry, denial, cancellation,
+      and re-checking revocation before execution.
+- [ ] **5.5** [olo-mono] Bounded retries, timeouts and cancellation propagated to ToolGate
+- [ ] **5.6** Tests: a crash after dispatch but before recording; an activity retry; approve, deny and expire; a
+      grant revoked while waiting
+
+**Acceptance.** Crash and retry tests show that no completed side effect repeats, and that an approval resumes the
+original operation.
+
+## M6 — Memory and RAG services and ToolGate packages (weight 12)
+
+ToolGate governs access; it is not the storage engine. Memory and RAG are separate services exposed through
+ToolGate packages. The existing demo code is not copied unchanged:
+- `ConversationPluginSupport` is file storage keyed by session.
+- `RagVectorStoreSupport` filters Qdrant only by `capabilitySource`.
+
+- [ ] **6.1** Conversation history service:
+      - Tenant, owner and membership on every record, with explicit sharing
+      - Transactional, idempotent append keyed by a stable turn id, plus concurrency control
+      - Defined ordering for simultaneous turns
+      - Versioned summaries and context budgets
+      - Deletion that also removes derived summaries and embeddings
+- [ ] **6.2** Working-state store with bounded retention
+- [ ] **6.3** Long-term user memory as a separate store, with provenance, correction, deletion and retention (scope: D6)
+- [ ] **6.4** RAG service:
+      - Chunk metadata as in *RAG controls*, and mandatory authorized filters on query/fetch/update/delete
+      - A release-time re-check
+      - ACL propagation and cache invalidation; complete deletion
+      - Citations
+      - A versioned, real embedding model and a reindex process
+- [ ] **6.5** Ingestion controls: file size and type limits, parser hardening, restricted outbound access.
+      Retrieved text is marked as untrusted data.
+- [ ] **6.6** ToolGate packages `olo.memory` and `olo.rag`, built with the Java Tool SDK on the M4 principal contract.
+      Database credentials live only in their executors.
+- [ ] **6.7** Service tests: isolation (two users, two tenants), ACL change, deletion, concurrent appends
+
+**Acceptance.** The services refuse any request outside the authorized scope, even when called with a valid resource id.
+
+## M7 — OLO conversation and document lifecycles (weight 10)
+
+- [ ] **7.1** [olo-mono] Governed-call abstraction for deterministic path A and path C operations. It is neither an
+      AGENT node nor model-selected, and it runs on M5's durable dispatch.
+- [ ] **7.2** [olo-mono] Conversation lifecycle, replacing per-agent memory hooks:
+      1. Authorize the conversation.
+      2. Load permitted history once per incoming user turn.
+      3. Pass the relevant context to the workflow's agents.
+      4. Append the user turn and the final response with stable turn ids.
+
+      Child agents and retries never write history.
+- [ ] **7.3** [olo-mono] Document lifecycle: the index and delete pipelines become governed calls under the user, or
+      under an explicit service principal for scheduled indexing
+- [ ] **7.4** [olo-mono] RAG retrieval as a governed call. Results reach agents as untrusted, cited context.
+- [ ] **7.5** [olo] Backend endpoints (chat, uploads, knowledge sources, sessions, exports) go through the same identity
+      and authorization path
+
+**Acceptance.** A chat turn loads history once and appends exactly two records. Changing the workflow's agent doesn't
+change what history or documents the user can reach.
+
+## M8 — Isolation, recovery and real-stack tests (weight 8)
+
+- [ ] **8.1** Mandatory acceptance cases, automated against the real stack:
+      1. Two users in one tenant cannot access each other's private resources.
+      2. Cross-tenant access fails, even with a known resource id.
+      3. Changing the workflow agent does not change memory or RAG entitlement.
+      4. Forged identity arguments and substituted resource ids fail.
+      5. Revoked grants block execution, cached content access and result retrieval.
+      6. Concurrent turns and activity retries create no duplicate memory records.
+      7. Crash recovery does not repeat completed side effects.
+      8. An approval resumes the original operation.
+      9. Document ACL changes and deletion affect retrieval immediately, within a defined bound.
+- [ ] **8.2** Debug stack `debug.ps1 -ToolGate`: start or attach ToolGate and the memory/RAG services, add readiness
+      probes, provision identities (old 6.1)
+- [ ] **8.3** Multi-agent `incident-recovery` pipeline on ToolGate's `server-recovery` mocks (old M5), on path B with
+      the user as subject and each agent as actor:
+
+      | OLO agent (`agentName`, server-mapped) | Agent capability ceiling | Role |
+      |---|---|---|
+      | `incident-commander` (orchestrator) | none | Delegates and writes the summary |
+      | `triage-agent` | `incidents.incidents`, `incidents.host-status`, `incidents.crash-report` | Finds the incident and its root cause |
+      | `remediation-agent` | `incidents.runbook`, `incidents.remediate` (**ASK**), `incidents.verify` | Rolls back after approval, then verifies |
+      | `incident-report-agent` | `incidents.update-incident` | Records the outcome and resolves INC-5001 |
+
+      Tests: triage never sees `remediate`; a user without `remediate` is denied even through `remediation-agent`;
+      after approval the original `remediate` invocation resumes (M5.4).
+- [ ] **8.4** Evidence kept: run transcripts, the ToolGate audit log, the test reports
+
+**Acceptance.** All nine cases pass on the real stack. The incident-recovery run completes after approval, and each
+call is audited with the right user, actor, resource and decision.
+
+## M9 — Remove old tool code; coordinate backend and UI (weight 10)
 
 No deprecations, shims or compatibility readers. A workflow that still contains `tools` or `TOOL` fails validation.
 
-- [ ] **3.1** `olo-spi`: delete `spi/tool/*` (`Tool`, `ToolRequest`, `ToolResult`, `ToolStatus`), `@ToolId` and
-      `ToolProvider`. Also delete `@ImplementationId` if nothing else uses it.
-- [ ] **3.2** `olo-annotation` and `olo-annotation-processor`: delete `@OloTool`, `ToolDescriptor` and
-      `CatalogToolCollector`, the tool branches in `CatalogSpiValidator` and `ExtensionCatalogValidator`, and the
-      `tools.json` catalog output
-- [ ] **3.3** `olo-core`: delete the whole `tools` module, including its `demo-data` and the tool human-input
-      plugins. Also delete `runtime/ToolRegistry`, the tool branch of `ExecutionEngine`, and tool entries in
-      `CoreExtensionCatalog`.
-- [ ] **3.4** `olo-definition`: delete `ToolDefinition`, `ToolCallPlannerSupport`, `NodeType.TOOL`,
-      `WorkflowDefinition.tools` (field, builders, `WorkflowDefinitionFields`), and `capability.tool_requirements`.
-      Remove the tool rules from `WorkflowRegistryValidator`, `WorkflowRuntimeValidator`,
-      `WorkflowCapabilityValidator` and `PlannerCatalog`, and the TOOL entries in `StudioDesignerDefaults`.
-- [ ] **3.5** `olo-kernel`: delete `ToolNodeTypeHandler`, `ToolChainMerger`, `AvailableToolsJsonResolver`,
-      `ToolLabelResolver`, `ParsedToolCall`, `ToolCallRetryVariables`, and the tool half of the subgraph merger
-      and the dynamic-graph labels
-- [ ] **3.6** Workflow JSON: regenerate all 67 files from the `*Definitions` / `*RegenerationTest` sources. This
-      removes `tools[]`, TOOL nodes and their edges, `{availableToolsJson}`, and the TOOL designer node types.
-      It also adds the AGENT Studio property `agentName` (moved here from M1.4, since it changes every file).
-- [ ] **3.7** Delete the tool tests, and rewrite the travel and research end-to-end tests against the fake Gateway
-- [ ] **3.8** Guard: `grep -riE "OloTool|ToolRequest|NodeType.TOOL|availableToolsJson|toolCalls"` finds nothing,
-      and `publish-libs` plus every module's tests pass
+- [ ] **9.1** Separate agent delegation from tool calls (old M2):
+      - Rename `kernel/toolcall` to `kernel/agentcall`, and `ToolCallExpansionExecutionStrategy` to
+        `AgentCallExpansionExecutionStrategy`
+      - The planner schema keeps only `agentCalls`
+- [ ] **9.2** `olo-spi`, `olo-annotation`, `olo-annotation-processor`: delete the tool SPI (`Tool`, `ToolRequest`,
+      `ToolResult`, `ToolStatus`, `@ToolId`, `ToolProvider`), `@OloTool`, `ToolDescriptor`, `CatalogToolCollector`,
+      the tool validator branches, and `tools.json`
+- [ ] **9.3** `olo-core`: delete the `tools` module, its demo data and the tool human-input plugins, plus
+      `ToolRegistry` and the tool branch in `ExecutionEngine`
+- [ ] **9.4** `olo-definition` and `olo-kernel`:
+      - Delete `ToolDefinition`, `ToolCallPlannerSupport`, `NodeType.TOOL`, `WorkflowDefinition.tools` and
+        `capability.tool_requirements`
+      - Remove the tool validator rules, `ToolNodeTypeHandler`, `ToolChainMerger`, `AvailableToolsJsonResolver`,
+        `ToolLabelResolver`, `ParsedToolCall` and `ToolCallRetryVariables`
+- [ ] **9.5** Regenerate all workflow JSON. This removes `tools[]`, TOOL nodes and `{availableToolsJson}`. It adds the
+      AGENT Studio property `agentName`, limited to server-mapped identities (M3.8). Rewrite the planner end-to-end
+      tests against the fake Gateway.
+- [ ] **9.6** olo-docker: remove the `OLO_SHARED_SOURCE` and tools demo-data mounts and `tools.json`; add ToolGate
+      and memory/RAG service configuration
+- [ ] **9.7** olo, olo-ui, olo-chat: remove TOOL nodes from the Studio palette and the catalog readers. Each is a PR in
+      its own repo, landed in the same window as 9.2–9.5.
+- [ ] **9.8** Guard: `grep -riE "OloTool|ToolRequest|NodeType.TOOL|availableToolsJson|toolCalls"` finds nothing, and
+      every module builds and tests green
 
-**Acceptance.** No tool type, annotation, node, schema or JSON field is left in olo-mono, and the build is green.
+**Acceptance.** No tool type, annotation, node, schema or JSON field is left in olo-mono, and every repo is green.
 
-## M4 — Move conversation memory and RAG into ToolGate tool packages (weight 10)
+## M10 — Deployment and operational qualification (weight 5)
 
-`conversation-load` and `conversation-store` are in every workflow, and the documents index/delete pipelines use
-RAG ingest/query/delete. Per D1 they become ToolGate tools, built with the ToolGate Java Tool SDK in the
-olo-toolgate repo (none of it lives in olo-mono), and are granted to agents like any other tool.
+- [ ] **10.1** Encrypted transport everywhere, and encryption at rest for memory, RAG and ToolGate state
+- [ ] **10.2** Credential rotation for workload, user-bound and database credentials, with tested rollover
+- [ ] **10.3** Redacted diagnostics: no tokens, prompts or retrieved content in logs or errors
+- [ ] **10.4** Bounded retries, timeouts, cancellation, and per-user quotas
+- [ ] **10.5** **M1-R6:** protect sensitive Temporal payloads with a payload codec (encryption) or references (D7),
+      because prompts and outputs can enter history
+- [ ] **10.6** Backups, restore tests, and retention policies for conversations, working state, long-term memory and documents
+- [ ] **10.7** Docs: architecture, the identity and permission model, the grant guide (ALLOW for `memory.*`, so chat
+      never stalls on approval), operations runbook, and the incident-recovery walkthrough (old 6.4)
 
-- [x] **4.0** Settle decision D1: ToolGate tools
-- [ ] **4.1** ToolGate package `olo.memory` with `memory.load` and `memory.store`. Turns are persisted through
-      declared `@HttpRoute`s (`context.http()`) to the shared store, keyed by `conversationId`.
-- [ ] **4.2** ToolGate package `olo.rag` with `rag.ingest`, `rag.query` and `rag.delete`, calling qdrant and the
-      Ollama embedding endpoint through declared routes
-- [ ] **4.3** Run context in olo-mono: the agent loop fills tool arguments that the run already knows, such as
-      `conversationId` and `tenantId`, and hides them from the model's schema. The model can't omit them or forge them.
-- [ ] **4.4** Deterministic memory: an AGENT node's `memory: { load, store }` setting makes the executor call
-      `memory.load` before the first LLM turn and `memory.store` after the final answer, through ToolGate under the
-      agent's own identity. Chat continuity then doesn't depend on the model choosing to call memory tools.
-- [ ] **4.5** Document pipelines (documents-index, documents-delete) become an AGENT with `rag.*` granted, or use the
-      same deterministic pre/post call, chosen when the pipeline is migrated
-- [ ] **4.6** Tests: conversation round-trip and index/query/delete through ToolGate against qdrant
-
-**Acceptance.** Chat continuity and the document pipelines work through ToolGate with no TOOL nodes. An agent
-whose identity has no `memory.*` grant gets no conversation history.
-
-## M5 — Multi-agent `incident-recovery` pipeline on ToolGate mocks (weight 15)
-
-This uses ToolGate's `examples/mocked-tools/server-recovery` package. It returns fixed data, and its scenario is
-that payments-api on app-02 was killed by the OOM killer after release 2.14.0 (INC-5001).
-
-| OLO agent (`agentName`) | ToolGate grant | Role |
-|---|---|---|
-| `incident-commander` (orchestrator) | none | Delegates to the agents below and writes the summary |
-| `triage-agent` | `incidents.incidents`, `incidents.host-status`, `incidents.crash-report` | Finds the incident and its root cause |
-| `remediation-agent` | `incidents.runbook`, `incidents.remediate` (**ASK**), `incidents.verify` | Follows the runbook, rolls back after approval, verifies |
-| `incident-report-agent` | `incidents.update-incident` | Records the outcome and resolves INC-5001 |
-
-- [ ] **5.1** `debug/toolgate-setup.ps1`, which:
-      - builds `server-recovery.tgpkg` and deploys it to Tool Host, so no device is needed;
-      - creates the four ToolGate agents, a tool group per agent, agent groups, grants, and the ASK policy on
-        `remediate`;
-      - issues the workload tokens into the worker's `credentialsDir`.
-- [ ] **5.2** Workflow definitions for `incident-recovery-orchestrator` and its three child agents, generated from
-      `*Definitions` like the existing scenarios, plus a README
-- [ ] **5.3** Identity test: `triage-agent` never sees `incidents.remediate`, and running the triage workflow with
-      `agentName=incident-report-agent` returns a different catalog
-- [ ] **5.4** ASK test: remediation stops at `PENDING_APPROVAL` until the call is approved in the ToolGate console
-- [ ] **5.5** End-to-end run on the debug stack with `llama3.2:latest`, keeping the transcript and the ToolGate audit
-      log as evidence
-
-**Acceptance.** One chat request triggers triage, remediation (after approval) and the report. Every tool call
-appears in ToolGate's audit log under the correct agent identity.
-
-## M6 — Debug stack, docs and cross-repo follow-ups (weight 10)
-
-- [ ] **6.1** `debug.ps1 -ToolGate`: start or attach the ToolGate quickstart, join it to `olo-net`, add readiness
-      probes, and mount the worker credentials
-- [ ] **6.2** olo-docker: remove the `OLO_SHARED_SOURCE` / tools demo-data mounts and `tools.json`, and add the
-      ToolGate env/config
-- [ ] **6.3** olo (backend), olo-ui and olo-chat: remove TOOL nodes from the Studio palette and the catalog
-      readers. Each is a separate PR in its own repo.
-- [ ] **6.4** Docs: an architecture page for ToolGate tools, the `agentName` reference, a guide to granting tools
-      to an agent, and the `incident-recovery` walkthrough
-
-**Acceptance.** A fresh checkout runs `debug.ps1 up -ToolGate`, and then the incident-recovery demo works.
+**Acceptance.** A deployment checklist passes on a staging environment, including a restore test and a credential rotation.
 
 ---
 
 ## Decisions
 
-| # | Question | Options | Recommendation | Status |
-|---|---|---|---|---|
-| D1 | Where do conversation memory and RAG go once tools are removed? | (a) platform node types in `olo-core/nodes`; (b) ToolGate tools | **(b) ToolGate tools** (M4) | **Decided 2026-10-23** |
-| D2 | How does a run resume after an ASK approval? | (a) end the run at `WAITING_APPROVAL`, and the user re-runs; (b) wait on a Temporal signal fed by a ToolGate notification or by polling | (a) in v1, then (b) once ToolGate's API for reading the outcome of an approved invocation is confirmed | Open |
-| D3 | Do different *end users* get different tools? | (a) per `agentName`, with a static service token per agent; (b) delegated/OIDC tokens on behalf of the signed-in user | (a) now, (b) as a later phase | Open |
+| # | Question | Decision or recommendation | Status |
+|---|---|---|---|
+| D1 | Where do conversation memory and RAG go? | **Revised.** ToolGate *governs* them, as user-authorized platform capabilities. Separate memory and RAG services *store* the data and enforce scope. OLO orchestrates them deterministically (path A). They are not agent-selected tools, and agent identities don't authorize them. | Decided 2026-10-23, revised after review |
+| D2 | What happens after an ASK approval? | **Revised.** Resume the original invocation (M5.4), with expiry, denial, cancellation and a revocation re-check. M1's "run it again" is temporary and is removed in M5. | Decided; implementation in M5 |
+| D3 | Is end-user identity required? | **Moved into required scope.** Memory and RAG are authorized for the signed-in user. Agent-selected tools are authorized for user plus delegated actor. Scheduled jobs run as an explicit service principal. | Decided |
+| D4 | How does OLO obtain user-bound, audience-restricted ToolGate credentials? | Token exchange if ToolGate supports it, otherwise an authenticated server binding. Never token passthrough. | Open, decided in M2.5 |
+| D5 | Where do the memory and RAG services live and run? | A separate repo or service, deployed next to ToolGate's executors. Not the OLO worker. | Open, M2 |
+| D6 | Is long-term user memory in the first release? | The design covers it. Building it can follow conversation history and RAG. | Open, M2 |
+| D7 | How are sensitive Temporal payloads protected? | An encryption payload codec, or keeping only references in history | Open, M10.5 |
 
 ## Risks
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| `llama3.2` (3B) is unreliable on long tool chains | Flaky M5 demo | Keep 1–3 tools per agent, and allow a larger model through `-Model` |
-| The olo, olo-ui and olo-chat images break while TOOL nodes still exist there | Debug stack regressions | Land M6.3 PRs in the same window as M3, and pin images in `debug.ps1` until then |
-| ToolGate is a development release (Tool Host sandboxing is unfinished) | Not production-safe | Use it for evaluation and demos only. Mock tools return fixed data. |
-| A Temporal retry duplicates a side-effecting tool call | A double remediation | Send a deterministic `Idempotency-Key`. The mock `remediate` also runs once per `reference`. |
-| Memory and RAG now depend on ToolGate being up (D1) | ToolGate down means no chat history and no document pipelines | Fail closed with a clear error, and add ToolGate readiness to the debug stack's required-container check (M6.1) |
-| An ASK policy on `memory.*` would stall every chat turn | Chat hangs on approval | Recommend ALLOW policies for `memory.*`, and document this in the grant guide (M6.4) |
+| ToolGate's identity and resource features are a target design, not shipped | M3–M6 depend on ToolGate work of unknown size | M2.1's evidence-based gap matrix comes first. No memory or RAG code is written before M4 qualifies. |
+| OLO's current JWT handling is demo code (no signature check, `sub` fallback) | Any identity-based control would be bypassable | M3.1 is a hard prerequisite for path A |
+| Tool reach depends on agents chosen by workflow authors | Privilege escalation through `agentName` | Server-authorized mappings (M3.8), plus a user-plus-actor check (M3.9) |
+| A retry or crash repeats a side effect | Double remediation, duplicate memory records | Durable recorded operations (M5.1), reconciliation (M5.3), recovery tests (M8.1 cases 6–7) |
+| Memory and RAG depend on ToolGate and the services being up | No chat history or retrieval during an outage | Fail closed with a clear error, readiness probes (M8.2), timeouts and quotas (M10.4) |
+| Retrieved documents carry prompt injection | The model is steered by data | Retrieved text is marked untrusted, the model can't touch the filters, citations (M6.4, M7.4) |
+| Sensitive data in Temporal history and logs | Data exposure | Payload protection (M10.5), redaction (M10.3) |
+| `llama3.2` (3B) is unreliable on long tool chains | Flaky M8.3 demo | 1–3 tools per agent, and a larger model through `-Model` |
+| olo, olo-ui and olo-chat break while TOOL nodes still exist there | Stack regressions | Land M9.7 in the same window as M9.2–M9.5; pin images in `debug.ps1` until then |
+
+## References
+
+- ToolGate: [enterprise access-control target design](../../git/olo-toolgate/docs/security/enterprise-access-control.md),
+  [Gateway API](../../git/olo-toolgate/docs/api/gateway-api.md), [threat model](../../git/olo-toolgate/docs/security/threat-model.md)
+- [RFC 8693, OAuth 2.0 Token Exchange](https://www.rfc-editor.org/rfc/rfc8693) (subject and actor separation)
+- [RFC 9700, OAuth 2.0 Security Best Current Practice](https://www.rfc-editor.org/rfc/rfc9700)
+- MCP specification: authorization, and security best practices (audience validation, no token passthrough)
+- OWASP guidance on RAG and LLM application security
+- Temporal documentation: activity retries, and data encryption with payload codecs
