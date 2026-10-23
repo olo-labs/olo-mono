@@ -139,6 +139,7 @@ final class AgentToolTestSupport {
         final List<String> listedFor = new ArrayList<>();
         final List<Call> calls = new ArrayList<>();
         final List<org.olo.toolgate.client.UserBinding> users = new ArrayList<>();
+        final List<org.olo.toolgate.client.UserBinding> viaAgent = new ArrayList<>();
         Function<Call, ToolGateCallResult> results = call ->
                 new ToolGateCallResult(false, "ok", json("{\"tool\":\"" + call.tool() + "\"}"), null, null);
 
@@ -167,6 +168,12 @@ final class AgentToolTestSupport {
         @Override
         public ToolGateClient forUser(org.olo.toolgate.client.UserBinding binding) {
             users.add(binding);
+            return this;
+        }
+
+        @Override
+        public ToolGateClient forUserViaAgent(org.olo.toolgate.client.UserBinding binding) {
+            viaAgent.add(binding);
             return this;
         }
     }

@@ -52,11 +52,15 @@ public final class McpToolGateClient implements ToolGateClient {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final int MAX_REQUEST_ID_LENGTH = 128;
     private static final int MAX_ERROR_DETAIL = 300;
+    /** The Gateway header for an agent's on-behalf-of workload token (ToolGate M3.10). */
+    public static final String ACTOR_CREDENTIAL_HEADER = "X-ToolGate-Actor-Credential";
 
     private final ToolGateSettings settings;
     private final ToolGateCredentialResolver credentials;
     private final HttpClient httpClient;
     private final UserCredentialProvider users;
+    /** Agent workload tokens sent as the actor beside a user credential (path B, M3.10); null otherwise. */
+    private final ToolGateCredentialResolver actors;
 
     public McpToolGateClient(ToolGateSettings settings, ToolGateCredentialResolver credentials) {
         this(settings, credentials, buildHttpClient(settings));
@@ -73,17 +77,23 @@ public final class McpToolGateClient implements ToolGateClient {
 
     McpToolGateClient(ToolGateSettings settings, ToolGateCredentialResolver credentials, HttpClient httpClient,
                       UserCredentialProvider users) {
+        this(settings, credentials, httpClient, users, null);
+    }
+
+    private McpToolGateClient(ToolGateSettings settings, ToolGateCredentialResolver credentials, HttpClient httpClient,
+                              UserCredentialProvider users, ToolGateCredentialResolver actors) {
         this.settings = Objects.requireNonNull(settings, "settings");
         this.credentials = Objects.requireNonNull(credentials, "credentials");
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
         this.users = users;
+        this.actors = actors;
     }
 
     @Override
     public List<ToolGateTool> listTools(String agentName) {
         String token = credentials.resolveToken(agentName);
         ObjectNode params = JsonNodeFactory.instance.objectNode();
-        Reply reply = send(token, "tools/list", null, "olo-list-" + UUID.randomUUID(), params);
+        Reply reply = send(token, actor(agentName), "tools/list", null, "olo-list-" + UUID.randomUUID(), params);
         if (reply.error() != null) {
             throw failure(reply, "tools/list for agent '" + agentName + "'");
         }
@@ -116,7 +126,7 @@ public final class McpToolGateClient implements ToolGateClient {
                 ? arguments
                 : JsonNodeFactory.instance.objectNode());
 
-        Reply reply = send(token, "tools/call", toolName, requestId, params);
+        Reply reply = send(token, actor(agentName), "tools/call", toolName, requestId, params);
         if (reply.error() != null) {
             // The tool is not in this agent's catalog: let the model see it instead of failing the run.
             if (reply.status() == 403 && reply.error().path("code").asInt() == -32602) {
@@ -148,7 +158,21 @@ public final class McpToolGateClient implements ToolGateClient {
             throw new ToolGateException(ToolGateException.Kind.CREDENTIAL_MISSING, "ToolGate user credentials are not configured");
         }
         // Every token this view sends is the user's; the agent name only selects the catalog route.
-        return new McpToolGateClient(settings, agentName -> users.credential(binding), httpClient, null);
+        return new McpToolGateClient(settings, agentName -> users.credential(binding), httpClient, null, null);
+    }
+
+    @Override
+    public ToolGateClient forUserViaAgent(UserBinding binding) {
+        Objects.requireNonNull(binding, "binding");
+        if (users == null) {
+            throw new ToolGateException(ToolGateException.Kind.CREDENTIAL_MISSING, "ToolGate user credentials are not configured");
+        }
+        // The user credential is the bearer; the agent's on-behalf-of workload token travels beside it as the actor.
+        return new McpToolGateClient(settings, agentName -> users.credential(binding), httpClient, null, credentials);
+    }
+
+    private String actor(String agentName) {
+        return actors == null ? null : actors.resolveToken(agentName);
     }
 
     @Override
@@ -170,12 +194,13 @@ public final class McpToolGateClient implements ToolGateClient {
         }
     }
 
-    private Reply send(String token, String method, String toolName, String id, ObjectNode params) {
+    private Reply send(String token, String actor, String method, String toolName, String id, ObjectNode params) {
         ObjectNode body = frame(method, id, params);
-        HttpRequest request = baseRequest(method, toolName)
-                .header("Authorization", "Bearer " + token)
-                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
-                .build();
+        HttpRequest.Builder builder = baseRequest(method, toolName).header("Authorization", "Bearer " + token);
+        if (actor != null) {
+            builder.header(ACTOR_CREDENTIAL_HEADER, actor);
+        }
+        HttpRequest request = builder.POST(HttpRequest.BodyPublishers.ofString(body.toString())).build();
 
         HttpResponse<String> response;
         try {

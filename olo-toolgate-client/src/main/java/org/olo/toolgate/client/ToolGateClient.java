@@ -38,6 +38,16 @@ public interface ToolGateClient {
     }
 
     /**
+     * Path B (M3.10): the run's user as subject and the agent as actor. Each call sends the user's credential and the
+     * agent's on-behalf-of workload token, so ToolGate requires both the user's grant and the agent's capability.
+     *
+     * @throws ToolGateException {@link ToolGateException.Kind#CREDENTIAL_MISSING} when user credentials are not configured
+     */
+    default ToolGateClient forUserViaAgent(UserBinding binding) {
+        throw new ToolGateException(ToolGateException.Kind.CREDENTIAL_MISSING, "ToolGate user credentials are not configured");
+    }
+
+    /**
      * Checks that the Gateway answers HTTP. No token is sent; any HTTP response, including 401, counts as reachable.
      */
     void probe();

@@ -17,9 +17,9 @@ import java.util.Optional;
  * @param identityPolicy       which agent identities a run may use; required when enabled
  */
 public record AgentToolAccess(ToolGateClient client, int defaultMaxToolRounds, AgentIdentityPolicy identityPolicy,
-                              boolean userScoped) {
+                              boolean userScoped, boolean viaAgent) {
 
-    private static final AgentToolAccess DISABLED = new AgentToolAccess(null, 0, AgentIdentityPolicy.denyAll(), false);
+    private static final AgentToolAccess DISABLED = new AgentToolAccess(null, 0, AgentIdentityPolicy.denyAll(), false, false);
 
     public AgentToolAccess {
         if (defaultMaxToolRounds < 0) {
@@ -29,7 +29,7 @@ public record AgentToolAccess(ToolGateClient client, int defaultMaxToolRounds, A
     }
 
     public AgentToolAccess(ToolGateClient client, int defaultMaxToolRounds, AgentIdentityPolicy identityPolicy) {
-        this(client, defaultMaxToolRounds, identityPolicy, false);
+        this(client, defaultMaxToolRounds, identityPolicy, false, false);
     }
 
     public static AgentToolAccess disabled() {
@@ -45,7 +45,15 @@ public record AgentToolAccess(ToolGateClient client, int defaultMaxToolRounds, A
      * in its place.
      */
     public static AgentToolAccess userScoped(ToolGateClient client, int defaultMaxToolRounds, AgentIdentityPolicy identityPolicy) {
-        return new AgentToolAccess(Objects.requireNonNull(client, "client"), defaultMaxToolRounds, identityPolicy, true);
+        return new AgentToolAccess(Objects.requireNonNull(client, "client"), defaultMaxToolRounds, identityPolicy, true, false);
+    }
+
+    /**
+     * Path B (M3.10): tools run with the run's verified user as subject and the mapped agent as actor, so ToolGate needs
+     * both the user's grant and the agent's capability. A run without a verified user is refused, as in user-scoped mode.
+     */
+    public static AgentToolAccess userScopedViaAgent(ToolGateClient client, int defaultMaxToolRounds, AgentIdentityPolicy identityPolicy) {
+        return new AgentToolAccess(Objects.requireNonNull(client, "client"), defaultMaxToolRounds, identityPolicy, true, true);
     }
 
     public boolean isEnabled() {

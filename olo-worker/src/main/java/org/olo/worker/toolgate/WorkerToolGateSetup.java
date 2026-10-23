@@ -63,7 +63,9 @@ public final class WorkerToolGateSetup {
         }
 
         AgentToolAccess access = config.isUserScoped()
-                ? AgentToolAccess.userScoped(client, config.resolveMaxToolRounds(), identityPolicy(config))
+                ? (config.isDelegatedAgents()
+                        ? AgentToolAccess.userScopedViaAgent(client, config.resolveMaxToolRounds(), identityPolicy(config))
+                        : AgentToolAccess.userScoped(client, config.resolveMaxToolRounds(), identityPolicy(config)))
                 : AgentToolAccess.enabled(client, config.resolveMaxToolRounds(), identityPolicy(config));
         KernelRuntimeHolder.setToolAccess(access);
         log.info("ToolGate enabled: gateway={}, userCredentials={}, credentialsDir={}, caCertificate={}, maxToolRounds={}, agentMappings={}",

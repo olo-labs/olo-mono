@@ -78,6 +78,23 @@ class UserScopedToolsTest {
     }
 
     @Test
+    void delegatedModeCallsAsTheAgentActingForTheRunsUser() {
+        var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("memory-agent", List.of(tool("olo.memory.read"))));
+        var llm = new AgentToolTestSupport.ScriptedLlm().reply(answer("done"));
+        NodeDefinition node = agentNode("agent", Map.of());
+        var identity = new IdentityBinding("t1", "user-42", "https://idp.example", "sid-1", 3);
+        var access = new AtomicReference<>(AgentToolAccess.userScopedViaAgent(toolGate, 8, MAPPED));
+
+        NodeResult result = new LocalLlmAgentExecutor(new DefaultLlmInvocationService(PROMPT, graph -> MODEL, llm, access::get))
+                .execute(context(graph("memory-agent", node), "t1", identity), node);
+
+        assertThat(result.status()).isEqualTo(NodeStatus.COMPLETED);
+        assertThat(toolGate.viaAgent).containsExactly(new UserBinding("t1", "user-42", "https://idp.example", "sid-1", 3));
+        assertThat(toolGate.users).isEmpty();
+        assertThat(toolGate.listedFor).containsExactly("memory-agent");
+    }
+
+    @Test
     void aRunWithoutAVerifiedUserNeverFallsBackToTheAgentToken() {
         var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("memory-agent", List.of(tool("olo.memory.read"))));
         NodeDefinition node = agentNode("agent", Map.of());
