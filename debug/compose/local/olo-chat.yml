@@ -1,0 +1,7 @@
+# Build olo-chat from the sibling olo-chat repo (D:\olo\olo-chat by default).
+services:
+  olo-chat:
+    image: olo-chat:debug
+    build:
+      context: ${OLO_CHAT_ROOT}
+      dockerfile: Dockerfile

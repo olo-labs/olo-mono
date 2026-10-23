@@ -1,0 +1,7 @@
+# Build the olo backend from the sibling olo repo (D:\olo\olo by default).
+services:
+  olo:
+    image: olo:debug
+    build:
+      context: ${OLO_BACKEND_ROOT}
+      dockerfile: Dockerfile

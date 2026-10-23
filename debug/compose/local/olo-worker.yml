@@ -1,0 +1,7 @@
+# Build olo-worker from this olo-mono checkout instead of pulling ololab/olo-worker:latest.
+services:
+  olo-worker:
+    image: olo-worker:debug
+    build:
+      context: ${OLO_MONO_ROOT}
+      dockerfile: olo-worker/Dockerfile
