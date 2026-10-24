@@ -13,6 +13,8 @@ public final class KernelActivityOperations {
     public static final String REPORT_HUMAN_WAITING = "report-human-waiting";
     public static final String RESUME_HUMAN_INPUT = "resume-human-input";
 
+    public static final String CANCEL_TOOLS = "cancel-tools";
+
     private KernelActivityOperations() {
     }
 }

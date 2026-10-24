@@ -61,7 +61,7 @@ public final class DefaultGraphTraversalEngine implements GraphTraversalEngine {
 
         TraversalCursor cursor = TraversalCursor.running(null, 0, null, null);
         while (cursor.status() == KernelExecutionSnapshot.Status.RUNNING) {
-            cursor = executeSingleStep(context, graphSession, cursor);
+            cursor = ParallelBranchExecutor.advance(context, executeSingleStep(context, graphSession, cursor));
             pauseIfAsked(context);
         }
 
@@ -95,7 +95,7 @@ public final class DefaultGraphTraversalEngine implements GraphTraversalEngine {
         KernelRuntimeContext context = snapshot.toContext();
         MutableGraphSession graphSession = new MutableGraphSession(context.getGraph());
         TraversalCursor cursor = TraversalCursor.fromSnapshot(snapshot);
-        TraversalCursor updated = executeSingleStep(context, graphSession, cursor);
+        TraversalCursor updated = ParallelBranchExecutor.advance(context, executeSingleStep(context, graphSession, cursor));
         return TraversalSnapshotMapper.toSnapshot(context, graphSession, updated);
     }
 

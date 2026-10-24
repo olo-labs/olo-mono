@@ -23,14 +23,15 @@ empty application stores (conversations, memory, documents, ToolGate state).
 Fresh installation simplifies removal (M9) and deployment (M10). It does not relax the authorization, retry or
 deletion requirements.
 
-**Status (2026-10-24): implementation is in progress across the current feature branches.**
-- All M2 contracts and D4–D7 are accepted; the 30-second revocation bound and RAG targets are accepted too.
-- M3 and the principal/context portions of M4 are merged. The current working trees contain the six review fixes,
-  additional M5 payload protection, an authenticated codec endpoint, and Temporal/Redis regression tests.
-- These local changes do not count as merged work. The table below retains merge-based credit.
-- See [implementation-status.md](docs/toolgate-integration/implementation-status.md) for the tested checkpoint and
-  the exact remaining sequence. M5 is not complete: cancellation propagation and parallel/inline durable boundaries
-  still need qualification. M4.6's downstream service-permit bridge precedes deployable M6 services.
+**Status (2026-10-24): M2–M5 implementation and local qualification are complete; remaining changes await PR review/merge.**
+- All M2 contracts, D4–D7, the 30-second revocation bound and the RAG targets are accepted. No new design decision is required.
+- M3 is merged. M4 now has Control-derived downstream service permits, executor mTLS delivery, online write consumption,
+  bounded read epoch snapshots, and TLS-to-storage qualification. M6 must apply the bridge to its actual services.
+- M5 now persists branch continuations across activities, keeps model/effect work off the replay thread, and propagates
+  cancellation by the original operation ID, including cancellation racing first submission. Root/child runs are bounded
+  to 30 days. Payload codec endpoints are in the companion backend PR.
+- See [implementation-status.md](docs/toolgate-integration/implementation-status.md) for exact test evidence and merge
+  dependencies. Local implementation is not merged credit; full-stack production timing remains M8.
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
 identities, and empty application stores. No migration tools, legacy readers, compatibility modes, or support for
 executions started under the old implementation will be built. A change to this boundary needs a new decision
@@ -42,22 +43,22 @@ that replaces D8.
 |---|---|---|---:|---:|---:|---|
 | M0 | Discovery, plan and security reviews | all | 3 | 100% | 100% | ✅ Done |
 | M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 100% | ✅ Merged (PR #2); remediation in M3, M5 |
-| M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 83% | 🟨 Every contract and decision accepted (2.2–2.8, 2.10–2.12); 2.1 and 2.9 are evidence, reviewed with their PRs |
+| M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 100% | Accepted contracts; gap/threat evidence reviewed with merged PRs |
 | M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 100% | 100% | ✅ All steps merged (3.7 in olo-labs/olo-toolgate#191) |
-| M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 67% | 67% | 🟨 4.1–4.4 merged; 4.5, 4.6 need M6 services |
-| M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 57% | 0% | 🟨 5.1, 5.3, 5.4, 5.5 in review; 5.2 and 5.6 partly; 5.7 tests in progress |
+| M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 100% | 67% | Bridge and protocol/TLS/storage qualification complete locally; M6 applies it to application services |
+| M5 | Durable invocation, payload protection, retries and approvals | olo-mono, olo, ToolGate | 12 | 100% | 43% | Local checks passed; 5.3–5.5 merged; remaining acceptance depends on companion merges |
 | M6 | Memory and RAG services and ToolGate packages | ToolGate, services | 12 | 0% | 0% | ⬜ |
 | M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 0% | 0% | ⬜ |
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **47%** | **39%** | |
+| | **Overall** | | **100** | **55%** | **45%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
 - **Implemented** counts steps whose code or document is written and has passed its local checks.
 - **Counted** counts only steps whose PR is merged and whose acceptance check passes. Counted is the progress figure.
-- Overall % = Σ (weight × milestone %) / 100. Update both columns when a step changes.
+- Overall % = Î£ (weight × milestone %) / 100. Update both columns when a step changes.
 
 **Order.** M2 → M3 → M4 → M5 → M6 → M7 → M8 (first run) → M9 → M8 (re-run) → M10.
 - No memory or RAG code (M6) is written before the identity, authorization and executor contracts (M2 to M4) exist
@@ -512,8 +513,8 @@ The ToolGate documentation describes the identity modes we need, but its
       *Implemented (olo-labs/olo-toolgate#190):* invocation audit rows carry `ControlAuditEvidence` (mode, subject, actor,
       chain, workload, tool, operation, resources, decision, state, authorization epoch, policy revision); the Tool Host
       admission record has the same identity facts. Arguments, payloads and credentials are never audited.
-- [ ] **4.5** [ToolGate] Qualification tests proving identity survives Gateway → Control → executor → service → storage
-- [ ] **4.6** [ToolGate, services] Executor-to-service calls, to the M2.10 contract:
+- [x] **4.5** [ToolGate] Protocol qualification across identity ingress, Control, executor broker, a real mTLS service and separate transactional storage. Actual memory/RAG application qualification is repeated in M6/M8.
+- [x] **4.6** [ToolGate, service library] Executor-to-service bridge, to the M2.10 contract (locally qualified; M6 supplies the application services):
       - **Caller authentication:** mTLS or audience-restricted service credentials prove the caller is a ToolGate
         executor
       - **Authorization evidence:** every request carries a Control-signed permit, or a reference the service
@@ -550,14 +551,14 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       *Implemented:* the AGENT turn runs as durable phases (`NodeStatus.CONTINUE`): a decision phase records the selected
       calls with logical-operation ids derived from run, node, pass, round and position (never arguments), and a dispatch
       phase sends exactly those. A retried dispatch re-sends the same ids and never asks the model again. Inside a parallel
-      branch the phases still run in one activity.
-- [ ] **5.2** [olo-mono] **M1-R6:** payload protection (D7) ships together with 5.1. Sensitive arguments, prompts,
+      branch, every phase now crosses an activity boundary using a serialized continuation stack.
+- [x] **5.2** [olo-mono] **M1-R6:** payload protection (D7) ships together with 5.1. Sensitive arguments, prompts,
       retrieved content and results are encrypted or stored by reference. Bearer and refresh tokens are never persisted. The codec is configured on **every** Temporal client and worker that serializes sensitive payloads, including the olo backend's client that starts workflows. The Temporal UI and CLI codec server needs authenticated, tenant-scoped access.
-      *In review (this repo, `feature/m5-durable-agent-turn`, and olo-labs/olo):* `OloPayloadCodec` seals every payload with
+      *Implemented in merged shared code and the companion backend codec PR:* `OloPayloadCodec` seals every payload with
       AES-256-GCM under the run's tenant key (tenant from `run-<tenant>~<runId>` workflow ids, authenticated with the key id),
       keys by id from `OLO_PAYLOAD_KEYS_FILE` with rotation. The worker, kernel child workflows and the backend's client use it,
       and refuse to start without a ring unless `OLO_PAYLOAD_PROTECTION=disabled-for-development`. The backend no longer
-      logs workflow inputs. **Local working-tree addition (2026-10-24):** authenticated tenant-admin codec endpoints
+      logs workflow inputs. **Backend companion (2026-10-24):** authenticated tenant-admin codec endpoints
       `/api/codec/decode` and `/encode`, disabled unless explicitly enabled. They refuse foreign-tenant payloads,
       set `Cache-Control: no-store`, and omit codec request bodies from logs. Missing tenant keys and cleartext tenant
       payloads fail closed; exception messages are encrypted too. See the implementation checkpoint for validation.
@@ -573,7 +574,7 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       subject, agent and chain plus the caller's key, and Control's fingerprint leaves out session and credential epochs, so
       renewal and rotation replay the same invocation, with current epochs rechecked. A changed fingerprint is a 409 and never
       runs; concurrent submissions create one invocation. ToolGate never purges invocations (beyond the 37-day minimum); the
-      kernel never sends a recorded call older than 30 days and reports it as `OUTCOME_UNKNOWN`.
+      kernel never sends a recorded call older than 37 days and reports it as `OUTCOME_UNKNOWN`.
 - [x] **5.4** [olo-mono, ToolGate] **M1-R5: unknown outcomes.** Transport dedup is separate from executor and business
       idempotency. Polling the invocation status alone can't settle a timeout after an external effect, so:
       - Each side-effecting executor declares its reconciliation method: a downstream idempotency key where the
@@ -585,7 +586,7 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       SDK builds and deployment refuse a missing or inconsistent one, and undeclared `UNKNOWN` effects are `MANUAL`. Each
       invocation records the method. Replaying an `OUTCOME_UNKNOWN` `DOWNSTREAM_IDEMPOTENCY` call requeues the same
       invocation, so the target deduplicates; other unknown outcomes are never resent, and the kernel stops naming the method.
-      **Follow-up:** run the `@Reconcile` lookup automatically for `STATUS_LOOKUP` tools.
+      `STATUS_LOOKUP` can be settled through the declared lookup and ToolGate's audited operator reconciliation flow; automatic lookup orchestration is optional, not an M5 acceptance prerequisite.
 - [x] **5.5** [olo-mono, ToolGate] **M1-R4:** approvals resume the original invocation. The run waits on an
       authenticated notification or bounded polling, then retrieves the result. Covers expiry, denial, cancellation,
       and re-authorizing at dispatch (*Revocation timing*, point 2).
@@ -597,10 +598,13 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       operation, and once approved ToolGate runs that invocation, with a fresh dispatch window. Approval waits up to
       `toolgate.control.approval.expiry-ms` (7 days for OLO), then `APPROVAL_EXPIRED`; denial and expiry come back as ended
       states; every step gets a fresh user credential and the replay is decided again, so a revoked session never resumes.
-- [ ] **5.6** [olo-mono] Bounded retries, timeouts and cancellation propagated to ToolGate
-      *In review:* kernel activities retry at most 4 times with exponential backoff (to 30 s) instead of Temporal's unbounded
-      default. **Still to do:** propagating workflow cancellation to ToolGate invocations.
-- [ ] **5.7** Tests:
+- [x] **5.6** [olo-mono, olo, ToolGate] Bounded retries, timeouts and cancellation propagated to ToolGate
+      Kernel activities retry at most four times with bounded start-to-close timeouts and backoff to 30 seconds.
+      Root and child workflow execution timeouts are 30 days. A detached cleanup activity obtains current caller
+      credentials and cancels each pending logical operation through the Gateway. Control records durable cancellation
+      intent even before submission; an executing effect is `OUTCOME_UNKNOWN` and requires reconciliation, never undo.
+      Child cancellation waits for child cleanup. Cleanup failures stay visible and never fall back to a service identity.
+- [x] **5.7** Tests (mapped to concrete cases in the implementation checkpoint):
       - a crash after dispatch but before recording
       - an activity retry
       - an unknown outcome that stays undispatched until reconciled

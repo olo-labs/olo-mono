@@ -140,13 +140,12 @@ public final class AgentToolLoop {
                 return step.result();
             }
             if (step.waiting()) {
-                // In memory there is no durable wait: stop, as before, and let the caller run the request again.
                 Turn turn = load(context, node);
-                List<ToolInvocationRecord> invocations = new ArrayList<>(turn.invocations());
-                turn.pending().stream().filter(c -> c.status() == null).findFirst().ifPresent(c -> invocations.add(
-                        new ToolInvocationRecord(c.tool(), c.operationId(), turn.round(), ToolInvocationRecord.PENDING_APPROVAL, c.invocationId())));
-                return finish(context, node, new AgentToolLoopResult(waitingMessage(turn), AgentToolOutcome.WAITING_APPROVAL,
-                        settings.agentName(), names(turn.catalog()), invocations)).result();
+                List<ToolInvocationRecord> pending = new ArrayList<>(turn.invocations());
+                turn.pending().stream().filter(c -> c.status() == null).findFirst().ifPresent(c -> pending.add(
+                        new ToolInvocationRecord(c.tool(),c.operationId(),turn.round(),ToolInvocationRecord.PENDING_APPROVAL,c.invocationId())));
+                return new AgentToolLoopResult(waitingMessage(turn), AgentToolOutcome.WAITING_APPROVAL,
+                        settings.agentName(), names(turn.catalog()), pending);
             }
         }
     }
@@ -333,6 +332,14 @@ public final class AgentToolLoop {
         return new Step(result, null);
     }
 
+    public static void cancelPending(KernelRuntimeContext context, NodeDefinition node, ToolGateClient client, String agent) {
+        Turn turn = load(context, node);
+        if (turn == null) return;
+        for (RecordedCall call : turn.pending()) {
+            if (call.status() == null) client.cancelOperation(agent, call.operationId());
+        }
+    }
+
     private static Turn load(KernelRuntimeContext context, NodeDefinition node) {
         String stored = context.getVariables().getString(TURN_VARIABLE_PREFIX + node.getId());
         if (stored == null) {
@@ -368,7 +375,7 @@ public final class AgentToolLoop {
     static String waitingMessage(String tool, String invocationId) {
         return "Waiting for approval in ToolGate before running '" + tool + "'"
                 + (invocationId != null ? " (invocation " + invocationId + ")" : "")
-                + ". Nothing was run for it. Run this request again after it is approved.";
+                + ". Nothing was run for it. The original invocation resumes after approval.";
     }
 
     private static int nextPass(KernelRuntimeContext context, NodeDefinition node) {

@@ -14,6 +14,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 class NodeExecutionSchedulingTest {
 
     @Test
+    void inlineLlmAndToolEffectsAlwaysHaveAnActivityBoundary() {
+        for (String type : java.util.List.of("AGENT","TOOL")) {
+            var node = NodeDefinition.builder().id("effect").type(type).executionModel(ExecutionModel.INLINE).build();
+            assertThat(NodeExecutionScheduling.requiresDedicatedActivity(node)).isTrue();
+        }
+        var dispatch=NodeDefinition.builder().id("children").type("AGENT").executionModel(ExecutionModel.INLINE)
+            .configuration(java.util.Map.of("agentCallDispatch",true)).build();
+        assertThat(NodeExecutionScheduling.requiresDedicatedActivity(dispatch)).isFalse();
+    }
+
+    @Test
     void inlinePlannerWithActivityKindUsesDedicatedActivity() {
         NodeDefinition planner = NodeDefinition.builder()
                 .id("graph-planner")
@@ -42,6 +53,7 @@ class NodeExecutionSchedulingTest {
     void childWorkflowRunsInWorkflowThread() {
         NodeDefinition childAgent = NodeDefinition.builder()
                 .id("delegate")
+                .workflow(org.olo.definition.workflow.WorkflowReferenceDefinition.builder().workflowId("child").build())
                 .type("AGENT")
                 .executionModel(ExecutionModel.CHILD_WORKFLOW)
                 .build();

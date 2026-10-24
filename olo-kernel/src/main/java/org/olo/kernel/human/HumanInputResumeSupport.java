@@ -62,14 +62,14 @@ public final class HumanInputResumeSupport {
                 : KernelExecutionSnapshot.Status.RUNNING;
         String message = completed.message();
 
-        return KernelExecutionSnapshotFactory.fromContext(
+        return org.olo.kernel.traversal.engine.impl.ParallelBranchContinuation.afterResume(KernelExecutionSnapshotFactory.fromContext(
                 context,
                 nextNodeId,
                 snapshot.getStep(),
                 status,
                 humanNodeId,
                 NodeStatus.COMPLETED,
-                message);
+                message));
     }
 
     private static void applyOperatorInput(KernelRuntimeContext context, HumanResumeInput input) {

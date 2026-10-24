@@ -1,5 +1,12 @@
 # M2.1 — ToolGate capability gap matrix
 
+**Resolution checkpoint (2026-10-24).** The table below preserves the original discovery evidence. G1–G14's M2–M5
+requirements are implemented in the merged identity/context work and the current completion PRs. The downstream
+service bridge now includes exact-request permits, executor mTLS, online write consumption, bounded epoch snapshots,
+credential-deadline caps and protocol/TLS/storage tests. See [implementation-status.md](../implementation-status.md).
+Actual memory/RAG service ACLs, lifecycle integration and measured full-stack behavior remain M6–M8.
+
+
 The evidence comes from reading the ToolGate source at commit `fc4f6955` (`D:\git\olo-toolgate`), not from its
 design documents. "Present" means code implements the capability. It does **not** mean it is qualified for OLO:
 the qualification tests are M3.4, M3.5 and M4.5.

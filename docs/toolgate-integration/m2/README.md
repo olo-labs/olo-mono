@@ -46,10 +46,9 @@ Nothing. 2.1 (gap matrix) and 2.9 (threat model) are evidence and analysis, revi
 | 2026-10-24 | Contract 2.3 (resources and permissions), as proposed: ToolGate decides operation and resource kind per tenant, the memory and RAG services decide ownership and sharing | Project owner, in the working session | Still proposed: 2.2, 2.4 (including dedup retention), 2.11. |
 | 2026-10-24 | Contracts 2.2 (identity context), 2.4 (invocation lifecycle, including dedup retention of 30 days plus a 7-day approval expiry) and 2.11 (conversation turn), as proposed | Project owner, in the working session | Every M2 contract is now accepted. |
 
-## Critical path the gap matrix found
+## Original critical path, now resolved
 
-1. **G1 — user-bound Gateway authentication is missing.** The Gateway rejects `HUMAN` mode, and JWT and
-   introspection validators exist only as contract enums.
-2. **G7 — the trusted executor context is missing.** The SDK `Invocation` has no tenant, session or resource.
-
-Both are ToolGate work, in M3.4 and M4.1. Nothing in M6 starts until both are qualified.
+G1 (user-bound Gateway authentication) and G7 (trusted executor context) are implemented and qualified in M3/M4.
+The M4.6 service bridge and M5 durable-boundary/cancellation completion have passed local qualification; their merge
+status and exact tests are in the [implementation checkpoint](../implementation-status.md). M6 can use that bridge once
+the companion changes are merged/published. No accepted decision has been reopened.

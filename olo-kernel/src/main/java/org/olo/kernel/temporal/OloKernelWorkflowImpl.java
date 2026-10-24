@@ -27,6 +27,7 @@ public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
     private static final Duration RESULT_TIMEOUT = Duration.ofMinutes(1);
 
     private HumanResumeInput pendingHumanInput;
+    private KernelExecutionSnapshot lastRecordedSnapshot;
 
     private static ActivityStub activityStub(Duration timeout) {
         return Workflow.newUntypedActivityStub(
@@ -62,39 +63,49 @@ public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
                         queue,
                         input);
 
-        while (true) {
-            snapshot = traverseUntilTerminal(snapshot);
+        try {
+            while (true) {
+                snapshot = traverseUntilTerminal(snapshot);
 
-            if (!snapshot.isWaiting()) {
-                break;
+                if (!snapshot.isWaiting()) {
+                    break;
+                }
+
+                activityStub(HUMAN_WAIT_TIMEOUT)
+                        .execute(
+                                snapshot.getWorkflowActivityName(),
+                                Void.class,
+                                snapshot,
+                                KernelActivityOperations.REPORT_HUMAN_WAITING);
+
+                Workflow.await(() -> pendingHumanInput != null);
+                HumanResumeInput resumeInput = pendingHumanInput;
+                pendingHumanInput = null;
+
+                snapshot = activityStub(HUMAN_WAIT_TIMEOUT)
+                        .execute(
+                                snapshot.getWorkflowActivityName(),
+                                KernelExecutionSnapshot.class,
+                                snapshot,
+                                KernelActivityOperations.RESUME_HUMAN_INPUT,
+                                resumeInput);
             }
 
-            activityStub(HUMAN_WAIT_TIMEOUT)
-                    .execute(
-                            snapshot.getWorkflowActivityName(),
-                            Void.class,
-                            snapshot,
-                            KernelActivityOperations.REPORT_HUMAN_WAITING);
-
-            Workflow.await(() -> pendingHumanInput != null);
-            HumanResumeInput resumeInput = pendingHumanInput;
-            pendingHumanInput = null;
-
-            snapshot = activityStub(HUMAN_WAIT_TIMEOUT)
-                    .execute(
-                            snapshot.getWorkflowActivityName(),
-                            KernelExecutionSnapshot.class,
-                            snapshot,
-                            KernelActivityOperations.RESUME_HUMAN_INPUT,
-                            resumeInput);
+            return activityStub(RESULT_TIMEOUT)
+                    .execute(snapshot.getWorkflowActivityName(), String.class, snapshot);
+        } catch (io.temporal.failure.CanceledFailure cancelled) {
+            Workflow.newDetachedCancellationScope(() -> {
+                if (lastRecordedSnapshot != null) activityStub(Duration.ofMinutes(1)).execute(
+                        lastRecordedSnapshot.getWorkflowActivityName(), Void.class, lastRecordedSnapshot,
+                        KernelActivityOperations.CANCEL_TOOLS);
+            }).run();
+            throw cancelled;
         }
-
-        return activityStub(RESULT_TIMEOUT)
-                .execute(snapshot.getWorkflowActivityName(), String.class, snapshot);
     }
 
-    private static KernelExecutionSnapshot traverseUntilTerminal(KernelExecutionSnapshot snapshot) {
+    private KernelExecutionSnapshot traverseUntilTerminal(KernelExecutionSnapshot snapshot) {
         while (!snapshot.isTerminal()) {
+            lastRecordedSnapshot = snapshot;
             if (snapshot.isNextRequiresDedicatedActivity()) {
                 snapshot = activityStub(NODE_STEP_TIMEOUT)
                         .execute(

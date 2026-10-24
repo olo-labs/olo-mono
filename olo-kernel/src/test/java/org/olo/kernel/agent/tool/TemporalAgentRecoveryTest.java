@@ -19,6 +19,7 @@ import org.olo.kernel.temporal.OloKernelWorkflow;
 import org.olo.kernel.temporal.OloKernelWorkflowImpl;
 import org.olo.kernel.traversal.KernelExecutionSnapshot;
 import org.olo.toolgate.client.ToolGateCallResult;
+import org.olo.toolgate.client.ToolGateClient;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -37,15 +38,20 @@ import static org.olo.kernel.agent.tool.AgentToolTestSupport.*;
 class TemporalAgentRecoveryTest {
     @Test
     void aLostDispatchResultIsRetriedWithoutRegeneratingTheDecisionOrRepeatingTheEffect() {
-        verify(false);
+        verify(false, false);
     }
 
     @Test
     void approvalWaitUsesATemporalTimerAndResumesTheOriginalOperation() {
-        verify(true);
+        verify(true, false);
     }
 
-    private void verify(boolean approval) {
+    @Test
+    void cancellationWhileWaitingCancelsTheRecordedOperationWithoutRegeneratingIt() {
+        verify(true, true);
+    }
+
+    private void verify(boolean approval, boolean cancel) {
         var ring = new PayloadKeyRing(Map.of("t1-key", new byte[32], "platform", new byte[32]),
                 Map.of("t1", "t1-key"), "platform");
         var converter = new CodecDataConverter(DefaultDataConverter.newDefaultInstance(),
@@ -58,12 +64,15 @@ class TemporalAgentRecoveryTest {
             var llm = new ScriptedLlm().reply(callTool("incidents_restart", "{\"host\":\"private-app-02\"}"),
                     answer("private recovery result"));
             var gateway = new FakeToolGate(Map.of("triage-agent", List.of(tool("incidents.restart"))));
+            var cancellationIds = new java.util.concurrent.CopyOnWriteArrayList<String>();
+            var pending = new java.util.concurrent.CountDownLatch(1);
             var submissions = new AtomicInteger();
             var effects = new AtomicInteger();
             var committed = new ConcurrentHashMap<String, ToolGateCallResult>();
             gateway.results = call -> {
                 int attempt = submissions.incrementAndGet();
-                if (approval && attempt == 1) {
+                if (approval && (cancel || attempt == 1)) {
+                    pending.countDown();
                     return new ToolGateCallResult(true, "approval required", null, "PENDING_APPROVAL", "inv-original");
                 }
                 return committed.computeIfAbsent(call.requestId(), key -> {
@@ -83,6 +92,14 @@ class TemporalAgentRecoveryTest {
             worker.registerWorkflowImplementationTypes(OloKernelWorkflowImpl.class);
             // Replace external model/Gateway integrations, retaining the production workflow, loop, codec and timers.
             worker.registerActivitiesImplementations((DynamicActivity) args -> {
+                if (args.getSize() == 2 && KernelActivityOperations.CANCEL_TOOLS.equals(args.get(1, Object.class))) {
+                    var cleanup = args.get(0, KernelExecutionSnapshot.class).toContext();
+                    ToolGateClient cancelling = new FakeToolGate(Map.of()) {
+                        @Override public void cancelOperation(String agent, String id) { cancellationIds.add(id); }
+                    };
+                    AgentToolLoop.cancelPending(cleanup, node, cancelling, "triage-agent");
+                    return null;
+                }
                 if (args.getSize() == 2 && !KernelActivityOperations.STEP.equals(args.get(1, Object.class))) {
                     return KernelExecutionSnapshot.fromContext(context(graph, "run-1"), "agent", 0,
                             KernelExecutionSnapshot.Status.RUNNING, null, null, null);
@@ -103,6 +120,19 @@ class TemporalAgentRecoveryTest {
             String workflowId = TenantWorkflowIds.run("t1", "recovery-" + approval);
             OloKernelWorkflow workflow = environment.getWorkflowClient().newWorkflowStub(OloKernelWorkflow.class,
                     WorkflowOptions.newBuilder().setTaskQueue("oloQueue2").setWorkflowId(workflowId).build());
+            if (cancel) {
+                io.temporal.client.WorkflowClient.start(workflow::execute, WorkflowInput.fromJson("{\"message\":\"private user prompt\"}"));
+                try { assertThat(pending.await(10,java.util.concurrent.TimeUnit.SECONDS)).isTrue(); }
+                catch (InterruptedException e) { throw new AssertionError(e); }
+                io.temporal.client.WorkflowStub stub=io.temporal.client.WorkflowStub.fromTyped(workflow);
+                stub.cancel();
+                org.assertj.core.api.Assertions.assertThatThrownBy(() -> stub.getResult(String.class))
+                        .isInstanceOf(io.temporal.client.WorkflowFailedException.class);
+                assertThat(cancellationIds).containsExactly(gateway.calls.getFirst().requestId());
+                assertThat(effects.get()).isZero();
+                assertThat(llm.chatMessages).hasSize(1);
+                return;
+            }
             String result = workflow.execute(WorkflowInput.fromJson("{\"message\":\"private user prompt\"}"));
             assertThat(result).isEqualTo("private recovery result");
             assertThat(submissions.get()).isEqualTo(2);

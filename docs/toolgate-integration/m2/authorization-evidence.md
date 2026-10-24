@@ -70,3 +70,20 @@ options:
 - Exposing consumption to the services: today only executors call `/permits/consume`
 - A revocation feed
 - Package manifests that declare which option each operation uses
+
+## Implementation binding (2026-10-24)
+
+Control's service API lives under `/api/control/v1/access/service-permits`: `issue`, `{audience}/consume`,
+`{audience}/epoch` and `{audience}/jwks`. Executor admission still uses `/permits/consume`; it is a different audience
+and permit type. The service library and Tool Host delivery are in ToolGate's M2–M5 completion branch.
+
+The implementation strengthens the maximum service lifetime to **15 seconds for writes and reads**, additionally
+capped by the original or renewed verified user credential deadline. A running invocation cannot extend its own
+user authority. Write nonces are stable per invocation/audience; a consumed or ambiguous write is reconciled rather
+than issued a second capability. Services must enforce commit deadlines and storage idempotency, since consuming a
+Control nonce and committing another database cannot be one atomic transaction. A failed commit after consumption
+therefore requires reconciliation. Each indexing chunk has its own logical operation. Read epoch snapshots refresh
+within five seconds and fail closed after ten seconds; read release re-checks remain mandatory.
+
+These are implementation constraints within the accepted evidence options. M6 applies ownership/ACL checks and M8
+measures the production 30-second bound. See the [completion evidence](../implementation-status.md).
