@@ -96,7 +96,8 @@ class AgentTurnOutcomesTest {
     @Test
     void anUnknownOutcomeIsNeverResentAndStopsTheTurn() {
         var toolGate = toolGate();
-        toolGate.results = call -> state("OUTCOME_UNKNOWN");
+        toolGate.results = call -> new ToolGateCallResult(true, "OUTCOME_UNKNOWN",
+                AgentToolTestSupport.json("{\"state\":\"OUTCOME_UNKNOWN\",\"reconciliation\":\"MANUAL\"}"), "OUTCOME_UNKNOWN", "inv-1");
         var llm = llm();
         var loop = new AgentToolLoop(llm, clock);
         var context = context(graph, "run-1");
@@ -105,7 +106,8 @@ class AgentTurnOutcomesTest {
 
         assertThat(unknown.done()).isTrue();
         assertThat(unknown.result().outcome()).isEqualTo(AgentToolOutcome.OUTCOME_UNKNOWN);
-        assertThat(unknown.result().response()).contains("unknown").contains("inv-1").contains("not run again");
+        assertThat(unknown.result().response()).contains("unknown").contains("inv-1").contains("not run again")
+                .contains("An operator settles it");
         assertThat(toolGate.calls).hasSize(1);
         assertThat(llm.chatMessages).hasSize(1);
     }

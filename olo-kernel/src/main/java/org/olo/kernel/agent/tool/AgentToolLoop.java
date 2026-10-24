@@ -250,7 +250,7 @@ public final class AgentToolLoop {
             if (now - call.recordedAtUnixMs() > DEDUP_RETENTION_MS) {
                 invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(),
                         ToolInvocationRecord.OUTCOME_UNKNOWN, call.invocationId()));
-                return finish(context, node, new AgentToolLoopResult(unknownMessage(call), AgentToolOutcome.OUTCOME_UNKNOWN,
+                return finish(context, node, new AgentToolLoopResult(unknownMessage(call, null), AgentToolOutcome.OUTCOME_UNKNOWN,
                         agentName, names(turn.catalog()), invocations));
             }
             ToolGateCallResult result = toolGate.callTool(agentName, call.operationId(), call.tool(), call.arguments());
@@ -277,7 +277,7 @@ public final class AgentToolLoop {
                 invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(),
                         ToolInvocationRecord.OUTCOME_UNKNOWN, result.invocationId()));
                 return finish(context, node, new AgentToolLoopResult(
-                        unknownMessage(call.done(ToolInvocationRecord.OUTCOME_UNKNOWN, result.invocationId())),
+                        unknownMessage(call.done(ToolInvocationRecord.OUTCOME_UNKNOWN, result.invocationId()), reconciliation(result)),
                         AgentToolOutcome.OUTCOME_UNKNOWN, agentName, names(turn.catalog()), invocations));
             }
             String status = result.error() || result.ended() ? ToolInvocationRecord.ERROR : ToolInvocationRecord.OK;
@@ -289,10 +289,23 @@ public final class AgentToolLoop {
         return new Step(null, "dispatched " + turn.pending().size() + " tool call(s) for round " + turn.round());
     }
 
-    static String unknownMessage(RecordedCall call) {
+    /** M5.4: the reconciliation method ToolGate reports for an unknown outcome, or null. */
+    static String reconciliation(ToolGateCallResult result) {
+        JsonNode structured = result.structuredContent();
+        JsonNode method = structured == null ? null : structured.get("reconciliation");
+        return method != null && method.isTextual() ? method.asText() : null;
+    }
+
+    static String unknownMessage(RecordedCall call, String method) {
+        String settled = switch (method == null ? "" : method) {
+            case "STATUS_LOOKUP" -> " ToolGate settles it with the tool's status lookup.";
+            case "DOWNSTREAM_IDEMPOTENCY" -> " ToolGate may resend it with the same idempotency key.";
+            case "MANUAL" -> " An operator settles it in ToolGate.";
+            default -> "";
+        };
         return "The outcome of '" + call.tool() + "' is unknown"
                 + (call.invocationId() != null ? " (invocation " + call.invocationId() + ")" : "")
-                + ". It was not run again; it needs reconciliation before this request continues.";
+                + ". It was not run again; it needs reconciliation before this request continues." + settled;
     }
 
     private static String waitingMessage(Turn turn) {
