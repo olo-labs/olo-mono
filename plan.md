@@ -23,39 +23,14 @@ empty application stores (conversations, memory, documents, ToolGate state).
 Fresh installation simplifies removal (M9) and deployment (M10). It does not relax the authorization, retry or
 deletion requirements.
 
-**Status (2026-10-23): 17% counted, 25% implemented.**
-- **Counted:**
-  - M0
-  - M1 (merged as [olo-labs/olo-mono#2](https://github.com/olo-labs/olo-mono/pull/2))
-  - The accepted M2 steps: 2.6–2.8 (D5–D7) and 2.12 (RAG targets)
-  - M3.9 (merged as [olo-labs/olo-mono#5](https://github.com/olo-labs/olo-mono/pull/5))
-- **Implemented, not yet counted:**
-  - the M2 contracts still awaiting approval (2.1–2.5, 2.9–2.11)
-  - M3.1–3.2, verified identity in the olo backend, in review as [olo-labs/olo#1](https://github.com/olo-labs/olo/pull/1)
-  - M3.11, a signed worker callback and tenant-scoped uploads and knowledge (olo, stacked on olo#1; plus the worker signer in olo-mono)
-- **Plan revisions:** four security reviews are folded in. They set the user/resource authorization model and the
-  deterministic memory/RAG flow, and cover fresh-install scope, service-job identity, payload protection,
-  unknown-outcome reconciliation, revocation of derived context, authorization evidence for services (tied to the
-  revocation bound), credential renewal, and a dedup record that turns changed arguments into a conflict.
-- **M1 remediation:** tracked as M1-R1 to M1-R6.
-- **M2 partly accepted:** all contracts, decisions and targets are in
-  [docs/toolgate-integration/m2](docs/toolgate-integration/m2/README.md) (merged in
-  [olo-labs/olo-mono#4](https://github.com/olo-labs/olo-mono/pull/4)). ToolGate's half of the threat model is in
-  olo-toolgate at `docs/security/threat-models/olo-integration.md` (merged in
-  [olo-labs/olo-toolgate#186](https://github.com/olo-labs/olo-toolgate/pull/186)).
-  - **Accepted by the project owner (2026-10-23):** D4–D7, the 30-second revocation bound, and the RAG quality and
-    performance targets. See the [approval record](docs/toolgate-integration/m2/README.md#approval-record).
-  - **Still proposed:** the contracts in 2.2–2.5, 2.10 and 2.11 (including the evidence options, dedup retention, the
-    object-authorization split, and sender binding), plus the gap matrix (2.1) and the threat model (2.9). M2 counts
-    fully once they are approved.
-- **Critical path found by the gap matrix:** user-bound Gateway authentication (G1) and the trusted executor context
-  (G7) are both missing in ToolGate today.
-- **Next:**
-  - Approval of the remaining M2 contracts, especially the three P1 contracts (2.4, 2.5, 2.10)
-  - In parallel, M3 steps that don't depend on those contracts: 3.9 is merged, and 3.1–3.2 (verified identity in the
-    olo backend) are in review. 3.11 is in review too. Next are the olo-chat and olo-ui changes to send tokens, and the olo-docker worker settings for the callback key.
-  - Steps 3.3, 3.4 and 3.10 wait for the 2.5 contract (D4 is accepted)
-
+**Status (2026-10-24): implementation is in progress across the current feature branches.**
+- All M2 contracts and D4–D7 are accepted; the 30-second revocation bound and RAG targets are accepted too.
+- M3 and the principal/context portions of M4 are merged. The current working trees contain the six review fixes,
+  additional M5 payload protection, an authenticated codec endpoint, and Temporal/Redis regression tests.
+- These local changes do not count as merged work. The table below retains merge-based credit.
+- See [implementation-status.md](docs/toolgate-integration/implementation-status.md) for the tested checkpoint and
+  the exact remaining sequence. M5 is not complete: cancellation propagation and parallel/inline durable boundaries
+  still need qualification. M4.6's downstream service-permit bridge precedes deployable M6 services.
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
 identities, and empty application stores. No migration tools, legacy readers, compatibility modes, or support for
 executions started under the old implementation will be built. A change to this boundary needs a new decision
@@ -582,7 +557,10 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       AES-256-GCM under the run's tenant key (tenant from `run-<tenant>~<runId>` workflow ids, authenticated with the key id),
       keys by id from `OLO_PAYLOAD_KEYS_FILE` with rotation. The worker, kernel child workflows and the backend's client use it,
       and refuse to start without a ring unless `OLO_PAYLOAD_PROTECTION=disabled-for-development`. The backend no longer
-      logs workflow inputs. **Still to do:** the authenticated, tenant-scoped codec server for the Temporal UI and CLI.
+      logs workflow inputs. **Local working-tree addition (2026-10-24):** authenticated tenant-admin codec endpoints
+      `/api/codec/decode` and `/encode`, disabled unless explicitly enabled. They refuse foreign-tenant payloads,
+      set `Cache-Control: no-store`, and omit codec request bodies from logs. Missing tenant keys and cleartext tenant
+      payloads fail closed; exception messages are encrypted too. See the implementation checkpoint for validation.
 - [x] **5.3** [ToolGate, olo-mono] Dedup to the M2.4 record: look up by tenant + subject or service principal +
       logical-operation id, and store the request fingerprint with the invocation state and result.
       - Same key and same fingerprint: resume or return the existing invocation.

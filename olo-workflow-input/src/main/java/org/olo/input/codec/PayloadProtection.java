@@ -43,7 +43,7 @@ public final class PayloadProtection {
 
     static DataConverter dataConverter(PayloadKeyRing ring, String mode) {
         if (ring != null) {
-            return new CodecDataConverter(DefaultDataConverter.newDefaultInstance(), List.of(new OloPayloadCodec(ring)));
+            return new CodecDataConverter(DefaultDataConverter.newDefaultInstance(), List.of(new OloPayloadCodec(ring)), true);
         }
         if (DISABLED_FOR_DEVELOPMENT.equals(mode)) {
             System.getLogger(PayloadProtection.class.getName()).log(System.Logger.Level.WARNING,

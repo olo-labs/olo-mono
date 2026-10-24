@@ -41,6 +41,9 @@ toolgate:
   mcpUrl: "https://localhost:18451/mcp"
   caCertificate: "../../debug/toolgate/gateway-ca.crt"
   credentialsDir: "../../debug/toolgate/credentials"
+  # Required when enabled: backend user credentials plus the mapped agent's actor token.
+  userCredentialsUrl: "http://localhost:47080"
+  delegatedAgents: true
   timeoutMs: 60000
   maxToolRounds: 8
   # Operator-controlled: which agent identities each workflow may use. Workflow authors can't change this.

@@ -96,7 +96,8 @@ public final class DefaultLlmInvocationService implements LlmInvocationService {
         }
         UserBinding user = new UserBinding(identity.tenantId(), identity.userId(), identity.issuer(),
                 identity.sessionId(), identity.sessionEpoch());
-        return access.viaAgent() ? access.client().forUserViaAgent(user) : access.client().forUser(user);
+        // This is the model-selected business-tool loop, never the deterministic platform-call path.
+        return access.client().forUserViaAgent(user);
     }
 
     /**

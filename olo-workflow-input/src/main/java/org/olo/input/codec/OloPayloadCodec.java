@@ -31,7 +31,7 @@ import java.util.Objects;
  *   <li>Each payload records its key id and tenant. Both are authenticated, so a payload cannot be moved into another
  *       tenant's workflow or decrypted under another key.</li>
  *   <li>Rotation adds a key and points the tenant at it; older payloads still decode by their key id.</li>
- *   <li>Payloads this codec did not produce pass through decode unchanged. Encode always seals.</li>
+ *   <li>Unsealed tenant payloads are refused. Non-tenant system payloads may pass through.</li>
  * </ul>
  * Configure the same ring on every Temporal client and worker that reads or writes OLO payloads.
  */
@@ -110,6 +110,7 @@ public final class OloPayloadCodec implements PayloadCodec {
     private Payload open(Payload payload) {
         ByteString encoding = payload.getMetadataMap().get(METADATA_ENCODING);
         if (encoding == null || !ENCODING.equals(encoding.toStringUtf8())) {
+            if (tenant != null) throw new PayloadCodecException(new GeneralSecurityException("unsealed tenant payload refused"));
             return payload;
         }
         String keyId = text(payload, METADATA_KEY_ID);

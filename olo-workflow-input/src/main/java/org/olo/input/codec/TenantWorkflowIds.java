@@ -8,14 +8,15 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
- * Workflow ids that carry their tenant (M5.2): {@code run-<tenant>~<runId>} for runs and {@code <tenant>~<name>} for
- * child workflows. The payload codec reads the tenant from the workflow id of the payload it encodes, so every payload
+ * Workflow ids that carry their tenant (M5.2): {@code run-<tenant>~<runId>} for runs and {@code child-<tenant>~<name>}
+ * for child workflows. The payload codec reads the tenant from the workflow id of the payload it encodes, so every payload
  * of a run is sealed with that tenant's key.
  */
 public final class TenantWorkflowIds {
 
     /** Prefix of run workflow ids. */
     public static final String RUN_PREFIX = "run-";
+    public static final String CHILD_PREFIX = "child-";
     /** Separates the tenant from the rest of the id. */
     public static final char SEPARATOR = '~';
 
@@ -33,7 +34,7 @@ public final class TenantWorkflowIds {
     /** A child workflow id in {@code tenantId}; {@code name} is the rest of the id. */
     public static String child(String tenantId, String name) {
         Objects.requireNonNull(name, "name");
-        return tenant(tenantId) + SEPARATOR + name;
+        return CHILD_PREFIX + tenant(tenantId) + SEPARATOR + name;
     }
 
     /** The tenant a workflow id names, or {@code null} when it names none. */
@@ -41,7 +42,14 @@ public final class TenantWorkflowIds {
         if (workflowId == null) {
             return null;
         }
-        String id = workflowId.startsWith(RUN_PREFIX) ? workflowId.substring(RUN_PREFIX.length()) : workflowId;
+        String id;
+        if (workflowId.startsWith(RUN_PREFIX)) {
+            id = workflowId.substring(RUN_PREFIX.length());
+        } else if (workflowId.startsWith(CHILD_PREFIX)) {
+            id = workflowId.substring(CHILD_PREFIX.length());
+        } else {
+            return null;
+        }
         int at = id.indexOf(SEPARATOR);
         if (at <= 0) {
             return null;

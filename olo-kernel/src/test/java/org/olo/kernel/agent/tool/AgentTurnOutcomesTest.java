@@ -91,6 +91,22 @@ class AgentTurnOutcomesTest {
         var expired = loop.step(context, node, MODEL, "restart", toolGate, settings);
         assertThat(expired.done()).isTrue();
         assertThat(expired.result().outcome()).isEqualTo(AgentToolOutcome.APPROVAL_EXPIRED);
+        assertThat(toolGate.calls).hasSize(1);
+    }
+
+    @Test
+    void approvalExpiryIsCheckedBeforeAReplayCanExecuteALateApproval() {
+        var toolGate = toolGate();
+        toolGate.results = call -> state("PENDING_APPROVAL");
+        var loop = new AgentToolLoop(llm(), clock);
+        var context = context(graph, "run-1");
+        loop.step(context, node, MODEL, "restart", toolGate, settings);
+        loop.step(context, node, MODEL, "restart", toolGate, settings);
+        toolGate.results = call -> new ToolGateCallResult(false, "late effect", null, null, "inv-1");
+        now.addAndGet(AgentToolLoop.APPROVAL_EXPIRY_MS);
+        assertThat(loop.step(context, node, MODEL, "restart", toolGate, settings).result().outcome())
+                .isEqualTo(AgentToolOutcome.APPROVAL_EXPIRED);
+        assertThat(toolGate.calls).hasSize(1);
     }
 
     @Test
@@ -113,15 +129,16 @@ class AgentTurnOutcomesTest {
     }
 
     @Test
-    void anEndedInvocationIsAToolErrorTheModelSees() {
+    void anEndedInvocationStopsTheTurnWithoutLettingTheModelRequestTheEffectAgain() {
         for (String ended : List.of("FAILED", "CANCELLED", "EXPIRED", "PARTIAL")) {
             var toolGate = toolGate();
             toolGate.results = call -> state(ended);
             var llm = llm();
             var result = new AgentToolLoop(llm, clock).run(context(graph, "run-1"), node, MODEL, "restart", toolGate, settings);
-            assertThat(result.outcome()).isEqualTo(AgentToolOutcome.COMPLETED);
+            assertThat(result.outcome()).isEqualTo(AgentToolOutcome.INVOCATION_ENDED);
             assertThat(result.invocations()).singleElement().extracting(ToolInvocationRecord::status).isEqualTo(ToolInvocationRecord.ERROR);
-            assertThat(llm.chatMessages.get(1).get(llm.chatMessages.get(1).size() - 1).content()).startsWith("ERROR");
+            assertThat(llm.chatMessages).hasSize(1);
+            assertThat(toolGate.calls).hasSize(1);
         }
     }
 
