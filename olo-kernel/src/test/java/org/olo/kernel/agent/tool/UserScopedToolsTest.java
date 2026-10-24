@@ -59,8 +59,8 @@ class UserScopedToolsTest {
     private static NodeResult run(AgentToolTestSupport.FakeToolGate toolGate, AgentToolTestSupport.ScriptedLlm llm,
                                   KernelRuntimeContext context, NodeDefinition node) {
         var access = new AtomicReference<>(AgentToolAccess.userScoped(toolGate, 8, MAPPED));
-        return new LocalLlmAgentExecutor(new DefaultLlmInvocationService(PROMPT, graph -> MODEL, llm, access::get))
-                .execute(context, node);
+        return AgentToolTestSupport.runTurn(
+                new LocalLlmAgentExecutor(new DefaultLlmInvocationService(PROMPT, graph -> MODEL, llm, access::get)), context, node);
     }
 
     @Test
@@ -73,7 +73,8 @@ class UserScopedToolsTest {
         NodeResult result = run(toolGate, llm, context(graph("memory-agent", node), "t1", identity), node);
 
         assertThat(result.status()).isEqualTo(NodeStatus.COMPLETED);
-        assertThat(toolGate.users).containsExactly(new UserBinding("t1", "user-42", "https://idp.example", "sid-1", 3));
+        // Every durable step authenticates afresh as the run's user (M3.3, M5.1); never as anyone else.
+        assertThat(toolGate.users).isNotEmpty().containsOnly(new UserBinding("t1", "user-42", "https://idp.example", "sid-1", 3));
         assertThat(toolGate.calls).hasSize(1);
     }
 
@@ -85,8 +86,9 @@ class UserScopedToolsTest {
         var identity = new IdentityBinding("t1", "user-42", "https://idp.example", "sid-1", 3);
         var access = new AtomicReference<>(AgentToolAccess.userScopedViaAgent(toolGate, 8, MAPPED));
 
-        NodeResult result = new LocalLlmAgentExecutor(new DefaultLlmInvocationService(PROMPT, graph -> MODEL, llm, access::get))
-                .execute(context(graph("memory-agent", node), "t1", identity), node);
+        NodeResult result = AgentToolTestSupport.runTurn(
+                new LocalLlmAgentExecutor(new DefaultLlmInvocationService(PROMPT, graph -> MODEL, llm, access::get)),
+                context(graph("memory-agent", node), "t1", identity), node);
 
         assertThat(result.status()).isEqualTo(NodeStatus.COMPLETED);
         assertThat(toolGate.viaAgent).containsExactly(new UserBinding("t1", "user-42", "https://idp.example", "sid-1", 3));

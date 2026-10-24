@@ -51,8 +51,15 @@ class ToolGateAgentExecutionTest {
         }
     };
 
-    private LocalLlmAgentExecutor executor(AgentToolTestSupport.ScriptedLlm llm, AtomicReference<AgentToolAccess> access) {
-        return new LocalLlmAgentExecutor(new DefaultLlmInvocationService(PROMPT, graph -> MODEL, llm, access::get));
+    /** The executor, driven through every durable phase of a turn. */
+    private record Turn(LocalLlmAgentExecutor executor) {
+        NodeResult execute(org.olo.kernel.context.KernelRuntimeContext context, NodeDefinition node) {
+            return AgentToolTestSupport.runTurn(executor, context, node);
+        }
+    }
+
+    private Turn executor(AgentToolTestSupport.ScriptedLlm llm, AtomicReference<AgentToolAccess> access) {
+        return new Turn(new LocalLlmAgentExecutor(new DefaultLlmInvocationService(PROMPT, graph -> MODEL, llm, access::get)));
     }
 
     @Test

@@ -27,6 +27,9 @@ public record ToolGateCallResult(
         String invocationId) {
 
     public static final String STATE_PENDING_APPROVAL = "PENDING_APPROVAL";
+    /** The invocation may or may not have taken effect; it is never sent again, only reconciled (M5.4). */
+    public static final String STATE_OUTCOME_UNKNOWN = "OUTCOME_UNKNOWN";
+    private static final java.util.Set<String> ENDED = java.util.Set.of("FAILED", "CANCELLED", "EXPIRED", "PARTIAL");
 
     public ToolGateCallResult {
         text = text == null ? "" : text;
@@ -34,6 +37,15 @@ public record ToolGateCallResult(
 
     public boolean pendingApproval() {
         return STATE_PENDING_APPROVAL.equals(state);
+    }
+
+    public boolean outcomeUnknown() {
+        return STATE_OUTCOME_UNKNOWN.equals(state);
+    }
+
+    /** The invocation ended without a result: failed, denied or cancelled, expired, or only partly done. */
+    public boolean ended() {
+        return state != null && ENDED.contains(state);
     }
 
     public static ToolGateCallResult failure(String message) {

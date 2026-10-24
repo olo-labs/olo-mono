@@ -28,6 +28,32 @@ final class ToolCallRequestIds {
     }
 
     /**
+     * The logical-operation id of a recorded call (M2.4, M5.1): stable across retries and never derived from the
+     * arguments, so a call recorded once keeps its id, and changed arguments under that id are a ToolGate conflict
+     * rather than a new invocation.
+     *
+     * @param runId the OLO run id
+     * @param scope workflow id and AGENT node id
+     * @param pass  how many times this AGENT node has already run in this run
+     * @param round tool round within this turn
+     * @param index position of the call within the round
+     */
+    static String logicalOperationId(String runId, String scope, int pass, int round, int index) {
+        String material = String.join("\u0000",
+                runId == null ? "" : runId,
+                scope,
+                Integer.toString(pass),
+                Integer.toString(round),
+                Integer.toString(index));
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(material.getBytes(StandardCharsets.UTF_8));
+            return "olo-op-" + HexFormat.of().formatHex(digest, 0, 24);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
+    }
+
+    /**
      * @param runId    the OLO run id
      * @param scope    workflow id and AGENT node id
      * @param pass     how many times this AGENT node has already run in this run

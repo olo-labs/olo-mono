@@ -23,6 +23,7 @@ public record ToolInvocationRecord(String tool, String requestId, int round, Str
     public static final String ERROR = "ERROR";
     public static final String PENDING_APPROVAL = "PENDING_APPROVAL";
     public static final String INVALID_CALL = "INVALID_CALL";
+    public static final String OUTCOME_UNKNOWN = "OUTCOME_UNKNOWN";
 
     public Map<String, Object> toOutput() {
         Map<String, Object> out = new LinkedHashMap<>();

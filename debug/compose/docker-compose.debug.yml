@@ -51,6 +51,8 @@ services:
   olo:
     environment:
       OLO_CHAT_CALLBACK_BASE_URL: ${OLO_CHAT_CALLBACK_BASE_URL:-http://olo:7080}
+      # Local debugging only: Temporal history stays readable. Production mounts OLO_PAYLOAD_KEYS_FILE (M5.2).
+      OLO_PAYLOAD_PROTECTION: ${OLO_PAYLOAD_PROTECTION:-disabled-for-development}
     depends_on:
       db:
         condition: service_healthy
@@ -60,6 +62,8 @@ services:
   olo-worker:
     environment:
       OLO_LLM_BASE_URL: http://ollama:11434
+      # Local debugging only: Temporal history stays readable. Production mounts OLO_PAYLOAD_KEYS_FILE (M5.2).
+      OLO_PAYLOAD_PROTECTION: ${OLO_PAYLOAD_PROTECTION:-disabled-for-development}
     depends_on:
       olo:
         condition: service_started

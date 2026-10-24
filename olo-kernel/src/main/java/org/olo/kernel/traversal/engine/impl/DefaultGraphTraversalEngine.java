@@ -62,6 +62,7 @@ public final class DefaultGraphTraversalEngine implements GraphTraversalEngine {
         TraversalCursor cursor = TraversalCursor.running(null, 0, null, null);
         while (cursor.status() == KernelExecutionSnapshot.Status.RUNNING) {
             cursor = executeSingleStep(context, graphSession, cursor);
+            pauseIfAsked(context);
         }
 
         if (cursor.status() == KernelExecutionSnapshot.Status.FAILED) {
@@ -74,6 +75,19 @@ public final class DefaultGraphTraversalEngine implements GraphTraversalEngine {
         TraversalDiagnostics.logTraversalComplete(
                 cursor.lastNodeId(), cursor.message(), context.getVariableMap(), context.getOutputMap());
         return TraversalResult.completed(cursor.lastNodeId(), cursor.message());
+    }
+
+    /** In-process runs honor a step's resume delay (an approval wait) here; under Temporal the workflow sleeps instead. */
+    private static void pauseIfAsked(KernelRuntimeContext context) {
+        Object resumeAfter = context.getVariables().get(org.olo.kernel.agent.tool.AgentToolLoop.RESUME_AFTER_VARIABLE);
+        if (resumeAfter instanceof Number delay && delay.longValue() > 0) {
+            try {
+                Thread.sleep(delay.longValue());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new KernelException("interrupted while waiting to resume an agent turn");
+            }
+        }
     }
 
     @Override
@@ -104,6 +118,10 @@ public final class DefaultGraphTraversalEngine implements GraphTraversalEngine {
             String message = result.message() != null ? result.message() : "node execution failed";
             TraversalDiagnostics.logTraversalFailed(currentNodeId, result.status(), message);
             return TraversalCursor.failed(currentNodeId, step, result.status(), message);
+        }
+        if (result.status() == NodeStatus.CONTINUE) {
+            // The same node runs again; its recorded state travels in the run variables (M5.1).
+            return TraversalCursor.running(currentNodeId, step, currentNodeId, result.message());
         }
         if (result.status() == NodeStatus.WAITING) {
             String message = result.message() != null ? result.message() : "awaiting human input";

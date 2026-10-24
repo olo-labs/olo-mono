@@ -47,6 +47,9 @@ public final class LocalLlmAgentExecutor implements AgentExecutor {
     public NodeResult execute(KernelRuntimeContext context, NodeDefinition node) {
         try {
             LlmInvocationResult invocation = llmInvocationService.invoke(context, node);
+            if (invocation.isContinuing()) {
+                return NodeResult.continuing(invocation.progress());
+            }
             TraversalDiagnostics.logLlmInvocation(node.getId(), invocation);
 
             Map<String, Object> output = new LinkedHashMap<>();
@@ -58,6 +61,11 @@ public final class LocalLlmAgentExecutor implements AgentExecutor {
             output.put("agentMode", EXECUTOR_ID);
 
             AgentToolLoopResult toolLoop = invocation.toolLoop();
+            if (toolLoop != null && (toolLoop.outcome() == org.olo.kernel.agent.tool.AgentToolOutcome.OUTCOME_UNKNOWN
+                    || toolLoop.outcome() == org.olo.kernel.agent.tool.AgentToolOutcome.APPROVAL_EXPIRED)) {
+                // M5.4/M5.5: the run must not carry on as if the call had finished; reconciliation or a new request decides.
+                return NodeResult.failed(toolLoop.response(), null);
+            }
             if (toolLoop != null) {
                 output.put("agentName", toolLoop.agentName());
                 output.put("toolCatalog", toolLoop.catalog());

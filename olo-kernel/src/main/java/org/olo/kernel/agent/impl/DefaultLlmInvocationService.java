@@ -70,7 +70,12 @@ public final class DefaultLlmInvocationService implements LlmInvocationService {
         AgentToolSettings settings = AgentToolSettings.resolve(context.getGraph(), node, access.defaultMaxToolRounds());
         // M1-R2: only operator-mapped identities; never whatever name the workflow author typed.
         access.identityPolicy().authorize(tenantId(context), context.getGraph().getId(), settings.agentName());
-        AgentToolLoopResult result = toolLoop.run(context, node, modelCall, renderedPrompt, caller(context, access, settings), settings);
+        // M5.1: one durable phase per step; the traversal persists the recorded turn before the next phase acts on it.
+        AgentToolLoop.Step step = toolLoop.step(context, node, modelCall, renderedPrompt, caller(context, access, settings), settings);
+        if (!step.done()) {
+            return LlmInvocationResult.continuing(modelCall, renderedPrompt, step.progress());
+        }
+        AgentToolLoopResult result = step.result();
         return new LlmInvocationResult(modelCall, renderedPrompt, result.response(), result);
     }
 

@@ -30,7 +30,7 @@ public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
 
     private static ActivityStub activityStub(Duration timeout) {
         return Workflow.newUntypedActivityStub(
-                ActivityOptions.newBuilder().setStartToCloseTimeout(timeout).build());
+                org.olo.kernel.temporal.KernelActivityOptions.of(timeout));
     }
 
     @Override
@@ -102,6 +102,11 @@ public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
                                 KernelExecutionSnapshot.class,
                                 snapshot,
                                 KernelActivityOperations.STEP);
+                // M5.5: a step that waits (an approval) asks to resume later; the workflow sleeps durably meanwhile.
+                Object resumeAfter = snapshot.getVariables().get(org.olo.kernel.agent.tool.AgentToolLoop.RESUME_AFTER_VARIABLE);
+                if (resumeAfter instanceof Number delay && delay.longValue() > 0) {
+                    Workflow.sleep(java.time.Duration.ofMillis(delay.longValue()));
+                }
             } else {
                 snapshot = WorkflowInlineTraversal.executeStep(snapshot);
             }

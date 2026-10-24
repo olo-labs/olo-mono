@@ -68,15 +68,15 @@ that replaces D8.
 | M0 | Discovery, plan and security reviews | all | 3 | 100% | 100% | ✅ Done |
 | M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 100% | ✅ Merged (PR #2); remediation in M3, M5 |
 | M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 83% | 🟨 Every contract and decision accepted (2.2–2.8, 2.10–2.12); 2.1 and 2.9 are evidence, reviewed with their PRs |
-| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 100% | 91% | 🟨 3.1–3.6 and 3.8–3.11 merged; 3.7 in review |
+| M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 100% | 100% | ✅ All steps merged (3.7 in olo-labs/olo-toolgate#191) |
 | M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 67% | 67% | 🟨 4.1–4.4 merged; 4.5, 4.6 need M6 services |
-| M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 0% | 0% | ⬜ |
+| M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 57% | 0% | 🟨 5.1, 5.3, 5.4, 5.5 in review; 5.2 and 5.6 partly; 5.7 tests in progress |
 | M6 | Memory and RAG services and ToolGate packages | ToolGate, services | 12 | 0% | 0% | ⬜ |
 | M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 0% | 0% | ⬜ |
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **40%** | **38%** | |
+| | **Overall** | | **100** | **47%** | **39%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -569,12 +569,21 @@ standalone runs. Session epochs stay with Control. The Python SDK has the same a
 
 Temporal can run a failed activity again, so every effect has to be safe to replay.
 
-- [ ] **5.1** [olo-mono] **M1-R1:** split the agent turn. One activity gets the model's decision and records each selected
+- [x] **5.1** [olo-mono] **M1-R1:** split the agent turn. One activity gets the model's decision and records each selected
       operation, with a stable logical-operation id, in workflow state. A separate activity dispatches each recorded
       operation. On recovery, recorded operations are resumed, never regenerated.
+      *Implemented:* the AGENT turn runs as durable phases (`NodeStatus.CONTINUE`): a decision phase records the selected
+      calls with logical-operation ids derived from run, node, pass, round and position (never arguments), and a dispatch
+      phase sends exactly those. A retried dispatch re-sends the same ids and never asks the model again. Inside a parallel
+      branch the phases still run in one activity.
 - [ ] **5.2** [olo-mono] **M1-R6:** payload protection (D7) ships together with 5.1. Sensitive arguments, prompts,
       retrieved content and results are encrypted or stored by reference. Bearer and refresh tokens are never persisted. The codec is configured on **every** Temporal client and worker that serializes sensitive payloads, including the olo backend's client that starts workflows. The Temporal UI and CLI codec server needs authenticated, tenant-scoped access.
-- [ ] **5.3** [ToolGate, olo-mono] Dedup to the M2.4 record: look up by tenant + subject or service principal +
+      *In review (this repo, `feature/m5-durable-agent-turn`, and olo-labs/olo):* `OloPayloadCodec` seals every payload with
+      AES-256-GCM under the run's tenant key (tenant from `run-<tenant>~<runId>` workflow ids, authenticated with the key id),
+      keys by id from `OLO_PAYLOAD_KEYS_FILE` with rotation. The worker, kernel child workflows and the backend's client use it,
+      and refuse to start without a ring unless `OLO_PAYLOAD_PROTECTION=disabled-for-development`. The backend no longer
+      logs workflow inputs. **Still to do:** the authenticated, tenant-scoped codec server for the Temporal UI and CLI.
+- [x] **5.3** [ToolGate, olo-mono] Dedup to the M2.4 record: look up by tenant + subject or service principal +
       logical-operation id, and store the request fingerprint with the invocation state and result.
       - Same key and same fingerprint: resume or return the existing invocation.
       - Same key and different fingerprint: conflict, never executed.
@@ -582,20 +591,37 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       - Credential rotation and renewal change neither the key nor the fingerprint.
       - Records are kept for the M2.4 retention period. After expiry, a recovering operation becomes `OUTCOME_UNKNOWN`
         and goes through reconciliation (5.4).
-- [ ] **5.4** [olo-mono, ToolGate] **M1-R5: unknown outcomes.** Transport dedup is separate from executor and business
+      *Implemented (olo-labs/olo-toolgate, `feature/olo-m5-dedup`; kernel in this PR):* the Gateway's dedup key is tenant, mode,
+      subject, agent and chain plus the caller's key, and Control's fingerprint leaves out session and credential epochs, so
+      renewal and rotation replay the same invocation, with current epochs rechecked. A changed fingerprint is a 409 and never
+      runs; concurrent submissions create one invocation. ToolGate never purges invocations (beyond the 37-day minimum); the
+      kernel never sends a recorded call older than 30 days and reports it as `OUTCOME_UNKNOWN`.
+- [x] **5.4** [olo-mono, ToolGate] **M1-R5: unknown outcomes.** Transport dedup is separate from executor and business
       idempotency. Polling the invocation status alone can't settle a timeout after an external effect, so:
       - Each side-effecting executor declares its reconciliation method: a downstream idempotency key where the
         target system supports one, or an executor-specific status lookup.
       - While the outcome is unknown, the operation is marked `OUTCOME_UNKNOWN` and is **never redispatched
         automatically**. It is resolved by reconciliation or by an operator.
-- [ ] **5.5** [olo-mono, ToolGate] **M1-R4:** approvals resume the original invocation. The run waits on an
+      *Implemented (olo-labs/olo-toolgate#192):* tools with side effects (`IDEMPOTENT`, `NON_IDEMPOTENT`) must declare
+      `reconciliation` (`DOWNSTREAM_IDEMPOTENCY` with `@Idempotency`, `STATUS_LOOKUP` with a `@Reconcile` tool, or `MANUAL`);
+      SDK builds and deployment refuse a missing or inconsistent one, and undeclared `UNKNOWN` effects are `MANUAL`. Each
+      invocation records the method. Replaying an `OUTCOME_UNKNOWN` `DOWNSTREAM_IDEMPOTENCY` call requeues the same
+      invocation, so the target deduplicates; other unknown outcomes are never resent, and the kernel stops naming the method.
+      **Follow-up:** run the `@Reconcile` lookup automatically for `STATUS_LOOKUP` tools.
+- [x] **5.5** [olo-mono, ToolGate] **M1-R4:** approvals resume the original invocation. The run waits on an
       authenticated notification or bounded polling, then retrieves the result. Covers expiry, denial, cancellation,
       and re-authorizing at dispatch (*Revocation timing*, point 2).
 
       Resuming after a long wait follows *Credential renewal*: a fresh credential comes from the stored binding
       reference, and current authority is rechecked. An expired or revoked session means re-authentication or
       termination, never the service principal.
+      *Implemented:* a call pending approval stays recorded; the workflow sleeps durably and resends the same logical
+      operation, and once approved ToolGate runs that invocation, with a fresh dispatch window. Approval waits up to
+      `toolgate.control.approval.expiry-ms` (7 days for OLO), then `APPROVAL_EXPIRED`; denial and expiry come back as ended
+      states; every step gets a fresh user credential and the replay is decided again, so a revoked session never resumes.
 - [ ] **5.6** [olo-mono] Bounded retries, timeouts and cancellation propagated to ToolGate
+      *In review:* kernel activities retry at most 4 times with exponential backoff (to 30 s) instead of Temporal's unbounded
+      default. **Still to do:** propagating workflow cancellation to ToolGate invocations.
 - [ ] **5.7** Tests:
       - a crash after dispatch but before recording
       - an activity retry
