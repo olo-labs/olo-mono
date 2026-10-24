@@ -26,6 +26,9 @@ public final class KernelActivityOptions {
         return ActivityOptions.newBuilder()
                 .setStartToCloseTimeout(startToClose)
                 .setRetryOptions(RetryOptions.newBuilder()
+                        .setDoNotRetry(SecurityException.class.getName(),
+                                org.olo.toolgate.client.GovernedCalls.Pending.class.getName(),
+                                org.olo.toolgate.client.GovernedCalls.ReconciliationRequired.class.getName())
                         .setInitialInterval(Duration.ofSeconds(1))
                         .setBackoffCoefficient(2.0)
                         .setMaximumInterval(Duration.ofSeconds(30))

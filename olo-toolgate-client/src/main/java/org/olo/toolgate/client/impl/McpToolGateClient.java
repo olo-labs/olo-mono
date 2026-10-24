@@ -61,6 +61,7 @@ public final class McpToolGateClient implements ToolGateClient {
     private final UserCredentialProvider users;
     /** Agent workload tokens sent as the actor beside a user credential (path B, M3.10); null otherwise. */
     private final ToolGateCredentialResolver actors;
+    private final String serviceTenant, servicePrincipal;
 
     public McpToolGateClient(ToolGateSettings settings, ToolGateCredentialResolver credentials) {
         this(settings, credentials, buildHttpClient(settings));
@@ -82,11 +83,16 @@ public final class McpToolGateClient implements ToolGateClient {
 
     private McpToolGateClient(ToolGateSettings settings, ToolGateCredentialResolver credentials, HttpClient httpClient,
                               UserCredentialProvider users, ToolGateCredentialResolver actors) {
+        this(settings,credentials,httpClient,users,actors,null,null);
+    }
+    private McpToolGateClient(ToolGateSettings settings, ToolGateCredentialResolver credentials,HttpClient httpClient,
+                             UserCredentialProvider users,ToolGateCredentialResolver actors,String serviceTenant,String servicePrincipal) {
         this.settings = Objects.requireNonNull(settings, "settings");
         this.credentials = Objects.requireNonNull(credentials, "credentials");
         this.httpClient = Objects.requireNonNull(httpClient, "httpClient");
         this.users = users;
         this.actors = actors;
+        this.serviceTenant=serviceTenant;this.servicePrincipal=servicePrincipal;
     }
 
     @Override
@@ -120,6 +126,7 @@ public final class McpToolGateClient implements ToolGateClient {
             throw new IllegalArgumentException("requestId must be 1-" + MAX_REQUEST_ID_LENGTH + " characters");
         }
         String token = credentials.resolveToken(agentName);
+        verifyService(token);
         ObjectNode params = JsonNodeFactory.instance.objectNode();
         params.put("name", toolName);
         params.set("arguments", arguments != null && arguments.isObject()
@@ -180,6 +187,18 @@ public final class McpToolGateClient implements ToolGateClient {
         }
         // The user credential is the bearer; the agent's on-behalf-of workload token travels beside it as the actor.
         return new McpToolGateClient(settings, agentName -> users.credential(binding), httpClient, null, credentials);
+    }
+    @Override public ToolGateClient forService(String tenant,String principal) {
+        Objects.requireNonNull(tenant);Objects.requireNonNull(principal);
+        return new McpToolGateClient(settings,name->credentials.resolveToken(principal),httpClient,null,null,tenant,principal);
+    }
+    private void verifyService(String token) {
+        if(serviceTenant==null)return;
+        var reply=send(token,null,"olo/identity",null,"olo-identity-"+UUID.randomUUID(),MAPPER.createObjectNode());
+        if(reply.error()!=null || !serviceTenant.equals(reply.result().path("tenantId").asText())
+            ||!servicePrincipal.equals(reply.result().path("agentId").asText())||!"SERVICE".equals(reply.result().path("mode").asText())
+            ||!reply.result().path("userId").isNull() || !reply.result().path("chain").isArray() || reply.result().path("chain").size()!=0)
+            throw new ToolGateException(ToolGateException.Kind.FORBIDDEN,"Gateway service identity does not match the scheduled resource tenant");
     }
 
     @Override

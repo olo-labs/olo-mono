@@ -85,6 +85,7 @@ public final class LocalLlmAgentExecutor implements AgentExecutor {
             }
             return NodeResult.completed(invocation.response(), output);
         } catch (RuntimeException e) {
+            if(e instanceof org.olo.kernel.knowledge.KnowledgeRuntime.CheckpointExpired || e instanceof org.olo.toolgate.client.GovernedCalls.Pending)throw e;
             TraversalDiagnostics.logLlmFailure(node.getId(), e.getMessage());
             return NodeResult.failed(e.getMessage(), e);
         }

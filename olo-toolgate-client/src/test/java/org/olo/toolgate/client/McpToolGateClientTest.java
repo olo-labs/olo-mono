@@ -225,4 +225,33 @@ class McpToolGateClientTest {
         assertThatThrownBy(() -> client.callTool("triage-agent", "x".repeat(129), "a.b", null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+    @Test
+    void scheduledDispatchBindsTheSameCredentialToTheAuthenticatedServiceTenant() {
+        gateway.respond(r -> FakeGateway.Response.json(200,
+                "olo/identity".equals(r.body().path("method").asText())
+                ? """
+                  {"jsonrpc":"2.0","id":"x","result":{"tenantId":"t1","agentId":"triage-agent","mode":"SERVICE","userId":null,"chain":[]}}
+                  """
+                : """
+                  {"jsonrpc":"2.0","id":"x","result":{"content":[],"isError":false}}
+                  """));
+        client.forService("t1", "triage-agent").callTool("platform", "scheduled-1", "olo.rag/update", null);
+        assertThat(gateway.received()).hasSize(2);
+        assertThat(gateway.received()).extracting(r -> r.header("Authorization"))
+                .containsExactly("Bearer triage-token", "Bearer triage-token");
+        assertThat(gateway.received()).allSatisfy(r -> assertThat(r.header("X-ToolGate-Actor-Credential")).isNull());
+    }
+
+    @Test
+    void scheduledDispatchRejectsForeignTenantBeforeSendingTheMutation() {
+        gateway.respond(r -> FakeGateway.Response.json(200, """
+                {"jsonrpc":"2.0","id":"x","result":{"tenantId":"foreign","agentId":"triage-agent","mode":"SERVICE","userId":null,"chain":[]}}
+                """));
+        assertThatThrownBy(() -> client.forService("t1", "triage-agent")
+                .callTool("platform", "scheduled-1", "olo.rag/update", null))
+                .isInstanceOf(ToolGateException.class);
+        assertThat(gateway.received()).hasSize(1);
+        assertThat(gateway.received().getFirst().body().path("method").asText()).isEqualTo("olo/identity");
+    }
+
 }

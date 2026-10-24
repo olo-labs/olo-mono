@@ -46,6 +46,10 @@ public interface ToolGateClient {
     default ToolGateClient forUserViaAgent(UserBinding binding) {
         throw new ToolGateException(ToolGateException.Kind.CREDENTIAL_MISSING, "ToolGate user credentials are not configured");
     }
+    /** Path C: validate the expected tenant/service principal over authenticated Gateway TLS before dispatch. */
+    default ToolGateClient forService(String tenant,String principal) {
+        throw new ToolGateException(ToolGateException.Kind.CREDENTIAL_MISSING,"A bound service identity is required");
+    }
 
     /**
      * Checks that the Gateway answers HTTP. No token is sent; any HTTP response, including 401, counts as reachable.

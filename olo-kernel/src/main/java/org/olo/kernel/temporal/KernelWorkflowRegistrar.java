@@ -19,6 +19,7 @@ public final class KernelWorkflowRegistrar {
     public static void register(Worker worker, WorkflowDefinitionRegistry registry) {
         KernelRuntimeHolder.setRegistry(registry);
         worker.registerWorkflowImplementationTypes(OloKernelWorkflowImpl.class);
+        worker.registerWorkflowImplementationTypes(org.olo.kernel.knowledge.OloDocumentWorkflowImpl.class);
         worker.registerActivitiesImplementations(new OloKernelDynamicActivity());
     }
 }

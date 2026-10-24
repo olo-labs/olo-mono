@@ -56,14 +56,13 @@ public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
     @Override
     public String execute(WorkflowInput input) {
         String queue = Workflow.getInfo().getTaskQueue();
-        KernelExecutionSnapshot snapshot = activityStub(CONTEXT_BUILD_TIMEOUT)
-                .execute(
+        try {
+        KernelExecutionSnapshot snapshot = org.olo.kernel.knowledge.GovernedActivity.execute(CONTEXT_BUILD_TIMEOUT,
                         NodeActivityNaming.formatQueue(queue),
                         KernelExecutionSnapshot.class,
                         queue,
                         input);
 
-        try {
             while (true) {
                 snapshot = traverseUntilTerminal(snapshot);
 
@@ -71,8 +70,7 @@ public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
                     break;
                 }
 
-                activityStub(HUMAN_WAIT_TIMEOUT)
-                        .execute(
+                org.olo.kernel.knowledge.GovernedActivity.execute(HUMAN_WAIT_TIMEOUT,
                                 snapshot.getWorkflowActivityName(),
                                 Void.class,
                                 snapshot,
@@ -82,8 +80,7 @@ public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
                 HumanResumeInput resumeInput = pendingHumanInput;
                 pendingHumanInput = null;
 
-                snapshot = activityStub(HUMAN_WAIT_TIMEOUT)
-                        .execute(
+                snapshot = org.olo.kernel.knowledge.GovernedActivity.execute(HUMAN_WAIT_TIMEOUT,
                                 snapshot.getWorkflowActivityName(),
                                 KernelExecutionSnapshot.class,
                                 snapshot,
@@ -91,15 +88,23 @@ public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
                                 resumeInput);
             }
 
-            return activityStub(RESULT_TIMEOUT)
-                    .execute(snapshot.getWorkflowActivityName(), String.class, snapshot);
+            return org.olo.kernel.knowledge.GovernedActivity.checked(RESULT_TIMEOUT,snapshot.getWorkflowActivityName(), String.class, snapshot);
         } catch (io.temporal.failure.CanceledFailure cancelled) {
             Workflow.newDetachedCancellationScope(() -> {
-                if (lastRecordedSnapshot != null) activityStub(Duration.ofMinutes(1)).execute(
+                try { activityStub(Duration.ofMinutes(1)).execute(NodeActivityNaming.formatQueue(queue),Void.class,input,"knowledge-outcome:cancellation"); }
+                catch (RuntimeException markerFailure) { cancelled.addSuppressed(markerFailure); }
+                try { if (lastRecordedSnapshot != null) activityStub(Duration.ofMinutes(1)).execute(
                         lastRecordedSnapshot.getWorkflowActivityName(), Void.class, lastRecordedSnapshot,
-                        KernelActivityOperations.CANCEL_TOOLS);
+                        KernelActivityOperations.CANCEL_TOOLS); }
+                catch (RuntimeException cleanupFailure) { cancelled.addSuppressed(cleanupFailure); }
             }).run();
             throw cancelled;
+        } catch(RuntimeException failed) {
+            Workflow.newDetachedCancellationScope(()->{
+                try { activityStub(Duration.ofMinutes(1)).execute(NodeActivityNaming.formatQueue(queue),Void.class,input,"knowledge-outcome:failure"); }
+                catch(RuntimeException markerFailure) {failed.addSuppressed(markerFailure);}
+            }).run();
+            throw failed;
         }
     }
 
@@ -107,8 +112,7 @@ public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
         while (!snapshot.isTerminal()) {
             lastRecordedSnapshot = snapshot;
             if (snapshot.isNextRequiresDedicatedActivity()) {
-                snapshot = activityStub(NODE_STEP_TIMEOUT)
-                        .execute(
+                snapshot = org.olo.kernel.knowledge.GovernedActivity.checked(NODE_STEP_TIMEOUT,
                                 snapshot.getNextActivityName(),
                                 KernelExecutionSnapshot.class,
                                 snapshot,
