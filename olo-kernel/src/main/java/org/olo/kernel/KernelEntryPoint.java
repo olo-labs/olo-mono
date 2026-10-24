@@ -104,6 +104,11 @@ public final class KernelEntryPoint {
             throw new KernelException("workflow graph is not ready for queue: " + queue);
         }
 
+        if(org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle()!=null) {
+            var lifecycle=org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle();lifecycle.begin(context);
+            var metadata=context.getInput().getMetadata();
+            if(metadata!=null && metadata.getRagTag()!=null && !metadata.getRagTag().isBlank()) lifecycle.retrieve(context,metadata.getRagTag(),WorkflowInputMessages.primaryMessage(context.getInput()));
+        }
         UiCallbackReporter.reportContextReady(context);
         KernelExecutionSnapshot snapshot = KernelExecutionSnapshot.fromContext(context);
         TraversalDiagnostics.logContextReady(
@@ -126,6 +131,7 @@ public final class KernelEntryPoint {
         if (nodeId == null || nodeId.isBlank()) {
             throw new KernelException("waiting snapshot has no human node id");
         }
+        if(org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle()!=null)org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle().marker(context,"pending");
         UiCallbackReporter.reportHumanWaiting(context, nodeId, snapshot.getStep(), humanWaitingOutput(context, nodeId));
     }
 
@@ -219,6 +225,7 @@ public final class KernelEntryPoint {
     public static String reportWorkflowResult(KernelExecutionSnapshot snapshot) {
         Objects.requireNonNull(snapshot, "snapshot");
         if (snapshot.getStatus() == KernelExecutionSnapshot.Status.FAILED) {
+            if(org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle()!=null)org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle().marker(snapshot.toContext(),"failure");
             throw new KernelException("workflow graph traversal failed for queue: " + snapshot.getQueue()
                     + (snapshot.getMessage() != null ? ": " + snapshot.getMessage() : ""));
         }
@@ -228,6 +235,7 @@ public final class KernelEntryPoint {
 
         KernelRuntimeContext context = snapshot.toContext();
         WorkflowReturnResolution resolution = WorkflowReturnResolver.resolveDetails(context);
+        if(org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle()!=null)org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle().finish(context,resolution.message());
         logReturnBeforeCallback(snapshot.getQueue(), context, resolution);
         UiCallbackReporter.reportWorkflowResult(
                 context,
@@ -255,6 +263,11 @@ public final class KernelEntryPoint {
     private static KernelExecutionSnapshot buildContextAndNotifyUiFromContext(String queue, KernelRuntimeContext context) {
         if (!context.isGraphReady()) {
             throw new KernelException("workflow graph is not ready for queue: " + queue);
+        }
+        if(org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle()!=null) {
+            var lifecycle=org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle();lifecycle.begin(context);
+            var metadata=context.getInput().getMetadata();
+            if(metadata!=null && metadata.getRagTag()!=null && !metadata.getRagTag().isBlank()) lifecycle.retrieve(context,metadata.getRagTag(),WorkflowInputMessages.primaryMessage(context.getInput()));
         }
         UiCallbackReporter.reportContextReady(context);
         KernelExecutionSnapshot snapshot = KernelExecutionSnapshot.fromContext(context);

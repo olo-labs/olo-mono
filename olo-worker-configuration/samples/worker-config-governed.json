@@ -1,0 +1,21 @@
+{
+  "id": "governed-worker",
+  "name": "OLO governed worker",
+  "server": { "host": "0.0.0.0", "port": 8080 },
+  "workflowDefinitions": { "scanFolder": "../../olo-definition/olo-configuration/governed", "recursive": false },
+  "temporal": { "namespace": "default", "target": "temporal:7233" },
+  "cache": { "enabled": false },
+  "toolgate": {
+    "enabled": true,
+    "mcpUrl": "https://toolgate-gateway:8443/mcp",
+    "caCertificate": "/run/secrets/toolgate-ca.pem",
+    "credentialsDir": "/run/secrets/toolgate-principals",
+    "userCredentialsUrl": "https://olo:7080/api/internal/toolgate/credentials",
+    "delegatedAgents": true,
+    "reservedPrincipals": ["olo-platform-service"],
+    "agentMappings": [],
+    "timeoutMs": 20000,
+    "maxToolRounds": 8
+  },
+  "metadata": { "installationContract": "fresh-governed-v1" }
+}

@@ -39,6 +39,7 @@ public final class WorkerToolGateSetup {
      * @throws ToolGateException when ToolGate is enabled but the Gateway does not answer (fail closed)
      */
     public static AgentToolAccess install(WorkerSettings settings, Path configurationBaseDirectory) {
+        org.olo.kernel.knowledge.KnowledgeRuntime.reset();
         if (!settings.toolgateEnabled()) {
             KernelRuntimeHolder.setToolAccess(AgentToolAccess.disabled());
             log.info("ToolGate disabled: LLM agents run without tools");
@@ -67,6 +68,8 @@ public final class WorkerToolGateSetup {
 
         AgentToolAccess access = AgentToolAccess.userScopedViaAgent(client, config.resolveMaxToolRounds(), identityPolicy(config));
         KernelRuntimeHolder.setToolAccess(access);
+        org.olo.kernel.knowledge.KnowledgeRuntime.install(new org.olo.kernel.knowledge.ConversationLifecycle(new org.olo.toolgate.client.GovernedCalls(client)));
+        org.olo.kernel.knowledge.KnowledgeRuntime.installDocuments(new org.olo.toolgate.client.GovernedCalls(client));
         log.info("ToolGate enabled: gateway={}, userCredentials={}, credentialsDir={}, caCertificate={}, maxToolRounds={}, agentMappings={}",
                 clientSettings.mcpUrl(),
                 config.isUserScoped() ? config.getUserCredentialsUrl() : "(agent workload tokens)",

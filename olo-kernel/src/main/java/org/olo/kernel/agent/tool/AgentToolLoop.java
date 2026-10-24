@@ -165,11 +165,15 @@ public final class AgentToolLoop {
 
         Turn turn = load(context, node);
         if (turn == null) {
-            List<ToolGateTool> catalog = toolGate.listTools(agentName);
+            List<ToolGateTool> catalog = toolGate.listTools(agentName).stream()
+                    .filter(tool -> !tool.name().startsWith("olo.memory/") && !tool.name().startsWith("olo.rag/")
+                            && !tool.name().startsWith("olo.memory.") && !tool.name().startsWith("olo.rag."))
+                    .toList();
             log.info("Agent node {} as '{}': ToolGate catalog {}", node.getId(), agentName,
                     catalog.stream().map(ToolGateTool::name).toList());
             int pass = nextPass(context, node);
             if (catalog.isEmpty() || settings.maxToolRounds() == 0) {
+                org.olo.kernel.knowledge.KnowledgeRuntime.beforeModel(context,node.getId());
                 return finish(context, node, new AgentToolLoopResult(llmClient.complete(modelCall, prompt),
                         AgentToolOutcome.COMPLETED, agentName, names(catalog), List.of()));
             }
@@ -182,6 +186,7 @@ public final class AgentToolLoop {
 
     private Step decide(KernelRuntimeContext context, NodeDefinition node, ResolvedModelCall modelCall,
                         ToolGateClient toolGate, AgentToolSettings settings, Turn turn) {
+        org.olo.kernel.knowledge.KnowledgeRuntime.beforeModel(context,node.getId()+":"+turn.round());
         String agentName = settings.agentName();
         List<String> catalogNames = names(turn.catalog());
         List<LlmMessage> messages = new ArrayList<>(turn.messages());

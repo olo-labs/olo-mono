@@ -22,6 +22,7 @@ public final class OloKernelDynamicActivity implements DynamicActivity {
 
     @Override
     public Object execute(EncodedValues args) {
+        if("knowledge-document".equals(Activity.getExecutionContext().getInfo().getActivityType())) return org.olo.kernel.knowledge.KnowledgeRuntime.document(args.get(0,org.olo.kernel.knowledge.DocumentOperation.class));
         return switch (args.getSize()) {
             case 1 -> KernelEntryPoint.reportWorkflowResult(args.get(0, KernelExecutionSnapshot.class));
             case 2 -> dispatchTwoArgumentActivity(args);
@@ -43,8 +44,15 @@ public final class OloKernelDynamicActivity implements DynamicActivity {
     private static Object dispatchTwoArgumentActivity(EncodedValues args) {
         try {
             String operation = args.get(1, String.class);
+            if(operation.startsWith("knowledge-check:")) return org.olo.kernel.knowledge.KnowledgeCheckpoint.check(args.get(0,KernelExecutionSnapshot.class),operation.substring("knowledge-check:".length()));
+            if(operation.startsWith("knowledge-outcome:")) {
+                if(org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle()!=null)org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle().marker(args.get(0, WorkflowInput.class),operation.substring("knowledge-outcome:".length()));
+                return null;
+            }
             if (KernelActivityOperations.CANCEL_TOOLS.equals(operation)) {
-                org.olo.kernel.agent.tool.AgentTurnCancellation.cancel(args.get(0, KernelExecutionSnapshot.class));
+                var cancelled=args.get(0, KernelExecutionSnapshot.class);
+                if(org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle()!=null)org.olo.kernel.knowledge.KnowledgeRuntime.lifecycle().marker(cancelled.toContext(),"cancellation");
+                org.olo.kernel.agent.tool.AgentTurnCancellation.cancel(cancelled);
                 return null;
             }
             if (KernelActivityOperations.STEP.equals(operation)) {

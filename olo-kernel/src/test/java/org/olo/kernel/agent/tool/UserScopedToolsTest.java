@@ -91,8 +91,8 @@ class UserScopedToolsTest {
 
     @Test
     void toolsRunAsTheRunsVerifiedUser() {
-        var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("memory-agent", List.of(tool("olo.memory.read"))));
-        var llm = new AgentToolTestSupport.ScriptedLlm().reply(callTool("olo_memory_read", "{}"), answer("done"));
+        var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("memory-agent", List.of(tool("incidents.read"))));
+        var llm = new AgentToolTestSupport.ScriptedLlm().reply(callTool("incidents_read", "{}"), answer("done"));
         NodeDefinition node = agentNode("agent", Map.of());
         var identity = new IdentityBinding("t1", "user-42", "https://idp.example", "sid-1", 3);
 
@@ -107,7 +107,7 @@ class UserScopedToolsTest {
 
     @Test
     void delegatedModeCallsAsTheAgentActingForTheRunsUser() {
-        var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("memory-agent", List.of(tool("olo.memory.read"))));
+        var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("memory-agent", List.of(tool("incidents.read"))));
         var llm = new AgentToolTestSupport.ScriptedLlm().reply(answer("done"));
         NodeDefinition node = agentNode("agent", Map.of());
         var identity = new IdentityBinding("t1", "user-42", "https://idp.example", "sid-1", 3);
@@ -125,7 +125,7 @@ class UserScopedToolsTest {
 
     @Test
     void aRunWithoutAVerifiedUserNeverFallsBackToTheAgentToken() {
-        var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("memory-agent", List.of(tool("olo.memory.read"))));
+        var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("memory-agent", List.of(tool("incidents.read"))));
         NodeDefinition node = agentNode("agent", Map.of());
 
         for (IdentityBinding identity : new IdentityBinding[]{

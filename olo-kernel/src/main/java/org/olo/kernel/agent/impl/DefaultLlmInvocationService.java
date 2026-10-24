@@ -59,10 +59,11 @@ public final class DefaultLlmInvocationService implements LlmInvocationService {
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(node, "node");
         ResolvedModelCall modelCall = modelProviderResolver.resolve(context.getGraph());
-        String renderedPrompt = promptRenderer.renderForNode(context.getGraph(), node, context.getVariables());
+        String renderedPrompt = org.olo.kernel.knowledge.KnowledgeRuntime.prompt(context,promptRenderer.renderForNode(context.getGraph(), node, context.getVariables()));
 
         AgentToolAccess access = toolAccess.get();
         if (access == null || !access.isEnabled() || !AgentToolSettings.usesTools(node)) {
+            org.olo.kernel.knowledge.KnowledgeRuntime.beforeModel(context,node.getId());
             String response = llmClient.complete(modelCall, renderedPrompt);
             return new LlmInvocationResult(modelCall, renderedPrompt, response);
         }

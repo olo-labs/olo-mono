@@ -51,7 +51,7 @@ public final class ChildWorkflowInputs {
             transactionId = UUID.randomUUID().toString();
         }
 
-        return new WorkflowInputBuilder()
+        var builder = new WorkflowInputBuilder()
                 .version(parentInput != null && parentInput.getVersion() != null
                         ? parentInput.getVersion()
                         : "1.0")
@@ -61,7 +61,11 @@ public final class ChildWorkflowInputs {
                         InputType.STRING,
                         new Storage(StorageMode.LOCAL, null, null),
                         message))
-                .routing(new Routing(childWorkflowId, TransactionType.AGENT_EXECUTION, transactionId))
-                .build();
+                .context(parentInput!=null?parentInput.getContext():null)
+                .routing(new Routing(childWorkflowId, TransactionType.AGENT_EXECUTION, transactionId));
+        if(parent.getVariables().has(org.olo.kernel.knowledge.ConversationLifecycle.STATE)) builder.addInput(new InputItem(
+            org.olo.kernel.knowledge.ConversationLifecycle.STATE,"Inherited authorized context",InputType.STRING,
+            new Storage(StorageMode.LOCAL,null,null),org.olo.kernel.knowledge.ConversationLifecycle.inherited(parent.getVariables().get(org.olo.kernel.knowledge.ConversationLifecycle.STATE))));
+        return builder.build();
     }
 }
