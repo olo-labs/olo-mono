@@ -1,6 +1,6 @@
 # M2.2 — Identity context contract
 
-**Status: proposed, awaiting sign-off** from olo, olo-mono and ToolGate.
+**Status: Accepted** (2026-10-24, project owner), as proposed.
 
 This is the identity that travels with every governed call, from the OLO backend through the OLO runtime to
 ToolGate, and from ToolGate into the executor.

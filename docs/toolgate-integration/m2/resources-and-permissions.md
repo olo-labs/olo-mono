@@ -1,6 +1,7 @@
 # M2.3 — Resources and permissions
 
-**Status: proposed, awaiting sign-off.**
+**Status: Accepted** (2026-10-24, project owner), as proposed: the split decision below for the first release, with
+caller-bound locator templates recorded as a ToolGate follow-up (G6.3).
 
 ## Resource identifiers
 
