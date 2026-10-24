@@ -70,13 +70,13 @@ that replaces D8.
 | M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 50% | 🟨 D4–D7, 2.5, 2.10, revocation bound and RAG targets accepted; 2.2–2.4 and 2.11 await approval |
 | M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 91% | 73% | 🟨 3.1–3.5, 3.8, 3.9 and 3.11 merged; 3.6 and 3.10 in review; 3.7 waits on contract 2.3 |
 | M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 67% | 50% | 🟨 4.1–4.3 merged; 4.4 and the Python SDK principal in review; 4.5, 4.6 need M6 services |
-| M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 43% | 0% | 🟨 5.1, 5.3, 5.5 in review; 5.2, 5.4, 5.6 partly; 5.7 tests in progress |
+| M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 57% | 0% | 🟨 5.1, 5.3, 5.4, 5.5 in review; 5.2 and 5.6 partly; 5.7 tests in progress |
 | M6 | Memory and RAG services and ToolGate packages | ToolGate, services | 12 | 0% | 0% | ⬜ |
 | M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 0% | 0% | ⬜ |
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **45%** | **31%** | |
+| | **Overall** | | **100** | **47%** | **31%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -592,15 +592,18 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       renewal and rotation replay the same invocation, with current epochs rechecked. A changed fingerprint is a 409 and never
       runs; concurrent submissions create one invocation. ToolGate never purges invocations (beyond the 37-day minimum); the
       kernel never sends a recorded call older than 30 days and reports it as `OUTCOME_UNKNOWN`.
-- [ ] **5.4** [olo-mono, ToolGate] **M1-R5: unknown outcomes.** Transport dedup is separate from executor and business
+- [x] **5.4** [olo-mono, ToolGate] **M1-R5: unknown outcomes.** Transport dedup is separate from executor and business
       idempotency. Polling the invocation status alone can't settle a timeout after an external effect, so:
       - Each side-effecting executor declares its reconciliation method: a downstream idempotency key where the
         target system supports one, or an executor-specific status lookup.
       - While the outcome is unknown, the operation is marked `OUTCOME_UNKNOWN` and is **never redispatched
         automatically**. It is resolved by reconciliation or by an operator.
-      *Partly implemented:* replayed ended invocations report their state; `OUTCOME_UNKNOWN` is never resent and fails the
-      node with a reconciliation message, using ToolGate's existing reconciliation. **Still to do:** require every
-      side-effecting executor to declare its reconciliation method (`downstream-idempotency`, `status-lookup` or `manual`).
+      *Implemented (olo-labs/olo-toolgate#192):* tools with side effects (`IDEMPOTENT`, `NON_IDEMPOTENT`) must declare
+      `reconciliation` (`DOWNSTREAM_IDEMPOTENCY` with `@Idempotency`, `STATUS_LOOKUP` with a `@Reconcile` tool, or `MANUAL`);
+      SDK builds and deployment refuse a missing or inconsistent one, and undeclared `UNKNOWN` effects are `MANUAL`. Each
+      invocation records the method. Replaying an `OUTCOME_UNKNOWN` `DOWNSTREAM_IDEMPOTENCY` call requeues the same
+      invocation, so the target deduplicates; other unknown outcomes are never resent, and the kernel stops naming the method.
+      **Follow-up:** run the `@Reconcile` lookup automatically for `STATUS_LOOKUP` tools.
 - [x] **5.5** [olo-mono, ToolGate] **M1-R4:** approvals resume the original invocation. The run waits on an
       authenticated notification or bounded polling, then retrieves the result. Covers expiry, denial, cancellation,
       and re-authorizing at dispatch (*Revocation timing*, point 2).
