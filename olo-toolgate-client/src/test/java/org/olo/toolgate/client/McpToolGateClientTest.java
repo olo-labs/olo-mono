@@ -43,6 +43,19 @@ class McpToolGateClientTest {
     }
 
     @Test
+    void cancellationUsesTheSameUserAndActorAndCarriesOnlyTheOperationReference() {
+        gateway.respond(r -> FakeGateway.Response.json(200,"{\"jsonrpc\":\"2.0\",\"id\":\"x\",\"result\":{\"cancelled\":true}}"));
+        var users = new McpToolGateClient(new ToolGateSettings(gateway.mcpUrl(),null,null,Duration.ofSeconds(5)),
+                agent -> "actor-token", binding -> "user-token");
+        users.forUserViaAgent(new UserBinding("t1","u1","issuer","sid",1)).cancelOperation("triage-agent","olo-op-original");
+        var request=gateway.received().getFirst();
+        assertThat(request.header("Authorization")).isEqualTo("Bearer user-token");
+        assertThat(request.header("X-ToolGate-Actor-Credential")).isEqualTo("actor-token");
+        assertThat(request.body().path("method").asText()).isEqualTo("olo/invocations/cancel");
+        assertThat(request.body().path("params").path("operationId").asText()).isEqualTo("olo-op-original");
+    }
+
+    @Test
     void listToolsSendsTheAgentTokenAndTheExactMcpFrame() {
         gateway.respond(r -> FakeGateway.Response.json(200, "{\"jsonrpc\":\"2.0\",\"id\":\"x\",\"result\":{\"tools\":["
                 + "{\"name\":\"incidents.host-status\",\"description\":\"Host status\","

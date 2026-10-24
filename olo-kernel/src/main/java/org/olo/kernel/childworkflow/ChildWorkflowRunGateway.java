@@ -91,6 +91,9 @@ public final class ChildWorkflowRunGateway {
                 OloKernelWorkflow.class,
                 ChildWorkflowOptions.newBuilder()
                         .setTaskQueue(queue)
+                        .setWorkflowExecutionTimeout(java.time.Duration.ofDays(30))
+                        .setParentClosePolicy(io.temporal.api.enums.v1.ParentClosePolicy.PARENT_CLOSE_POLICY_REQUEST_CANCEL)
+                        .setCancellationType(io.temporal.workflow.ChildWorkflowCancellationType.WAIT_CANCELLATION_COMPLETED)
                         .setWorkflowId(childId(childWorkflowId + "-" + Workflow.randomUUID()))
                         .build());
         return child.execute(childInput);

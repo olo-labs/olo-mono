@@ -83,7 +83,7 @@ public final class DefaultLlmInvocationService implements LlmInvocationService {
      * M3.3: in user-scoped mode the client authenticates as the run's verified user. A run without a complete binding, or
      * one whose binding names another tenant, is refused; there is no fallback to the agent or service principal.
      */
-    private static ToolGateClient caller(KernelRuntimeContext context, AgentToolAccess access, AgentToolSettings settings) {
+    public static ToolGateClient caller(KernelRuntimeContext context, AgentToolAccess access, AgentToolSettings settings) {
         if (!access.userScoped()) {
             return access.client();
         }

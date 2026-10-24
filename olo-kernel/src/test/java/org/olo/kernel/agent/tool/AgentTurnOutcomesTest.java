@@ -155,12 +155,12 @@ class AgentTurnOutcomesTest {
     }
 
     @Test
-    void inMemoryRunsStopAtAnApprovalInsteadOfWaiting() {
+    void inMemoryRunsRetainTheOriginalTurnWhileWaiting() {
         var toolGate = toolGate();
         toolGate.results = call -> state("PENDING_APPROVAL");
         var context = context(graph, "run-1");
         var result = new AgentToolLoop(llm(), clock).run(context, node, MODEL, "restart", toolGate, settings);
         assertThat(result.outcome()).isEqualTo(AgentToolOutcome.WAITING_APPROVAL);
-        assertThat(context.getVariables().getString(AgentToolLoop.TURN_VARIABLE_PREFIX + "agent")).isNull();
+        assertThat(context.getVariables().getString(AgentToolLoop.TURN_VARIABLE_PREFIX + "agent")).isNotNull();
     }
 }

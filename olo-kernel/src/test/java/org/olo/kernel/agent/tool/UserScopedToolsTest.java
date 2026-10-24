@@ -64,6 +64,32 @@ class UserScopedToolsTest {
     }
 
     @Test
+    void anExpiredSessionOrRevokedGrantDuringApprovalEndsTheTurnWithoutAnotherDispatch() {
+        for (var reason : java.util.List.of(org.olo.toolgate.client.ToolGateException.Kind.UNAUTHORIZED,
+                org.olo.toolgate.client.ToolGateException.Kind.FORBIDDEN)) {
+            var active=new java.util.concurrent.atomic.AtomicBoolean(true);
+            var gateway=new AgentToolTestSupport.FakeToolGate(Map.of("memory-agent",List.of(tool("incidents.restart")))) {
+                @Override public org.olo.toolgate.client.ToolGateClient forUserViaAgent(UserBinding binding) {
+                    if(!active.get()) throw new org.olo.toolgate.client.ToolGateException(reason,"current user authority refused");
+                    return super.forUserViaAgent(binding);
+                }
+            };
+            gateway.results=call->new org.olo.toolgate.client.ToolGateCallResult(true,"approval",null,"PENDING_APPROVAL","inv-original");
+            var llm=new AgentToolTestSupport.ScriptedLlm().reply(callTool("incidents_restart","{}"));
+            var node=agentNode("agent",Map.of());
+            var identity=new IdentityBinding("t1","user-42","https://idp.example","sid-1",3);
+            var context=context(graph("memory-agent",node),"t1",identity);
+            var access=AgentToolAccess.userScopedViaAgent(gateway,8,MAPPED);
+            var executor=new LocalLlmAgentExecutor(new DefaultLlmInvocationService(PROMPT,graph->MODEL,llm,()->access));
+            assertThat(executor.execute(context,node).status()).isEqualTo(NodeStatus.CONTINUE);
+            assertThat(executor.execute(context,node).status()).isEqualTo(NodeStatus.CONTINUE);
+            active.set(false);
+            assertThat(executor.execute(context,node).status()).isEqualTo(NodeStatus.FAILED);
+            assertThat(gateway.calls).hasSize(1);assertThat(llm.chatMessages).hasSize(1);assertThat(gateway.users).isEmpty();
+        }
+    }
+
+    @Test
     void toolsRunAsTheRunsVerifiedUser() {
         var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("memory-agent", List.of(tool("olo.memory.read"))));
         var llm = new AgentToolTestSupport.ScriptedLlm().reply(callTool("olo_memory_read", "{}"), answer("done"));

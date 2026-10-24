@@ -26,9 +26,16 @@ public final class NodeExecutionScheduling {
      */
     public static boolean requiresDedicatedActivity(NodeDefinition node) {
         ExecutionModel model = node.getExecutionModel();
-        if (model == ExecutionModel.CHILD_WORKFLOW) {
-            return false;
+        if ("AGENT".equals(node.getType())) {
+            // These executors only orchestrate Temporal children. Their children own every external call.
+            if (node.getConfiguration() != null && Boolean.TRUE.equals(node.getConfiguration().get("agentCallDispatch"))) return false;
+            boolean child = model == ExecutionModel.CHILD_WORKFLOW && node.getWorkflow() != null
+                    && !org.olo.definition.toolcall.ToolCallPlannerSupport.isToolCallPlanner(node)
+                    && !org.olo.definition.dynamicgraph.AgentSynthesisSupport.isAgentSynthesis(node);
+            return !child;
         }
+        if ("TOOL".equals(node.getType())) return true;
+        if (model == ExecutionModel.CHILD_WORKFLOW) return false;
         if (model == ExecutionModel.INLINE) {
             return node.getExecutionKind() == ExecutionKind.ACTIVITY;
         }

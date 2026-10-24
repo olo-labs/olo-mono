@@ -42,6 +42,10 @@ public final class OloKernelDynamicActivity implements DynamicActivity {
     private static Object dispatchTwoArgumentActivity(EncodedValues args) {
         try {
             String operation = args.get(1, String.class);
+            if (KernelActivityOperations.CANCEL_TOOLS.equals(operation)) {
+                org.olo.kernel.agent.tool.AgentTurnCancellation.cancel(args.get(0, KernelExecutionSnapshot.class));
+                return null;
+            }
             if (KernelActivityOperations.STEP.equals(operation)) {
                 return KernelEntryPoint.executeTraversalStep(args.get(0, KernelExecutionSnapshot.class));
             }

@@ -51,4 +51,9 @@ public interface ToolGateClient {
      * Checks that the Gateway answers HTTP. No token is sent; any HTTP response, including 401, counts as reachable.
      */
     void probe();
+
+    /** Cancel the caller-scoped logical operation, including a submission whose acknowledgement was lost. */
+    default void cancelOperation(String agentName, String operationId) {
+        throw new ToolGateException(ToolGateException.Kind.PROTOCOL, "Gateway cancellation is not supported");
+    }
 }

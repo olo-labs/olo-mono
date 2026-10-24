@@ -182,6 +182,18 @@ public final class McpToolGateClient implements ToolGateClient {
         return new McpToolGateClient(settings, agentName -> users.credential(binding), httpClient, null, credentials);
     }
 
+    @Override
+    public void cancelOperation(String agentName, String operationId) {
+        if (operationId == null || operationId.isBlank() || operationId.length() > MAX_REQUEST_ID_LENGTH)
+            throw new IllegalArgumentException("operationId must be 1-128 characters");
+        ObjectNode params = MAPPER.createObjectNode().put("operationId", operationId);
+        Reply reply = send(credentials.resolveToken(agentName), actor(agentName), "olo/invocations/cancel", null,
+                "olo-cancel-" + UUID.randomUUID(), params);
+        if (reply.error() != null) throw failure(reply, "cancel operation");
+        if (!reply.result().path("cancelled").asBoolean(false))
+            throw new ToolGateException(ToolGateException.Kind.PROTOCOL, "Gateway did not acknowledge cancellation");
+    }
+
     private String actor(String agentName) {
         return actors == null ? null : actors.resolveToken(agentName);
     }
