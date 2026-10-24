@@ -7,14 +7,14 @@ decisions below.
 | Step | Document | P1 | Status |
 |---|---|---|---|
 | 2.1 | [gap-matrix.md](gap-matrix.md): 14 capabilities, with code evidence from ToolGate `fc4f6955` | | Drafted |
-| 2.2 | [identity-context.md](identity-context.md) | | Proposed |
-| 2.3 | [resources-and-permissions.md](resources-and-permissions.md) | | Proposed |
-| 2.4 | [invocation-lifecycle.md](invocation-lifecycle.md): dedup record, states, reconciliation, revocation, derived context | ✔ | Revocation bound **Accepted**; contract Proposed |
+| 2.2 | [identity-context.md](identity-context.md) | | **Accepted** |
+| 2.3 | [resources-and-permissions.md](resources-and-permissions.md) | | Accepted |
+| 2.4 | [invocation-lifecycle.md](invocation-lifecycle.md): dedup record, states, reconciliation, revocation, derived context | ✔ | **Accepted** (with the revocation bound and dedup retention) |
 | 2.5 | [credentials.md](credentials.md): lifecycle, renewal, misuse, **D4** | ✔ | **Accepted** |
 | 2.6–2.8 | [decisions.md](decisions.md): **D5, D6, D7** | | **Accepted** |
 | 2.9 | [threat-model.md](threat-model.md) (OLO side). ToolGate side: olo-toolgate `docs/security/threat-models/olo-integration.md` | | Proposed |
 | 2.10 | [authorization-evidence.md](authorization-evidence.md): service permits and the revocation bound | ✔ | **Accepted** |
-| 2.11 | [conversation-turn.md](conversation-turn.md) | | Proposed |
+| 2.11 | [conversation-turn.md](conversation-turn.md) | | **Accepted** |
 | 2.12 | [rag-targets.md](rag-targets.md) | | **Accepted** |
 
 ## Decisions
@@ -29,13 +29,12 @@ decisions below.
 | RAG quality and performance targets | As in [rag-targets.md](rag-targets.md): zero unauthorized leakage, 100% correct citations, authorized recall@5 of 0.80 or more and precision@5 of 0.60 or more, indexing freshness p95 of 30 s or less, deletion and ACL changes within the revocation bound, context of 4,000 tokens or less, query p50/p95 of 300/800 ms or less, turn overhead p95 of 1.5 s or less, at 50 concurrent users, 10,000 documents per tenant and 5 tenants | **Accepted** |
 | Evidence options (2.10) | Writes: online permit consumption at commit. Reads: permits of 15 seconds or less, plus a revocation feed. | **Accepted** |
 | Sender binding (2.5) | Not required in the first release (private Gateway network); revisit for exposed deployments | **Accepted** |
+| Dedup retention (2.4) | 30 days, plus approval expiry (7 days) | **Accepted** |
+| Object authorization split (2.3) | ToolGate decides operation + tenant + resource kind; the service decides ownership, membership and sharing; both must allow. Caller-bound locator templates are a ToolGate follow-up (G6.3). | **Accepted** |
 
 ## Still to sign off
 
-| Item | Proposal |
-|---|---|
-| Dedup retention | 30 days, plus approval expiry (7 days) |
-| Object authorization split | ToolGate decides operation + tenant + resource kind; the service decides ownership, membership and sharing; both must allow |
+Nothing. 2.1 (gap matrix) and 2.9 (threat model) are evidence and analysis, reviewed with the PRs that use them.
 
 ## Approval record
 
@@ -44,6 +43,8 @@ decisions below.
 | 2026-10-23 | D4, D5, D6, D7, as written in the *Decisions* table | Project owner (owner of olo, olo-mono and ToolGate), in the working session | D1–D3 and D8 unchanged. The revocation bound, the RAG targets and the remaining contracts are approved separately. |
 | 2026-10-23 | The 30-second revocation bound, and the RAG quality and performance targets as in rag-targets.md | Project owner, in the working session | The remaining contracts (2.2–2.5, 2.10, 2.11) are still proposed. |
 | 2026-10-23 | Contracts 2.5 (credential lifecycle and renewal, including sender binding not required) and 2.10 (authorization evidence, including the evidence options), as proposed | Project owner, in the working session | Still proposed: 2.2, 2.3, 2.4 (including dedup retention), 2.11. |
+| 2026-10-24 | Contract 2.3 (resources and permissions), as proposed: ToolGate decides operation and resource kind per tenant, the memory and RAG services decide ownership and sharing | Project owner, in the working session | Still proposed: 2.2, 2.4 (including dedup retention), 2.11. |
+| 2026-10-24 | Contracts 2.2 (identity context), 2.4 (invocation lifecycle, including dedup retention of 30 days plus a 7-day approval expiry) and 2.11 (conversation turn), as proposed | Project owner, in the working session | Every M2 contract is now accepted. |
 
 ## Critical path the gap matrix found
 

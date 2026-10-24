@@ -1,6 +1,6 @@
 # M2.11 — Conversation turn contract
 
-**Status: proposed, awaiting sign-off.**
+**Status: Accepted** (2026-10-24, project owner), as proposed.
 
 ## Sequence
 
