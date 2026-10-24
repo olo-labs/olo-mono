@@ -1,6 +1,6 @@
 # M2.4 — Invocation lifecycle and revocation contract (P1)
 
-**Status: proposed, awaiting sign-off.** This contract must be agreed before M3–M7 implement it.
+**Status: Accepted** (2026-10-24, project owner), as proposed, including dedup retention of 30 days plus a 7-day approval expiry.
 
 ## Logical operations
 

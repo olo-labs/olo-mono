@@ -67,7 +67,7 @@ that replaces D8.
 |---|---|---|---:|---:|---:|---|
 | M0 | Discovery, plan and security reviews | all | 3 | 100% | 100% | ✅ Done |
 | M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 100% | ✅ Merged (PR #2); remediation in M3, M5 |
-| M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 58% | 🟨 D4–D7, 2.3, 2.5, 2.10, revocation bound and RAG targets accepted; 2.2, 2.4 and 2.11 await approval |
+| M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 83% | 🟨 Every contract and decision accepted (2.2–2.8, 2.10–2.12); 2.1 and 2.9 are evidence, reviewed with their PRs |
 | M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 100% | 91% | 🟨 3.1–3.6 and 3.8–3.11 merged; 3.7 in review |
 | M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 67% | 67% | 🟨 4.1–4.4 merged; 4.5, 4.6 need M6 services |
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, ToolGate | 12 | 0% | 0% | ⬜ |
@@ -76,7 +76,7 @@ that replaces D8.
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **40%** | **36%** | |
+| | **Overall** | | **100** | **40%** | **38%** | |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -355,7 +355,7 @@ The ToolGate documentation describes the identity modes we need, but its
 "target design" and is not a claim that the features exist. Readiness has to be shown by code and tests.
 
 **Deliverables:** [docs/toolgate-integration/m2](docs/toolgate-integration/m2/README.md). Ticked steps are drafted
-(implemented). Each step counts once it is approved: 2.3, 2.5–2.8, 2.10 and 2.12 so far.
+(implemented). Each step counts once it is approved: 2.2–2.8 and 2.10–2.12 so far.
 
 - [x] **2.1** Gap matrix, with evidence (code paths and tests, not docs), for each required ToolGate capability:
       user-bound Gateway authentication; service-principal authentication; credential lifecycle; user and team
