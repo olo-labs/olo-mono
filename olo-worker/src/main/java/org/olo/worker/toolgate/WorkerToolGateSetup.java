@@ -46,6 +46,9 @@ public final class WorkerToolGateSetup {
         }
 
         ToolGateSettings config = settings.toolgate();
+        if (!config.isUserScoped() || Boolean.FALSE.equals(config.getDelegatedAgents())) {
+            throw new IllegalStateException("Model-selected ToolGate tools require userCredentialsUrl and delegated agent authentication");
+        }
         Path caCertificate = WorkerSettings.resolveAgainst(config.getCaCertificate(), configurationBaseDirectory);
         Path credentialsDir = WorkerSettings.resolveAgainst(config.getCredentialsDir(), configurationBaseDirectory);
         org.olo.toolgate.client.ToolGateSettings clientSettings = new org.olo.toolgate.client.ToolGateSettings(
@@ -62,11 +65,7 @@ public final class WorkerToolGateSetup {
             client.probe();
         }
 
-        AgentToolAccess access = config.isUserScoped()
-                ? (config.isDelegatedAgents()
-                        ? AgentToolAccess.userScopedViaAgent(client, config.resolveMaxToolRounds(), identityPolicy(config))
-                        : AgentToolAccess.userScoped(client, config.resolveMaxToolRounds(), identityPolicy(config)))
-                : AgentToolAccess.enabled(client, config.resolveMaxToolRounds(), identityPolicy(config));
+        AgentToolAccess access = AgentToolAccess.userScopedViaAgent(client, config.resolveMaxToolRounds(), identityPolicy(config));
         KernelRuntimeHolder.setToolAccess(access);
         log.info("ToolGate enabled: gateway={}, userCredentials={}, credentialsDir={}, caCertificate={}, maxToolRounds={}, agentMappings={}",
                 clientSettings.mcpUrl(),

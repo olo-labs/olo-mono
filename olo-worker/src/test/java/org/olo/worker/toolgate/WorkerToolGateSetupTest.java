@@ -26,9 +26,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WorkerToolGateSetupTest {
 
+    @org.junit.jupiter.api.BeforeEach
+    void configureWorkerIdentity() {
+        System.setProperty(WorkerToolGateSetup.SKIP_PROBE_PROPERTY, "true");
+        System.setProperty("OLO_CALLBACK_KEY_ID", "test-worker");
+        System.setProperty("OLO_CALLBACK_KEY", "test-worker-secret-at-least-32-bytes-long");
+    }
+
     @AfterEach
     void reset() {
         KernelRuntimeHolder.setToolAccess(AgentToolAccess.disabled());
+        System.clearProperty("OLO_CALLBACK_KEY_ID");
+        System.clearProperty("OLO_CALLBACK_KEY");
         System.setProperty(WorkerToolGateSetup.SKIP_PROBE_PROPERTY, "true");
     }
 
@@ -44,6 +53,7 @@ class WorkerToolGateSetupTest {
     void enabledInstallsAccessWithTheWorkerDefaultRounds() {
         AgentToolAccess access = WorkerToolGateSetup.install(settings(ToolGateSettings.builder()
                 .enabled(true)
+                .userCredentialsUrl("https://backend.example")
                 .mcpUrl("https://localhost:18451/mcp")
                 .credentialsDir("toolgate/credentials")
                 .maxToolRounds(5)
@@ -51,6 +61,8 @@ class WorkerToolGateSetupTest {
 
         assertThat(access.isEnabled()).isTrue();
         assertThat(access.defaultMaxToolRounds()).isEqualTo(5);
+        assertThat(access.userScoped()).isTrue();
+        assertThat(access.viaAgent()).isTrue();
         assertThat(KernelRuntimeHolder.toolAccess()).isSameAs(access);
     }
 
@@ -60,6 +72,7 @@ class WorkerToolGateSetupTest {
 
         assertThatThrownBy(() -> WorkerToolGateSetup.install(settings(ToolGateSettings.builder()
                 .enabled(true)
+                .userCredentialsUrl("https://backend.example")
                 .mcpUrl("http://127.0.0.1:1/mcp")
                 .timeoutMs(2000)
                 .build()), Path.of(".")))
@@ -71,6 +84,7 @@ class WorkerToolGateSetupTest {
     void agentMappingsBecomeTheIdentityPolicy() {
         AgentToolAccess access = WorkerToolGateSetup.install(settings(ToolGateSettings.builder()
                 .enabled(true)
+                .userCredentialsUrl("https://backend.example")
                 .mcpUrl("https://localhost:18451/mcp")
                 .agentMappings(List.of(AgentMappingSettings.builder()
                         .tenant("*").workflow("triage-agent").agents(List.of("triage-agent")).build()))
@@ -87,7 +101,7 @@ class WorkerToolGateSetupTest {
     @Test
     void noMappingsRefusesEveryIdentity() {
         AgentToolAccess access = WorkerToolGateSetup.install(settings(ToolGateSettings.builder()
-                .enabled(true).mcpUrl("https://localhost:18451/mcp").build()), Path.of("."));
+                .enabled(true).userCredentialsUrl("https://backend.example").mcpUrl("https://localhost:18451/mcp").build()), Path.of("."));
 
         assertThatThrownBy(() -> access.identityPolicy().authorize("t1", "triage-agent", "triage-agent"))
                 .isInstanceOf(AgentIdentityDeniedException.class);
@@ -107,5 +121,16 @@ class WorkerToolGateSetupTest {
                 .workflowDefinitions(WorkflowDefinitionsSettings.builder().scanFolder("/defs").build())
                 .toolgate(toolgate)
                 .build());
+    }
+
+    @Test
+    void modelSelectedToolsCannotDisableTheUserOrAgentAuthorizationChecks() {
+        assertThatThrownBy(() -> WorkerToolGateSetup.install(settings(ToolGateSettings.builder()
+                .enabled(true).mcpUrl("https://gateway.example/mcp").build()), Path.of(".")))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("delegated agent authentication");
+        assertThatThrownBy(() -> WorkerToolGateSetup.install(settings(ToolGateSettings.builder()
+                .enabled(true).userCredentialsUrl("https://backend.example").delegatedAgents(false)
+                .mcpUrl("https://gateway.example/mcp").build()), Path.of(".")))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("delegated agent authentication");
     }
 }

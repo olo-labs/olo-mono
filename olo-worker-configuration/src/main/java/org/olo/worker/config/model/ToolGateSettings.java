@@ -117,7 +117,7 @@ public final class ToolGateSettings {
 
     /**
      * With {@link #getUserCredentialsUrl()}: call as the mapped agent acting for the run's user (path B, M3.10), sending the
-     * agent's on-behalf-of workload token beside the user credential. Unset or false calls as the user alone (path A).
+     * agent's on-behalf-of workload token beside the user credential. Unset enables delegation; false is refused at startup.
      */
     @JsonProperty("delegatedAgents")
     public Boolean getDelegatedAgents() {
@@ -125,7 +125,7 @@ public final class ToolGateSettings {
     }
 
     public boolean isDelegatedAgents() {
-        return isUserScoped() && Boolean.TRUE.equals(delegatedAgents);
+        return isUserScoped() && !Boolean.FALSE.equals(delegatedAgents);
     }
 
     public boolean isUserScoped() {

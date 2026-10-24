@@ -141,6 +141,19 @@ class McpToolGateClientTest {
     }
 
     @Test
+    void firstDispatchUnknownOutcomeRetainsTheInvocationInsteadOfBecomingAnOrdinaryError() {
+        gateway.respond(r -> FakeGateway.Response.json(200, """
+                {"jsonrpc":"2.0","id":"op-1","error":{"code":-32000,"message":"Tool execution failed",
+                "data":{"code":"DEPENDENCY_UNAVAILABLE","outcome":"OUTCOME_UNKNOWN","requestId":"inv-42",
+                "error":{"code":"OUTCOME_UNKNOWN","retryable":false}}}}
+                """));
+        ToolGateCallResult result = client.callTool("triage-agent", "op-1", "incidents.remediate", null);
+        assertThat(result.outcomeUnknown()).isTrue();
+        assertThat(result.invocationId()).isEqualTo("inv-42");
+        assertThat(result.structuredContent().path("state").asText()).isEqualTo("OUTCOME_UNKNOWN");
+    }
+
+    @Test
     void rejectedTokenFailsClosed() {
         gateway.respond(r -> FakeGateway.Response.json(401, "{\"error\":{\"code\":\"UNAUTHORIZED\"}}"));
 

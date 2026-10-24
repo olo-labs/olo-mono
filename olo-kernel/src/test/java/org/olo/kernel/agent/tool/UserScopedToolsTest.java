@@ -74,7 +74,8 @@ class UserScopedToolsTest {
 
         assertThat(result.status()).isEqualTo(NodeStatus.COMPLETED);
         // Every durable step authenticates afresh as the run's user (M3.3, M5.1); never as anyone else.
-        assertThat(toolGate.users).isNotEmpty().containsOnly(new UserBinding("t1", "user-42", "https://idp.example", "sid-1", 3));
+        assertThat(toolGate.viaAgent).isNotEmpty().containsOnly(new UserBinding("t1", "user-42", "https://idp.example", "sid-1", 3));
+        assertThat(toolGate.users).isEmpty();
         assertThat(toolGate.calls).hasSize(1);
     }
 

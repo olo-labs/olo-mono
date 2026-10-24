@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  *  "platform": "platform-1"}
  * </pre>
  *
- * A tenant without an entry seals with the platform key. Keys never leave the process and are never logged.
+ * A tenant without an entry is refused. The platform key is only for non-tenant payloads.
  */
 public final class PayloadKeyRing {
 
@@ -78,7 +78,11 @@ public final class PayloadKeyRing {
     }
 
     String activeKeyId(String tenant) {
-        return tenant == null ? platform : tenants.getOrDefault(tenant, platform);
+        if (tenant == null) return platform;
+        String keyId = tenants.get(tenant);
+        if (keyId == null) throw new io.temporal.payload.codec.PayloadCodecException(
+                new java.security.GeneralSecurityException("no payload key configured for tenant"));
+        return keyId;
     }
 
     byte[] key(String keyId) {

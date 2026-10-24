@@ -62,7 +62,8 @@ public final class LocalLlmAgentExecutor implements AgentExecutor {
 
             AgentToolLoopResult toolLoop = invocation.toolLoop();
             if (toolLoop != null && (toolLoop.outcome() == org.olo.kernel.agent.tool.AgentToolOutcome.OUTCOME_UNKNOWN
-                    || toolLoop.outcome() == org.olo.kernel.agent.tool.AgentToolOutcome.APPROVAL_EXPIRED)) {
+                    || toolLoop.outcome() == org.olo.kernel.agent.tool.AgentToolOutcome.APPROVAL_EXPIRED
+                    || toolLoop.outcome() == org.olo.kernel.agent.tool.AgentToolOutcome.INVOCATION_ENDED)) {
                 // M5.4/M5.5: the run must not carry on as if the call had finished; reconciliation or a new request decides.
                 return NodeResult.failed(toolLoop.response(), null);
             }

@@ -116,4 +116,32 @@ class OloPayloadCodecTest {
         assertThat(TenantWorkflowIds.tenantOf("run-abc")).isNull();
         assertThatThrownBy(() -> TenantWorkflowIds.run("t~1", "abc")).isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void prefixedTenantNamesRoundTripForRootChildAndGrandchildWorkflows() {
+        for (String tenant : List.of("t1", "run-t1", "child-t1", "run-child-t1")) {
+            assertThat(TenantWorkflowIds.tenantOf(TenantWorkflowIds.run(tenant, "root"))).isEqualTo(tenant);
+            String child = TenantWorkflowIds.child(tenant, "child-1");
+            assertThat(TenantWorkflowIds.tenantOf(child)).isEqualTo(tenant);
+            assertThat(TenantWorkflowIds.tenantOf(TenantWorkflowIds.child(TenantWorkflowIds.tenantOf(child), "grandchild")))
+                    .isEqualTo(tenant);
+        }
+    }
+
+    @Test
+    void tenantPayloadsCannotDowngradeToCleartextOrASharedPlatformKey() {
+        assertThatThrownBy(() -> in(TenantWorkflowIds.run("unknown-tenant", "r")).encode(List.of(plain("secret"))))
+                .isInstanceOf(PayloadCodecException.class);
+        assertThatThrownBy(() -> in(TenantWorkflowIds.run("t1", "r")).decode(List.of(plain("secret"))))
+                .isInstanceOf(PayloadCodecException.class);
+    }
+
+    @Test
+    void exceptionMessagesAreEncryptedAlongWithPayloads() {
+        var converter = PayloadProtection.dataConverter(ring, null)
+                .withContext(new WorkflowSerializationContext("default", TenantWorkflowIds.run("t1", "r")));
+        var failure = converter.exceptionToFailure(new IllegalStateException("private account 123456"));
+        assertThat(failure.toString()).doesNotContain("private account 123456");
+        assertThat(converter.failureToException(failure).getMessage()).contains("private account 123456");
+    }
 }

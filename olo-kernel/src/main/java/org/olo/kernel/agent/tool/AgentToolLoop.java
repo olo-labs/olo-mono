@@ -70,7 +70,7 @@ public final class AgentToolLoop {
     /** Run variable: wait this many milliseconds before the next step (an approval wait, M5.5); the workflow sleeps. */
     public static final String RESUME_AFTER_VARIABLE = "__olo.kernel.resumeAfterMs";
     /** How long ToolGate keeps dedup records (M2.4); an older recorded call is never sent (M5.3). */
-    public static final long DEDUP_RETENTION_MS = 30L * 24 * 60 * 60 * 1000;
+    public static final long DEDUP_RETENTION_MS = 37L * 24 * 60 * 60 * 1000;
     /** How long a call may wait for approval (M2.4). */
     public static final long APPROVAL_EXPIRY_MS = 7L * 24 * 60 * 60 * 1000;
     /** How often a waiting call is checked again. */
@@ -246,6 +246,13 @@ public final class AgentToolLoop {
             if (call.status() != null) {
                 continue;
             }
+            if (turn.waitingSinceUnixMs() != null && now - turn.waitingSinceUnixMs() >= APPROVAL_EXPIRY_MS) {
+                invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(),
+                        ToolInvocationRecord.PENDING_APPROVAL, call.invocationId()));
+                return finish(context, node, new AgentToolLoopResult(
+                        "The approval for '" + call.tool() + "' expired before dispatch. Nothing was run for it.",
+                        AgentToolOutcome.APPROVAL_EXPIRED, agentName, names(turn.catalog()), invocations));
+            }
             // M5.3: past the dedup retention ToolGate may no longer know the key, so the call is never sent blindly.
             if (now - call.recordedAtUnixMs() > DEDUP_RETENTION_MS) {
                 invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(),
@@ -279,6 +286,14 @@ public final class AgentToolLoop {
                 return finish(context, node, new AgentToolLoopResult(
                         unknownMessage(call.done(ToolInvocationRecord.OUTCOME_UNKNOWN, result.invocationId()), reconciliation(result)),
                         AgentToolOutcome.OUTCOME_UNKNOWN, agentName, names(turn.catalog()), invocations));
+            }
+            if (result.ended()) {
+                invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(),
+                        ToolInvocationRecord.ERROR, result.invocationId()));
+                return finish(context, node, new AgentToolLoopResult(
+                        "Invocation for '" + call.tool() + "' ended as " + result.state()
+                                + (result.invocationId() == null ? "" : " (" + result.invocationId() + ")") + ".",
+                        AgentToolOutcome.INVOCATION_ENDED, agentName, names(turn.catalog()), invocations));
             }
             String status = result.error() || result.ended() ? ToolInvocationRecord.ERROR : ToolInvocationRecord.OK;
             invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(), status, result.invocationId()));

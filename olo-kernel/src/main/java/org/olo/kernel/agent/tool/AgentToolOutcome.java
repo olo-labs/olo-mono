@@ -22,6 +22,8 @@ public enum AgentToolOutcome {
     OUTCOME_UNKNOWN,
     /** An approval was not decided within the approval expiry. */
     APPROVAL_EXPIRED,
+    /** ToolGate returned a terminal failed, cancelled, expired or partial invocation. */
+    INVOCATION_ENDED,
     /** The model kept calling tools until {@code maxToolRounds}; it was then asked to answer without tools. */
     ROUND_LIMIT
 }

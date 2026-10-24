@@ -134,6 +134,17 @@ public final class McpToolGateClient implements ToolGateClient {
             }
             // The executor ran or refused the call: a tool-level failure the model can react to.
             if (reply.status() == 200 && reply.error().path("code").asInt() == -32000) {
+                JsonNode data = reply.error().path("data");
+                if (ToolGateCallResult.STATE_OUTCOME_UNKNOWN.equals(data.path("outcome").asText())
+                        || ToolGateCallResult.STATE_OUTCOME_UNKNOWN.equals(data.path("error").path("code").asText())) {
+                    ObjectNode unknown = MAPPER.createObjectNode();
+                    unknown.put("state", ToolGateCallResult.STATE_OUTCOME_UNKNOWN);
+                    String invocationId = textOrNull(data.get("requestId"));
+                    if (invocationId != null) unknown.put("invocationId", invocationId);
+                    if (data.has("reconciliation")) unknown.set("reconciliation", data.get("reconciliation"));
+                    return new ToolGateCallResult(true, "Tool outcome is unknown; reconciliation is required.",
+                            unknown, ToolGateCallResult.STATE_OUTCOME_UNKNOWN, invocationId);
+                }
                 return ToolGateCallResult.failure("Tool '" + toolName + "' failed: " + describe(reply.error()));
             }
             throw failure(reply, "tools/call " + toolName + " for agent '" + agentName + "'");
