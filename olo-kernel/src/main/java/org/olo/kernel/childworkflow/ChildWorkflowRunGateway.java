@@ -91,9 +91,15 @@ public final class ChildWorkflowRunGateway {
                 OloKernelWorkflow.class,
                 ChildWorkflowOptions.newBuilder()
                         .setTaskQueue(queue)
-                        .setWorkflowId(childWorkflowId + "-" + Workflow.randomUUID())
+                        .setWorkflowId(childId(childWorkflowId + "-" + Workflow.randomUUID()))
                         .build());
         return child.execute(childInput);
+    }
+
+    /** M5.2: a child keeps its parent's tenant in its workflow id, so its payloads are sealed with the same tenant key. */
+    private static String childId(String name) {
+        String tenant = org.olo.input.codec.TenantWorkflowIds.tenantOf(Workflow.getInfo().getWorkflowId());
+        return tenant == null ? name : org.olo.input.codec.TenantWorkflowIds.child(tenant, name);
     }
 
     private static String executeInProcess(String queue, WorkflowInput childInput) {

@@ -52,7 +52,9 @@ public final class TemporalWorkerFactory {
 
         WorkflowClient client = WorkflowClient.newInstance(
                 service,
-                WorkflowClientOptions.newBuilder().setNamespace(namespace).build());
+                // M5.2: every payload this worker writes to Temporal is sealed under the run's tenant key.
+                WorkflowClientOptions.newBuilder().setNamespace(namespace)
+                        .setDataConverter(org.olo.input.codec.PayloadProtection.dataConverter()).build());
         WorkerFactory factory = WorkerFactory.newInstance(client);
 
         Set<String> queues = new LinkedHashSet<>();
