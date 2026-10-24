@@ -47,6 +47,9 @@ public final class LocalLlmAgentExecutor implements AgentExecutor {
     public NodeResult execute(KernelRuntimeContext context, NodeDefinition node) {
         try {
             LlmInvocationResult invocation = llmInvocationService.invoke(context, node);
+            if (invocation.isContinuing()) {
+                return NodeResult.continuing(invocation.progress());
+            }
             TraversalDiagnostics.logLlmInvocation(node.getId(), invocation);
 
             Map<String, Object> output = new LinkedHashMap<>();

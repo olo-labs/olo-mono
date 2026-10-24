@@ -33,7 +33,7 @@ public final class OloKernelWorkflowImpl implements OloKernelWorkflow {
 
     private static ActivityStub activityStub(Duration timeout) {
         return Workflow.newUntypedActivityStub(
-                ActivityOptions.newBuilder().setStartToCloseTimeout(timeout).build());
+                org.olo.kernel.temporal.KernelActivityOptions.of(timeout));
     }
 
     @Override

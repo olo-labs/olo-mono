@@ -74,7 +74,7 @@ class AgentToolLoopTest {
             assertThat(call.agentName()).isEqualTo("triage-agent");
             assertThat(call.tool()).isEqualTo("incidents.host-status");
             assertThat(call.arguments().path("host").asText()).isEqualTo("app-02");
-            assertThat(call.requestId()).startsWith("olo-").hasSize(52);
+            assertThat(call.requestId()).startsWith("olo-op-").hasSize(55);
         });
 
         List<LlmMessage> second = llm.chatMessages.get(1);

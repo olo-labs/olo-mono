@@ -33,6 +33,11 @@ public record NodeResult(
         return new NodeResult(NodeStatus.WAITING, output, message, null);
     }
 
+    /** Progress is recorded; run this node again at the next step ({@link NodeStatus#CONTINUE}). */
+    public static NodeResult continuing(String message) {
+        return new NodeResult(NodeStatus.CONTINUE, Map.of(), message, null);
+    }
+
     public static NodeResult failed(String message, Throwable error) {
         return new NodeResult(NodeStatus.FAILED, Map.of(), message, error);
     }

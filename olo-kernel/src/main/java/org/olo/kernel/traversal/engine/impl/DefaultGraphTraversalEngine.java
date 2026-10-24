@@ -105,6 +105,10 @@ public final class DefaultGraphTraversalEngine implements GraphTraversalEngine {
             TraversalDiagnostics.logTraversalFailed(currentNodeId, result.status(), message);
             return TraversalCursor.failed(currentNodeId, step, result.status(), message);
         }
+        if (result.status() == NodeStatus.CONTINUE) {
+            // The same node runs again; its recorded state travels in the run variables (M5.1).
+            return TraversalCursor.running(currentNodeId, step, currentNodeId, result.message());
+        }
         if (result.status() == NodeStatus.WAITING) {
             String message = result.message() != null ? result.message() : "awaiting human input";
             TraversalDiagnostics.logTraversalWaiting(currentNodeId, message);

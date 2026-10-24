@@ -178,6 +178,18 @@ final class AgentToolTestSupport {
         }
     }
 
+    /** Drives an AGENT node through its durable phases, as the traversal does: again while it reports CONTINUE. */
+    static org.olo.spi.node.NodeResult runTurn(org.olo.kernel.agent.executor.impl.LocalLlmAgentExecutor executor,
+                                                KernelRuntimeContext context, NodeDefinition node) {
+        for (int step = 0; step < 64; step++) {
+            org.olo.spi.node.NodeResult result = executor.execute(context, node);
+            if (result.status() != org.olo.spi.node.NodeStatus.CONTINUE) {
+                return result;
+            }
+        }
+        throw new AssertionError("agent turn did not finish in 64 steps");
+    }
+
     static ToolGateTool tool(String name) {
         return new ToolGateTool(name, "does " + name,
                 json("{\"type\":\"object\",\"properties\":{\"host\":{\"type\":\"string\"}}}"));

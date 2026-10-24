@@ -10,5 +10,10 @@ package org.olo.spi.node;
 public enum NodeStatus {
     COMPLETED,
     WAITING,
+    /**
+     * The node recorded durable progress and runs again at the next step. Under Temporal that step is a new activity,
+     * so what this step recorded is in workflow history before anything it decided is acted on (M5.1).
+     */
+    CONTINUE,
     FAILED
 }
