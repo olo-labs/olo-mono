@@ -103,6 +103,11 @@ M9 replaces that legacy workflow/plugin path under the new-install contract.
 
 ## Merge and next work
 
+Completion PRs: [ToolGate #193](https://github.com/olo-labs/olo-toolgate/pull/193),
+[olo-mono #15](https://github.com/olo-labs/olo-mono/pull/15), and
+[backend #8](https://github.com/olo-labs/olo/pull/8), stacked on
+[backend #7](https://github.com/olo-labs/olo/pull/7).
+
 1. Merge/publish the ToolGate service-permit/cancellation bridge before deploying OLO's new cancellation calls.
 2. Merge the olo-mono durable-boundary/cancellation completion and the backend companion(s), including existing backend
    PR #7 for credential/revocation/codec hardening. Publish shared libraries before backend deployment.
