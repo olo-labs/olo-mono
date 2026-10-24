@@ -67,26 +67,57 @@ public final class AgentToolLoop {
     private static final ObjectMapper JSON = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+    /** Run variable: wait this many milliseconds before the next step (an approval wait, M5.5); the workflow sleeps. */
+    public static final String RESUME_AFTER_VARIABLE = "__olo.kernel.resumeAfterMs";
+    /** How long ToolGate keeps dedup records (M2.4); an older recorded call is never sent (M5.3). */
+    public static final long DEDUP_RETENTION_MS = 30L * 24 * 60 * 60 * 1000;
+    /** How long a call may wait for approval (M2.4). */
+    public static final long APPROVAL_EXPIRY_MS = 7L * 24 * 60 * 60 * 1000;
+    /** How often a waiting call is checked again. */
+    public static final long APPROVAL_POLL_MS = 30_000;
+
     private final LlmClient llmClient;
+    private final java.time.Clock clock;
 
     public AgentToolLoop(LlmClient llmClient) {
+        this(llmClient, java.time.Clock.systemUTC());
+    }
+
+    AgentToolLoop(LlmClient llmClient, java.time.Clock clock) {
         this.llmClient = Objects.requireNonNull(llmClient, "llmClient");
+        this.clock = Objects.requireNonNull(clock, "clock");
     }
 
     /** The outcome of one {@link #step}: the finished turn, or recorded progress with more to do. */
-    public record Step(AgentToolLoopResult result, String progress) {
+    public record Step(AgentToolLoopResult result, String progress, long resumeAfterMs) {
+        public Step(AgentToolLoopResult result, String progress) {
+            this(result, progress, 0);
+        }
+
         public boolean done() {
             return result != null;
         }
+
+        /** Whether the turn is waiting for an approval before its next step. */
+        public boolean waiting() {
+            return resumeAfterMs > 0;
+        }
     }
 
-    /** A call the model selected, recorded before it is dispatched. */
-    record RecordedCall(String operationId, String modelName, String tool, JsonNode arguments) {
+    /**
+     * A call the model selected, recorded before it is dispatched. {@code status} is null until the call has a result;
+     * a dispatch resumed after a wait skips calls that already have one.
+     */
+    record RecordedCall(String operationId, String modelName, String tool, JsonNode arguments, long recordedAtUnixMs,
+                        String status, String invocationId) {
+        RecordedCall done(String status, String invocationId) {
+            return new RecordedCall(operationId, modelName, tool, arguments, recordedAtUnixMs, status, invocationId);
+        }
     }
 
     /** An unfinished turn, kept in {@link #TURN_VARIABLE_PREFIX}{@code <nodeId>} between steps. */
     record Turn(int pass, int round, List<ToolGateTool> catalog, List<LlmMessage> messages,
-                List<RecordedCall> pending, List<ToolInvocationRecord> invocations) {
+                List<RecordedCall> pending, List<ToolInvocationRecord> invocations, Long waitingSinceUnixMs) {
         Turn {
             catalog = catalog == null ? List.of() : List.copyOf(catalog);
             messages = messages == null ? List.of() : List.copyOf(messages);
@@ -108,6 +139,15 @@ public final class AgentToolLoop {
             if (step.done()) {
                 return step.result();
             }
+            if (step.waiting()) {
+                // In memory there is no durable wait: stop, as before, and let the caller run the request again.
+                Turn turn = load(context, node);
+                List<ToolInvocationRecord> invocations = new ArrayList<>(turn.invocations());
+                turn.pending().stream().filter(c -> c.status() == null).findFirst().ifPresent(c -> invocations.add(
+                        new ToolInvocationRecord(c.tool(), c.operationId(), turn.round(), ToolInvocationRecord.PENDING_APPROVAL, c.invocationId())));
+                return finish(context, node, new AgentToolLoopResult(waitingMessage(turn), AgentToolOutcome.WAITING_APPROVAL,
+                        settings.agentName(), names(turn.catalog()), invocations)).result();
+            }
         }
     }
 
@@ -122,6 +162,7 @@ public final class AgentToolLoop {
         Objects.requireNonNull(toolGate, "toolGate");
         Objects.requireNonNull(settings, "settings");
         String agentName = settings.agentName();
+        context.getVariables().set(RESUME_AFTER_VARIABLE, null);
 
         Turn turn = load(context, node);
         if (turn == null) {
@@ -133,7 +174,7 @@ public final class AgentToolLoop {
                 return finish(context, node, new AgentToolLoopResult(llmClient.complete(modelCall, prompt),
                         AgentToolOutcome.COMPLETED, agentName, names(catalog), List.of()));
             }
-            turn = new Turn(pass, 1, catalog, List.of(LlmMessage.user(prompt)), List.of(), List.of());
+            turn = new Turn(pass, 1, catalog, List.of(LlmMessage.user(prompt)), List.of(), List.of(), null);
         }
         return turn.pending().isEmpty()
                 ? decide(context, node, modelCall, toolGate, settings, turn)
@@ -184,10 +225,10 @@ public final class AgentToolLoop {
                 continue;
             }
             String operationId = ToolCallRequestIds.logicalOperationId(runId, scope, turn.pass(), turn.round(), index);
-            recorded.add(new RecordedCall(operationId, call.name(), toolGateName.get(), call.arguments()));
+            recorded.add(new RecordedCall(operationId, call.name(), toolGateName.get(), call.arguments(), clock.millis(), null, null));
         }
         Turn next = new Turn(turn.pass(), recorded.isEmpty() ? turn.round() + 1 : turn.round(), turn.catalog(),
-                messages, recorded, invocations);
+                messages, recorded, invocations, null);
         save(context, node, next);
         log.info("Agent node {} as '{}': round {} recorded {} operation(s)", node.getId(), agentName, turn.round(),
                 recorded.size());
@@ -198,22 +239,65 @@ public final class AgentToolLoop {
                           Turn turn) {
         List<LlmMessage> messages = new ArrayList<>(turn.messages());
         List<ToolInvocationRecord> invocations = new ArrayList<>(turn.invocations());
-        for (RecordedCall call : turn.pending()) {
+        List<RecordedCall> calls = new ArrayList<>(turn.pending());
+        long now = clock.millis();
+        for (int i = 0; i < calls.size(); i++) {
+            RecordedCall call = calls.get(i);
+            if (call.status() != null) {
+                continue;
+            }
+            // M5.3: past the dedup retention ToolGate may no longer know the key, so the call is never sent blindly.
+            if (now - call.recordedAtUnixMs() > DEDUP_RETENTION_MS) {
+                invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(),
+                        ToolInvocationRecord.OUTCOME_UNKNOWN, call.invocationId()));
+                return finish(context, node, new AgentToolLoopResult(unknownMessage(call), AgentToolOutcome.OUTCOME_UNKNOWN,
+                        agentName, names(turn.catalog()), invocations));
+            }
             ToolGateCallResult result = toolGate.callTool(agentName, call.operationId(), call.tool(), call.arguments());
             if (result.pendingApproval()) {
-                invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(),
-                        ToolInvocationRecord.PENDING_APPROVAL, result.invocationId()));
+                long since = turn.waitingSinceUnixMs() != null ? turn.waitingSinceUnixMs() : now;
+                if (now - since > APPROVAL_EXPIRY_MS) {
+                    invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(),
+                            ToolInvocationRecord.PENDING_APPROVAL, result.invocationId()));
+                    return finish(context, node, new AgentToolLoopResult(
+                            "The approval for '" + call.tool() + "' was not decided in time. Nothing was run for it.",
+                            AgentToolOutcome.APPROVAL_EXPIRED, agentName, names(turn.catalog()), invocations));
+                }
+                // M5.5: wait durably, then resend this same logical operation; once approved, ToolGate runs this invocation.
+                calls.set(i, new RecordedCall(call.operationId(), call.modelName(), call.tool(), call.arguments(),
+                        call.recordedAtUnixMs(), null, result.invocationId()));
+                save(context, node, new Turn(turn.pass(), turn.round(), turn.catalog(), messages, calls, invocations, since));
+                context.getVariables().set(RESUME_AFTER_VARIABLE, APPROVAL_POLL_MS);
                 log.info("Agent node {} as '{}': {} waits for approval (invocation {})",
                         node.getId(), agentName, call.tool(), result.invocationId());
-                return finish(context, node, new AgentToolLoopResult(waitingMessage(call.tool(), result.invocationId()),
-                        AgentToolOutcome.WAITING_APPROVAL, agentName, names(turn.catalog()), invocations));
+                return new Step(null, "waiting for approval of " + call.tool(), APPROVAL_POLL_MS);
             }
-            invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(),
-                    result.error() ? ToolInvocationRecord.ERROR : ToolInvocationRecord.OK, result.invocationId()));
+            if (result.outcomeUnknown()) {
+                // M5.4: it may have taken effect, so it is never sent again, only reconciled.
+                invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(),
+                        ToolInvocationRecord.OUTCOME_UNKNOWN, result.invocationId()));
+                return finish(context, node, new AgentToolLoopResult(
+                        unknownMessage(call.done(ToolInvocationRecord.OUTCOME_UNKNOWN, result.invocationId())),
+                        AgentToolOutcome.OUTCOME_UNKNOWN, agentName, names(turn.catalog()), invocations));
+            }
+            String status = result.error() || result.ended() ? ToolInvocationRecord.ERROR : ToolInvocationRecord.OK;
+            invocations.add(new ToolInvocationRecord(call.tool(), call.operationId(), turn.round(), status, result.invocationId()));
             messages.add(LlmMessage.toolResult(call.modelName(), forModel(result)));
+            calls.set(i, call.done(status, result.invocationId()));
         }
-        save(context, node, new Turn(turn.pass(), turn.round() + 1, turn.catalog(), messages, List.of(), invocations));
+        save(context, node, new Turn(turn.pass(), turn.round() + 1, turn.catalog(), messages, List.of(), invocations, null));
         return new Step(null, "dispatched " + turn.pending().size() + " tool call(s) for round " + turn.round());
+    }
+
+    static String unknownMessage(RecordedCall call) {
+        return "The outcome of '" + call.tool() + "' is unknown"
+                + (call.invocationId() != null ? " (invocation " + call.invocationId() + ")" : "")
+                + ". It was not run again; it needs reconciliation before this request continues.";
+    }
+
+    private static String waitingMessage(Turn turn) {
+        RecordedCall waiting = turn.pending().stream().filter(c -> c.status() == null).findFirst().orElse(null);
+        return waiting == null ? "Waiting for approval in ToolGate." : waitingMessage(waiting.tool(), waiting.invocationId());
     }
 
     private static Step finish(KernelRuntimeContext context, NodeDefinition node, AgentToolLoopResult result) {
