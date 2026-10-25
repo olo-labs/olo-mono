@@ -36,35 +36,51 @@ deletion requirements.
   See [M6/M7 implementation and verification](docs/M6-M7-IMPLEMENTATION.md). The older
   [M2–M5 checkpoint](docs/toolgate-integration/implementation-status.md) is historical evidence; its pending-merge/next-work notes are superseded here.
 - **Next: complete the M8 first qualification run.** The deployed Gateway → broker → service → store smoke path and
-  enforced network isolation have local evidence. Complete workflow recovery, derived-context revocation and
-  governed RAG freshness/latency/load remain open. M9 removal and UI/deployment coordination,
+  enforced network isolation have local evidence. Selected real Temporal recovery, concurrent-turn and
+  derived-context revocation checks now pass; complete ASK/unknown-outcome/incident coverage and governed
+  RAG freshness/latency/load remain open. Performance investigation is deferred under defect #204. M9 removal and UI/deployment coordination,
   the post-M9 M8 re-run, and M10 clean-install/operational qualification are also open. Merge does not sign off those gates.
 - M8 qualification tooling is in progress in olo-knowledge: reusable local `start`/`test`/`stop`, 22 passing Calico
   isolation probes, and a real-model component corpus evaluation (recall@5 1.00, precision@5 0.733, zero leakage,
   750/750 citations). October 25 tuning bounds embedding CPU threads and uses disposable native model volumes:
   component query p50/p95 are 113/132 ms; these are not Gateway latency or concurrent-load results.
-  [ToolGate #203](https://github.com/olo-labs/olo-toolgate/pull/203) fixes the authorization-epoch transaction
+  Merged [ToolGate #203](https://github.com/olo-labs/olo-toolgate/pull/203) fixes the authorization-epoch transaction
   found by the real stack. The subsequent smoke run passed governed writes, stable/concurrent invocation recovery,
   private-user/tenant/resource isolation, forged identity arguments, RAG ingest/query and live revocation checks.
   Document ACL exclusion was 2.92 s, deletion 2.84 s, and grant revocation 0.30 s. The fixture uses loopback HTTP
   between Gateway and Control and does not prove production transport, Temporal recovery or the full M8 matrix.
-  M8 remains open, including complete recovery/Temporal
+  The separate Temporal fixture below adds recovery evidence. M8 remains open, including complete recovery
   and post-M9 qualification; M10's 50-user/50,000-document qualification has not passed.
 - The first backend/worker qualification found fresh-build dependency gaps, an invalid governed workflow,
   an agent-mapping check despite zero tool rounds, and private traversal payloads in logs. Fixes are in
   [backend #10](https://github.com/olo-labs/olo/pull/10) and
-  [olo-mono #18](https://github.com/olo-labs/olo-mono/pull/18): exact shared-library build pins,
+  [olo-mono #18](https://github.com/olo-labs/olo-mono/pull/18) (both still open): exact shared-library build pins,
   a loader-valid fresh workflow, no agent identity/catalog access for zero-round chat, and payload redaction.
   All 144 kernel tests, 26 ToolGate-client tests, 18 context tests, four loader tests and 82 backend tests pass
   with no failures or skips (backend tests used isolated Redis). Governed request JSON is deterministic across
   JVM restarts; completed Temporal turn IDs reject reuse; callback and request diagnostics omit payloads.
-  The strict real Temporal pipeline passed from clean knowledge revision `1627f21`, worker `d73a978` and
+  The latest strict real Temporal pipeline passed from clean knowledge revision `6a34f1c`, worker `d73a978` and
   backend image source `f42b439`: hard worker stop/backend restart retained one Temporal execution and one
   model call with two messages, the unmapped-agent change preserved user authority, payload history was encrypted,
-  and source deletion blocked in-flight release in 9.53 s, stored derived responses and the next model call.
+  two concurrent distinct turns retained unique messages and exactly one model call per turn,
+  and source deletion blocked in-flight release in 9.94 s, stored derived responses and the next model call.
   The private canary was absent from backend and worker logs. This uses scripted IdP/model dependencies and
   development gRPC/Gateway HTTP; complete ASK/unknown-outcome/incident, Gateway RAG/load and production
   qualification remain open. These selected checks do not close M8 or authorize M9 removal.
+- **Performance defect, investigation deferred:** [ToolGate #204](https://github.com/olo-labs/olo-toolgate/issues/204).
+  The real Gateway/broker/service/store baseline measured **1,381 ms p50 / 1,567 ms p95**, exceeding the accepted
+  **300/800 ms** targets, with one user, one document, 16 measured successful queries after one excluded warm-up,
+  and zero backpressure retries. Root cause is not established. The measurement recorded knowledge revision
+  `705d7e8` with a dirty worktree; it is diagnostic evidence, not clean-source or corpus/load sign-off.
+  At the user's request, root-cause work and performance fixes are deferred; targets remain unchanged and
+  M8.2a/M10.4 remain open. ToolGate #202 remains a separate CI implementation.
+- **Qualification checkpoint and cleanup:** run `olo-qualification-0fa7ca6ac461` records the latest passing
+  functional pipeline; run `olo-qualification-5c00f5e51669` records the failing latency baseline. Reports are in
+  `olo-knowledge/build/qualification/pipeline.json` and `gateway-latency.json` respectively (local generated evidence).
+  The repeatable start/test/stop scripts remain available. Stop completed and verification found no remaining
+  owner-labelled test containers, volumes, networks or images; shared build/model caches are retained.
+  [olo-knowledge #3](https://github.com/olo-labs/olo-knowledge/pull/3) merged an earlier checkpoint; subsequent
+  pipeline, cleanup and latency tooling commits on `feature/m8-m10-completion` require a follow-up PR.
 
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
 identities, and empty application stores. No migration tools, legacy readers, compatibility modes, or support for
@@ -83,9 +99,9 @@ that replaces D8.
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, olo, ToolGate | 12 | 100% | 100% | ✅ Completion PRs merged; local recovery/codec/approval checks passed |
 | M6 | Memory and RAG services and ToolGate packages | olo-knowledge, ToolGate | 12 | 100% | 100% | ✅ Merged (#1, ToolGate #194); service/component tests and package validation passed |
 | M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 100% | 100% | ✅ Merged (olo-mono #16, backend #9); lifecycle/client/worker/backend checks passed |
-| M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
-| M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
-| M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
+| M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | In progress: selected functional checks pass; full matrix open; latency fails (#204), investigation deferred; runs twice |
+| M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | Not started; gated on complete first M8 pass |
+| M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | Open; full staging load, transport and operational qualification remain |
 | | **Overall** | | **100** | **77%** | **77%** | M8 first run → M9 → M8 re-run → M10 remain |
 
 **How the percentages work.**
@@ -765,6 +781,15 @@ source re-checks and persistence-before-release are covered in the implementatio
 M8 runs twice: once to qualify the governed paths before M9, and again after M9 on the final stack. Both runs must
 pass for M8 to count. **Current status: neither deployed qualification run is complete.** M6/M7 component tests are
 inputs to these runs; they do not establish production revocation timing, CNI isolation or the accepted RAG targets.
+
+**Latest checkpoint (2026-10-25).** Real-stack smoke and 22 Calico isolation probes passed. The separate real
+backend/worker/Temporal run `olo-qualification-0fa7ca6ac461` passed encrypted-history inspection, restart/replay,
+agent-independent user authority, concurrent distinct turns and selected derived/in-flight revocation checks
+(9.94 s exclusion). Scripted IdP/model dependencies and development transport limit this evidence. Complete
+ASK/incident/unknown-outcome coverage and all required revocation scenarios remain open. The Gateway RAG baseline
+failed at 1,381/1,567 ms p50/p95; [defect #204](https://github.com/olo-labs/olo-toolgate/issues/204) tracks it,
+with investigation deferred by the user. Full corpus/load/freshness qualification and the post-M9 run are still
+required. No complete M8 step is credited from these selected checks; overall counted progress remains **77%**.
 
 - [ ] **8.1** Mandatory acceptance cases, automated against the real stack:
       1. Two users in one tenant cannot access each other's private resources.
