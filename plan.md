@@ -50,9 +50,13 @@ anonymous volumes. The separate operations drill passed encrypted backup/restore
 restored isolation/tombstones, reindexing and retention of an uncertain write without redispatch.
 
 Follow-up ToolGate approval terminal-state changes passed the Java checks and PostgreSQL/SQLite enterprise
-suites (386 tests, seven skips, zero failures/errors). The final extended incident run
-`olo-qualification-97f0c84c7d30` passed denial handling but failed the cancellation assertion; cancellation and
-the subsequent authorization-deadline cases are not signed off. The foundation check's Python suites passed,
+suites (386 tests, seven skips, zero failures/errors). Follow-up Gateway changes register the canonical
+cancellation acknowledgement; all 41 Gateway Rust tests pass and the deployed acknowledgement now returns
+200. The fixture now checks Control's deliberate 409 replay rejection plus the original cancelled state and
+absence of dispatch, rather than requiring a terminal envelope. The latest full run
+`olo-qualification-8d364466e508` stopped earlier with HTTP 403 reading the independently approved incident turn.
+[Backend #11](https://github.com/olo-labs/olo/issues/11) tracks this required functional failure; it is not
+waived by the scope decisions. The complete negative approval matrix remains unsigned. The foundation check's Python suites passed,
 but the overall command stopped at missing local PHP. This local cross-language validation limitation is
 explicitly deferred in [ToolGate #205](https://github.com/olo-labs/olo-toolgate/issues/205) by the user; it does
 not block this plan and is not reported as a passing PHP test. PHP is a contract-test dependency, not an OLO,
@@ -60,6 +64,11 @@ memory or RAG runtime dependency. The existing PHP CI checks remain required and
 Follow-up changes are published in [ToolGate #206](https://github.com/olo-labs/olo-toolgate/pull/206),
 [olo-knowledge #4](https://github.com/olo-labs/olo-knowledge/pull/4),
 [olo-mono #18](https://github.com/olo-labs/olo-mono/pull/18) and [backend #10](https://github.com/olo-labs/olo/pull/10).
+ToolGate #206 also enforces human-only contributor attribution and release-only generated notes. Its new
+`contribution-policy` GitHub check passed and is required on main by additive ruleset `25840003`, preserving
+existing rules. All 349 local CI regression tests completed with zero failures/errors and one platform skip.
+The OpenAI fragment and generated `RELEASE-NOTES.md` files are absent from that PR's changed-file list.
+After the latest local run, stop removed all owned containers, volumes, networks, images and private runtime files.
 M9 removal, the post-removal M8 rerun and full M10 operational acceptance remain unfinished.
 - M2 contracts, D4–D7, the 30-second revocation bound and the RAG targets remain accepted. Targets are not yet measured production results.
 - M4/M5 completion is merged in [ToolGate #193](https://github.com/olo-labs/olo-toolgate/pull/193),
