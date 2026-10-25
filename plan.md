@@ -32,6 +32,14 @@ the measured 1,381/1,567 ms p50/p95 evidence in that defect. Latency, throughput
 longer block M8, M9 or M10. Retrieval quality, isolation, revocation/freshness, retry/cancellation safety, quotas
 and operational acceptance remain required. This scope decision supersedes earlier performance-gate wording.
 
+**Production qualification scope decision (2026-10-26, user approved):** full production transport/at-rest
+encryption, broader credential and payload-key rotation, coordinated disaster recovery and production retention
+qualification move to [olo-mono #19](https://github.com/olo-labs/olo-mono/issues/19). These are explicitly
+deferred checks, not passing tests or production-readiness sign-off. They no longer block closure of this local
+integration plan. Functional authorization/cancellation, legacy-code removal, strict new-workflow validation,
+owned-resource cleanup and the final local end-to-end regression remain required. The selected local DB
+restore/rotation drills remain useful evidence without replacing production qualification.
+
 **Latest functional checkpoint (2026-10-26).** The clean-source Temporal pipeline (`3f9d62b`, run
 `olo-qualification-bf4658686f9f`) passed restart/replay, encrypted history, agent-independent user authority,
 concurrent turns and source deletion blocking in-flight release in 9.157 s. The main seven-tool incident run
@@ -49,7 +57,9 @@ but the overall command stopped at missing local PHP. This local cross-language 
 explicitly deferred in [ToolGate #205](https://github.com/olo-labs/olo-toolgate/issues/205) by the user; it does
 not block this plan and is not reported as a passing PHP test. PHP is a contract-test dependency, not an OLO,
 memory or RAG runtime dependency. The existing PHP CI checks remain required and unchanged.
-Follow-up changes still require publication/review.
+Follow-up changes are published in [ToolGate #206](https://github.com/olo-labs/olo-toolgate/pull/206),
+[olo-knowledge #4](https://github.com/olo-labs/olo-knowledge/pull/4),
+[olo-mono #18](https://github.com/olo-labs/olo-mono/pull/18) and [backend #10](https://github.com/olo-labs/olo/pull/10).
 M9 removal, the post-removal M8 rerun and full M10 operational acceptance remain unfinished.
 - M2 contracts, D4–D7, the 30-second revocation bound and the RAG targets remain accepted. Targets are not yet measured production results.
 - M4/M5 completion is merged in [ToolGate #193](https://github.com/olo-labs/olo-toolgate/pull/193),
@@ -901,14 +911,19 @@ then re-run (8.6).
 
 ## M10 — Deployment, clean install and operational qualification (weight 5)
 
-- [ ] **10.1** Encrypted transport everywhere, and encryption at rest for memory, RAG and ToolGate state
-- [ ] **10.2** Credential rotation for user-bound, service, executor-to-service and database credentials, with tested
+**Scope revision 2026-10-26:** the production-environment portions of 10.1, 10.2 and 10.5 and the production
+staging sign-off move to #19. Performance moves to ToolGate #204. Local functional diagnostics, retry/timeout/
+cancellation/quotas, grant/runbook documentation and clean-install acceptance without legacy execution remain
+in scope. Deferred rows below are preserved as the original requirements and do not represent passed checks.
+
+- [ ] **10.1 — Deferred to #19** Encrypted transport everywhere, and encryption at rest for memory, RAG and ToolGate state
+- [ ] **10.2 — Production qualification deferred to #19** Credential rotation for user-bound, service, executor-to-service and database credentials, with tested
       rollover. Also rotation of the payload-protection keys (M5.2).
 - [ ] **10.3** Redacted diagnostics: no tokens, prompts or retrieved content in logs or errors
 - [ ] **10.4** Bounded retries, timeouts, cancellation, and per-user quotas, with functional freshness checks while
       quotas are enabled. Latency/throughput/capacity load qualification is complete for this plan by the user's
       scope decision and tracked separately in #204; it is not a remaining release gate here.
-- [ ] **10.5** Backups, restore tests, and retention policies for conversations, working state and documents
+- [ ] **10.5 — Production qualification deferred to #19** Backups, restore tests, and retention policies for conversations, working state and documents
 - [ ] **10.6** **Clean-install acceptance test.** On empty infrastructure, follow only the documented steps to provision
       identities, grants (including the path C service principal), the memory and RAG services, ToolGate packages and
       the new workflows. Then check:
@@ -925,8 +940,9 @@ then re-run (8.6).
 - [ ] **10.8** Docs: architecture, the identity and permission model, an operations runbook (including
       `OUTCOME_UNKNOWN` handling), and the incident-recovery walkthrough (old 6.4)
 
-**Acceptance.** The clean-install test passes on a staging environment from documented steps alone, along with a
-restore test and a credential rotation.
+**Acceptance for this plan.** The final local clean-install test passes from documented steps alone, without
+legacy local tool execution, with functional lifecycle, safety and cleanup checks and explicit limitations.
+Production staging, coordinated restore and full credential/key rotation acceptance are tracked in #19.
 
 ---
 
@@ -944,6 +960,7 @@ restore test and a credential rotation.
 | D8 | Existing data and executions? | **Out of scope, and the boundary is fixed.** One new installation contract: no migration tools, legacy readers, compatibility modes, or support for executions started under the old implementation. Changing this needs a new decision that replaces D8. | Decided |
 | D9 | Does performance block completion of this plan? | **No. Performance is considered complete for this plan and tracked separately in ToolGate #204.** Preserve original targets and failed measurements; this is a scope closure, not a measured pass. Functional quality, authorization/revocation, retry/cancellation, quotas and operational acceptance still apply. | User decided 2026-10-26 |
 | D10 | Does missing local PHP block this plan? | **No. The incomplete local PHP contract validation is deferred to ToolGate #205.** Preserve the missing-prerequisite result; do not mark tests passed or disable PHP checks in CI. OLO/memory/RAG do not require PHP at runtime. | User decided 2026-10-26 |
+| D11 | Must production-environment qualification complete before this plan closes? | **No. Production transport/at-rest encryption, broader credential/key rotation, coordinated recovery and production retention qualification move to olo-mono #19.** This does not waive functional fixes, legacy-code removal or the final local end-to-end run and is not production-readiness sign-off. | User decided 2026-10-26 |
 
 ## Risks
 
