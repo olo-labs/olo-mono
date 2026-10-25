@@ -55,8 +55,16 @@ deletion requirements.
   [backend #10](https://github.com/olo-labs/olo/pull/10) and
   [olo-mono #18](https://github.com/olo-labs/olo-mono/pull/18): exact shared-library build pins,
   a loader-valid fresh workflow, no agent identity/catalog access for zero-round chat, and payload redaction.
-  All 144 kernel tests and all four loader tests pass with no failures or skips. The real Temporal pipeline
-  rerun is in progress; these fixes do not close M8 or authorize M9 removal.
+  All 144 kernel tests, 26 ToolGate-client tests, 18 context tests, four loader tests and 82 backend tests pass
+  with no failures or skips (backend tests used isolated Redis). Governed request JSON is deterministic across
+  JVM restarts; completed Temporal turn IDs reject reuse; callback and request diagnostics omit payloads.
+  The strict real Temporal pipeline passed from clean knowledge revision `1627f21`, worker `d73a978` and
+  backend image source `f42b439`: hard worker stop/backend restart retained one Temporal execution and one
+  model call with two messages, the unmapped-agent change preserved user authority, payload history was encrypted,
+  and source deletion blocked in-flight release in 9.53 s, stored derived responses and the next model call.
+  The private canary was absent from backend and worker logs. This uses scripted IdP/model dependencies and
+  development gRPC/Gateway HTTP; complete ASK/unknown-outcome/incident, Gateway RAG/load and production
+  qualification remain open. These selected checks do not close M8 or authorize M9 removal.
 
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
 identities, and empty application stores. No migration tools, legacy readers, compatibility modes, or support for
