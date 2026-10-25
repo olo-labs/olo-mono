@@ -32,7 +32,7 @@ deletion requirements.
   [olo-knowledge #1](https://github.com/olo-labs/olo-knowledge/pull/1) (private repository),
   [olo-mono #16](https://github.com/olo-labs/olo-mono/pull/16) and [backend #9](https://github.com/olo-labs/olo/pull/9).
   Separate memory/RAG services, user-governed lifecycles, scheduled service indexing and the fresh backend API are implemented.
-- Latest local evidence: 219 Java tests and 82 Rust tests passed across the affected suites; both ToolGate packages validated.
+- M6/M7 checkpoint evidence: 219 Java tests and 82 Rust tests passed across the affected suites; both ToolGate packages validated.
   See [M6/M7 implementation and verification](docs/M6-M7-IMPLEMENTATION.md). The older
   [M2–M5 checkpoint](docs/toolgate-integration/implementation-status.md) is historical evidence; its pending-merge/next-work notes are superseded here.
 - **Next: complete the M8 first qualification run.** The deployed Gateway → broker → service → store smoke path and
@@ -50,6 +50,13 @@ deletion requirements.
   between Gateway and Control and does not prove production transport, Temporal recovery or the full M8 matrix.
   M8 remains open, including complete recovery/Temporal
   and post-M9 qualification; M10's 50-user/50,000-document qualification has not passed.
+- The first backend/worker qualification found fresh-build dependency gaps, an invalid governed workflow,
+  an agent-mapping check despite zero tool rounds, and private traversal payloads in logs. Fixes are in
+  [backend #10](https://github.com/olo-labs/olo/pull/10) and
+  [olo-mono #18](https://github.com/olo-labs/olo-mono/pull/18): exact shared-library build pins,
+  a loader-valid fresh workflow, no agent identity/catalog access for zero-round chat, and payload redaction.
+  All 144 kernel tests and all four loader tests pass with no failures or skips. The real Temporal pipeline
+  rerun is in progress; these fixes do not close M8 or authorize M9 removal.
 
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
 identities, and empty application stores. No migration tools, legacy readers, compatibility modes, or support for
