@@ -23,15 +23,28 @@ empty application stores (conversations, memory, documents, ToolGate state).
 Fresh installation simplifies removal (M9) and deployment (M10). It does not relax the authorization, retry or
 deletion requirements.
 
-**Status (2026-10-24): M2–M5 implementation and local qualification are complete; remaining changes await PR review/merge.**
-- All M2 contracts, D4–D7, the 30-second revocation bound and the RAG targets are accepted. No new design decision is required.
-- M3 is merged. M4 now has Control-derived downstream service permits, executor mTLS delivery, online write consumption,
-  bounded read epoch snapshots, and TLS-to-storage qualification. M6 must apply the bridge to its actual services.
-- M5 now persists branch continuations across activities, keeps model/effect work off the replay thread, and propagates
-  cancellation by the original operation ID, including cancellation racing first submission. Root/child runs are bounded
-  to 30 days. Payload codec endpoints are in the companion backend PR.
-- See [implementation-status.md](docs/toolgate-integration/implementation-status.md) for exact test evidence and merge
-  dependencies. Local implementation is not merged credit; full-stack production timing remains M8.
+**Status (2026-10-25): M2–M7 implementation and local/component acceptance checks are complete and merged.**
+- M2 contracts, D4–D7, the 30-second revocation bound and the RAG targets remain accepted. Targets are not yet measured production results.
+- M4/M5 completion is merged in [ToolGate #193](https://github.com/olo-labs/olo-toolgate/pull/193),
+  [olo-mono #15](https://github.com/olo-labs/olo-mono/pull/15) and [backend #8](https://github.com/olo-labs/olo/pull/8),
+  with backend hardening in [#7](https://github.com/olo-labs/olo/pull/7).
+- M6/M7 is merged in [ToolGate #194](https://github.com/olo-labs/olo-toolgate/pull/194),
+  [olo-knowledge #1](https://github.com/olo-labs/olo-knowledge/pull/1) (private repository),
+  [olo-mono #16](https://github.com/olo-labs/olo-mono/pull/16) and [backend #9](https://github.com/olo-labs/olo/pull/9).
+  Separate memory/RAG services, user-governed lifecycles, scheduled service indexing and the fresh backend API are implemented.
+- Latest local evidence: 219 Java tests and 82 Rust tests passed across the affected suites; both ToolGate packages validated.
+  See [M6/M7 implementation and verification](docs/M6-M7-IMPLEMENTATION.md). The older
+  [M2–M5 checkpoint](docs/toolgate-integration/implementation-status.md) is historical evidence; its pending-merge/next-work notes are superseded here.
+- **Next: M8 first qualification run.** The deployed Gateway → broker → service → store chain, enforced network isolation,
+  measured revocation/recovery and RAG quality/freshness/latency/load remain open. M9 removal and UI/deployment coordination,
+  the post-M9 M8 re-run, and M10 clean-install/operational qualification are also open. Merge does not sign off those gates.
+- M8 qualification tooling is in progress in olo-knowledge: reusable local `start`/`test`/`stop`, 22 passing Calico
+  isolation probes, and a real-model component corpus evaluation (recall@5 1.00, precision@5 0.733, zero leakage,
+  750/750 citations). Component query p95 was 2213 ms, above the accepted latency target; this is not a Gateway
+  latency result. The full-chain fixture reaches token exchange and dispatch, but its first downstream write is
+  fenced as `OUTCOME_UNKNOWN` after a service rejection. M8 remains open, including complete recovery/Temporal
+  and post-M9 qualification; M10's 50-user/50,000-document qualification has not passed.
+
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
 identities, and empty application stores. No migration tools, legacy readers, compatibility modes, or support for
 executions started under the old implementation will be built. A change to this boundary needs a new decision
@@ -45,20 +58,23 @@ that replaces D8.
 | M1 | ToolGate client and agent tool loop (historical) | olo-mono | 10 | 100% | 100% | ✅ Merged (PR #2); remediation in M3, M5 |
 | M2 | Capability gaps, contracts and open decisions | all | 7 | 100% | 100% | Accepted contracts; gap/threat evidence reviewed with merged PRs |
 | M3 | Verified user and service identity; resource authorization | olo, ToolGate, olo-mono | 15 | 100% | 100% | ✅ All steps merged (3.7 in olo-labs/olo-toolgate#191) |
-| M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 100% | 67% | Bridge and protocol/TLS/storage qualification complete locally; M6 applies it to application services |
-| M5 | Durable invocation, payload protection, retries and approvals | olo-mono, olo, ToolGate | 12 | 100% | 43% | Local checks passed; 5.3–5.5 merged; remaining acceptance depends on companion merges |
-| M6 | Memory and RAG services and ToolGate packages | ToolGate, services | 12 | 0% | 0% | ⬜ |
-| M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 0% | 0% | ⬜ |
+| M4 | Trusted SDK, executor context and executor-to-service calls | ToolGate, services | 8 | 100% | 100% | ✅ Merged; bridge and component/TLS/storage checks passed; application services supplied by M6 |
+| M5 | Durable invocation, payload protection, retries and approvals | olo-mono, olo, ToolGate | 12 | 100% | 100% | ✅ Completion PRs merged; local recovery/codec/approval checks passed |
+| M6 | Memory and RAG services and ToolGate packages | olo-knowledge, ToolGate | 12 | 100% | 100% | ✅ Merged (#1, ToolGate #194); service/component tests and package validation passed |
+| M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 100% | 100% | ✅ Merged (olo-mono #16, backend #9); lifecycle/client/worker/backend checks passed |
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | ⬜ (runs twice: before and after M9) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | ⬜ |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | ⬜ |
-| | **Overall** | | **100** | **55%** | **45%** | |
+| | **Overall** | | **100** | **77%** | **77%** | M8 first run → M9 → M8 re-run → M10 remain |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
 - **Implemented** counts steps whose code or document is written and has passed its local checks.
 - **Counted** counts only steps whose PR is merged and whose acceptance check passes. Counted is the progress figure.
-- Overall % = Î£ (weight × milestone %) / 100. Update both columns when a step changes.
+- Overall % = sum(weight × milestone %) / 100. Update both columns when a step changes.
+- M4–M7 credit reflects merged implementation and the recorded local/component acceptance checks. Deployed full-chain,
+  CNI, production timing and RAG benchmark acceptance is counted separately in M8/M10, which remain at 0%.
+- Initial backend route closures and the fresh pipeline are included in M7; they do not complete M9's cross-repository removal and UI work.
 
 **Order.** M2 → M3 → M4 → M5 → M6 → M7 → M8 (first run) → M9 → M8 (re-run) → M10.
 - No memory or RAG code (M6) is written before the identity, authorization and executor contracts (M2 to M4) exist
@@ -513,8 +529,8 @@ The ToolGate documentation describes the identity modes we need, but its
       *Implemented (olo-labs/olo-toolgate#190):* invocation audit rows carry `ControlAuditEvidence` (mode, subject, actor,
       chain, workload, tool, operation, resources, decision, state, authorization epoch, policy revision); the Tool Host
       admission record has the same identity facts. Arguments, payloads and credentials are never audited.
-- [x] **4.5** [ToolGate] Protocol qualification across identity ingress, Control, executor broker, a real mTLS service and separate transactional storage. Actual memory/RAG application qualification is repeated in M6/M8.
-- [x] **4.6** [ToolGate, service library] Executor-to-service bridge, to the M2.10 contract (locally qualified; M6 supplies the application services):
+- [x] **4.5** [ToolGate] Protocol qualification across identity ingress, Control, executor broker, a real mTLS service and separate transactional storage. M6 adds actual application listener/store component checks; one deployed full-chain run remains M8.
+- [x] **4.6** [ToolGate, service library] Executor-to-service bridge, to the M2.10 contract (merged and component-qualified; applied by the merged M6 application services):
       - **Caller authentication:** mTLS or audience-restricted service credentials prove the caller is a ToolGate
         executor
       - **Authorization evidence:** every request carries a Control-signed permit, or a reference the service
@@ -554,11 +570,11 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       branch, every phase now crosses an activity boundary using a serialized continuation stack.
 - [x] **5.2** [olo-mono] **M1-R6:** payload protection (D7) ships together with 5.1. Sensitive arguments, prompts,
       retrieved content and results are encrypted or stored by reference. Bearer and refresh tokens are never persisted. The codec is configured on **every** Temporal client and worker that serializes sensitive payloads, including the olo backend's client that starts workflows. The Temporal UI and CLI codec server needs authenticated, tenant-scoped access.
-      *Implemented in merged shared code and the companion backend codec PR:* `OloPayloadCodec` seals every payload with
+      *Implemented in merged shared code and backend #8:* `OloPayloadCodec` seals every payload with
       AES-256-GCM under the run's tenant key (tenant from `run-<tenant>~<runId>` workflow ids, authenticated with the key id),
       keys by id from `OLO_PAYLOAD_KEYS_FILE` with rotation. The worker, kernel child workflows and the backend's client use it,
       and refuse to start without a ring unless `OLO_PAYLOAD_PROTECTION=disabled-for-development`. The backend no longer
-      logs workflow inputs. **Backend companion (2026-10-24):** authenticated tenant-admin codec endpoints
+      logs workflow inputs. **Merged backend #8 (2026-10-24):** authenticated tenant-admin codec endpoints
       `/api/codec/decode` and `/encode`, disabled unless explicitly enabled. They refuse foreign-tenant payloads,
       set `Cache-Control: no-store`, and omit codec request bodies from logs. Missing tenant keys and cleartext tenant
       payloads fail closed; exception messages are encrypted too. See the implementation checkpoint for validation.
@@ -570,7 +586,7 @@ Temporal can run a failed activity again, so every effect has to be safe to repl
       - Credential rotation and renewal change neither the key nor the fingerprint.
       - Records are kept for the M2.4 retention period. After expiry, a recovering operation becomes `OUTCOME_UNKNOWN`
         and goes through reconciliation (5.4).
-      *Implemented (olo-labs/olo-toolgate, `feature/olo-m5-dedup`; kernel in this PR):* the Gateway's dedup key is tenant, mode,
+      *Implemented in merged ToolGate #192/#193 and olo-mono #15:* the Gateway's dedup key is tenant, mode,
       subject, agent and chain plus the caller's key, and Control's fingerprint leaves out session and credential epochs, so
       renewal and rotation replay the same invocation, with current epochs rechecked. A changed fingerprint is a 409 and never
       runs; concurrent submissions create one invocation. ToolGate never purges invocations (beyond the 37-day minimum); the
@@ -632,16 +648,23 @@ ToolGate packages. The existing demo code is not copied:
 
 The stores start empty (fresh install), so no import or migration is built.
 
-- [ ] **6.1** Conversation history service:
+**Merged:** [olo-knowledge #1](https://github.com/olo-labs/olo-knowledge/pull/1) and
+[ToolGate #194](https://github.com/olo-labs/olo-toolgate/pull/194). The new private repository owns separate
+`olo-memory` and `olo-rag` processes and databases. All six counted M6 steps have implementation and local/component evidence:
+10 memory and 11 RAG tests passed, including real PostgreSQL, real Qdrant/Ollama and separate application JVMs with mTLS;
+both Java SDK packages passed descriptor/archive validation. Application HTTPS tests simulate Control, while Control's
+bridge/TLS tests run separately. A single deployed full chain and enforced CNI checks remain M8/M10, not completed M6 evidence.
+
+- [x] **6.1** Conversation history service:
       - Tenant, owner and membership on every record, with explicit sharing
       - Transactional, idempotent writes keyed by stable message ids, with concurrency control
       - Defined ordering for simultaneous turns
       - Versioned summaries that record their source dependencies and are rebuilt when a source is revoked or deleted
       - Context budgets
       - Deletion that also removes derived summaries and embeddings
-- [ ] **6.2** Working-state store with bounded retention
+- [x] **6.2** Working-state store with bounded retention
 - **6.3** *Removed by D6:* no long-term user memory in the first release, and no unused endpoints. It is not counted as a step.
-- [ ] **6.4** RAG service:
+- [x] **6.4** RAG service:
       - Chunk metadata, mandatory authorized filters on query/fetch/update/delete, and a release-time re-check
       - Atomic version publication
       - Tombstones that exclude a deleted document from search at once, and that stop in-flight indexing from
@@ -649,11 +672,11 @@ The stores start empty (fresh install), so no import or migration is built.
       - Complete deletion of content, chunks, embeddings and caches
       - ACL propagation; caches keyed by tenant and authorization context
       - Citations; a versioned, real embedding model and a reindex process
-- [ ] **6.5** Ingestion controls: file size and type limits, parser hardening, restricted outbound access.
+- [x] **6.5** Ingestion controls: file size and type limits, parser hardening, restricted outbound access.
       Retrieved text is marked as untrusted data.
-- [ ] **6.6** ToolGate packages `olo.memory` and `olo.rag`, built with the Java Tool SDK on the M4 principal contract.
+- [x] **6.6** ToolGate packages `olo.memory` and `olo.rag`, built with the Java Tool SDK on the M4 principal contract.
       Executors hold only service-call credentials (M4.6). Database credentials stay in the services.
-- [ ] **6.7** Service tests: isolation (two users, two tenants), ACL change, revocation within the M2.4 bound, version
+- [x] **6.7** Service tests: isolation (two users, two tenants), ACL change, revocation within the M2.4 bound, version
       publication, deletion versus a concurrent indexing job, concurrent appends
 
 **Acceptance.** The services refuse any request outside the authorized scope, even with a valid resource id. A deleted
@@ -661,9 +684,17 @@ document never reappears in search.
 
 ## M7 — OLO conversation and document lifecycles (weight 10)
 
-- [ ] **7.1** [olo-mono] Governed-call abstraction for deterministic path A and path C operations. It is neither an
+**Merged:** [olo-mono #16](https://github.com/olo-labs/olo-mono/pull/16) and
+[backend #9](https://github.com/olo-labs/olo/pull/9), using ToolGate #194 and olo-knowledge #1.
+Local checks passed: 64 affected kernel/tool/recovery tests, 25 client tests, 13 worker tests and all 81 backend tests
+(including disposable Redis). These are the named affected kernel suites, not the entire legacy kernel suite.
+The fresh API replaces the retired backend entry points; the old UI still needs M9 coordination. Scheduled reindexing
+is tenant-bound SERVICE-only, with reference payloads and no user fallback. Cancellation recovery, durable receipts,
+source re-checks and persistence-before-release are covered in the implementation record.
+
+- [x] **7.1** [olo-mono] Governed-call abstraction for deterministic path A and path C operations. It is neither an
       AGENT node nor model-selected, and it runs on M5's durable dispatch.
-- [ ] **7.2** [olo-mono] Conversation lifecycle, replacing per-agent memory hooks (contract in M2.11):
+- [x] **7.2** [olo-mono] Conversation lifecycle, replacing per-agent memory hooks (contract in M2.11):
       1. Authorize the conversation.
       2. **Persist each accepted user message** idempotently, under its stable message id, once it is accepted.
       3. Load permitted history once for that turn. Assemble the prompt so the accepted user message appears
@@ -688,16 +719,16 @@ document never reappears in search.
       | Streaming | Nothing while streaming. The response is persisted once, when finalized. A broken stream follows the failure rule. |
       | Pending approval | The accepted user message, plus a pending marker. The response is persisted when the resumed invocation (M5.5) finishes. |
 
-- [ ] **7.3** [olo-mono] Context re-check before each LLM call and before a result is released (*Revocation timing*,
+- [x] **7.3** [olo-mono] Context re-check before each LLM call and before a result is released (*Revocation timing*,
       points 1 and 3).
       - Already-loaded history and retrieved chunks are re-authorized, and revoked items are dropped.
       - **Derived context** is checked through its source dependencies: earlier model responses, summaries,
         child-agent outputs and tool results. Anything that depends on a revoked source is discarded, or regenerated
         without it, before the next model call and before release.
-- [ ] **7.4** [olo-mono] Document lifecycle: ingest and delete are governed calls under the user. Scheduled indexing
+- [x] **7.4** [olo-mono] Document lifecycle: ingest and delete are governed calls under the user. Scheduled indexing
       runs on path C under the service principal, with resource-scoped grants.
-- [ ] **7.5** [olo-mono] RAG retrieval as a governed call. Results reach agents as untrusted, cited context.
-- [ ] **7.6** [olo] Backend endpoints (chat, uploads, knowledge sources, sessions, exports) go through the same identity
+- [x] **7.5** [olo-mono] RAG retrieval as a governed call. Results reach agents as untrusted, cited context.
+- [x] **7.6** [olo] Backend endpoints (chat, uploads, knowledge sources, sessions, exports) go through the same identity
       and authorization path
 
 **Acceptance.**
@@ -711,7 +742,8 @@ document never reappears in search.
 ## M8 — Isolation, revocation, recovery and real-stack tests (weight 8)
 
 M8 runs twice: once to qualify the governed paths before M9, and again after M9 on the final stack. Both runs must
-pass for M8 to count.
+pass for M8 to count. **Current status: neither deployed qualification run is complete.** M6/M7 component tests are
+inputs to these runs; they do not establish production revocation timing, CNI isolation or the accepted RAG targets.
 
 - [ ] **8.1** Mandatory acceptance cases, automated against the real stack:
       1. Two users in one tenant cannot access each other's private resources.
