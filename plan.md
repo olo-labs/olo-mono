@@ -35,14 +35,20 @@ deletion requirements.
 - Latest local evidence: 219 Java tests and 82 Rust tests passed across the affected suites; both ToolGate packages validated.
   See [M6/M7 implementation and verification](docs/M6-M7-IMPLEMENTATION.md). The older
   [M2–M5 checkpoint](docs/toolgate-integration/implementation-status.md) is historical evidence; its pending-merge/next-work notes are superseded here.
-- **Next: M8 first qualification run.** The deployed Gateway → broker → service → store chain, enforced network isolation,
-  measured revocation/recovery and RAG quality/freshness/latency/load remain open. M9 removal and UI/deployment coordination,
+- **Next: complete the M8 first qualification run.** The deployed Gateway → broker → service → store smoke path and
+  enforced network isolation have local evidence. Complete workflow recovery, derived-context revocation and
+  governed RAG freshness/latency/load remain open. M9 removal and UI/deployment coordination,
   the post-M9 M8 re-run, and M10 clean-install/operational qualification are also open. Merge does not sign off those gates.
 - M8 qualification tooling is in progress in olo-knowledge: reusable local `start`/`test`/`stop`, 22 passing Calico
   isolation probes, and a real-model component corpus evaluation (recall@5 1.00, precision@5 0.733, zero leakage,
-  750/750 citations). Component query p95 was 2213 ms, above the accepted latency target; this is not a Gateway
-  latency result. The full-chain fixture reaches token exchange and dispatch, but its first downstream write is
-  fenced as `OUTCOME_UNKNOWN` after a service rejection. M8 remains open, including complete recovery/Temporal
+  750/750 citations). October 25 tuning bounds embedding CPU threads and uses disposable native model volumes:
+  component query p50/p95 are 113/132 ms; these are not Gateway latency or concurrent-load results.
+  [ToolGate #203](https://github.com/olo-labs/olo-toolgate/pull/203) fixes the authorization-epoch transaction
+  found by the real stack. The subsequent smoke run passed governed writes, stable/concurrent invocation recovery,
+  private-user/tenant/resource isolation, forged identity arguments, RAG ingest/query and live revocation checks.
+  Document ACL exclusion was 2.92 s, deletion 2.84 s, and grant revocation 0.30 s. The fixture uses loopback HTTP
+  between Gateway and Control and does not prove production transport, Temporal recovery or the full M8 matrix.
+  M8 remains open, including complete recovery/Temporal
   and post-M9 qualification; M10's 50-user/50,000-document qualification has not passed.
 
 **The installation boundary is fixed.** We ship one new installation contract: new pipelines, workflows and
