@@ -20,6 +20,15 @@ class DirectoryWorkflowDefinitionLoaderTest {
     private final DirectoryWorkflowDefinitionLoader loader = new DirectoryWorkflowDefinitionLoader();
 
     @Test
+    void governedFreshInstallWorkflowPassesTheRealWorkerLoader() {
+        Path folder = Path.of("../olo-definition/olo-configuration/governed").toAbsolutePath().normalize();
+        assertThat(folder).isDirectory();
+        var registry = loader.load(folder, false);
+        assertThat(registry.findById("governed-chat")).isPresent();
+        assertThat(registry.findByQueue("olo-governed")).isPresent();
+    }
+
+    @Test
     void loadsMultipleVersionsForSameWorkflowId(@TempDir Path scanFolder) throws Exception {
         String fastJson = readPreset("fast.json");
         Files.writeString(scanFolder.resolve("fast-1.0.0.json"), fastJson);
