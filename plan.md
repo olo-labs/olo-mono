@@ -45,7 +45,11 @@ Follow-up ToolGate approval terminal-state changes passed the Java checks and Po
 suites (386 tests, seven skips, zero failures/errors). The final extended incident run
 `olo-qualification-97f0c84c7d30` passed denial handling but failed the cancellation assertion; cancellation and
 the subsequent authorization-deadline cases are not signed off. The foundation check's Python suites passed,
-but the overall command stopped at missing local PHP. Follow-up changes still require publication/review.
+but the overall command stopped at missing local PHP. This local cross-language validation limitation is
+explicitly deferred in [ToolGate #205](https://github.com/olo-labs/olo-toolgate/issues/205) by the user; it does
+not block this plan and is not reported as a passing PHP test. PHP is a contract-test dependency, not an OLO,
+memory or RAG runtime dependency. The existing PHP CI checks remain required and unchanged.
+Follow-up changes still require publication/review.
 M9 removal, the post-removal M8 rerun and full M10 operational acceptance remain unfinished.
 - M2 contracts, D4–D7, the 30-second revocation bound and the RAG targets remain accepted. Targets are not yet measured production results.
 - M4/M5 completion is merged in [ToolGate #193](https://github.com/olo-labs/olo-toolgate/pull/193),
@@ -939,6 +943,7 @@ restore test and a credential rotation.
 | D7 | How are sensitive Temporal payloads protected? | **An AES-256-GCM payload codec**, with tenant keys managed outside Temporal and identified by key id, configured on every client and worker that serializes sensitive payloads. Authorized references for large content. No authentication credentials in payloads. Decryption tools need authenticated, tenant-scoped access. Implemented with durable state in M5.2. | **Accepted 2026-10-23** |
 | D8 | Existing data and executions? | **Out of scope, and the boundary is fixed.** One new installation contract: no migration tools, legacy readers, compatibility modes, or support for executions started under the old implementation. Changing this needs a new decision that replaces D8. | Decided |
 | D9 | Does performance block completion of this plan? | **No. Performance is considered complete for this plan and tracked separately in ToolGate #204.** Preserve original targets and failed measurements; this is a scope closure, not a measured pass. Functional quality, authorization/revocation, retry/cancellation, quotas and operational acceptance still apply. | User decided 2026-10-26 |
+| D10 | Does missing local PHP block this plan? | **No. The incomplete local PHP contract validation is deferred to ToolGate #205.** Preserve the missing-prerequisite result; do not mark tests passed or disable PHP checks in CI. OLO/memory/RAG do not require PHP at runtime. | User decided 2026-10-26 |
 
 ## Risks
 
