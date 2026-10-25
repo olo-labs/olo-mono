@@ -250,7 +250,7 @@ public final class KernelEntryPoint {
                 resolution.returnVariableName(),
                 TraversalDiagnostics.formatValue(resolution.returnVariableValue()),
                 resolution.message().length(),
-                resolution.message());
+                TraversalDiagnostics.formatValue(resolution.message()));
         return resolution.message();
     }
 
@@ -313,8 +313,8 @@ public final class KernelEntryPoint {
                 queue,
                 resolution.returnVariableName(),
                 TraversalDiagnostics.formatValue(resolution.returnVariableValue()),
-                context.getVariableMap(),
-                resolution.message());
+                TraversalDiagnostics.formatValue(context.getVariableMap()),
+                TraversalDiagnostics.formatValue(resolution.message()));
     }
 
     private static String workflowIdFromInput(WorkflowInput input) {

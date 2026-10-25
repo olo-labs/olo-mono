@@ -21,7 +21,7 @@ class WorkflowReturnVariableTest {
     void readsConfiguredNameFromWorkflowMetadata() {
         WorkflowDefinition graph = WorkflowDefinition.builder()
                 .id("test")
-                .name("Test")
+                .label("Test")
                 .queue("test")
                 .metadata(Map.of(WorkflowReturnVariable.WORKFLOW_METADATA_KEY, "ReturnValue"))
                 .variables(List.of(variable("OtherValue")))
@@ -35,7 +35,7 @@ class WorkflowReturnVariableTest {
     void prefersWorkflowMetadataReturnVariable() {
         WorkflowDefinition graph = WorkflowDefinition.builder()
                 .id("test")
-                .name("Test")
+                .label("Test")
                 .queue("test")
                 .metadata(Map.of(WorkflowReturnVariable.WORKFLOW_METADATA_KEY, "ReturnValue"))
                 .variables(List.of(
@@ -50,7 +50,7 @@ class WorkflowReturnVariableTest {
     void usesSingleVariableMarkedWithReturnRole() {
         WorkflowDefinition graph = WorkflowDefinition.builder()
                 .id("test")
-                .name("Test")
+                .label("Test")
                 .queue("test")
                 .variables(List.of(
                         variable("OtherValue"),
@@ -64,7 +64,7 @@ class WorkflowReturnVariableTest {
     void failsWhenMultipleVariablesMarkedWithReturnRole() {
         WorkflowDefinition graph = WorkflowDefinition.builder()
                 .id("test")
-                .name("Test")
+                .label("Test")
                 .queue("test")
                 .variables(List.of(
                         variableWithReturnRole("First"),
@@ -80,7 +80,7 @@ class WorkflowReturnVariableTest {
     void fallsBackToDefaultReturnValueName() {
         WorkflowDefinition graph = WorkflowDefinition.builder()
                 .id("test")
-                .name("Test")
+                .label("Test")
                 .queue("test")
                 .variables(List.of(variable("ReturnValue"), variable("OtherValue")))
                 .build();
