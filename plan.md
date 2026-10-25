@@ -23,7 +23,30 @@ empty application stores (conversations, memory, documents, ToolGate state).
 Fresh installation simplifies removal (M9) and deployment (M10). It does not relax the authorization, retry or
 deletion requirements.
 
-**Status (2026-10-25): M2–M7 implementation and local/component acceptance checks are complete and merged.**
+**Status (2026-10-26): M2–M7 implementation and local/component acceptance checks are complete and merged.**
+
+**Scope decision (2026-10-26, user approved): performance is complete for this plan and tracked separately in
+[ToolGate #204](https://github.com/olo-labs/olo-toolgate/issues/204).** This is an administrative closure of
+performance acceptance here, not a claim that the measured latency passed. Preserve the 300/800 ms targets and
+the measured 1,381/1,567 ms p50/p95 evidence in that defect. Latency, throughput and capacity benchmarking no
+longer block M8, M9 or M10. Retrieval quality, isolation, revocation/freshness, retry/cancellation safety, quotas
+and operational acceptance remain required. This scope decision supersedes earlier performance-gate wording.
+
+**Latest functional checkpoint (2026-10-26).** The clean-source Temporal pipeline (`3f9d62b`, run
+`olo-qualification-bf4658686f9f`) passed restart/replay, encrypted history, agent-independent user authority,
+concurrent turns and source deletion blocking in-flight release in 9.157 s. The main seven-tool incident run
+(`olo-qualification-8d3171d2df6b`) passed delegated ceilings, independent approval of the original invocation
+and audited subject/actor/resource bindings. It uses sequential workflow orchestration; commander-generated
+delegation is not proved. The reusable governed debug start/check/stop passed, including removal of captured
+anonymous volumes. The separate operations drill passed encrypted backup/restore, database credential rotation,
+restored isolation/tombstones, reindexing and retention of an uncertain write without redispatch.
+
+Follow-up ToolGate approval terminal-state changes passed the Java checks and PostgreSQL/SQLite enterprise
+suites (386 tests, seven skips, zero failures/errors). The final extended incident run
+`olo-qualification-97f0c84c7d30` passed denial handling but failed the cancellation assertion; cancellation and
+the subsequent authorization-deadline cases are not signed off. The foundation check's Python suites passed,
+but the overall command stopped at missing local PHP. Follow-up changes still require publication/review.
+M9 removal, the post-removal M8 rerun and full M10 operational acceptance remain unfinished.
 - M2 contracts, D4–D7, the 30-second revocation bound and the RAG targets remain accepted. Targets are not yet measured production results.
 - M4/M5 completion is merged in [ToolGate #193](https://github.com/olo-labs/olo-toolgate/pull/193),
   [olo-mono #15](https://github.com/olo-labs/olo-mono/pull/15) and [backend #8](https://github.com/olo-labs/olo/pull/8),
@@ -38,7 +61,7 @@ deletion requirements.
 - **Next: complete the M8 first qualification run.** The deployed Gateway → broker → service → store smoke path and
   enforced network isolation have local evidence. Selected real Temporal recovery, concurrent-turn and
   derived-context revocation checks now pass; complete ASK/unknown-outcome/incident coverage and governed
-  RAG freshness/latency/load remain open. Performance investigation is deferred under defect #204. M9 removal and UI/deployment coordination,
+  RAG freshness remain open. Performance is closed for this plan and tracked separately under defect #204. M9 removal and UI/deployment coordination,
   the post-M9 M8 re-run, and M10 clean-install/operational qualification are also open. Merge does not sign off those gates.
 - M8 qualification tooling is in progress in olo-knowledge: reusable local `start`/`test`/`stop`, 22 passing Calico
   isolation probes, and a real-model component corpus evaluation (recall@5 1.00, precision@5 0.733, zero leakage,
@@ -50,7 +73,7 @@ deletion requirements.
   Document ACL exclusion was 2.92 s, deletion 2.84 s, and grant revocation 0.30 s. The fixture uses loopback HTTP
   between Gateway and Control and does not prove production transport, Temporal recovery or the full M8 matrix.
   The separate Temporal fixture below adds recovery evidence. M8 remains open, including complete recovery
-  and post-M9 qualification; M10's 50-user/50,000-document qualification has not passed.
+  and post-M9 qualification; M10's 50-user/50,000-document performance qualification is now tracked separately.
 - The first backend/worker qualification found fresh-build dependency gaps, an invalid governed workflow,
   an agent-mapping check despite zero tool rounds, and private traversal payloads in logs. Fixes are in
   [backend #10](https://github.com/olo-labs/olo/pull/10) and
@@ -72,8 +95,8 @@ deletion requirements.
   **300/800 ms** targets, with one user, one document, 16 measured successful queries after one excluded warm-up,
   and zero backpressure retries. Root cause is not established. The measurement recorded knowledge revision
   `705d7e8` with a dirty worktree; it is diagnostic evidence, not clean-source or corpus/load sign-off.
-  At the user's request, root-cause work and performance fixes are deferred; targets remain unchanged and
-  M8.2a/M10.4 remain open. ToolGate #202 remains a separate CI implementation.
+  At the user's request, performance is considered complete for this plan and tracked separately in #204;
+  targets remain unchanged. Non-performance requirements of M8.2a/M10.4 remain open. ToolGate #202 remains a separate CI implementation.
 - **Qualification checkpoint and cleanup:** run `olo-qualification-0fa7ca6ac461` records the latest passing
   functional pipeline; run `olo-qualification-5c00f5e51669` records the failing latency baseline. Reports are in
   `olo-knowledge/build/qualification/pipeline.json` and `gateway-latency.json` respectively (local generated evidence).
@@ -99,9 +122,9 @@ that replaces D8.
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, olo, ToolGate | 12 | 100% | 100% | ✅ Completion PRs merged; local recovery/codec/approval checks passed |
 | M6 | Memory and RAG services and ToolGate packages | olo-knowledge, ToolGate | 12 | 100% | 100% | ✅ Merged (#1, ToolGate #194); service/component tests and package validation passed |
 | M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 100% | 100% | ✅ Merged (olo-mono #16, backend #9); lifecycle/client/worker/backend checks passed |
-| M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | In progress: selected functional checks pass; full matrix open; latency fails (#204), investigation deferred; runs twice |
+| M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | In progress: functional checks advanced; cancellation/full matrix and post-removal rerun open; performance closed here (#204 separate) |
 | M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | Not started; gated on complete first M8 pass |
-| M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | Open; full staging load, transport and operational qualification remain |
+| M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | Selected restore/DB rotation drills pass; transport, full rotation and final clean install remain; performance separate |
 | | **Overall** | | **100** | **77%** | **77%** | M8 first run → M9 → M8 re-run → M10 remain |
 
 **How the percentages work.**
@@ -787,8 +810,8 @@ backend/worker/Temporal run `olo-qualification-0fa7ca6ac461` passed encrypted-hi
 agent-independent user authority, concurrent distinct turns and selected derived/in-flight revocation checks
 (9.94 s exclusion). Scripted IdP/model dependencies and development transport limit this evidence. Complete
 ASK/incident/unknown-outcome coverage and all required revocation scenarios remain open. The Gateway RAG baseline
-failed at 1,381/1,567 ms p50/p95; [defect #204](https://github.com/olo-labs/olo-toolgate/issues/204) tracks it,
-with investigation deferred by the user. Full corpus/load/freshness qualification and the post-M9 run are still
+failed at 1,381/1,567 ms p50/p95; [defect #204](https://github.com/olo-labs/olo-toolgate/issues/204) tracks it.
+Performance is closed for this plan by the user's 2026-10-26 decision. Full functional corpus/freshness qualification and the post-M9 run are still
 required. No complete M8 step is credited from these selected checks; overall counted progress remains **77%**.
 
 - [ ] **8.1** Mandatory acceptance cases, automated against the real stack:
@@ -809,7 +832,7 @@ required. No complete M8 step is credited from these selected checks; overall co
       - citation correctness
       - indexing freshness
       - context limits
-      - query and turn latency (p50 and p95) at the expected concurrent load
+      - query/turn latency and concurrent-load performance: complete for this plan by scope decision; tracked separately in #204
 - [ ] **8.3** Debug stack `debug.ps1 -ToolGate`: start or attach ToolGate and the memory/RAG services, add readiness
       probes, provision identities (old 6.1)
 - [ ] **8.4** Multi-agent `incident-recovery` pipeline on ToolGate's `server-recovery` mocks (old M5), on path B with
@@ -831,7 +854,7 @@ required. No complete M8 step is credited from these selected checks; overall co
 
 **Acceptance.**
 - In both runs: all nine cases pass, revocation (including derived context) stays within the bound, and the RAG
-  quality and performance targets are met.
+  quality targets are met. Performance acceptance is closed here and tracked separately in #204.
 - The incident-recovery run completes after approval, and every call is audited with the right subject, actor,
   resource and decision.
 
@@ -878,8 +901,9 @@ then re-run (8.6).
 - [ ] **10.2** Credential rotation for user-bound, service, executor-to-service and database credentials, with tested
       rollover. Also rotation of the payload-protection keys (M5.2).
 - [ ] **10.3** Redacted diagnostics: no tokens, prompts or retrieved content in logs or errors
-- [ ] **10.4** Bounded retries, timeouts, cancellation, and per-user quotas. A load test at the M2.12 concurrency on
-      staging confirms the latency and freshness targets hold with quotas on.
+- [ ] **10.4** Bounded retries, timeouts, cancellation, and per-user quotas, with functional freshness checks while
+      quotas are enabled. Latency/throughput/capacity load qualification is complete for this plan by the user's
+      scope decision and tracked separately in #204; it is not a remaining release gate here.
 - [ ] **10.5** Backups, restore tests, and retention policies for conversations, working state and documents
 - [ ] **10.6** **Clean-install acceptance test.** On empty infrastructure, follow only the documented steps to provision
       identities, grants (including the path C service principal), the memory and RAG services, ToolGate packages and
@@ -914,6 +938,7 @@ restore test and a credential rotation.
 | D6 | Is long-term user memory in the first release? | **No.** The first release ships persistent conversation history, temporary working state and document RAG. Preferences or facts carried across conversations need a future decision covering consent, provenance, correction and deletion. No unused long-term memory endpoints are built. | **Accepted 2026-10-23** |
 | D7 | How are sensitive Temporal payloads protected? | **An AES-256-GCM payload codec**, with tenant keys managed outside Temporal and identified by key id, configured on every client and worker that serializes sensitive payloads. Authorized references for large content. No authentication credentials in payloads. Decryption tools need authenticated, tenant-scoped access. Implemented with durable state in M5.2. | **Accepted 2026-10-23** |
 | D8 | Existing data and executions? | **Out of scope, and the boundary is fixed.** One new installation contract: no migration tools, legacy readers, compatibility modes, or support for executions started under the old implementation. Changing this needs a new decision that replaces D8. | Decided |
+| D9 | Does performance block completion of this plan? | **No. Performance is considered complete for this plan and tracked separately in ToolGate #204.** Preserve original targets and failed measurements; this is a scope closure, not a measured pass. Functional quality, authorization/revocation, retry/cancellation, quotas and operational acceptance still apply. | User decided 2026-10-26 |
 
 ## Risks
 
