@@ -46,6 +46,11 @@ param(
     # Run Ollama without the NVIDIA GPU reservation.
     [switch]$Cpu,
 
+    # Fresh isolated governed stack, supplied by the adjacent olo-knowledge checkout.
+    [switch]$ToolGate,
+    [string]$QualificationPython = 'python',
+    [string]$KnowledgeDir = '',
+
     # Force a rebuild of the locally built images.
     [switch]$Rebuild,
 
@@ -78,6 +83,14 @@ $ErrorActionPreference = 'Stop'
 $DebugDir = $PSScriptRoot
 $MonoRoot = (Resolve-Path (Join-Path $DebugDir '..')).Path
 $WorkspaceRoot = (Resolve-Path (Join-Path $MonoRoot '..')).Path
+if ($ToolGate) {
+    if (-not $KnowledgeDir) { $KnowledgeDir = Join-Path $WorkspaceRoot 'olo-knowledge' }
+    $governedDebug = Join-Path $KnowledgeDir 'governed-debug.ps1'
+    if (!(Test-Path -LiteralPath $governedDebug)) { throw 'ToolGate debug requires olo-knowledge/governed-debug.ps1 and its documented qualification prerequisites' }
+    if ($Action -notin @('up','check','status','logs','collect','down')) { throw 'ToolGate debug supports up, check, status, logs, collect and down' }
+    & $governedDebug -Action $Action -Python $QualificationPython
+    exit $LASTEXITCODE
+}
 if (-not $OloDockerDir) { $OloDockerDir = Join-Path $MonoRoot 'deploy/stack' }
 $DevDir = Join-Path $OloDockerDir 'dev'
 $ComposeDir = Join-Path $DebugDir 'compose'
@@ -571,3 +584,4 @@ switch ($Action) {
 }
 # Failures throw (exit 1); don't leak the exit code of the last probe.
 exit 0
+

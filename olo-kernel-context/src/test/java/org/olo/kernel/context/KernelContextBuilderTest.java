@@ -20,22 +20,22 @@ class KernelContextBuilderTest {
 
     @Test
     void buildsRuntimeContextWithDeserializedInputAndIsolatedGraph() throws Exception {
-        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
+        Path presets = Paths.get("../olo-definition/olo-configuration/governed").toAbsolutePath().normalize();
         if (!Files.exists(presets)) {
             throw new org.opentest4j.TestAbortedException("olo-configuration presets not found");
         }
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false);
-        WorkflowDefinition source = registry.findById("agent").orElseThrow();
+        WorkflowDefinition source = registry.findById("governed-chat").orElseThrow();
         String payload = Files.readString(
                 Paths.get("../olo-workflow-input/samples/agent-execution/workflow-input.json")
                         .toAbsolutePath()
                         .normalize());
 
         KernelRuntimeContext context = KernelContextBuilder.build(
-                KernelContextBuildRequest.of("oloQueue2", payload, source));
+                KernelContextBuildRequest.of("olo-governed", payload, source));
 
-        assertThat(context.getQueue()).isEqualTo("agent");
+        assertThat(context.getQueue()).isEqualTo("olo-governed");
         assertThat(context.isGraphReady()).isTrue();
         assertThat(context.getInput()).isInstanceOf(WorkflowInput.class);
         assertThat(context.getInput().getRouting().getTransactionType().name()).isEqualTo("AGENT_EXECUTION");

@@ -62,7 +62,7 @@ public final class TravelPlannerDefinitions {
                and logPath in directResponse.
 
             If a previous attempt failed validation, fix it:
-            {toolCallSequenceJsonValidationError}
+            {agentCallSequenceJsonValidationError}
 
             Respond with JSON only.""";
 

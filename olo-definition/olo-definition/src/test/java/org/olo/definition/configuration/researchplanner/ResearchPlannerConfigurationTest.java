@@ -9,7 +9,7 @@ import org.olo.definition.configuration.scenario.ScenarioActionToolsSupport;
 import org.olo.definition.configuration.scenario.ScenarioConversationPluginSupport;
 import org.olo.definition.designer.StudioDesignerAssertions;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowDefinition;
 
@@ -46,13 +46,13 @@ class ResearchPlannerConfigurationTest {
                         ScenarioActionToolsSupport.CREATE_PULL_REQUEST_NODE_ID,
                         ScenarioConversationPluginSupport.CONVERSATION_LOAD_NODE_ID,
                         ScenarioConversationPluginSupport.CONVERSATION_STORE_NODE_ID);
-        assertThat(orchestrator.getMetadata()).containsKey(ToolCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
+        assertThat(orchestrator.getMetadata()).containsKey(AgentCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
         assertThat(orchestrator.getVariables().stream().map(v -> v.getName()))
-                .contains(ToolCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE);
+                .contains(AgentCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE);
         assertThat(orchestrator.getEdges()).anyMatch(edge ->
                 ResearchPlannerDefinitions.LITERATURE_AGENT_ID.equals(edge.getSourceNodeId())
                         && "agentPlug".equals(edge.getSourcePortId())
-                        && ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(edge.getTargetNodeId())
+                        && AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(edge.getTargetNodeId())
                         && "agentPlug".equals(edge.getTargetPortId()));
         assertThat(orchestrator.getEdges()).anyMatch(edge ->
                 ResearchPlannerDefinitions.SYNTHESIS_AGENT_ID.equals(edge.getSourceNodeId())

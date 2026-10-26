@@ -6,7 +6,7 @@ package org.olo.kernel.agent.tool;
 
 import org.junit.jupiter.api.Test;
 import org.olo.definition.node.NodeDefinition;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.agent.executor.impl.LocalLlmAgentExecutor;
 import org.olo.kernel.agent.impl.DefaultLlmInvocationService;
@@ -77,6 +77,20 @@ class ToolGateAgentExecutionTest {
     }
 
     @Test
+    void zeroToolRoundsNeedsNoAgentIdentityOrCatalog() {
+        var llm = new AgentToolTestSupport.ScriptedLlm();
+        var gateway = new AgentToolTestSupport.FakeToolGate(Map.of());
+        var denied = new MappedAgentIdentityPolicy(List.of(), List.of("olo-platform-service"));
+        var access = new AtomicReference<>(AgentToolAccess.enabled(gateway, 8, denied));
+        var node = agentNode("agent", Map.of("maxToolRounds", 0, "agentName", "unmapped-agent"));
+        var result = executor(llm, access).execute(context(graph("unmapped-workflow", node), "run-1"), node);
+        assertThat(result.status()).isEqualTo(NodeStatus.COMPLETED);
+        assertThat(llm.completions).containsExactly("prompt for agent");
+        assertThat(llm.chatTools).isEmpty();
+        assertThat(gateway.listedFor).isEmpty();
+    }
+
+    @Test
     void eachAgentUsesItsOwnIdentityAndRecordsItsToolCalls() {
         var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of(
                 "triage-agent", List.of(tool("incidents.host-status")),
@@ -143,7 +157,7 @@ class ToolGateAgentExecutionTest {
     void plannerAgentsKeepAnsweringWithAPlan() {
         var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("planner", List.of(tool("incidents.host-status"))));
         var llm = new AgentToolTestSupport.ScriptedLlm();
-        NodeDefinition planner = agentNode("agent", Map.of(ToolCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true));
+        NodeDefinition planner = agentNode("agent", Map.of(AgentCallPlannerSupport.CONFIG_AGENT_CALL_PLANNER, true));
 
         executor(llm, new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8, MAPPED)))
                 .execute(context(graph("planner", planner), "run-1"), planner);

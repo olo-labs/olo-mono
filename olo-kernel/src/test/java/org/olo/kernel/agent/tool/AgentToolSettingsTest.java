@@ -6,7 +6,7 @@ package org.olo.kernel.agent.tool;
 
 import org.junit.jupiter.api.Test;
 import org.olo.definition.node.NodeDefinition;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.kernel.exception.KernelException;
 
 import java.util.Map;
@@ -83,7 +83,7 @@ class AgentToolSettingsTest {
 
     @Test
     void plannerAgentsDoNotGetTools() {
-        NodeDefinition planner = agentNode("agent", Map.of(ToolCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true));
+        NodeDefinition planner = agentNode("agent", Map.of(AgentCallPlannerSupport.CONFIG_AGENT_CALL_PLANNER, true));
 
         assertThat(AgentToolSettings.usesTools(planner)).isFalse();
         assertThat(AgentToolSettings.usesTools(agentNode("agent", Map.of()))).isTrue();

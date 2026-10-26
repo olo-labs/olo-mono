@@ -30,7 +30,7 @@ public final class NodeExecutionScheduling {
             // These executors only orchestrate Temporal children. Their children own every external call.
             if (node.getConfiguration() != null && Boolean.TRUE.equals(node.getConfiguration().get("agentCallDispatch"))) return false;
             boolean child = model == ExecutionModel.CHILD_WORKFLOW && node.getWorkflow() != null
-                    && !org.olo.definition.toolcall.ToolCallPlannerSupport.isToolCallPlanner(node)
+                    && !org.olo.definition.agentcall.AgentCallPlannerSupport.isAgentCallPlanner(node)
                     && !org.olo.definition.dynamicgraph.AgentSynthesisSupport.isAgentSynthesis(node);
             return !child;
         }

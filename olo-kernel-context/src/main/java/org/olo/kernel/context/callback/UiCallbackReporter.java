@@ -243,7 +243,7 @@ public final class UiCallbackReporter {
                 eventPostUrl,
                 returnVariableName,
                 formatLogValue(returnVariableValue),
-                message);
+                formatLogValue(message));
 
         postPayload(eventPostUrl, payload);
     }
@@ -256,11 +256,7 @@ public final class UiCallbackReporter {
         if (value == null) {
             return "null";
         }
-        String text = String.valueOf(value);
-        if (text.length() <= 120) {
-            return text;
-        }
-        return text.substring(0, 120) + "...";
+        return "[redacted]";
     }
 
     static String resolveCallbackUrl(WorkflowInput input) {

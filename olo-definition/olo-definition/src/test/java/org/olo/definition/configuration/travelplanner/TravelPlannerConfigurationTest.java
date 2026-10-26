@@ -7,7 +7,7 @@ package org.olo.definition.configuration.travelplanner;
 import org.junit.jupiter.api.Test;
 import org.olo.definition.designer.StudioDesignerAssertions;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowDefinition;
 
@@ -41,13 +41,13 @@ class TravelPlannerConfigurationTest {
                 .contains(
                         TravelPlannerDefinitions.DESTINATIONS_TOOL_ID,
                         TravelPlannerDefinitions.OFFERS_TOOL_ID);
-        assertThat(orchestrator.getMetadata()).containsKey(ToolCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
+        assertThat(orchestrator.getMetadata()).containsKey(AgentCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
         assertThat(orchestrator.getVariables().stream().map(v -> v.getName()))
-                .contains(ToolCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE);
+                .contains(AgentCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE);
         assertThat(orchestrator.getEdges()).anyMatch(edge ->
                 TravelPlannerDefinitions.DESTINATION_AGENT_ID.equals(edge.getSourceNodeId())
                         && "agentPlug".equals(edge.getSourcePortId())
-                        && ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(edge.getTargetNodeId()));
+                        && AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(edge.getTargetNodeId()));
         assertThat(orchestrator.getEdges()).anyMatch(edge ->
                 TravelPlannerDefinitions.ITINERARY_AGENT_ID.equals(edge.getSourceNodeId())
                         && "agentPlug".equals(edge.getSourcePortId()));

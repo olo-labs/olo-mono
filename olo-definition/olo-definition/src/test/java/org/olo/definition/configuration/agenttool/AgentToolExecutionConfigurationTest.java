@@ -6,7 +6,7 @@ package org.olo.definition.configuration.agenttool;
 
 import org.junit.jupiter.api.Test;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowDefinition;
 
@@ -29,11 +29,11 @@ class AgentToolExecutionConfigurationTest {
         WorkflowDefinition onDisk = json.deserialize(Files.readString(preset));
         assertThat(WorkflowValidator.validate(onDisk).valid()).isTrue();
         assertThat(onDisk.getId()).isEqualTo(expected.getId());
-        assertThat(onDisk.getMetadata()).containsKey(ToolCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
+        assertThat(onDisk.getMetadata()).containsKey(AgentCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
         assertThat(onDisk.getVariables().stream().map(v -> v.getName()))
                 .contains(
-                        ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
-                        ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE,
-                        ToolCallPlannerSupport.DEFAULT_TOOL_RESULTS_VARIABLE);
+                        AgentCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
+                        AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE,
+                        AgentCallPlannerSupport.DEFAULT_TOOL_RESULTS_VARIABLE);
     }
 }

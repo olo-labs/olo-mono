@@ -35,8 +35,8 @@ class GraphTraverserTest {
     private final GraphTraverser traverser = GraphTraverserFactory.withLlmClient(new FakeLlmClient());
 
     @Test
-    void traversesFastPresetAndPopulatesReturnValue() throws Exception {
-        KernelRuntimeContext context = buildContext("fast", withMessage("quick question"));
+    void traversesFreshGovernedPresetAndPopulatesReturnValue() throws Exception {
+        KernelRuntimeContext context = buildContext("governed-chat", withMessage("quick question"));
         TraversalResult result = traverser.traverse(context);
 
         assertThat(result.completed()).isTrue();
@@ -49,7 +49,7 @@ class GraphTraverserTest {
 
     @Test
     void leavesReturnValueUnsetWhenInputMessageMissing() throws Exception {
-        KernelRuntimeContext context = buildContext("fast", new WorkflowInput("1.0", List.of(), null, null, null, null));
+        KernelRuntimeContext context = buildContext("governed-chat", new WorkflowInput("1.0", List.of(), null, null, null, null));
         TraversalResult result = traverser.traverse(context);
 
         assertThat(result.completed()).isTrue();
@@ -60,7 +60,7 @@ class GraphTraverserTest {
     }
 
     private static KernelRuntimeContext buildContext(String queue, WorkflowInput input) throws Exception {
-        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
+        Path presets = Paths.get("../olo-definition/olo-configuration/governed").toAbsolutePath().normalize();
         if (!Files.exists(presets)) {
             throw new org.opentest4j.TestAbortedException("olo-configuration presets not found");
         }

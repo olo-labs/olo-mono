@@ -92,13 +92,14 @@ class WorkflowReturnResolverTest {
     }
 
     private static KernelRuntimeContext buildAgentContext(WorkflowInput input) throws Exception {
-        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
+        Path presets = Paths.get("../olo-definition/olo-configuration/governed").toAbsolutePath().normalize();
         if (!Files.exists(presets)) {
             throw new org.opentest4j.TestAbortedException("olo-configuration presets not found");
         }
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false);
-        WorkflowDefinition source = registry.findById("agent").orElseThrow();
+        WorkflowDefinition source = registry.findById("governed-chat").orElseThrow();
+        source = source.toBuilder().metadata("returnOutputKey", "").build();
         return KernelContextBuilder.build(KernelContextBuildRequest.of("oloQueue2", input, source));
     }
 

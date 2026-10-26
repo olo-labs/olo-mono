@@ -31,7 +31,7 @@ public final class TraversalContextLogger {
                 context.isGraphReady(),
                 nextActivityName,
                 TraversalCompletionLogger.formatValue(primaryInputMessage),
-                context.getVariableMap());
+                TraversalCompletionLogger.formatValue(context.getVariableMap()));
     }
 
     public static void logContextReady(KernelRuntimeContext context, String primaryInputMessage) {

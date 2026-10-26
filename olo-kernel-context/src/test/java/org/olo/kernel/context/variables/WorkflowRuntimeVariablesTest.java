@@ -18,7 +18,7 @@ class WorkflowRuntimeVariablesTest {
     void initializesFromVariableDefinitions() {
         WorkflowDefinition graph = WorkflowDefinition.builder()
                 .id("test")
-                .name("Test")
+                .label("Test")
                 .queue("test")
                 .variables(List.of(
                         VariableDefinition.builder()

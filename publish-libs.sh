@@ -3,12 +3,14 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
+# Container builders can use their preinstalled Gradle without downloading another distribution.
+GRADLE_EXECUTABLE="${OLO_GRADLE_EXECUTABLE:-./gradlew}"
 for module in olo-spi olo-annotation olo-annotation-processor; do
   echo "Publishing $module to build/repo ..."
-  (cd "$module" && ./gradlew "-PoloPublishBuildDir=../build/publish-work/$module" publishMavenPublicationToOloMonoRepository -x test)
+  (cd "$module" && "$GRADLE_EXECUTABLE" "-PoloPublishBuildDir=../build/publish-work/$module" publishMavenPublicationToOloMonoRepository -x test)
 done
 echo "Publishing olo-definition to build/repo ..."
-(cd olo-definition && ./gradlew "-PoloPublishBuildDir=../build/publish-work/olo-definition" :olo-definition:publishMavenPublicationToOloMonoRepository -x test)
+(cd olo-definition && "$GRADLE_EXECUTABLE" "-PoloPublishBuildDir=../build/publish-work/olo-definition" :olo-definition:publishMavenPublicationToOloMonoRepository -x test)
 echo "Publishing olo-workflow-input to build/repo ..."
-(cd olo-workflow-input && ./gradlew "-PoloPublishBuildDir=../build/publish-work/olo-workflow-input" publishMavenPublicationToOloMonoRepository -x test)
+(cd olo-workflow-input && "$GRADLE_EXECUTABLE" "-PoloPublishBuildDir=../build/publish-work/olo-workflow-input" publishMavenPublicationToOloMonoRepository -x test)
 echo "OLO libs published to $ROOT/build/repo"
