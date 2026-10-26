@@ -208,7 +208,10 @@ read -r -p "Deploy speech/audio AI? [y/N]: " DEPLOY_SPEECH_ANSWER
 read -r -p "Deploy image AI? [y/N]: " DEPLOY_IMAGE_ANSWER
 read -r -p "Deploy video AI? [y/N]: " DEPLOY_VIDEO_ANSWER
 
+bash scripts/init-identity.sh || exit 1
+
 COMPOSE_FILES=(
+    docker-compose-identity.yml
     docker-compose-db.yml
     docker-compose-cache.yml
     docker-compose-ElasticSearch.yml

@@ -21,7 +21,15 @@ services:
       # URL workers use to POST run events. Host-run worker (gradlew/IDE): localhost:47080.
       # Override when worker runs in Docker on olo-net: OLO_CHAT_CALLBACK_BASE_URL=http://olo:7080
       OLO_CHAT_CALLBACK_BASE_URL: ${OLO_CHAT_CALLBACK_BASE_URL:-http://olo:7080}
-      OLO_WS_JWT_REQUIRED: "false"
+      # Verified JWT identity is required by the backend; .env values must be forwarded explicitly.
+      OLO_SECURITY_ISSUER: ${OLO_SECURITY_ISSUER:-http://localhost:48080/realms/olo-dev}
+      OLO_SECURITY_AUDIENCE: ${OLO_SECURITY_AUDIENCE:-olo-api}
+      OLO_SECURITY_JWK_SET_URI: ${OLO_SECURITY_JWK_SET_URI:-http://keycloak:8080/realms/olo-dev/protocol/openid-connect/certs}
+      OLO_SECURITY_BOOTSTRAPMEMBERSHIPS_0_ISSUER: ${OLO_SECURITY_ISSUER:-http://localhost:48080/realms/olo-dev}
+      OLO_SECURITY_BOOTSTRAPMEMBERSHIPS_0_SUBJECT: "5e6c15f2-2771-426b-b463-c0b932ef85a1"
+      OLO_SECURITY_BOOTSTRAPMEMBERSHIPS_0_TENANTS_0: default
+      OLO_CALLBACK_KEY_ID: ${OLO_CALLBACK_KEY_ID:-}
+      OLO_CALLBACK_KEY: ${OLO_CALLBACK_KEY:-}
       # Must match Dockerfile WORKDIR (/app) and image default OLO_CONFIGURATION_DIR.
       OLO_CONFIGURATION_DIR: /app/olo-configuration
       # Shared raw document upload folder. Keep mounted so uploads are visible to
@@ -42,8 +50,12 @@ services:
       - ${OLO_CONFIGURATION_SOURCE:-./configuration/olo-configuration}:/app/olo-configuration
       - ${OLO_RESOURCE_UPLOAD_SOURCE:-./configuration/olo-resource-uploads}:/app/shared/resource-uploads
     depends_on:
-      - redis
-      - db
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      db:
+        condition: service_started
     networks:
       - olo-net
 
@@ -91,6 +103,8 @@ services:
     restart: unless-stopped
     environment:
       OLO_WORKER_CONFIG_PATH: /app/worker/config/worker-config.yaml
+      OLO_CALLBACK_KEY_ID: ${OLO_CALLBACK_KEY_ID:-}
+      OLO_CALLBACK_KEY: ${OLO_CALLBACK_KEY:-}
       # Temporal payload protection (OLO M5.2). This dev stack keeps history readable; production mounts a key ring
       # and sets OLO_PAYLOAD_KEYS_FILE instead.
       OLO_PAYLOAD_PROTECTION: ${OLO_PAYLOAD_PROTECTION:-disabled-for-development}

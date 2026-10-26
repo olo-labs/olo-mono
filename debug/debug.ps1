@@ -93,6 +93,7 @@ if ($ToolGate) {
 }
 if (-not $OloDockerDir) { $OloDockerDir = Join-Path $MonoRoot 'deploy/stack' }
 $DevDir = Join-Path $OloDockerDir 'dev'
+if ($Action -in @('up', 'check', 'worker')) { & (Join-Path $DevDir 'scripts/init-identity.ps1') }
 $ComposeDir = Join-Path $DebugDir 'compose'
 $LogRoot = Join-Path $DebugDir 'logs'
 $ProjectName = 'olo'
@@ -116,6 +117,8 @@ if ($Worker -eq 'host') {
 # Infrastructure the worker and backend cannot run without, in start order.
 # Probe returns $true when the service is ready to accept work.
 $Required = @(
+    @{ Service = 'keycloak'; Container = 'olo-keycloak'; Port = 48080; Url = 'http://localhost:48080'
+       Probe = { (Get-ContainerState 'olo-keycloak').Health -eq 'healthy' } }
     @{ Service = 'db';            Container = 'olo-db';            Port = 45432; Url = 'postgres://localhost:45432'
        Probe = { (Invoke-Docker exec olo-db pg_isready -U pguser -d pgdb) -match 'accepting connections' } }
     @{ Service = 'redis';         Container = 'olo-redis';         Port = 46379; Url = 'redis://localhost:46379'
@@ -169,7 +172,7 @@ function Invoke-Docker {
 
 function Get-ComposeFiles {
     $files = @(
-        'docker-compose-db.yml'
+        'docker-compose-identity.yml', 'docker-compose-db.yml'
         'docker-compose-cache.yml'
         'docker-compose-ElasticSearch.yml'
         'docker-compose-vectordb.yml'
