@@ -6,3 +6,13 @@
 **/dist
 **/storybook-static
 .idea
+
+# Runtime state and local credentials never enter a source build context.
+**/log
+**/logs
+**/.dev
+**/.env
+**/.env.*
+**/bin
+**/conversations
+**/resource-uploads
