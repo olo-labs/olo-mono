@@ -37,7 +37,7 @@ public final class TraversalCompletionLogger {
                 lastNodeId,
                 formatValue(lastMessage),
                 formatValue(returnValue),
-                variables,
+                formatValue(variables),
                 outputs != null ? outputs.keySet() : null);
         if (returnValue != null && String.valueOf(returnValue).contains("child workflow dispatch pending")) {
             log.warn(
@@ -76,10 +76,6 @@ public final class TraversalCompletionLogger {
         if (value == null) {
             return "null";
         }
-        String text = String.valueOf(value);
-        if (text.length() <= 200) {
-            return text;
-        }
-        return text.substring(0, 200) + "...";
+        return "[redacted]";
     }
 }

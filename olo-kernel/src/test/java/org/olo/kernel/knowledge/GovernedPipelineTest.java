@@ -42,7 +42,8 @@ class GovernedPipelineTest {
                                         Map.of("message", "unique accepted message")));
         assertEquals(1, prompt.split("unique accepted message", -1).length - 1);
         assertEquals(
-                org.olo.definition.execution.ExecutionModel.ACTIVITY,
+                org.olo.definition.execution.ExecutionModel.INLINE,
                 node.getExecution().getExecutionModel());
+        assertFalse(org.olo.kernel.agent.tool.AgentToolSettings.usesTools(node));
     }
 }

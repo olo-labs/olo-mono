@@ -15,7 +15,7 @@ import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.dynamicgraph.DynamicNodeLabels;
 import org.olo.kernel.dynamicgraph.model.DynamicSubgraphMergeResult;
-import org.olo.kernel.toolcall.impl.InjectedNodePortEnricher;
+import org.olo.kernel.agentcall.impl.InjectedNodePortEnricher;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

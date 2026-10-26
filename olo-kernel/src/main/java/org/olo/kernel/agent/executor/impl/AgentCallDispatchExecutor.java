@@ -6,15 +6,15 @@ package org.olo.kernel.agent.executor.impl;
 
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.kernel.agent.executor.AgentExecutor;
 import org.olo.kernel.childworkflow.ChildWorkflowInputs;
 import org.olo.kernel.childworkflow.ChildWorkflowRunGateway;
 import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.exception.KernelException;
-import org.olo.kernel.toolcall.AgentCallResultsSupport;
-import org.olo.kernel.toolcall.AvailableAgentsJsonResolver;
-import org.olo.kernel.toolcall.model.ParsedAgentCall;
+import org.olo.kernel.agentcall.AgentCallResultsSupport;
+import org.olo.kernel.agentcall.AvailableAgentsJsonResolver;
+import org.olo.kernel.agentcall.model.ParsedAgentCall;
 import org.olo.spi.node.NodeResult;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public final class AgentCallDispatchExecutor implements AgentExecutor {
     public static final String CONFIG_AGENT_CALL_DISPATCH = "agentCallDispatch";
     public static final String CONFIG_PLANNER_NODE_ID = "plannerNodeId";
     public static final String CONFIG_AGENT_CALLS = "agentCalls";
-    public static final String DEFAULT_AGENT_RESULTS_VARIABLE = ToolCallPlannerSupport.DEFAULT_AGENT_RESULTS_VARIABLE;
+    public static final String DEFAULT_AGENT_RESULTS_VARIABLE = AgentCallPlannerSupport.DEFAULT_AGENT_RESULTS_VARIABLE;
 
     @Override
     public String id() {
@@ -108,7 +108,7 @@ public final class AgentCallDispatchExecutor implements AgentExecutor {
                 return plannerNodeId;
             }
         }
-        return ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID;
+        return AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID;
     }
 
     @SuppressWarnings("unchecked")

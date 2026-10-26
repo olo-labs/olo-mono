@@ -6,7 +6,8 @@ COPY . .
 
 # Windows checkouts (core.autocrlf=true) give gradlew/*.sh CRLF endings, which break the shebang.
 RUN find . \( -name gradlew -o -name '*.sh' \) -type f -exec sed -i 's/\r$//' {} + \
-    && find . -name gradlew -exec chmod +x {} + && chmod +x publish-libs.sh && ./publish-libs.sh
+    && find . -name gradlew -exec chmod +x {} + && chmod +x publish-libs.sh \
+    && OLO_GRADLE_EXECUTABLE=gradle ./publish-libs.sh
 RUN gradle -p olo-worker installDist --no-daemon -x test
 
 FROM eclipse-temurin:21-jre

@@ -34,7 +34,7 @@ final class WorkflowAgentExecutionValidator {
             requireInlineActivity(nodeId, "dynamic graph planner AGENT node", node, errors);
             return;
         }
-        if (org.olo.definition.toolcall.ToolCallPlannerSupport.isToolCallPlanner(node)) {
+        if (org.olo.definition.agentcall.AgentCallPlannerSupport.isAgentCallPlanner(node)) {
             requireInlineActivity(nodeId, "tool-call planner AGENT node", node, errors);
             return;
         }

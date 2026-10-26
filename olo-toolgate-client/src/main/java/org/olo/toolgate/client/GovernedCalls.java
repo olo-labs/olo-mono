@@ -10,7 +10,9 @@ import java.util.*;
  * Paths A/C. No catalog selection, model decision, delegated actor, or stored bearer credential.
  */
 public final class GovernedCalls {
-    private static final ObjectMapper JSON = new ObjectMapper();
+    // The request is JSON inside a string argument. Map iteration order must not
+    // change its ToolGate fingerprint when another JVM resumes the invocation.
+    private static final ObjectMapper JSON = new ObjectMapper().enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
     private final ToolGateClient client;
 
     public GovernedCalls(ToolGateClient client) {

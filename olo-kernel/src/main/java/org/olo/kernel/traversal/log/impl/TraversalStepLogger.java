@@ -39,11 +39,11 @@ public final class TraversalStepLogger {
                 node.getType(),
                 resolveNodeLabel(node),
                 NodeActivityNaming.formatNode(node),
-                variables);
+                TraversalCompletionLogger.formatValue(variables));
     }
 
     public static void logStepEnter(int step, String nodeId, String nodeType, Map<String, Object> variables) {
-        log.info("Traversal step {} enter: nodeId={}, nodeType={}, variables={}", step, nodeId, nodeType, variables);
+        log.info("Traversal step {} enter: nodeId={}, nodeType={}, variables={}", step, nodeId, nodeType, TraversalCompletionLogger.formatValue(variables));
     }
 
     public static void logInputBind(
@@ -96,8 +96,8 @@ public final class TraversalStepLogger {
                 nodeId,
                 definitionNodeType,
                 spiNodeType,
-                input,
-                configuration);
+                TraversalCompletionLogger.formatValue(input),
+                TraversalCompletionLogger.formatValue(configuration));
     }
 
     public static void logNodeResult(String nodeId, String nodeType, NodeResult result) {
@@ -111,7 +111,7 @@ public final class TraversalStepLogger {
                 nodeType,
                 result.status(),
                 TraversalCompletionLogger.formatValue(result.message()),
-                result.output());
+                TraversalCompletionLogger.formatValue(result.output()));
         if (result.status() == NodeStatus.COMPLETED
                 && result.message() != null
                 && result.message().contains("child workflow dispatch pending")) {
@@ -171,7 +171,7 @@ public final class TraversalStepLogger {
                 step,
                 nodeId,
                 nextNodeId != null ? nextNodeId : "<end>",
-                variables);
+                TraversalCompletionLogger.formatValue(variables));
     }
 
     private static String resolveNodeLabel(NodeDefinition node) {

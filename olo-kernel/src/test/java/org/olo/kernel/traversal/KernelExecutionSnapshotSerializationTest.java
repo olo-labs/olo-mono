@@ -43,10 +43,7 @@ class KernelExecutionSnapshotSerializationTest {
 
         KernelRuntimeHolder.setRegistry(OloBootstrap.load(presets, false));
         WorkflowDefinition source = KernelRuntimeHolder.registry().findById("fast").orElseThrow();
-        WorkflowInput baseInput = WorkflowInput.fromJson(
-                Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
-                        .toAbsolutePath()
-                        .normalize()));
+        WorkflowInput baseInput = org.olo.kernel.support.FreshWorkflowInputs.minimal();
         WorkflowInput input = baseInput.toBuilder()
                 .routing(new org.olo.input.model.Routing(
                         "fast",
@@ -76,10 +73,7 @@ class KernelExecutionSnapshotSerializationTest {
         WorkflowDefinition source = org.olo.bootstrap.OloBootstrap.load(presets, false)
                 .findById("fast")
                 .orElseThrow();
-        WorkflowInput baseInput = WorkflowInput.fromJson(
-                Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
-                        .toAbsolutePath()
-                        .normalize()));
+        WorkflowInput baseInput = org.olo.kernel.support.FreshWorkflowInputs.minimal();
         WorkflowInput input = baseInput.toBuilder()
                 .routing(new org.olo.input.model.Routing(
                         "fast",
@@ -127,10 +121,7 @@ class KernelExecutionSnapshotSerializationTest {
                 .deserialize(Files.readString(workflowJson));
         Path presets = workflowJson.getParent();
         KernelRuntimeHolder.setRegistry(OloBootstrap.load(presets, true));
-        WorkflowInput baseInput = WorkflowInput.fromJson(
-                Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
-                        .toAbsolutePath()
-                        .normalize()));
+        WorkflowInput baseInput = org.olo.kernel.support.FreshWorkflowInputs.minimal();
         WorkflowInput input = baseInput.toBuilder()
                 .routing(new org.olo.input.model.Routing(
                         "dynamic-graph-creation",

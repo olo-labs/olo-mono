@@ -43,10 +43,7 @@ class AgentWorkflowActivityNamingTest {
         assertThat(agentNode.getLabel()).isEqualTo("Agent");
         assertThat(NodeActivityNaming.formatNode(agentNode)).isEqualTo("agent:Agent");
 
-        WorkflowInput input = WorkflowInput.fromJson(
-                Files.readString(Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
-                        .toAbsolutePath()
-                        .normalize()));
+        WorkflowInput input = org.olo.kernel.support.FreshWorkflowInputs.minimal();
         KernelRuntimeContext context = KernelContextBuilder.build(
                 KernelContextBuildRequest.of("oloQueue2", input, source));
 

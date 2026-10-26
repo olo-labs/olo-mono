@@ -15,7 +15,7 @@ import org.olo.definition.planner.AgentAvailableAgents;
 import org.olo.definition.planner.PlannerContextDefinition;
 import org.olo.definition.port.PortDirection;
 import org.olo.definition.preset.WorkflowPresetInfrastructure;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.workflow.WorkflowBuilder;
 
 import java.util.LinkedHashMap;
@@ -60,7 +60,7 @@ final class AgentToolPlannerSupport {
                olo-core:restart-container with containerId and namespace. Include confirmationId and logPath in directResponse.
 
             If a previous attempt failed validation, fix it:
-            {toolCallSequenceJsonValidationError}
+            {agentCallSequenceJsonValidationError}
 
             Respond with JSON only.""";
 
@@ -75,8 +75,8 @@ final class AgentToolPlannerSupport {
                 .addInput("input")
                 .addOutput("output")
                 .addRequiredContext(WorkflowPresetInfrastructure.MESSAGE_VARIABLE)
-                .addRequiredContext(ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE)
-                .addRequiredContext(ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
+                .addRequiredContext(AgentCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE)
+                .addRequiredContext(AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
                 .build();
     }
 
@@ -87,8 +87,8 @@ final class AgentToolPlannerSupport {
                 List.of(
                         WorkflowPresetInfrastructure.MESSAGE_VARIABLE,
                         ScenarioConversationPluginSupport.CONVERSATION_SUMMARY_VARIABLE,
-                        ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
-                        ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE));
+                        AgentCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
+                        AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE));
         context.put(PlannerContextDefinition.SELECTED_TOOLS, List.of(CALCULATOR_TOOL_ID, CPU_USAGE_TOOL_ID));
         context.put(PlannerContextDefinition.SELECTED_AGENTS, AgentAvailableAgents.agentPresetDefaults().stream()
                 .map(ref -> ref.getId())
@@ -97,7 +97,7 @@ final class AgentToolPlannerSupport {
         return Map.copyOf(context);
     }
 
-    static NodeDefinition toolCallPlannerNode(String nodeId, String continueNodeId) {
+    static NodeDefinition agentCallPlannerNode(String nodeId, String continueNodeId) {
         return NodeDefinition.builder()
                 .id(nodeId)
                 .type(NodeType.AGENT.name())
@@ -108,14 +108,14 @@ final class AgentToolPlannerSupport {
                 .addPort(WorkflowBuilder.capabilitiesPort(PortDirection.INPUT))
                 .addPort(WorkflowBuilder.agentPlugPort(PortDirection.INPUT))
                 .addPort(WorkflowBuilder.messagePort("out", PortDirection.OUTPUT))
-                .putConfiguration(ToolCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true)
+                .putConfiguration(AgentCallPlannerSupport.CONFIG_AGENT_CALL_PLANNER, true)
                 .putConfiguration(
-                        ToolCallPlannerSupport.CONFIG_OUTPUT_VARIABLE,
-                        ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
+                        AgentCallPlannerSupport.CONFIG_OUTPUT_VARIABLE,
+                        AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
                 .putConfiguration(
-                        ToolCallPlannerSupport.CONFIG_MAX_INVALID_JSON_RETRIES,
-                        ToolCallPlannerSupport.DEFAULT_MAX_INVALID_JSON_RETRIES)
-                .putConfiguration(ToolCallPlannerSupport.CONFIG_CONTINUE_NODE_ID, continueNodeId)
+                        AgentCallPlannerSupport.CONFIG_MAX_INVALID_JSON_RETRIES,
+                        AgentCallPlannerSupport.DEFAULT_MAX_INVALID_JSON_RETRIES)
+                .putConfiguration(AgentCallPlannerSupport.CONFIG_CONTINUE_NODE_ID, continueNodeId)
                 .putConfiguration("promptTemplate", JSON_ONLY_PROMPT_TEMPLATE)
                 .build();
     }

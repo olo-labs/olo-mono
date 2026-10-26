@@ -8,7 +8,7 @@ import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.runtime.RuntimeBindingDefinition;
 import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.configuration.scenario.ScenarioConversationPluginSupport;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.variable.VariableDefinition;
 import org.olo.definition.variable.VariableScope;
 
@@ -71,7 +71,7 @@ final class AgentToolComponentDefinitions {
 
     static VariableDefinition availableToolsVariable() {
         return VariableDefinition.builder()
-                .name(ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE)
+                .name(AgentCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE)
                 .type("string")
                 .description("JSON array of tools connected on the canvas and registered in tools[]")
                 .scope(VariableScope.LOCAL)
@@ -81,7 +81,7 @@ final class AgentToolComponentDefinitions {
 
     static VariableDefinition toolCallSequenceVariable() {
         return VariableDefinition.builder()
-                .name(ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
+                .name(AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
                 .type("string")
                 .description("Model-produced strict JSON tool call sequence")
                 .scope(VariableScope.LOCAL)
@@ -91,7 +91,7 @@ final class AgentToolComponentDefinitions {
 
     static VariableDefinition toolResultsVariable() {
         return VariableDefinition.builder()
-                .name(ToolCallPlannerSupport.DEFAULT_TOOL_RESULTS_VARIABLE)
+                .name(AgentCallPlannerSupport.DEFAULT_TOOL_RESULTS_VARIABLE)
                 .type("string")
                 .description("Aggregated JSON results from executed tool nodes for synthesis")
                 .scope(VariableScope.LOCAL)
@@ -100,7 +100,7 @@ final class AgentToolComponentDefinitions {
 
     static VariableDefinition retryCountVariable() {
         return VariableDefinition.builder()
-                .name(ToolCallPlannerSupport.DEFAULT_RETRY_VARIABLE)
+                .name(AgentCallPlannerSupport.DEFAULT_RETRY_VARIABLE)
                 .type("number")
                 .description("Invalid JSON retry counter for the tool-call planner")
                 .scope(VariableScope.LOCAL)
@@ -109,9 +109,9 @@ final class AgentToolComponentDefinitions {
 
     static VariableDefinition validationErrorVariable() {
         return VariableDefinition.builder()
-                .name(ToolCallPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE)
+                .name(AgentCallPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE)
                 .type("string")
-                .description("Last validation error from toolCallSequenceJson, injected into planner retries")
+                .description("Last validation error from agentCallSequenceJson, injected into planner retries")
                 .scope(VariableScope.LOCAL)
                 .build();
     }

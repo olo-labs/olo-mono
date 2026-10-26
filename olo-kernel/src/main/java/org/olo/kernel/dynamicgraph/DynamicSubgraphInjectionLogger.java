@@ -7,7 +7,6 @@ package org.olo.kernel.dynamicgraph;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,15 +18,13 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Writes an audit log file under {@code olo-configuration/log/} whenever a dynamic subgraph is merged
- * into the active workflow graph.
+ * Writes structural audit metadata under {@code olo-configuration/log/} when a dynamic subgraph is merged.
  */
 public final class DynamicSubgraphInjectionLogger {
 
     private static final Logger log = LoggerFactory.getLogger(DynamicSubgraphInjectionLogger.class);
     private static final ObjectMapper MAPPER =
             new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-    private static final JsonWorkflowSerializer WORKFLOW_JSON = new JsonWorkflowSerializer();
 
     private DynamicSubgraphInjectionLogger() {
     }
@@ -48,7 +45,7 @@ public final class DynamicSubgraphInjectionLogger {
             log.warn(
                     "Failed to write dynamic subgraph injection log for workflow {}: {}",
                     record.workflowId(),
-                    e.getMessage());
+                    e.getClass().getSimpleName());
         }
     }
 
@@ -76,10 +73,10 @@ public final class DynamicSubgraphInjectionLogger {
         root.put("continueNodeId", record.continueNodeId());
         root.put("entryNodeId", record.entryNodeId());
         root.put("strategy", record.strategyName());
-        if (record.sourceJson() != null) {
-            root.put("sourceJson", record.sourceJson());
-        }
-        root.set("mergedGraph", MAPPER.readTree(WORKFLOW_JSON.serialize(record.mergedGraph())));
+        // The graph and planner output can contain prompts, retrieved content and
+        // child-agent messages. Diagnostics retain structural counts only.
+        root.put("nodeCount", record.mergedGraph().getNodes().size());
+        root.put("edgeCount", record.mergedGraph().getEdges().size());
         return MAPPER.writeValueAsString(root);
     }
 
@@ -105,7 +102,7 @@ public final class DynamicSubgraphInjectionLogger {
 
         public enum Kind {
             DYNAMIC_GRAPH("dynamic-graph"),
-            TOOL_CALL("tool-call");
+            AGENT_CALL("agent-call");
 
             private final String wireName;
 

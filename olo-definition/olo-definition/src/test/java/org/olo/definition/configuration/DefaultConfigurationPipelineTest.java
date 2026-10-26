@@ -67,7 +67,7 @@ class DefaultConfigurationPipelineTest {
                     .containsExactly("START", "TOOL", "TOOL", "HUMAN", "TOOL", "TOOL", "TOOL", "AGENT", "END");
             assertThat(onDisk.getMetadata()).containsKey("dynamicToolExecution");
             assertThat(onDisk.getVariables().stream().map(v -> v.getName()))
-                    .contains("availableToolsJson", "toolCallSequenceJson", "toolResultsJson");
+                    .contains("availableToolsJson", "agentCallSequenceJson", "toolResultsJson");
         } else if ("rag-chat".equals(fileName)) {
             assertThat(onDisk.getNodes().stream().map(node -> node.getType()).toList())
                     .containsExactly("START", "TOOL", "TOOL", "AGENT", "TOOL", "END");
@@ -85,7 +85,7 @@ class DefaultConfigurationPipelineTest {
         if ("agent".equals(fileName)) {
             assertThat(plannerContext.get(PlannerContextDefinition.SELECTED_VARIABLES))
                     .isEqualTo(java.util.List.of(
-                            "message", "conversationSummary", "availableToolsJson", "toolCallSequenceJson"));
+                            "message", "conversationSummary", "availableToolsJson", "agentCallSequenceJson"));
         } else if ("rag-chat".equals(fileName)) {
             assertThat(plannerContext)
                     .containsEntry(

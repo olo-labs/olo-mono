@@ -65,7 +65,7 @@ public final class ResearchPlannerDefinitions {
                title and headBranch from the operator's human-input approval. Include confirmationId and logPath in directResponse.
 
             If a previous attempt failed validation, fix it:
-            {toolCallSequenceJsonValidationError}
+            {agentCallSequenceJsonValidationError}
 
             Respond with JSON only.""";
 

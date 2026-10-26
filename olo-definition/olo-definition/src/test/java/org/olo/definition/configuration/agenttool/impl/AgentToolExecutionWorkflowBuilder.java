@@ -10,7 +10,7 @@ import org.olo.definition.configuration.scenario.impl.ScenarioHumanStepSupport;
 import org.olo.definition.designer.StudioDesignerDefaults;
 import org.olo.definition.execution.ExecutionModel;
 import org.olo.definition.planner.PlannerContextDefinition;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.workflow.ChildWorkflowDefinition;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
@@ -32,7 +32,7 @@ public final class AgentToolExecutionWorkflowBuilder {
 
     public static WorkflowDefinition build() {
         String description = "Autonomous tool-using agent with strict JSON tool-call planning";
-        String plannerNodeId = ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID;
+        String plannerNodeId = AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID;
         String humanNodeId = ScenarioHumanStepSupport.HUMAN_INPUT_NODE_ID;
         String conversationLoadNodeId = ScenarioConversationPluginSupport.CONVERSATION_LOAD_NODE_ID;
         String conversationStoreNodeId = ScenarioConversationPluginSupport.CONVERSATION_STORE_NODE_ID;
@@ -93,7 +93,7 @@ public final class AgentToolExecutionWorkflowBuilder {
                 .putNodeConfiguration(CPU_USAGE_NODE_ID, Map.of("toolId", CPU_USAGE_TOOL_ID))
                 .canvasToolNode(RESTART_CONTAINER_NODE_ID)
                 .putNodeConfiguration(RESTART_CONTAINER_NODE_ID, Map.of("toolId", RESTART_CONTAINER_TOOL_ID))
-                .addNode(AgentToolPlannerSupport.toolCallPlannerNode(plannerNodeId, conversationStoreNodeId))
+                .addNode(AgentToolPlannerSupport.agentCallPlannerNode(plannerNodeId, conversationStoreNodeId))
                 .endNode("end")
                 .connect("start", "out", conversationLoadNodeId, "in")
                 .connect(conversationLoadNodeId, "out", humanNodeId, "in")
@@ -115,15 +115,15 @@ public final class AgentToolExecutionWorkflowBuilder {
                 .metadata("description", description)
                 .metadata("role", WORKFLOW_ID)
                 .metadata(
-                        ToolCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION,
+                        AgentCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION,
                         Map.of(
-                                ToolCallPlannerSupport.METADATA_PLANNER_NODE_ID,
+                                AgentCallPlannerSupport.METADATA_PLANNER_NODE_ID,
                                 plannerNodeId,
-                                ToolCallPlannerSupport.CONFIG_OUTPUT_VARIABLE,
-                                ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE,
-                                ToolCallPlannerSupport.METADATA_AVAILABLE_TOOLS_VARIABLE,
-                                ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
-                                ToolCallPlannerSupport.CONFIG_CONTINUE_NODE_ID,
+                                AgentCallPlannerSupport.CONFIG_OUTPUT_VARIABLE,
+                                AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE,
+                                AgentCallPlannerSupport.METADATA_AVAILABLE_TOOLS_VARIABLE,
+                                AgentCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
+                                AgentCallPlannerSupport.CONFIG_CONTINUE_NODE_ID,
                                 conversationStoreNodeId))
                 .metadata(PlannerContextDefinition.METADATA_KEY, AgentToolPlannerSupport.agentPlannerContext())
                 .withStandardReturnVariable()
