@@ -1,7 +1,7 @@
 # Dev AI stack - video: ComfyUI (AnimateDiff, SVD, etc.)
 # Uses all NVIDIA GPUs. Requires nvidia-container-toolkit.
 services:
-  comfyui:
+  comfyui-video:
     image: ghcr.io/ai-dock/comfyui:latest-cuda
     container_name: olo-comfyui-video
     restart: unless-stopped
