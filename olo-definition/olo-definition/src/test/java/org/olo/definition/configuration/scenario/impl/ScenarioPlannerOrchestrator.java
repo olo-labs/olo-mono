@@ -84,7 +84,7 @@ public final class ScenarioPlannerOrchestrator {
                 .startNodeWithMessageInput("start");
         ScenarioConversationPluginSupport.wireConversationPlugins(builder, conversationStoreNodeId);
         builder.humanNode(humanNodeId, "INPUT", humanIntake)
-                .addNode(toolCallPlannerNode(plannerNodeId, promptTemplate, conversationStoreNodeId))
+                .addNode(agentCallPlannerNode(plannerNodeId, promptTemplate, conversationStoreNodeId))
                 .endNode("end")
                 .connect("start", "out", conversationLoadNodeId, "in")
                 .connect(conversationLoadNodeId, "out", humanNodeId, "in")
@@ -188,7 +188,7 @@ public final class ScenarioPlannerOrchestrator {
         return Map.copyOf(context);
     }
 
-    private static NodeDefinition toolCallPlannerNode(String nodeId, String promptTemplate, String continueNodeId) {
+    private static NodeDefinition agentCallPlannerNode(String nodeId, String promptTemplate, String continueNodeId) {
         return NodeDefinition.builder()
                 .id(nodeId)
                 .type(NodeType.AGENT.name())
@@ -199,7 +199,7 @@ public final class ScenarioPlannerOrchestrator {
                 .addPort(WorkflowBuilder.capabilitiesPort(PortDirection.INPUT))
                 .addPort(WorkflowBuilder.agentPlugPort(PortDirection.INPUT))
                 .addPort(WorkflowBuilder.messagePort("out", PortDirection.OUTPUT))
-                .putConfiguration(AgentCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true)
+                .putConfiguration(AgentCallPlannerSupport.CONFIG_AGENT_CALL_PLANNER, true)
                 .putConfiguration(
                         AgentCallPlannerSupport.CONFIG_OUTPUT_VARIABLE,
                         AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)

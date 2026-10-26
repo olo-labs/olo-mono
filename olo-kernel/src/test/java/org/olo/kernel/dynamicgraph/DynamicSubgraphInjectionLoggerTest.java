@@ -26,6 +26,7 @@ class DynamicSubgraphInjectionLoggerTest {
             WorkflowDefinition merged = WorkflowBuilder.create("Merged")
                     .id("demo")
                     .queue("demo")
+                    .metadata("systemPrompt", "graph-prompt-canary")
                     .startNode("start")
                     .endNode("end")
                     .connect("start", "end")
@@ -38,7 +39,7 @@ class DynamicSubgraphInjectionLoggerTest {
                     "graph-planner",
                     "end",
                     "dyn-step-1",
-                    "{\"id\":\"subgraph\"}",
+                    "{\"private\":\"source-plan-canary\"}",
                     merged));
 
             try (var files = Files.list(tempDir)) {
@@ -49,7 +50,9 @@ class DynamicSubgraphInjectionLoggerTest {
                 assertThat(logFile.getFileName().toString()).startsWith("dynamic-graph-dynamic-graph-creation-graph-planner-");
                 assertThat(content).contains("\"kind\" : \"dynamic-graph\"");
                 assertThat(content).contains("\"entryNodeId\" : \"dyn-step-1\"");
-                assertThat(content).contains("\"mergedGraph\"");
+                assertThat(content).contains("\"nodeCount\" : 2", "\"edgeCount\" : 1");
+                assertThat(content).doesNotContain("mergedGraph", "sourceJson",
+                        "graph-prompt-canary", "source-plan-canary");
             }
         } finally {
             System.clearProperty(DynamicSubgraphInjectionLogPaths.LOG_DIR_PROPERTY);
@@ -58,7 +61,7 @@ class DynamicSubgraphInjectionLoggerTest {
 
     @Test
     void writesOnlyToLogDirectory() throws Exception {
-        Path currentActive = Files.createTempDirectory("current-active");
+        Path currentActive = Files.createDirectory(tempDir.resolve("current-active"));
         System.setProperty(DynamicSubgraphInjectionLogPaths.LOG_DIR_PROPERTY, tempDir.toString());
         System.setProperty(DynamicSubgraphInjectionLogPaths.CURRENT_ACTIVE_DIR_PROPERTY, currentActive.toString());
         try {
@@ -71,13 +74,13 @@ class DynamicSubgraphInjectionLoggerTest {
                     .build();
 
             DynamicSubgraphInjectionLogger.logInjection(new DynamicSubgraphInjectionLogger.InjectionRecord(
-                    DynamicSubgraphInjectionLogger.InjectionRecord.Kind.TOOL_CALL,
-                    "tool-call-expansion",
+                    DynamicSubgraphInjectionLogger.InjectionRecord.Kind.AGENT_CALL,
+                    "agent-call-expansion",
                     "agent",
                     "agent",
                     "end",
-                    "tool-dyn-step-0",
-                    "{\"toolCalls\":[{\"toolId\":\"olo-core:cpu-usage\"}],\"directResponse\":null}",
+                    "agent-dyn-step-0",
+                    "{\"agentCalls\":[{\"agentId\":\"triage-agent\"}],\"directResponse\":null}",
                     merged));
 
             try (var logFiles = Files.list(tempDir)) {

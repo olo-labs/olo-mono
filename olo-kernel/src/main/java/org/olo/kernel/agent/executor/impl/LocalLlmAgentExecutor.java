@@ -79,7 +79,7 @@ public final class LocalLlmAgentExecutor implements AgentExecutor {
                 context.getVariables().set(
                         DynamicGraphPlannerSupport.outputVariable(node), invocation.response());
             }
-            if (AgentCallPlannerSupport.isToolCallPlanner(node)) {
+            if (AgentCallPlannerSupport.isAgentCallPlanner(node)) {
                 context.getVariables().set(
                         AgentCallPlannerSupport.outputVariable(node), invocation.response());
             }

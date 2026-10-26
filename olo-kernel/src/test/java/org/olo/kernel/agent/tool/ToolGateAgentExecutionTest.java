@@ -157,7 +157,7 @@ class ToolGateAgentExecutionTest {
     void plannerAgentsKeepAnsweringWithAPlan() {
         var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("planner", List.of(tool("incidents.host-status"))));
         var llm = new AgentToolTestSupport.ScriptedLlm();
-        NodeDefinition planner = agentNode("agent", Map.of(AgentCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true));
+        NodeDefinition planner = agentNode("agent", Map.of(AgentCallPlannerSupport.CONFIG_AGENT_CALL_PLANNER, true));
 
         executor(llm, new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8, MAPPED)))
                 .execute(context(graph("planner", planner), "run-1"), planner);

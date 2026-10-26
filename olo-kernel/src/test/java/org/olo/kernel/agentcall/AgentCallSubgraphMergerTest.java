@@ -1,157 +1,78 @@
-/*
- * Copyright (c) 2026 Olo Labs
- * SPDX-License-Identifier: Apache-2.0
- */
+/* Copyright (c) 2026 Olo Labs; SPDX-License-Identifier: Apache-2.0 */
 package org.olo.kernel.agentcall;
 
 import org.junit.jupiter.api.Test;
 import org.olo.definition.execution.ExecutionModel;
-import org.olo.definition.agentcall.AgentCallPlannerSupport;
-import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.agentcall.model.ParsedAgentCall;
-import org.olo.kernel.agentcall.model.ParsedToolCall;
 import org.olo.kernel.agentcall.model.AgentCallValidationResult;
 import org.olo.kernel.agentcall.support.AgentCallSubgraphMergerTestWorkflows;
-
 import java.util.List;
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AgentCallSubgraphMergerTest {
-
     private static final AgentCallSubgraphMerger MERGER = AgentCallFactories.defaultAgentCallSubgraphMerger();
+    private static final String CATALOG = "[{\"agentId\":\"literature-agent\"},{\"agentId\":\"synthesis-agent\"}]";
+    private static final String CALL = "{\"agentCalls\":[{\"agentId\":\"literature-agent\",\"message\":\"Find papers\"}],\"directResponse\":null}";
 
-    @Test
-    void validatesToolCallSequenceJson() {
-        var result = MERGER.validate(
-                """
-                {
-                  "toolCalls": [
-                    { "toolId": "olo-core:calculator", "arguments": { "a": 1, "b": 2 } }
-                  ],
-                  "directResponse": null
-                }
-                """,
-                """
-                [{"toolId":"olo-core:calculator"}]
-                """);
-
+    @Test void validatesOnlyExplicitlyAvailableAgents() {
+        var result = MERGER.validate(CALL, CATALOG);
         assertThat(result.valid()).isTrue();
-        assertThat(result.kind()).isEqualTo(AgentCallValidationResult.Kind.TOOL_CALLS);
-        assertThat(result.toolCalls()).hasSize(1);
+        assertThat(result.kind()).isEqualTo(AgentCallValidationResult.Kind.AGENT_CALLS);
+        assertThat(result.agentCalls()).containsExactly(new ParsedAgentCall("literature-agent", "Find papers"));
+        for (String catalog : List.of("[]", "{}", "null", "malformed", "[{\"agentId\":\"other\"}]"))
+            assertThat(MERGER.validate(CALL, catalog).valid()).isFalse();
+        assertThat(MERGER.validate(CALL, null).valid()).isFalse();
     }
 
-    @Test
-    void acceptsDirectResponseWithoutTools() {
-        var result = MERGER.validate(
-                """
-                { "toolCalls": [], "directResponse": "Hello" }
-                """,
-                "[]");
-
-        assertThat(result.valid()).isTrue();
+    @Test void directResponseNeedsNoDelegationCatalog() {
+        var result = MERGER.validate("{\"agentCalls\":[],\"directResponse\":\"Hello\"}", "[]");
         assertThat(result.kind()).isEqualTo(AgentCallValidationResult.Kind.DIRECT_RESPONSE);
         assertThat(result.directResponse()).isEqualTo("Hello");
+        assertThat(MERGER.validate("{\"agentCalls\":[],\"directResponse\":null}", CATALOG).valid()).isFalse();
+        assertThat(MERGER.validate(CALL.replace("null", "\"Both\""), CATALOG).valid()).isFalse();
     }
 
-    @Test
-    void rejectsToolIdOutsideAllowList() {
-        var result = MERGER.validate(
-                """
-                {
-                  "toolCalls": [
-                    { "toolId": "olo-core:unknown", "arguments": {} }
-                  ],
-                  "directResponse": null
-                }
-                """,
-                """
-                [{"toolId":"olo-core:calculator"}]
-                """);
-
+    @Test void rejectsLegacyToolPlannerFieldsEvenWhenEmpty() {
+        var result = MERGER.validate("{\"toolCalls\":[],\"agentCalls\":[],\"directResponse\":\"Hello\"}", CATALOG);
         assertThat(result.valid()).isFalse();
-        assertThat(result.message()).contains("allow-list");
+        assertThat(result.message()).contains("toolCalls");
     }
 
-    @Test
-    void validatesAgentCallsAgainstAllowList() {
-        var result = MERGER.validate(
-                """
-                {
-                  "toolCalls": [],
-                  "agentCalls": [
-                    { "agentId": "literature-agent", "message": "Find papers on OLO" }
-                  ],
-                  "directResponse": null
-                }
-                """,
-                "[]",
-                """
-                [{"agentId":"literature-agent"}]
-                """);
-
-        assertThat(result.valid()).isTrue();
-        assertThat(result.agentCalls()).hasSize(1);
-        assertThat(result.agentCalls().getFirst().agentId()).isEqualTo("literature-agent");
+    @Test void rejectsUnknownNestedFieldsDuplicateKeysAndTrailingDocuments() {
+        for (String json : List.of(CALL.replace("\"message\"", "\"toolId\""),
+                CALL.replace("\"Find papers\"", "42"),
+                CALL.replace("\"agentCalls\":", "\"agentCalls\":[],\"agentCalls\":"),
+                CALL + " {}", CALL.replace("\"directResponse\":null", "\"directResponse\":false")))
+            assertThat(MERGER.validate(json, CATALOG).valid()).isFalse();
     }
 
-    @Test
-    void mergeAgentCallsRoutesEachAgentAsChildWorkflowToEnd() {
-        WorkflowDefinition base = AgentCallSubgraphMergerTestWorkflows.orchestratorWithChildAgents();
-        var mergeResult = MERGER.mergeAgentAndToolCalls(
-                base,
-                AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID,
-                "end",
-                List.of(
-                        new ParsedAgentCall("literature-agent", "Find papers"),
-                        new ParsedAgentCall("synthesis-agent", "Summarize findings")),
-                List.of());
-
-        assertThat(mergeResult.entryNodeId()).contains("step-0");
-        assertThat(mergeResult.graph().getNodes().stream()
-                .filter(node -> node.getId() != null && node.getId().contains("agent-dyn-"))
-                .map(node -> node.getLabel())
-                .filter(label -> label != null && !label.isBlank()))
-                .containsExactly("Dyn-Agent Literature Agent", "Dyn-Agent Synthesis Agent");
-        assertThat(mergeResult.graph().getNodes().stream()
-                .filter(node -> node.getId().contains("step-0"))
-                .findFirst()
-                .orElseThrow()
-                .getExecutionModel())
-                .isEqualTo(ExecutionModel.CHILD_WORKFLOW);
-        assertThat(mergeResult.graph().getEdges()).noneMatch(edge ->
-                edge.getTargetNodeId() != null && edge.getTargetNodeId().contains("agent-synthesis"));
-        assertThat(mergeResult.graph().getEdges()).anyMatch(edge ->
-                edge.getSourceNodeId() != null
-                        && edge.getSourceNodeId().contains("step-1")
-                        && "end".equals(edge.getTargetNodeId()));
+    @Test void duplicateDelegationsAndMalformedCatalogsFailClosed() {
+        String duplicate = "{\"agentCalls\":[{\"agentId\":\"literature-agent\"},{\"agentId\":\"literature-agent\"}],\"directResponse\":null}";
+        assertThat(MERGER.validate(duplicate, CATALOG).valid()).isFalse();
+        for (String catalog : List.of("[{}]", "[\"literature-agent\"]", "[{\"agentId\":\"literature-agent\"},{\"agentId\":\"literature-agent\"}]"))
+            assertThat(MERGER.validate(CALL, catalog).valid()).isFalse();
     }
 
-    @Test
-    void mergesToolChainWithSynthesisBeforeEnd() {
-        WorkflowDefinition base = AgentCallSubgraphMergerTestWorkflows.baseWorkflowWithTools();
-        var mergeResult = MERGER.merge(
-                base,
-                AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID,
-                "end",
-                List.of(
-                        new ParsedToolCall("olo-core:calculator", Map.of()),
-                        new ParsedToolCall("olo-core:cpu-usage", Map.of())));
+    @Test void invalidJsonDiagnosticsDoNotIncludePrivateModelText() {
+        var result = MERGER.validate("{ private-model-output-secret", CATALOG);
+        assertThat(result.valid()).isFalse();
+        assertThat(result.message()).doesNotContain("private-model-output-secret");
+        var unknown = MERGER.validate("{\"private-model-output-secret\":true}", CATALOG);
+        assertThat(unknown.message()).doesNotContain("private-model-output-secret");
+    }
 
-        assertThat(mergeResult.graph().getNodes().stream().map(node -> node.getType()))
-                .contains("TOOL", "AGENT");
-        assertThat(mergeResult.graph().getNodes().stream()
-                .filter(node -> "TOOL".equals(node.getType()))
-                .map(node -> node.getLabel())
-                .filter(label -> label != null && !label.isBlank()))
-                .containsExactlyInAnyOrder("Dyn-Tool Calculator", "Dyn-Tool CPU Usage");
-        assertThat(mergeResult.graph().getEdges()).anyMatch(edge ->
-                AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(edge.getSourceNodeId())
-                        && mergeResult.entryNodeId().equals(edge.getTargetNodeId()));
-        assertThat(mergeResult.graph().getEdges()).anyMatch(edge ->
-                edge.getSourceNodeId() != null
-                        && edge.getSourceNodeId().contains("tool-synthesis")
-                        && "end".equals(edge.getTargetNodeId()));
+    @Test void delegatesSequentialChildWorkflowsWithReplayStableNodeIds() {
+        var base = AgentCallSubgraphMergerTestWorkflows.orchestratorWithChildAgents();
+        var calls = List.of(new ParsedAgentCall("literature-agent", "Find papers"), new ParsedAgentCall("synthesis-agent", "Summarize"));
+        var first = MERGER.merge(base, "agent", "end", calls);
+        var replay = MERGER.merge(base, "agent", "end", calls);
+        var nodes = first.graph().getNodes().stream().filter(n -> n.getId().startsWith("agent-dyn-")).toList();
+        assertThat(nodes).hasSize(2);
+        assertThat(nodes).allMatch(n -> n.getType().equals("AGENT") && n.getExecutionModel() == ExecutionModel.CHILD_WORKFLOW);
+        assertThat(nodes.stream().map(n -> n.getWorkflow().getWorkflowId())).containsExactly("literature-agent", "synthesis-agent");
+        assertThat(first.entryNodeId()).isEqualTo(nodes.getFirst().getId());
+        assertThat(first.graph().getEdges()).anyMatch(e -> e.getSourceNodeId().equals(nodes.getFirst().getId()) && e.getTargetNodeId().equals(nodes.getLast().getId()));
+        assertThat(first.graph().getEdges()).anyMatch(e -> e.getSourceNodeId().equals(nodes.getLast().getId()) && e.getTargetNodeId().equals("end"));
+        assertThat(first.graph().getNodes().stream().map(n -> n.getId())).containsExactlyElementsOf(replay.graph().getNodes().stream().map(n -> n.getId()).toList());
     }
 }

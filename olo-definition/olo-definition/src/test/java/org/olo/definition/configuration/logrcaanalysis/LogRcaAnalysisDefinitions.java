@@ -85,7 +85,7 @@ public final class LogRcaAnalysisDefinitions {
             6. If no tools or agents are needed, set both arrays to [] and put the final answer in "directResponse".
 
             If a previous attempt failed validation, fix it:
-            {toolCallSequenceJsonValidationError}
+            {agentCallSequenceJsonValidationError}
 
             Respond with JSON only.""";
 

@@ -11,7 +11,6 @@ import org.olo.kernel.agent.executor.AgentExecutor;
 import org.olo.kernel.agent.executor.AgentExecutorRegistry;
 import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.agentcall.AvailableAgentsJsonResolver;
-import org.olo.kernel.agentcall.AvailableToolsJsonResolver;
 import org.olo.kernel.traversal.log.TraversalDiagnostics;
 import org.olo.kernel.traversal.step.handler.NodeTypeHandler;
 import org.olo.spi.node.NodeResult;
@@ -36,11 +35,7 @@ public final class AgentNodeTypeHandler implements NodeTypeHandler {
 
     @Override
     public NodeResult execute(KernelRuntimeContext context, NodeDefinition node) {
-        if (AgentCallPlannerSupport.isToolCallPlanner(node) && context.getGraph() != null) {
-            String availableToolsJson =
-                    AvailableToolsJsonResolver.resolve(context.getGraph(), node.getId());
-            context.getVariables()
-                    .set(AgentCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE, availableToolsJson);
+        if (AgentCallPlannerSupport.isAgentCallPlanner(node) && context.getGraph() != null) {
             String availableAgentsJson =
                     AvailableAgentsJsonResolver.resolve(context.getGraph(), node.getId());
             context.getVariables()

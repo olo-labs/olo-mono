@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * After an inline tool-call planner agent completes, validates {@code toolCallSequenceJson},
- * merges a tool/agent execution subgraph, or continues directly when {@code directResponse} is set.
+ * After an inline delegation planner completes, validates {@code agentCallSequenceJson},
+ * inserts child-agent workflows, or continues directly when {@code directResponse} is set.
  */
 public final class AgentCallExpansionExecutionStrategy implements ExecutionStrategy {
 
@@ -46,7 +46,7 @@ public final class AgentCallExpansionExecutionStrategy implements ExecutionStrat
     @Override
     public boolean supports(ExecutionStrategyRequest request) {
         return request.graphSession() != null
-                && AgentCallPlannerSupport.isToolCallPlanner(request.completedNode())
+                && AgentCallPlannerSupport.isAgentCallPlanner(request.completedNode())
                 && request.nodeResult().status() == NodeStatus.COMPLETED;
     }
 
@@ -55,15 +55,12 @@ public final class AgentCallExpansionExecutionStrategy implements ExecutionStrat
         MutableGraphSession graphSession = request.graphSession();
         var node = request.completedNode();
         String outputVariable = AgentCallPlannerSupport.outputVariable(node);
-        String availableToolsJson = request.context()
-                .getVariables()
-                .getString(AgentCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE);
         String availableAgentsJson = request.context()
                 .getVariables()
                 .getString(AgentCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE);
         String rawJson = request.context().getVariables().getString(outputVariable);
         AgentCallValidationResult validation =
-                subgraphMerger.validate(rawJson, availableToolsJson, availableAgentsJson);
+                subgraphMerger.validate(rawJson, availableAgentsJson);
         if (!validation.valid()) {
             return handleInvalidJson(request, node, validation.message());
         }
@@ -81,21 +78,18 @@ public final class AgentCallExpansionExecutionStrategy implements ExecutionStrat
 
         List<ParsedAgentCall> pendingAgentCalls = AgentCallResultsSupport.filterPending(
                 validation.agentCalls(), request.context().getVariables());
-        var pendingToolCalls = validation.toolCalls();
 
-        if (pendingAgentCalls.isEmpty() && pendingToolCalls.isEmpty()) {
+        if (pendingAgentCalls.isEmpty()) {
             return handleDuplicateDelegation(request, node, validation);
         }
 
-        retryVariables.resetToolResults(request.context().getVariables());
-        var mergeResult = subgraphMerger.mergeAgentAndToolCalls(
+        var mergeResult = subgraphMerger.merge(
                 graphSession.graph(),
                 node.getId(),
                 continueNodeId,
-                pendingAgentCalls,
-                pendingToolCalls);
+                pendingAgentCalls);
         DynamicSubgraphInjectionLogger.logInjection(new InjectionRecord(
-                InjectionRecord.Kind.TOOL_CALL,
+                InjectionRecord.Kind.AGENT_CALL,
                 name(),
                 request.context().getGraph().getId(),
                 node.getId(),
@@ -109,7 +103,7 @@ public final class AgentCallExpansionExecutionStrategy implements ExecutionStrat
 
     @Override
     public String name() {
-        return "tool-call-expansion";
+        return "agent-call-expansion";
     }
 
     private ExecutionDecision handleInvalidJson(
@@ -121,7 +115,7 @@ public final class AgentCallExpansionExecutionStrategy implements ExecutionStrat
                 .set(AgentCallPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE, message);
         if (retries + 1 >= maxRetries) {
             return ExecutionDecision.failed(
-                    name(), "invalid tool call sequence JSON after " + maxRetries + " attempts: " + message);
+                    name(), "invalid agent call sequence JSON after " + maxRetries + " attempts: " + message);
         }
         retryVariables.incrementRetryCount(request.context().getVariables());
         return ExecutionDecision.reexecute(name(), node.getId());
@@ -140,7 +134,7 @@ public final class AgentCallExpansionExecutionStrategy implements ExecutionStrat
         if (retries + 1 >= maxRetries) {
             return ExecutionDecision.failed(
                     name(),
-                    "planner repeated already-dispatched agents or tools after "
+                    "planner repeated already-dispatched agents after "
                             + maxRetries
                             + " attempts: "
                             + duplicateMessage);
@@ -158,9 +152,6 @@ public final class AgentCallExpansionExecutionStrategy implements ExecutionStrat
                             .map(ParsedAgentCall::agentId)
                             .reduce((left, right) -> left + ", " + right)
                             .orElse(""));
-        }
-        if (!validation.toolCalls().isEmpty()) {
-            parts.add("toolCalls were already executed or tools are unavailable");
         }
         return String.join("; ", parts)
                 + ". Read agentResultsJson and return directResponse or delegate to a different agent.";

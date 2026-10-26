@@ -9,7 +9,7 @@ import org.olo.kernel.agentcall.impl.DefaultAgentCallRetryVariables;
 import org.olo.kernel.agentcall.impl.DefaultAgentCallSubgraphMerger;
 
 /**
- * Default wiring for tool-call expansion collaborators used by {@link org.olo.kernel.traversal.factory.GraphTraverserFactory}.
+ * Default wiring for agent-delegation collaborators used by {@link org.olo.kernel.traversal.factory.GraphTraverserFactory}.
  */
 public final class AgentCallFactories {
 

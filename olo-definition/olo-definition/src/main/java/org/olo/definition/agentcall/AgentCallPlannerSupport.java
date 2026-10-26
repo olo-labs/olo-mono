@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public final class AgentCallPlannerSupport {
 
-    public static final String CONFIG_TOOL_CALL_PLANNER = "toolCallPlanner";
+    public static final String CONFIG_AGENT_CALL_PLANNER = "agentCallPlanner";
     public static final String CONFIG_OUTPUT_VARIABLE = "outputVariable";
     public static final String CONFIG_MAX_INVALID_JSON_RETRIES = "maxInvalidJsonRetries";
     public static final String CONFIG_CONTINUE_NODE_ID = "continueNodeId";
@@ -25,14 +25,14 @@ public final class AgentCallPlannerSupport {
     public static final String METADATA_AVAILABLE_TOOLS_VARIABLE = "availableToolsVariable";
 
     public static final String DEFAULT_PLANNER_NODE_ID = "agent";
-    public static final String DEFAULT_OUTPUT_VARIABLE = "toolCallSequenceJson";
+    public static final String DEFAULT_OUTPUT_VARIABLE = "agentCallSequenceJson";
     public static final String DEFAULT_AVAILABLE_TOOLS_VARIABLE = "availableToolsJson";
     public static final String DEFAULT_AVAILABLE_AGENTS_VARIABLE = "availableAgentsJson";
     public static final String METADATA_AVAILABLE_AGENTS_VARIABLE = "availableAgentsVariable";
     public static final String DEFAULT_TOOL_RESULTS_VARIABLE = "toolResultsJson";
     public static final String DEFAULT_AGENT_RESULTS_VARIABLE = "agentResultsJson";
-    public static final String DEFAULT_RETRY_VARIABLE = "toolCallSequenceJsonRetryCount";
-    public static final String DEFAULT_VALIDATION_ERROR_VARIABLE = "toolCallSequenceJsonValidationError";
+    public static final String DEFAULT_RETRY_VARIABLE = "agentCallSequenceJsonRetryCount";
+    public static final String DEFAULT_VALIDATION_ERROR_VARIABLE = "agentCallSequenceJsonValidationError";
     public static final String DEFAULT_SYNTHESIS_NODE_SUFFIX = "tool-synthesis";
     public static final String DEFAULT_AGENT_SYNTHESIS_NODE_SUFFIX = "agent-synthesis";
 
@@ -74,10 +74,10 @@ public final class AgentCallPlannerSupport {
     private AgentCallPlannerSupport() {
     }
 
-    public static boolean isToolCallPlanner(NodeDefinition node) {
+    public static boolean isAgentCallPlanner(NodeDefinition node) {
         return node != null
                 && node.getConfiguration() != null
-                && Boolean.TRUE.equals(node.getConfiguration().get(CONFIG_TOOL_CALL_PLANNER));
+                && Boolean.TRUE.equals(node.getConfiguration().get(CONFIG_AGENT_CALL_PLANNER));
     }
 
     public static String outputVariable(NodeDefinition node) {

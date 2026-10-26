@@ -150,10 +150,10 @@ that replaces D8.
 | M5 | Durable invocation, payload protection, retries and approvals | olo-mono, olo, ToolGate | 12 | 100% | 100% | ✅ Completion PRs merged; local recovery/codec/approval checks passed |
 | M6 | Memory and RAG services and ToolGate packages | olo-knowledge, ToolGate | 12 | 100% | 100% | ✅ Merged (#1, ToolGate #194); service/component tests and package validation passed |
 | M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 100% | 100% | ✅ Merged (olo-mono #16, backend #9); lifecycle/client/worker/backend checks passed |
-| M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | In progress: functional checks advanced; cancellation/full matrix and post-removal rerun open; performance closed here (#204 separate) |
-| M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 0% | 0% | Not started; gated on complete first M8 pass |
-| M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | Selected restore/DB rotation drills pass; transport, full rotation and final clean install remain; performance separate |
-| | **Overall** | | **100** | **77%** | **77%** | M8 first run → M9 → M8 re-run → M10 remain |
+| M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | Incident/approval matrix passes; commander delegation, remaining coverage and post-removal rerun open |
+| M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 12.5% | 0% | 9.1 implemented/tested in PR #18; runtime/catalog removal remains |
+| M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | Final local qualification remains; production qualification deferred to #19 |
+| | **Overall** | | **100** | **78.25%** | **77%** | Delegation baseline → runtime removal → post-removal M8 → local M10 remain |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -892,15 +892,20 @@ required. No complete M8 step is credited from these selected checks; overall co
 collaborators to `agentcall`/`AgentCall...`, including `AgentCallExpansionExecutionStrategy`.
 Clean-checkout kernel tests no longer depend on untracked generated input samples. All 144 kernel tests
 pass without failures/skips; definition tests report 236 tests, zero failures/errors and one existing skip.
-The planner still needs the agent-only schema and the local-tool APIs, runtime, catalogs and shipped
-workflows still need removal. No complete M9 checkbox is credited for the structural rename alone.
+The planner now uses a strict agent-only schema, rejects legacy call fields, enforces the available-agent
+allow-list, and inserts replay-stable child nodes. It no longer resolves a local-tool catalog. Dynamic
+expansion diagnostics retain identifiers/counts and exclude planner text and graph payloads. All 143 kernel
+tests pass with zero failures/skips; obsolete local-tool planner scenario tests were replaced with strict
+agent-delegation coverage. Studio [PR #1](https://github.com/olo-labs/olo-ui/pull/1) adds fresh-workflow
+import/API/save rejection; all 135 frontend tests and the production build pass. The local-tool APIs,
+runtime, catalogs and shipped workflows still need removal. 9.1 is implemented; counted credit awaits merge.
 
 Fresh installation only: no deprecations, shims, compatibility readers or migration of existing workflows or data. A
 workflow that still contains `tools[]` or a TOOL node fails validation. The ToolGate client and the path B tool loop
 (`olo-toolgate-client`, `org.olo.kernel.agent.tool`) legitimately keep tool schemas and tool-call concepts, and they
 stay.
 
-- [ ] **9.1** Separate agent delegation from local tool calls (old M2):
+- [x] **9.1** Separate agent delegation from local tool calls (old M2), implemented in PR #18:
       - Rename `kernel/toolcall` to `kernel/agentcall`, and `ToolCallExpansionExecutionStrategy` to
         `AgentCallExpansionExecutionStrategy`
       - The planner schema keeps only `agentCalls`

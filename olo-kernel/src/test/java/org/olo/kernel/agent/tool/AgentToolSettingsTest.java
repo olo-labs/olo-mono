@@ -83,7 +83,7 @@ class AgentToolSettingsTest {
 
     @Test
     void plannerAgentsDoNotGetTools() {
-        NodeDefinition planner = agentNode("agent", Map.of(AgentCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true));
+        NodeDefinition planner = agentNode("agent", Map.of(AgentCallPlannerSupport.CONFIG_AGENT_CALL_PLANNER, true));
 
         assertThat(AgentToolSettings.usesTools(planner)).isFalse();
         assertThat(AgentToolSettings.usesTools(agentNode("agent", Map.of()))).isTrue();

@@ -111,7 +111,7 @@ final class AgentToolComponentDefinitions {
         return VariableDefinition.builder()
                 .name(AgentCallPlannerSupport.DEFAULT_VALIDATION_ERROR_VARIABLE)
                 .type("string")
-                .description("Last validation error from toolCallSequenceJson, injected into planner retries")
+                .description("Last validation error from agentCallSequenceJson, injected into planner retries")
                 .scope(VariableScope.LOCAL)
                 .build();
     }

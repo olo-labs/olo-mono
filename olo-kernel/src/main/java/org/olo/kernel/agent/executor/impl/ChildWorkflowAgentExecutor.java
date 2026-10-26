@@ -40,7 +40,7 @@ public final class ChildWorkflowAgentExecutor implements AgentExecutor {
         if (node == null || !NodeType.AGENT.name().equals(node.getType())) {
             return false;
         }
-        if (AgentCallPlannerSupport.isToolCallPlanner(node)) {
+        if (AgentCallPlannerSupport.isAgentCallPlanner(node)) {
             return false;
         }
         if (Boolean.TRUE.equals(node.getConfiguration() != null

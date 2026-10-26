@@ -43,12 +43,11 @@ class AgentCallResultsSupportTest {
 
     @Test
     void stripInjectedNodesRestoresPlannerToEnd() {
-        WorkflowDefinition expanded = MERGER.mergeAgentAndToolCalls(
+        WorkflowDefinition expanded = MERGER.merge(
                 baseWorkflow(),
                 AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID,
                 "end",
-                List.of(new ParsedAgentCall("literature-agent", "find papers")),
-                List.of()).graph();
+                List.of(new ParsedAgentCall("literature-agent", "find papers"))).graph();
 
         assertThat(expanded.getNodes().stream().map(node -> node.getId()))
                 .anyMatch(DynamicSubgraphStripper::isInjectedNodeId);
@@ -73,7 +72,7 @@ class AgentCallResultsSupportTest {
                         .type(NodeType.AGENT.name())
                         .executionKind(ExecutionKind.ACTIVITY)
                         .executionModel(ExecutionModel.INLINE)
-                        .putConfiguration(AgentCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true)
+                        .putConfiguration(AgentCallPlannerSupport.CONFIG_AGENT_CALL_PLANNER, true)
                         .build())
                 .endNode("end")
                 .connect("start", "out", AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID, "in")

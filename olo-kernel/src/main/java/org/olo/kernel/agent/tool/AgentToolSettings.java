@@ -46,7 +46,7 @@ public record AgentToolSettings(String agentName, int maxToolRounds) {
      * Planner agents answer with a JSON plan, not prose, so they never get tools. They are removed in M2/M3.
      */
     public static boolean usesTools(NodeDefinition node) {
-        if (DynamicGraphPlannerSupport.isDynamicGraphPlanner(node) || AgentCallPlannerSupport.isToolCallPlanner(node)) {
+        if (DynamicGraphPlannerSupport.isDynamicGraphPlanner(node) || AgentCallPlannerSupport.isAgentCallPlanner(node)) {
             return false;
         }
         var configuration = node.getConfiguration() == null ? Map.<String, Object>of() : node.getConfiguration();

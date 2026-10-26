@@ -16,7 +16,6 @@ import org.olo.kernel.dynamicgraph.DynamicNodeLabels;
 import org.olo.kernel.agentcall.AgentLabelResolver;
 import org.olo.kernel.agentcall.DynamicSubgraphStripper;
 import org.olo.kernel.agentcall.model.ParsedAgentCall;
-import org.olo.kernel.agentcall.model.ParsedToolCall;
 import org.olo.kernel.agentcall.model.SubgraphMergeResult;
 
 import java.util.ArrayList;
@@ -28,7 +27,7 @@ import java.util.Map;
  * Injects a sequential chain of CHILD_WORKFLOW agent nodes after a planner node.
  *
  * <p>Each {@link ParsedAgentCall} becomes one dynamically labeled AGENT node that delegates to the
- * referenced child workflow. Tool nodes, when present, are chained after the last agent.
+ * referenced child workflow. No local tool nodes are created.
  */
 public final class AgentCallChainMerger {
 
@@ -39,36 +38,28 @@ public final class AgentCallChainMerger {
             WorkflowDefinition graph,
             String plannerNodeId,
             String continueNodeId,
-            List<ParsedAgentCall> agentCalls,
-            List<ParsedToolCall> toolCalls) {
+            List<ParsedAgentCall> agentCalls) {
         graph = DynamicSubgraphStripper.stripInjectedNodes(graph, plannerNodeId, continueNodeId);
         if (agentCalls == null || agentCalls.isEmpty()) {
-            return ToolChainMerger.merge(graph, plannerNodeId, continueNodeId, toolCalls);
+            return new SubgraphMergeResult(graph, continueNodeId);
         }
 
-        String prefix = "agent-dyn-" + System.nanoTime() + "-";
         List<String> dynamicAgentNodeIds = new ArrayList<>();
         WorkflowBuilder builder = WorkflowBuilder.from(graph);
         List<EdgeDefinition> mergedEdges = copyEdgesExceptPlannerBridge(graph, plannerNodeId, continueNodeId);
 
         for (int index = 0; index < agentCalls.size(); index++) {
             ParsedAgentCall call = agentCalls.get(index);
-            String nodeId = prefix + "step-" + index;
+            String nodeId = "agent-dyn-" + java.util.UUID.nameUUIDFromBytes((plannerNodeId + "\n" + call.agentId() + "\n" + index).getBytes(java.nio.charset.StandardCharsets.UTF_8));
             dynamicAgentNodeIds.add(nodeId);
             builder.addNode(buildAgentNode(graph, plannerNodeId, call, nodeId));
         }
 
         wireAgentChain(mergedEdges, plannerNodeId, dynamicAgentNodeIds);
         String tailNodeId = dynamicAgentNodeIds.getLast();
-        if (toolCalls == null || toolCalls.isEmpty()) {
-            mergedEdges.add(bridgeEdge(tailNodeId, continueNodeId));
-            builder.replaceEdges(mergedEdges);
-            return new SubgraphMergeResult(builder.build(), dynamicAgentNodeIds.getFirst());
-        }
-
+        mergedEdges.add(bridgeEdge(tailNodeId, continueNodeId));
         builder.replaceEdges(mergedEdges);
-        SubgraphMergeResult toolMerge = ToolChainMerger.merge(builder.build(), tailNodeId, continueNodeId, toolCalls);
-        return new SubgraphMergeResult(toolMerge.graph(), dynamicAgentNodeIds.getFirst());
+        return new SubgraphMergeResult(builder.build(), dynamicAgentNodeIds.getFirst());
     }
 
     private static List<EdgeDefinition> copyEdgesExceptPlannerBridge(

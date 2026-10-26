@@ -93,7 +93,7 @@ public final class AgentToolExecutionWorkflowBuilder {
                 .putNodeConfiguration(CPU_USAGE_NODE_ID, Map.of("toolId", CPU_USAGE_TOOL_ID))
                 .canvasToolNode(RESTART_CONTAINER_NODE_ID)
                 .putNodeConfiguration(RESTART_CONTAINER_NODE_ID, Map.of("toolId", RESTART_CONTAINER_TOOL_ID))
-                .addNode(AgentToolPlannerSupport.toolCallPlannerNode(plannerNodeId, conversationStoreNodeId))
+                .addNode(AgentToolPlannerSupport.agentCallPlannerNode(plannerNodeId, conversationStoreNodeId))
                 .endNode("end")
                 .connect("start", "out", conversationLoadNodeId, "in")
                 .connect(conversationLoadNodeId, "out", humanNodeId, "in")

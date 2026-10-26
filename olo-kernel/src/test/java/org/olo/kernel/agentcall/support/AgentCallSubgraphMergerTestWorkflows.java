@@ -90,7 +90,7 @@ public final class AgentCallSubgraphMergerTestWorkflows {
                 .type(NodeType.AGENT.name())
                 .executionKind(ExecutionKind.ACTIVITY)
                 .executionModel(ExecutionModel.INLINE)
-                .putConfiguration(AgentCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true)
+                .putConfiguration(AgentCallPlannerSupport.CONFIG_AGENT_CALL_PLANNER, true)
                 .build();
     }
 }

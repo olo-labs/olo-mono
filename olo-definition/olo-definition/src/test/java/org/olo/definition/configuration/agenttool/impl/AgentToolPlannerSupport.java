@@ -60,7 +60,7 @@ final class AgentToolPlannerSupport {
                olo-core:restart-container with containerId and namespace. Include confirmationId and logPath in directResponse.
 
             If a previous attempt failed validation, fix it:
-            {toolCallSequenceJsonValidationError}
+            {agentCallSequenceJsonValidationError}
 
             Respond with JSON only.""";
 
@@ -97,7 +97,7 @@ final class AgentToolPlannerSupport {
         return Map.copyOf(context);
     }
 
-    static NodeDefinition toolCallPlannerNode(String nodeId, String continueNodeId) {
+    static NodeDefinition agentCallPlannerNode(String nodeId, String continueNodeId) {
         return NodeDefinition.builder()
                 .id(nodeId)
                 .type(NodeType.AGENT.name())
@@ -108,7 +108,7 @@ final class AgentToolPlannerSupport {
                 .addPort(WorkflowBuilder.capabilitiesPort(PortDirection.INPUT))
                 .addPort(WorkflowBuilder.agentPlugPort(PortDirection.INPUT))
                 .addPort(WorkflowBuilder.messagePort("out", PortDirection.OUTPUT))
-                .putConfiguration(AgentCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true)
+                .putConfiguration(AgentCallPlannerSupport.CONFIG_AGENT_CALL_PLANNER, true)
                 .putConfiguration(
                         AgentCallPlannerSupport.CONFIG_OUTPUT_VARIABLE,
                         AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
