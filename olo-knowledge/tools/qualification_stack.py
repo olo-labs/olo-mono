@@ -314,7 +314,37 @@ print(tag['digest'])
         scope=dict(toolGroups=dict(ids=['default-tools'],all=False),deviceGroups=dict(ids=['default-devices'],all=False),
             actions=['memory.read','memory.append','memory.delete','memory.share','memory.export','rag.query','rag.ingest','rag.update','rag.delete','rag.share'],allActions=False,
             resources=[dict(kind='CUSTOM',locator='olo://'+self.tenant+'/conversation/'+self.conversation,match='EXACT'),dict(kind='CUSTOM',locator='olo://'+self.tenant+'/kb/'+self.kb,match='EXACT')],conditions=conditions)
-        self.api('/grants',dict(id='knowledge-human',name='Explicit qualification resources',enabled=True,revision=1,sourceType='TEAM',sourceId='installation-administrators',purpose='HUMAN',scope=scope),'POST')
+        self.provision_user_grants(scope)
+    def provision_user_grants(self,scope):
+        # ToolGate budgets are grant-scoped. Singleton Teams make these durable
+        # budgets user-specific; no shared alternative grant authorizes the resources.
+        for user,grant in [('reviewer-1','knowledge-human'),('reviewer-2','knowledge-human-reviewer-2')]:
+            team='knowledge-'+user
+            self.api('/teams',dict(id=team,name='Knowledge user '+user,enabled=True,revision=1,userIds=[user],roleIds=[]),'POST')
+            conditions={**scope['conditions'],'maxInvocationsPerMinute':600}
+            self.api('/grants',dict(id=grant,name='Explicit user knowledge resources',enabled=True,revision=1,
+                sourceType='TEAM',sourceId=team,purpose='HUMAN',scope={**scope,'conditions':conditions}),'POST')
+
+    def qualify_user_quotas(self):
+        for _ in range(2):
+            status,value=self.result('reviewer-1','rag.query',self.kb,{'query':'Quota qualification'})
+            self.require(status==200 and 'chunks' in value,'Quota baseline did not complete')
+        original=self.api('/grants/knowledge-human')
+        limited={**original,'scope':{**original['scope'],'conditions':{**original['scope']['conditions'],'maxInvocationsPerMinute':1}}}
+        self.api('/grants/knowledge-human',limited,'PUT',revision=original['revision'])
+        try:
+            status,value=self.result('reviewer-1','rag.query',self.kb,{'query':'Quota qualification'})
+            self.require(policy_denied(status,value),'Exhausted user quota must be denied by ToolGate before dispatch')
+            status,value=self.result('reviewer-2','rag.query',self.kb,{'query':'Quota qualification'})
+            self.require(status==200 and 'chunks' in value,'One user exhausted another user quota')
+        finally:
+            current=self.api('/grants/knowledge-human')
+            self.api('/grants/knowledge-human',{**original,'revision':current['revision']},'PUT',revision=current['revision'])
+        status,value=self.result('reviewer-1','rag.query',self.kb,{'query':'Quota qualification'})
+        self.require(status==200 and 'chunks' in value,'Restored user quota did not permit a fresh authorized query')
+        print('PASS ToolGate durable per-user quotas block only the exhausted user and preserve fresh queries for another user',flush=True)
+        return dict(limitPerMinute=600,quotaAuthority='ToolGate',exhaustedUserDenied=True,otherUserUnaffected=True)
+
     def call(self,user,operation,resource,request,logical_id=None):
         kind='conversationId' if operation.startswith('memory.') else 'kbId'
         status,response=self.mcp(user,params={'name':'olo.'+operation.replace('.','/'),'arguments':{kind:resource,'request':json.dumps(request,separators=(',',':'))}},operation=logical_id)
@@ -423,6 +453,8 @@ print(tag['digest'])
         timings['deleteExclusionSeconds']=time.monotonic()-began
         self.require(timings['deleteExclusionSeconds']<=30,'Deletion exclusion exceeds revocation bound')
         mark('governed deletion excludes the published document within 30 seconds')
+        user_quotas=self.qualify_user_quotas()
+        mark('per-user ToolGate quotas remain active throughout functional freshness checks')
         grant=self.api('/grants/knowledge-human')
         began=time.monotonic()
         self.api('/grants/knowledge-human',{**grant,'enabled':False},'PUT',revision=grant['revision'])
@@ -432,7 +464,7 @@ print(tag['digest'])
         self.require(timings['grantRevocationSeconds']<=30,'Grant revocation exceeds 30 seconds')
         mark('live Control grant revocation blocks result retrieval within 30 seconds')
         tested_image=json.loads(docker('image','inspect',self.image))[0]
-        report={'passed':True,'gates':gates,'timings':timings,
+        report={'passed':True,'gates':gates,'timings':timings,'perUserQuotas':user_quotas,
             'imageId':tested_image['Id'],
             'toolgateRevision':(tested_image['Config'].get('Labels') or {}).get('org.opencontainers.image.revision'),
             'knowledgeRevision':run(['git','rev-parse','HEAD'],cwd=ROOT,text=True).stdout.strip(),
