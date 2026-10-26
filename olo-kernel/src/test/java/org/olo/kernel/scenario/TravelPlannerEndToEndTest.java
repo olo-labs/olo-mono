@@ -15,7 +15,7 @@ import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.context.variables.WorkflowRuntimeVariables;
-import org.olo.kernel.toolcall.ToolCallFactories;
+import org.olo.kernel.agentcall.AgentCallFactories;
 import org.olo.kernel.traversal.context.impl.KernelExecutionContextFactory;
 import org.olo.kernel.traversal.step.handler.impl.ToolNodeTypeHandler;
 import org.olo.input.model.WorkflowInput;
@@ -73,7 +73,7 @@ class TravelPlannerEndToEndTest {
         assertThat(toolResultsJson).contains("paris-weekend-001");
         assertThat(toolResultsJson).contains("Paris");
 
-        var mergeValidation = ToolCallFactories.defaultToolCallSubgraphMerger().validate(
+        var mergeValidation = AgentCallFactories.defaultAgentCallSubgraphMerger().validate(
                 """
                 {
                   "toolCalls": [
@@ -87,7 +87,7 @@ class TravelPlannerEndToEndTest {
                 [{"toolId":"olo-core:travel-destinations"},{"toolId":"olo-core:travel-offers"}]
                 """);
         assertThat(mergeValidation.valid()).isTrue();
-        var mergeResult = ToolCallFactories.defaultToolCallSubgraphMerger().merge(
+        var mergeResult = AgentCallFactories.defaultAgentCallSubgraphMerger().merge(
                 orchestrator,
                 "agent",
                 "end",

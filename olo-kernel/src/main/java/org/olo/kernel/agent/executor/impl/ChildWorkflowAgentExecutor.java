@@ -7,7 +7,7 @@ package org.olo.kernel.agent.executor.impl;
 import org.olo.definition.execution.ExecutionModel;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.kernel.agent.executor.AgentExecutor;
 import org.olo.kernel.childworkflow.ChildWorkflowCoordinator;
 import org.olo.kernel.context.KernelRuntimeContext;
@@ -40,7 +40,7 @@ public final class ChildWorkflowAgentExecutor implements AgentExecutor {
         if (node == null || !NodeType.AGENT.name().equals(node.getType())) {
             return false;
         }
-        if (ToolCallPlannerSupport.isToolCallPlanner(node)) {
+        if (AgentCallPlannerSupport.isToolCallPlanner(node)) {
             return false;
         }
         if (Boolean.TRUE.equals(node.getConfiguration() != null

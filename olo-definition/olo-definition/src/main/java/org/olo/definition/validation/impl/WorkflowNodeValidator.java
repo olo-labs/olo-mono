@@ -113,7 +113,7 @@ final class WorkflowNodeValidator {
         if (NodeType.AGENT.value().equals(type)
                 && workflow == null
                 && !org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport.isDynamicGraphPlanner(node)
-                && !org.olo.definition.toolcall.ToolCallPlannerSupport.isToolCallPlanner(node)
+                && !org.olo.definition.agentcall.AgentCallPlannerSupport.isToolCallPlanner(node)
                 && !org.olo.definition.dynamicgraph.DynamicSubgraphInjectionSupport.isToolSynthesis(node)) {
             errors.add("AGENT node " + nodeId + " requires a workflow reference (agent = workflow)");
         }

@@ -6,7 +6,7 @@ package org.olo.definition.configuration.scenario;
 
 import org.olo.definition.designer.StudioDesignerAssertions;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowDefinition;
 
@@ -43,12 +43,12 @@ public final class ScenarioConfigurationTestSupport {
                 configurationRoot.resolve(orchestratorId + ".json")));
         assertThat(orchestrator.getChildWorkflows()).hasSize(expectedChildCount);
         assertThat(orchestrator.getAvailableAgents()).hasSize(expectedChildCount);
-        assertThat(orchestrator.getMetadata()).containsKey(ToolCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
+        assertThat(orchestrator.getMetadata()).containsKey(AgentCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
         for (String childAgentId : childAgentIds) {
             assertThat(orchestrator.getEdges()).anyMatch(edge ->
                     childAgentId.equals(edge.getSourceNodeId())
                             && "agentPlug".equals(edge.getSourcePortId())
-                            && ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(edge.getTargetNodeId()));
+                            && AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(edge.getTargetNodeId()));
         }
         StudioDesignerAssertions.assertStudioBuildReady(orchestrator);
     }

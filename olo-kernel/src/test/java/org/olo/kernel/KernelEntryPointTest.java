@@ -28,10 +28,12 @@ class KernelEntryPointTest {
         }
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false);
-        WorkflowInput baseInput = WorkflowInput.fromJson(Files.readString(
-                Paths.get("../olo-workflow-input/samples/minimal-local/workflow-input.json")
-                        .toAbsolutePath()
-                        .normalize()));
+        WorkflowInput baseInput = WorkflowInput.fromJson("""
+                {"version":"1.0","inputs":[{"name":"query","displayName":"Query",
+                  "type":"STRING","storage":{"mode":"LOCAL"},"value":"Hello, OLO"}],
+                  "routing":{"pipeline":"default-pipeline","transactionType":"QUESTION_ANSWER",
+                  "transactionId":"fresh-kernel-entry"}}
+                """);
         WorkflowInput input = baseInput.toBuilder()
                 .routing(new org.olo.input.model.Routing(
                         "minimal-echo",

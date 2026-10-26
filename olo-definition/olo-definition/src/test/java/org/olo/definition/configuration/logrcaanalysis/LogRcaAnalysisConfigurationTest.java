@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.olo.definition.designer.StudioDesignerAssertions;
 import org.olo.definition.execution.ExecutionModel;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowDefinition;
 
@@ -51,9 +51,9 @@ class LogRcaAnalysisConfigurationTest {
                         LogRcaAnalysisDefinitions.LOG_READER_TOOL_ID,
                         LogRcaAnalysisDefinitions.CPU_USAGE_TOOL_ID,
                         LogRcaAnalysisDefinitions.RECENT_CODE_TOOL_ID);
-        assertThat(orchestrator.getMetadata()).containsKey(ToolCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
+        assertThat(orchestrator.getMetadata()).containsKey(AgentCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION);
         assertThat(orchestrator.getVariables().stream().map(v -> v.getName()))
-                .contains(ToolCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE);
+                .contains(AgentCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE);
 
         for (String childAgentId : new String[] {
             LogRcaAnalysisDefinitions.LOG_FAILURE_AGENT_ID,
@@ -64,7 +64,7 @@ class LogRcaAnalysisConfigurationTest {
             assertThat(orchestrator.getEdges()).anyMatch(edge ->
                     childAgentId.equals(edge.getSourceNodeId())
                             && "agentPlug".equals(edge.getSourcePortId())
-                            && ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(edge.getTargetNodeId())
+                            && AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID.equals(edge.getTargetNodeId())
                             && "agentPlug".equals(edge.getTargetPortId()));
             assertThat(orchestrator.getNodes().stream()
                     .filter(node -> childAgentId.equals(node.getId()))

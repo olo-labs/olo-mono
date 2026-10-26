@@ -8,7 +8,7 @@ import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.exception.KernelException;
-import org.olo.kernel.toolcall.AgentCallResultsSupport;
+import org.olo.kernel.agentcall.AgentCallResultsSupport;
 import org.olo.kernel.graph.index.GraphIndex;
 import org.olo.kernel.graph.visit.GraphEdgeNavigator;
 import org.olo.spi.node.NodeResult;

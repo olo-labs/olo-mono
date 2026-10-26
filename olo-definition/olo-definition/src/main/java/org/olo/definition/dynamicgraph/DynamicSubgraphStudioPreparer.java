@@ -12,7 +12,7 @@ import org.olo.definition.designer.NodeTypeDesignerDefinition;
 import org.olo.definition.designer.StudioDesignerDefaults;
 import org.olo.definition.edge.EdgeDefinition;
 import org.olo.definition.node.NodeDefinition;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
 
@@ -75,7 +75,7 @@ public final class DynamicSubgraphStudioPreparer {
                 && Boolean.TRUE.equals(node.getConfiguration().get(ToolSynthesisSupport.CONFIG_TOOL_SYNTHESIS))) {
             return true;
         }
-        if (node.getId() != null && node.getId().endsWith(ToolCallPlannerSupport.DEFAULT_SYNTHESIS_NODE_SUFFIX)) {
+        if (node.getId() != null && node.getId().endsWith(AgentCallPlannerSupport.DEFAULT_SYNTHESIS_NODE_SUFFIX)) {
             return true;
         }
         return "Tool synthesis".equalsIgnoreCase(node.getLabel());

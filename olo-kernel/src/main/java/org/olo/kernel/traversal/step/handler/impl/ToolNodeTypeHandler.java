@@ -12,8 +12,8 @@ import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.traversal.context.ExecutionContextFactory;
 import org.olo.kernel.traversal.context.impl.VariableScopeBridge;
 import org.olo.kernel.traversal.input.impl.MessageVariableInputBinder;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
-import org.olo.kernel.toolcall.AvailableToolsJsonResolver;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
+import org.olo.kernel.agentcall.AvailableToolsJsonResolver;
 import org.olo.kernel.traversal.log.TraversalDiagnostics;
 import org.olo.kernel.traversal.step.handler.NodeTypeHandler;
 import org.olo.core.runtime.DefaultExecutionContext;
@@ -214,7 +214,7 @@ public final class ToolNodeTypeHandler implements NodeTypeHandler {
     private static boolean shouldAggregateToolResult(NodeDefinition node) {
         return node.getConfiguration() != null
                 && Boolean.TRUE.equals(
-                        node.getConfiguration().get(ToolCallPlannerSupport.CONFIG_AGGREGATE_TOOL_RESULT));
+                        node.getConfiguration().get(AgentCallPlannerSupport.CONFIG_AGGREGATE_TOOL_RESULT));
     }
 
     private static String formatToolResponse(ToolResult result) {

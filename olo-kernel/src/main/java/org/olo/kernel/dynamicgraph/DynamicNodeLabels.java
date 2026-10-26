@@ -7,8 +7,8 @@ package org.olo.kernel.dynamicgraph;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.workflow.WorkflowDefinition;
-import org.olo.kernel.toolcall.AgentLabelResolver;
-import org.olo.kernel.toolcall.ToolLabelResolver;
+import org.olo.kernel.agentcall.AgentLabelResolver;
+import org.olo.kernel.agentcall.ToolLabelResolver;
 
 /**
  * Labels for nodes injected at runtime into the active workflow graph.

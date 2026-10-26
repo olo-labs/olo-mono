@@ -6,7 +6,7 @@ package org.olo.kernel.agent.tool;
 
 import org.junit.jupiter.api.Test;
 import org.olo.definition.node.NodeDefinition;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.agent.executor.impl.LocalLlmAgentExecutor;
 import org.olo.kernel.agent.impl.DefaultLlmInvocationService;
@@ -157,7 +157,7 @@ class ToolGateAgentExecutionTest {
     void plannerAgentsKeepAnsweringWithAPlan() {
         var toolGate = new AgentToolTestSupport.FakeToolGate(Map.of("planner", List.of(tool("incidents.host-status"))));
         var llm = new AgentToolTestSupport.ScriptedLlm();
-        NodeDefinition planner = agentNode("agent", Map.of(ToolCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true));
+        NodeDefinition planner = agentNode("agent", Map.of(AgentCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true));
 
         executor(llm, new AtomicReference<>(AgentToolAccess.enabled(toolGate, 8, MAPPED)))
                 .execute(context(graph("planner", planner), "run-1"), planner);

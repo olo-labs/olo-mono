@@ -16,7 +16,7 @@ import org.olo.definition.port.PortDirection;
 import org.olo.definition.preset.WorkflowPresetInfrastructure;
 import org.olo.definition.runtime.RuntimeBindingDefinition;
 import org.olo.definition.tool.ToolDefinition;
-import org.olo.definition.toolcall.ToolCallPlannerSupport;
+import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.workflow.ChildWorkflowDefinition;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.configuration.scenario.ScenarioConversationPluginSupport;
@@ -43,7 +43,7 @@ public final class ScenarioPlannerOrchestrator {
             List<ScenarioAgentSpec> childAgents,
             List<ScenarioToolSpec> tools,
             ScenarioHumanActionSpec humanAction) {
-        String plannerNodeId = ToolCallPlannerSupport.DEFAULT_PLANNER_NODE_ID;
+        String plannerNodeId = AgentCallPlannerSupport.DEFAULT_PLANNER_NODE_ID;
         String humanNodeId = ScenarioHumanStepSupport.HUMAN_INPUT_NODE_ID;
         String conversationLoadNodeId = ScenarioConversationPluginSupport.CONVERSATION_LOAD_NODE_ID;
         String conversationStoreNodeId = ScenarioConversationPluginSupport.CONVERSATION_STORE_NODE_ID;
@@ -100,17 +100,17 @@ public final class ScenarioPlannerOrchestrator {
                 .metadata("description", shortDescription)
                 .metadata("role", workflowId)
                 .metadata(
-                        ToolCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION,
+                        AgentCallPlannerSupport.METADATA_DYNAMIC_TOOL_EXECUTION,
                         Map.of(
-                                ToolCallPlannerSupport.METADATA_PLANNER_NODE_ID,
+                                AgentCallPlannerSupport.METADATA_PLANNER_NODE_ID,
                                 plannerNodeId,
-                                ToolCallPlannerSupport.CONFIG_OUTPUT_VARIABLE,
-                                ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE,
-                                ToolCallPlannerSupport.METADATA_AVAILABLE_TOOLS_VARIABLE,
-                                ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
-                                ToolCallPlannerSupport.METADATA_AVAILABLE_AGENTS_VARIABLE,
-                                ToolCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE,
-                                ToolCallPlannerSupport.CONFIG_CONTINUE_NODE_ID,
+                                AgentCallPlannerSupport.CONFIG_OUTPUT_VARIABLE,
+                                AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE,
+                                AgentCallPlannerSupport.METADATA_AVAILABLE_TOOLS_VARIABLE,
+                                AgentCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
+                                AgentCallPlannerSupport.METADATA_AVAILABLE_AGENTS_VARIABLE,
+                                AgentCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE,
+                                AgentCallPlannerSupport.CONFIG_CONTINUE_NODE_ID,
                                 conversationStoreNodeId))
                 .metadata(PlannerContextDefinition.METADATA_KEY, orchestratorPlannerContext(childAgents, tools))
                 .withStandardReturnVariable();
@@ -162,8 +162,8 @@ public final class ScenarioPlannerOrchestrator {
                 .addInput("input")
                 .addOutput("output")
                 .addRequiredContext(WorkflowPresetInfrastructure.MESSAGE_VARIABLE)
-                .addRequiredContext(ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE)
-                .addRequiredContext(ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
+                .addRequiredContext(AgentCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE)
+                .addRequiredContext(AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
                 .build();
     }
 
@@ -175,10 +175,10 @@ public final class ScenarioPlannerOrchestrator {
                 List.of(
                         WorkflowPresetInfrastructure.MESSAGE_VARIABLE,
                         ScenarioConversationPluginSupport.CONVERSATION_SUMMARY_VARIABLE,
-                        ToolCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
-                        ToolCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE,
-                        ToolCallPlannerSupport.DEFAULT_AGENT_RESULTS_VARIABLE,
-                        ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE));
+                        AgentCallPlannerSupport.DEFAULT_AVAILABLE_TOOLS_VARIABLE,
+                        AgentCallPlannerSupport.DEFAULT_AVAILABLE_AGENTS_VARIABLE,
+                        AgentCallPlannerSupport.DEFAULT_AGENT_RESULTS_VARIABLE,
+                        AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE));
         context.put(PlannerContextDefinition.SELECTED_TOOLS, tools.stream().map(ScenarioToolSpec::implementationId).toList());
         context.put(
                 PlannerContextDefinition.SELECTED_AGENTS,
@@ -199,14 +199,14 @@ public final class ScenarioPlannerOrchestrator {
                 .addPort(WorkflowBuilder.capabilitiesPort(PortDirection.INPUT))
                 .addPort(WorkflowBuilder.agentPlugPort(PortDirection.INPUT))
                 .addPort(WorkflowBuilder.messagePort("out", PortDirection.OUTPUT))
-                .putConfiguration(ToolCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true)
+                .putConfiguration(AgentCallPlannerSupport.CONFIG_TOOL_CALL_PLANNER, true)
                 .putConfiguration(
-                        ToolCallPlannerSupport.CONFIG_OUTPUT_VARIABLE,
-                        ToolCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
+                        AgentCallPlannerSupport.CONFIG_OUTPUT_VARIABLE,
+                        AgentCallPlannerSupport.DEFAULT_OUTPUT_VARIABLE)
                 .putConfiguration(
-                        ToolCallPlannerSupport.CONFIG_MAX_INVALID_JSON_RETRIES,
-                        ToolCallPlannerSupport.DEFAULT_MAX_INVALID_JSON_RETRIES)
-                .putConfiguration(ToolCallPlannerSupport.CONFIG_CONTINUE_NODE_ID, continueNodeId)
+                        AgentCallPlannerSupport.CONFIG_MAX_INVALID_JSON_RETRIES,
+                        AgentCallPlannerSupport.DEFAULT_MAX_INVALID_JSON_RETRIES)
+                .putConfiguration(AgentCallPlannerSupport.CONFIG_CONTINUE_NODE_ID, continueNodeId)
                 .putConfiguration("promptTemplate", promptTemplate)
                 .build();
     }
