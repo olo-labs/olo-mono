@@ -40,23 +40,5 @@ mkdir -p "$GITHUB_WORKSPACE/olo-ui/olo-be/src/main/resources/static/catalog"
 cp dist/catalog/*.json "$GITHUB_WORKSPACE/olo-ui/olo-be/src/main/resources/static/catalog/"
 test -f "$GITHUB_WORKSPACE/olo-ui/olo-be/src/main/resources/static/catalog/catalog.json"
 mkdir -p "$GITHUB_WORKSPACE/olo-ui/olo-be/docker/runtime-configuration"
-if [ -x "$GITHUB_WORKSPACE/olo-ui/scripts/bundle-docker-configuration.sh" ]; then
-  "$GITHUB_WORKSPACE/olo-ui/scripts/bundle-docker-configuration.sh"
-elif [ -d "olo-definition/olo-configuration/default" ]; then
-  echo "Bundling from default + scenario collections (current-active is manual-only)"
-  DEST="$GITHUB_WORKSPACE/olo-ui/olo-be/docker/runtime-configuration"
-  CONFIG_ROOT="olo-definition/olo-configuration"
-  find "$DEST" -mindepth 1 ! -name README.md -exec rm -rf {} + 2>/dev/null || true
-  cp "$CONFIG_ROOT/default"/*.json "$DEST/"
-  for scenario in research-planner travel-planner dynamic-graph-creation; do
-    if [ -d "$CONFIG_ROOT/$scenario" ]; then
-      mkdir -p "$DEST/$scenario"
-      cp "$CONFIG_ROOT/$scenario"/*.json "$DEST/$scenario/" 2>/dev/null || true
-    fi
-  done
-  cp "$CONFIG_ROOT/dynamic-graph-creation/dynamic-graph-creation.json" "$DEST/" 2>/dev/null || true
-else
-  echo "::warning::No workflow JSON in olo-mono checkout; using committed olo-be/docker/runtime-configuration"
-  ls -la olo-definition/olo-configuration 2>/dev/null || ls -la olo-definition/ 2>/dev/null || true
-fi
+bash "$GITHUB_WORKSPACE/olo-ui/scripts/bundle-docker-configuration.sh"
 test "$(find "$GITHUB_WORKSPACE/olo-ui/olo-be/docker/runtime-configuration" -name '*.json' | wc -l)" -gt 0

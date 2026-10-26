@@ -20,7 +20,7 @@ repositories {
     mavenCentral()
 }
 
-def oloCoreDistCatalog = file('../olo-mono/olo-core/dist/catalog')
+def oloCoreDistCatalog = file('../../olo-core/dist/catalog')
 if (!oloCoreDistCatalog.exists()) {
     oloCoreDistCatalog = file('../../olo-mono/olo-core/dist/catalog')
 }

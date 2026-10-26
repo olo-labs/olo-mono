@@ -57,7 +57,7 @@ jobs:
         env:
           VERSION_FILE: ${{ matrix.version }}
         run: |
-          VERSION=$(node -e "const fs=require('fs');const s=fs.readFileSync(process.env.VERSION_FILE,'utf8');console.log(process.env.VERSION_FILE.endsWith('.json')?JSON.parse(s).version:s.match(/version\s*=\s*['\"]([^'\"]+)/)[1])")
+          VERSION=$(node scripts/image-version.cjs "$VERSION_FILE")
           echo "value=$VERSION" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3

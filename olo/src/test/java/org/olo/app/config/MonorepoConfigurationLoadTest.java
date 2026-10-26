@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MonorepoConfigurationLoadTest {
 
   private static final Path MONOREPO_ACTIVE =
-      Path.of("..", "olo-mono", "olo-definition", "olo-configuration", "current-active")
+      Path.of("..", "olo-definition", "olo-configuration", "current-active")
           .normalize()
           .toAbsolutePath();
 

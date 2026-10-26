@@ -1,6 +1,6 @@
 # OLO debug stack
 
-Brings up the [olo-docker](../../olo-docker/dev) **dev** stack around this olo-mono checkout so an issue
+Brings up the [olo-docker](../../deploy/stack/dev) **dev** stack around this olo-mono checkout so an issue
 can be reproduced end to end, with **one text model** in Ollama.
 
 ```powershell
@@ -95,5 +95,5 @@ debug/
   logs/                             output of `collect` (git-ignored)
 ```
 
-The compose project name is `olo` and the network `olo-net`, the same as `olo-docker/dev/install.*`, so
+The compose project name is `olo` and the network `olo-net`, the same as `deploy/stack/dev/install.*`, so
 containers and volumes created by the regular installer are reused rather than duplicated.
