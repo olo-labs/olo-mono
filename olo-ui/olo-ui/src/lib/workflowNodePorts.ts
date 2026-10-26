@@ -70,7 +70,7 @@ export function usesPlannerRoutedMessagePorts(
   configuration?: Record<string, unknown> | null,
 ): boolean {
   const normalized = workflowType.toUpperCase()
-  if (normalized === 'TOOL' || normalized === 'HOOK') return true
+  if (normalized === 'HOOK') return true
   if (normalized === 'AGENT' && isDelegateAgentNode(configuration)) return true
   return false
 }
@@ -94,7 +94,7 @@ export function resolveCapabilityPluginPorts(
   catalogPorts: WorkflowPort[],
 ): WorkflowPort[] {
   const normalized = workflowType.toUpperCase()
-  if (normalized !== 'TOOL' && normalized !== 'HOOK') {
+  if (normalized !== 'HOOK') {
     return workflowPorts ?? []
   }
   const merged = mergeMissingCatalogPorts(workflowPorts, catalogPorts)
@@ -129,7 +129,7 @@ export function resolveNodePorts(
     }
     return resolveAgentHostPorts(normalized, workflowPorts, catalogPorts)
   }
-  if (normalized === 'TOOL' || normalized === 'HOOK') {
+  if (normalized === 'HOOK') {
     return resolveCapabilityPluginPorts(normalized, workflowPorts, catalogPorts)
   }
   return workflowPorts ?? []

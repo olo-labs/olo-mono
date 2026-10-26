@@ -4,7 +4,7 @@ server:
   host: "0.0.0.0"
   port: 8080
 workflowDefinitions:
-  scanFolder: "/app/olo-configuration/current-active"
+  scanFolder: "/app/olo-configuration"
   recursive: true
 temporal:
   namespace: "default"
@@ -18,22 +18,13 @@ input:
 metadata:
   environment: "docker"
   oloApiBaseUrl: "http://olo:7080"
-# OLO ToolGate: LLM agents ask ToolGate which tools their agentName may use and call them through the Gateway.
-# Tokens: OLO_TOOLGATE_TOKEN_<AGENT_NAME> env vars, or <credentialsDir>/<agentName>.token files.
+# Platform history/RAG require user-bound Gateway credentials; no local fallback.
 toolgate:
-  enabled: false
-  mcpUrl: "https://toolgate-gateway:8451/mcp"
-  caCertificate: "/app/worker/toolgate/gateway-ca.crt"
-  credentialsDir: "/app/worker/toolgate/credentials"
-  # Required when enabled: backend user credentials plus the mapped agent's actor token.
-  userCredentialsUrl: "http://olo:7080"
+  enabled: true
+  mcpUrl: "${OLO_TOOLGATE_MCP_URL}"
+  userCredentialsUrl: "${OLO_TOOLGATE_USER_CREDENTIALS_URL}"
   delegatedAgents: true
-  timeoutMs: 60000
+  timeoutMs: 20000
   maxToolRounds: 8
-  # Operator-controlled: which agent identities each workflow may use. Workflow authors can't change this.
-  # An AGENT node whose agentName isn't listed for its tenant and workflow fails before any ToolGate call.
-  # "olo-platform-service" is reserved and can never be listed.
-  agentMappings:
-    - tenant: "*"
-      workflow: "log-rca-orchestrator"
-      agents: ["log-rca-orchestrator", "log-failure-agent", "metrics-rca-agent", "code-change-rca-agent", "incident-summary-agent"]
+  reservedPrincipals: ["olo-platform-service"]
+  agentMappings: []

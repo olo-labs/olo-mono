@@ -12,6 +12,12 @@ on:
 permissions:
   contents: read
 jobs:
+  fresh-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject retired local execution APIs and workflow contracts
+        run: python3 scripts/check-fresh-install.py
   images:
     runs-on: ubuntu-latest
     permissions:

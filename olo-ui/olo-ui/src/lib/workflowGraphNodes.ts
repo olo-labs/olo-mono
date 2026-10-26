@@ -20,7 +20,6 @@ import {
   agentPresetExecution,
   hookNodeConfiguration,
   resolveDelegateAgentPorts,
-  toolNodeConfiguration,
 } from './workflowGraphSemantics'
 import {
   cloneWorkflowNodeTemplate,
@@ -118,18 +117,7 @@ export function createWorkflowNodeFromDrag(
   catalog: StudioCatalog | null,
   workflow: WorkflowDocument,
 ): WorkflowNode {
-  if (payload.kind === 'TOOL') {
-    const id = uniqueNodeId(catalogItem.name ?? 'tool', existingIds)
-    return {
-      id,
-      type: 'TOOL',
-      label: catalogItem.name?.trim() || undefined,
-      ports: resolveCapabilityPluginPorts('TOOL', [], catalogComponentToPorts(catalogItem)),
-      reads: [],
-      writes: [],
-      configuration: toolNodeConfiguration(catalogItem, position),
-    }
-  }
+
 
   if (payload.kind === 'HOOK') {
     const id = uniqueNodeId(catalogItem.name ?? 'hook', existingIds)

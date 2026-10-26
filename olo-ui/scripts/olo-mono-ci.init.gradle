@@ -5,12 +5,14 @@
 
 // CI: resolve published olo-mono libs from build/repo during sparse checkout builds.
 def resolveOloMonoRepoDir = { Project p ->
-    [
-        p.rootProject.file('../../build/repo'),
-        p.file('../../olo-mono/build/repo'),
-        p.file('../olo-mono/build/repo'),
-        p.layout.projectDirectory.dir('../build/repo').asFile,
-    ].find { it.directory }
+    File directory = p.rootProject.projectDir
+    while (directory != null) {
+        if (new File(directory, 'olo-spi').isDirectory() && new File(directory, 'olo-annotation').isDirectory()) {
+            return new File(directory, 'build/repo')
+        }
+        directory = directory.parentFile
+    }
+    return null
 }
 
 allprojects { p ->

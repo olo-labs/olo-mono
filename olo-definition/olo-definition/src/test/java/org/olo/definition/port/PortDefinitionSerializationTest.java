@@ -31,7 +31,7 @@ class PortDefinitionSerializationTest {
                         .addInput("stocks")
                         .addOutput("stockList")
                         .build())
-                .addNode(ValidationTestFixtures.node("tool-b", NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("tool-b", NodeType.MODEL)
                         .addPort(PortDefinition.inputPort("stocks", "Stock[]"))
                         .addPort(PortDefinition.outputPort("stockList", "Stock[]"))
                         .build())

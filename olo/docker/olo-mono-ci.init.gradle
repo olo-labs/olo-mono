@@ -6,12 +6,15 @@
 // Docker CI: resolve published olo-spi / olo-annotation from olo-mono/build/repo.
 allprojects { p ->
     repositories {
-        def repo = [
-            p.rootProject.file('olo-mono/build/repo'),
-            p.file('../../olo-mono/build/repo'),
-            p.file('../olo-mono/build/repo'),
-            p.layout.projectDirectory.dir('../build/repo').asFile,
-        ].find { it.directory }
+        File directory = p.rootProject.projectDir
+        File repo = null
+        while (directory != null) {
+            if (new File(directory, 'olo-spi').isDirectory() && new File(directory, 'olo-annotation').isDirectory()) {
+                repo = new File(directory, 'build/repo')
+                break
+            }
+            directory = directory.parentFile
+        }
         if (repo != null) {
             maven {
                 name = 'oloMono'

@@ -6,7 +6,7 @@
 import { SECTIONS, type SectionId } from '../types/layout'
 import { ChatView } from './ChatView'
 import { KnowledgeView } from './KnowledgeView'
-import { DocumentsUploadView } from './DocumentsUploadView'
+import { GovernedKnowledgeView } from './GovernedKnowledgeView'
 import type { Tenant } from '../types/tenant'
 import type { ChatProfileDto } from '../api/chatApi'
 import { queueDisplayName } from '../lib/queueDisplayName'
@@ -110,7 +110,7 @@ export function MainContent({
       </div>
       <div className="main-content-body">
         {sectionId === 'documents' && subId === 'upload' ? (
-          <DocumentsUploadView />
+          <GovernedKnowledgeView />
         ) : sectionId === 'documents' ? (
           <div className="main-content-placeholder-inner">
             <p>Upload / Manage Raw Files.</p>

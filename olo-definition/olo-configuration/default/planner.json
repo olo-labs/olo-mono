@@ -1,107 +1,22 @@
 {
   "id" : "planner",
   "enabled" : true,
-  "isDefault" : true,
-  "label" : "Planner",
-  "role" : "Planner",
-  "shortDescription" : "Structured plans and task breakdowns",
-  "emoji" : "📋",
-  "designer" : {
-    "paletteGroup" : "Agents",
-    "searchKeywords" : [ "planner" ],
-    "nodeSize" : {
-      "width" : 300,
-      "height" : 120
-    },
-    "resizable" : true,
-    "draggable" : true,
-    "layout" : {
-      "originX" : 80,
-      "originY" : 80,
-      "columnGap" : 360,
-      "rowGap" : 200,
-      "columns" : 4
-    },
-    "canvas" : {
-      "backgroundColor" : "#3f3f46",
-      "gridGap" : 16,
-      "edgeStroke" : "#52525b",
-      "selectionBorder" : "#3b82f6",
-      "minimapNodeColor" : "#52525b"
-    },
-    "portColors" : {
-      "message" : "#ef4444",
-      "boolean" : "#fb923c",
-      "capabilities" : "#22c55e",
-      "integer" : "#38bdf8",
-      "string" : "#a3e635",
-      "object" : "#c084fc",
-      "number" : "#38bdf8",
-      "array" : "#f472b6",
-      "agent-plug" : "#a855f7",
-      "any" : "#94a3b8"
-    },
-    "nodeTypes" : {
-      "END" : {
-        "emoji" : "⏹",
-        "typeLabel" : "End",
-        "description" : "Workflow exit — maps a workflow variable to the caller result",
-        "palette" : {
-          "name" : "End",
-          "category" : "control"
-        },
-        "inlineProperties" : [ {
-          "id" : "outputVariable",
-          "widget" : "VARIABLE_SELECT",
-          "label" : "Output variable",
-          "binding" : "outputVariableMapping"
-        } ]
-      },
-      "START" : {
-        "emoji" : "▶",
-        "typeLabel" : "Start",
-        "description" : "Workflow entry — maps caller input to workflow variables",
-        "palette" : {
-          "name" : "Start",
-          "category" : "control"
-        },
-        "inlineProperties" : [ {
-          "id" : "inputVariables",
-          "widget" : "VARIABLE_CHECKLIST",
-          "label" : "Input variables",
-          "binding" : "inputVariableMappings"
-        } ]
-      },
-      "AGENT" : {
-        "emoji" : "📋",
-        "typeLabel" : "Agent",
-        "inlineProperties" : [ {
-          "id" : "parameters",
-          "widget" : "WORKFLOW_PARAMETERS",
-          "label" : "Parameters"
-        }, {
-          "id" : "model",
-          "widget" : "MODEL_SELECTOR",
-          "label" : "Model"
-        } ]
-      }
-    }
-  },
-  "queue" : "oloQueue1",
+  "isDefault" : false,
+  "label" : "planner",
+  "queue" : "oloQueue2",
   "workflowType" : "olo",
-  "runAgain" : true,
   "childWorkflows" : [ ],
   "availableAgents" : [ ],
   "version" : "1.0.0",
   "capability" : {
-    "name" : "Planner",
-    "description" : "Structured plans and task breakdowns",
-    "tags" : [ "planner" ],
+    "id" : "planner",
+    "name" : "planner",
+    "description" : "User-authorized governed workflow",
+    "tags" : [ ],
     "examples" : [ ],
-    "required_inputs" : [ "input" ],
-    "required_outputs" : [ "output" ],
-    "tool_requirements" : [ ],
-    "required_context" : [ "message" ]
+    "required_inputs" : [ "message" ],
+    "required_outputs" : [ "ReturnValue" ],
+    "required_context" : [ ]
   },
   "runtime" : {
     "contractVersion" : "1.0",
@@ -115,71 +30,7 @@
     }
   },
   "state" : { },
-  "parameters" : {
-    "temperature" : {
-      "type" : "number",
-      "label" : "Temperature",
-      "description" : "Sampling temperature",
-      "defaultValue" : 0.2,
-      "required" : false,
-      "validation" : {
-        "minimum" : 0.0,
-        "maximum" : 2.0,
-        "step" : 0.1
-      },
-      "ui" : {
-        "widget" : "SLIDER",
-        "group" : "Model Settings",
-        "help" : "Higher values increase response creativity.",
-        "order" : 3
-      }
-    },
-    "systemPrompt" : {
-      "type" : "string",
-      "label" : "System Prompt",
-      "description" : "System prompt for the agent",
-      "defaultValue" : "You are a planning specialist. Break complex work into ordered, actionable steps with clear outcomes.\n\nTask:\n{message}\n\nProduce a structured plan with goals, steps, dependencies, and success criteria.\nReference-only prior conversation context (from conversation-load plugin):\n{conversationSummary}\n\nUse this context only for continuity. Do not quote, summarize, mention, or answer it unless the current request explicitly asks about prior conversation.\n",
-      "required" : false,
-      "ui" : {
-        "widget" : "TEXTAREA",
-        "group" : "Model Settings",
-        "help" : "Include {message} to inject the workflow input into the system prompt.",
-        "placeholder" : "You are a helpful assistant…\n\n{message}",
-        "order" : 0
-      }
-    },
-    "maxIterations" : {
-      "type" : "integer",
-      "label" : "Max Iterations",
-      "description" : "Maximum agent reasoning iterations",
-      "defaultValue" : 10,
-      "required" : false,
-      "validation" : {
-        "minimum" : 1.0,
-        "maximum" : 100.0,
-        "step" : 1.0
-      },
-      "ui" : {
-        "widget" : "NUMBER",
-        "group" : "Model Settings",
-        "help" : "Caps how many planner/tool loops the agent may run.",
-        "order" : 1
-      }
-    },
-    "model" : {
-      "type" : "string",
-      "label" : "Model",
-      "description" : "Default model identifier",
-      "defaultValue" : "",
-      "required" : false,
-      "ui" : {
-        "widget" : "MODEL_SELECTOR",
-        "group" : "Model Settings",
-        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
-        "order" : 2
-      }
-    }
-  },
+  "parameters" : { },
   "nodes" : [ {
     "id" : "start",
     "type" : "START",
@@ -209,63 +60,9 @@
       }
     }
   }, {
-    "id" : "conversation-load",
-    "type" : "TOOL",
-    "ports" : [ {
-      "id" : "in",
-      "label" : "message in",
-      "schema" : "message",
-      "type" : "message",
-      "acceptType" : "message",
-      "direction" : "INPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "shortDescription" : "Incoming workflow message",
-      "ui" : {
-        "position" : "LEFT",
-        "color" : "#ef4444"
-      }
-    }, {
-      "id" : "out",
-      "label" : "message out",
-      "schema" : "message",
-      "type" : "message",
-      "direction" : "OUTPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "shortDescription" : "Outgoing workflow message",
-      "ui" : {
-        "position" : "RIGHT",
-        "color" : "#ef4444"
-      }
-    }, {
-      "id" : "capabilities",
-      "label" : "available tools",
-      "schema" : "capabilities",
-      "type" : "capabilities",
-      "direction" : "OUTPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "shortDescription" : "Capability indicator for runtime prompt assembly on a connected agent",
-      "ui" : {
-        "position" : "TOP",
-        "color" : "#22c55e"
-      }
-    } ],
-    "reads" : [ ],
-    "writes" : [ ],
-    "configuration" : {
-      "toolId" : "olo-core:conversation-load",
-      "designer" : {
-        "position" : {
-          "y" : 80,
-          "x" : 440
-        }
-      }
-    }
-  }, {
     "id" : "agent",
     "type" : "AGENT",
+    "label" : "Agent",
     "ports" : [ {
       "id" : "in",
       "label" : "message in",
@@ -280,20 +77,6 @@
       "ui" : {
         "position" : "LEFT",
         "color" : "#ef4444"
-      }
-    }, {
-      "id" : "capabilities",
-      "label" : "available tools",
-      "schema" : "capabilities",
-      "type" : "capabilities",
-      "acceptType" : "capabilities",
-      "direction" : "INPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "shortDescription" : "Tools and hooks registered for runtime prompt assembly (0 or more)",
-      "ui" : {
-        "position" : "BOTTOM",
-        "color" : "#22c55e"
       }
     }, {
       "id" : "agentPlug",
@@ -337,67 +120,14 @@
     "reads" : [ ],
     "writes" : [ ],
     "configuration" : {
+      "maxToolRounds" : 0,
       "designer" : {
         "position" : {
           "y" : 80,
-          "x" : 800
+          "x" : 440
         }
-      }
-    }
-  }, {
-    "id" : "conversation-store",
-    "type" : "TOOL",
-    "ports" : [ {
-      "id" : "in",
-      "label" : "message in",
-      "schema" : "message",
-      "type" : "message",
-      "acceptType" : "message",
-      "direction" : "INPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "shortDescription" : "Incoming workflow message",
-      "ui" : {
-        "position" : "LEFT",
-        "color" : "#ef4444"
-      }
-    }, {
-      "id" : "out",
-      "label" : "message out",
-      "schema" : "message",
-      "type" : "message",
-      "direction" : "OUTPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "shortDescription" : "Outgoing workflow message",
-      "ui" : {
-        "position" : "RIGHT",
-        "color" : "#ef4444"
-      }
-    }, {
-      "id" : "capabilities",
-      "label" : "available tools",
-      "schema" : "capabilities",
-      "type" : "capabilities",
-      "direction" : "OUTPUT",
-      "required" : false,
-      "minConnections" : 0,
-      "shortDescription" : "Capability indicator for runtime prompt assembly on a connected agent",
-      "ui" : {
-        "position" : "TOP",
-        "color" : "#22c55e"
-      }
-    } ],
-    "reads" : [ ],
-    "writes" : [ ],
-    "configuration" : {
-      "toolId" : "olo-core:conversation-store",
-      "designer" : {
-        "position" : {
-          "y" : 80,
-          "x" : 1160
-        }
-      }
+      },
+      "promptTemplate" : "You are a planning specialist. Break complex work into ordered, actionable steps with clear outcomes.\n\nTask:\n{message}\n\nProduce a structured plan with goals, steps, dependencies, and success criteria."
     }
   }, {
     "id" : "end",
@@ -424,7 +154,7 @@
       "designer" : {
         "position" : {
           "y" : 80,
-          "x" : 1520
+          "x" : 800
         }
       }
     }
@@ -432,20 +162,10 @@
   "edges" : [ {
     "sourceNodeId" : "start",
     "sourcePortId" : "out",
-    "targetNodeId" : "conversation-load",
-    "targetPortId" : "in"
-  }, {
-    "sourceNodeId" : "conversation-load",
-    "sourcePortId" : "out",
     "targetNodeId" : "agent",
     "targetPortId" : "in"
   }, {
     "sourceNodeId" : "agent",
-    "sourcePortId" : "out",
-    "targetNodeId" : "conversation-store",
-    "targetPortId" : "in"
-  }, {
-    "sourceNodeId" : "conversation-store",
     "sourcePortId" : "out",
     "targetNodeId" : "end",
     "targetPortId" : "in"
@@ -458,24 +178,6 @@
     "scope" : "READONLY_EXTERNAL",
     "metadata" : { }
   }, {
-    "name" : "conversationSummary",
-    "type" : "string",
-    "description" : "Summary of prior conversation turns loaded by the conversation-load plugin",
-    "required" : false,
-    "scope" : "LOCAL",
-    "metadata" : {
-      "role" : "conversation-summary"
-    }
-  }, {
-    "name" : "conversationHistory",
-    "type" : "string",
-    "description" : "JSON array of prior conversation turns loaded by the conversation-load plugin",
-    "required" : false,
-    "scope" : "LOCAL",
-    "metadata" : {
-      "role" : "conversation-history"
-    }
-  }, {
     "name" : "ReturnValue",
     "type" : "string",
     "description" : "Workflow return message returned to the caller",
@@ -484,41 +186,6 @@
     "metadata" : {
       "role" : "return"
     }
-  } ],
-  "tools" : [ {
-    "id" : "conversation-load",
-    "type" : "TOOL",
-    "capability" : {
-      "name" : "Conversation Load",
-      "description" : "Loads prior conversation as reference-only context for the workflow message",
-      "tags" : [ ],
-      "examples" : [ "Restore operator chat context before triage begins without echoing history" ],
-      "required_inputs" : [ ],
-      "required_outputs" : [ ],
-      "tool_requirements" : [ ],
-      "required_context" : [ ]
-    },
-    "runtimeBinding" : {
-      "implementationId" : "olo-core:conversation-load"
-    },
-    "configuration" : { }
-  }, {
-    "id" : "conversation-store",
-    "type" : "TOOL",
-    "capability" : {
-      "name" : "Conversation Store",
-      "description" : "Persists the current turn to conversation history for the next run",
-      "tags" : [ ],
-      "examples" : [ "Save assistant response after scenario completion" ],
-      "required_inputs" : [ ],
-      "required_outputs" : [ ],
-      "tool_requirements" : [ ],
-      "required_context" : [ ]
-    },
-    "runtimeBinding" : {
-      "implementationId" : "olo-core:conversation-store"
-    },
-    "configuration" : { }
   } ],
   "agents" : [ ],
   "hooks" : [ ],
@@ -539,13 +206,6 @@
   "extensions" : [ ],
   "metadata" : {
     "returnVariable" : "ReturnValue",
-    "role" : "planner",
-    "plannerContext" : {
-      "selectedTools" : [ ],
-      "injectCapabilities" : false,
-      "selectedVariables" : [ "message", "conversationSummary" ],
-      "selectedAgents" : [ ]
-    },
-    "description" : "Structured plans and task breakdowns"
+    "returnOutputKey" : "agent"
   }
 }

@@ -30,7 +30,7 @@ class DynamicSubgraphMergerTest {
     }
 
     @Test
-    void rejectsMarkdownWrappedJson() {
+    void acceptsMarkdownWrappedJson() {
         DynamicSubgraphValidationResult result = merger.validate("```json\n" + sampleSubgraphJson() + "\n```");
 
         assertThat(result.valid()).isTrue();
@@ -129,7 +129,7 @@ class DynamicSubgraphMergerTest {
                   "label": "Incident Triage",
                   "nodes": [
                     { "id": "start", "type": "START" },
-                    { "id": "read-logs", "type": "TOOL", "configuration": { "toolId": "olo-core:log-reader" } },
+                    { "id": "read-logs", "type": "MODEL", "configuration": { "promptTemplate": "Summarize the supplied incident report. {message}" } },
                     { "id": "end", "type": "END" }
                   ],
                   "edges": [

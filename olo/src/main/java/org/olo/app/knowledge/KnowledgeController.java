@@ -30,32 +30,51 @@ public final class KnowledgeController {
     private final PlatformKnowledge knowledge;
     private final RunService runs;
     private final ChatRunStore runStore;
+    private final ConversationDirectory directory;
+    private final org.olo.app.config.RegionalConfigurationRegistry configurations;
     private final String queue, callback, pipeline;
 
     public KnowledgeController(
             PlatformKnowledge knowledge,
             RunService runs,
             ChatRunStore runStore,
+            ConversationDirectory directory,
+            org.olo.app.config.RegionalConfigurationRegistry configurations,
             @Qualifier("oloTaskQueue") String queue,
             @Qualifier("oloCallbackBaseUrl") String callback,
             @Value("${olo.chat.pipeline:governed-chat}") String pipeline) {
         this.knowledge = knowledge;
         this.runs = runs;
         this.runStore = runStore;
+        this.directory = directory;
+        this.configurations = configurations;
         this.queue = queue;
         this.callback = callback;
         this.pipeline = pipeline;
     }
 
-    public record Turn(String message, String kbId) {}
+    public record Turn(String message, String kbId, String pipelineId) {}
+
+    @GetMapping("/conversations")
+    public List<Map<String,Object>> conversations() {
+        var result = new ArrayList<Map<String,Object>>();
+        for (String id : directory.list()) {
+            // An index entry never confers authority, even after a policy or ACL change.
+            knowledge.read(id, Map.of("type", "check"));
+            result.add(Map.of("sessionId", id, "tenantId", CurrentPrincipal.require().tenantId(), "createdAt", 0));
+        }
+        return result;
+    }
 
     @PostMapping("/conversations/{id}")
     public JsonNode create(@PathVariable UUID id, @RequestHeader("Idempotency-Key") UUID key) {
-        return knowledge.call(
+        var result = knowledge.call(
                 key + ":create",
                 "memory.append",
                 id.toString(),
                 Map.of("type", "create", "create", true));
+        directory.record(id);
+        return result;
     }
 
     @PostMapping("/conversations/{id}/turns")
@@ -66,6 +85,17 @@ public final class KnowledgeController {
         if (turn.message() == null || turn.message().isBlank() || turn.message().length() > 131072)
             throw new IllegalArgumentException("Message required");
         if (turn.kbId() != null) UUID.fromString(turn.kbId());
+        String selectedPipeline = turn.pipelineId() == null || turn.pipelineId().isBlank() ? pipeline : turn.pipelineId();
+        String selectedQueue = queue;
+        if (!selectedPipeline.equals(pipeline)) {
+            org.olo.definition.workflow.WorkflowDefinition selected = null;
+            for (String region : configurations.getRegions())
+                for (var candidate : configurations.get(region).getWorkflows())
+                    if (selectedPipeline.equals(candidate.getId()) && !Boolean.FALSE.equals(candidate.isEnabled()) && !Boolean.TRUE.equals(candidate.isChildWorkflow())) selected = candidate;
+            if (selected == null || selected.getQueue() == null || selected.getQueue().isBlank())
+                throw new IllegalArgumentException("Pipeline is not an enabled server-owned chat workflow");
+            selectedQueue = selected.getQueue();
+        }
         var p = CurrentPrincipal.require();
         String run =
                 UUID.nameUUIDFromBytes(
@@ -93,6 +123,7 @@ public final class KnowledgeController {
                         List.of(),
                         "create",
                         true));
+        directory.recordTurn(id, run);
         runStore.put(
                 new ChatRunStore.RunRecord(
                         run, id.toString(), message, p.tenantId(), run, null, null, null));
@@ -102,7 +133,7 @@ public final class KnowledgeController {
                         id.toString(),
                         message,
                         turn.message(),
-                        pipeline,
+                        selectedPipeline,
                         run,
                         run,
                         callback,
@@ -115,7 +146,7 @@ public final class KnowledgeController {
                                 p.sessionId(),
                                 p.sessionEpoch()));
         try {
-            runs.startWorkflow(run, input, queue);
+            runs.startWorkflow(run, input, selectedQueue);
         } catch (io.temporal.client.WorkflowExecutionAlreadyStarted alreadyStarted) {
             /* Same immutable turn was accepted previously. */
         }
@@ -173,7 +204,9 @@ public final class KnowledgeController {
 
     @DeleteMapping("/conversations/{id}")
     public JsonNode delete(@PathVariable UUID id, @RequestHeader("Idempotency-Key") UUID key) {
-        return knowledge.call(key + ":delete", "memory.delete", id.toString(), Map.of());
+        var result = knowledge.call(key + ":delete", "memory.delete", id.toString(), Map.of());
+        directory.forget(id);
+        return result;
     }
 
     @PostMapping("/conversations/{id}/share")
@@ -190,6 +223,13 @@ public final class KnowledgeController {
         return knowledge.call(key + ":export", "memory.export", id.toString(), Map.of());
     }
 
+    @GetMapping("/knowledge")
+    public List<String> knowledgeCollections() {
+        var ids=directory.knowledge();
+        for (String id:ids) knowledge.call(UUID.randomUUID().toString(),"rag.query",id,Map.of("type","check","sources",List.of()));
+        return ids;
+    }
+
     @PostMapping("/knowledge/{kb}/{operation}")
     public JsonNode document(
             @PathVariable UUID kb,
@@ -198,10 +238,12 @@ public final class KnowledgeController {
             @RequestBody Map<String, Object> body) {
         if (!Set.of("query", "ingest", "update", "delete", "share").contains(operation))
             throw new IllegalArgumentException("Unsupported document operation");
-        return knowledge.call(
+        var result = knowledge.call(
                 operation.equals("query") ? UUID.randomUUID().toString() : key + ":" + operation,
                 "rag." + operation,
                 kb.toString(),
                 body);
+        if (operation.equals("ingest") || operation.equals("update")) directory.recordKnowledge(kb);
+        return result;
     }
 }

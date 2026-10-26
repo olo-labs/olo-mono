@@ -8,7 +8,6 @@ package org.olo.definition.validation.impl;
 import org.olo.definition.agent.AgentDefinition;
 import org.olo.definition.hook.HookDefinition;
 import org.olo.definition.hook.HookValidator;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
 
 import java.util.HashSet;
@@ -28,19 +27,6 @@ final class WorkflowRegistryValidator {
 
     static void validate(WorkflowDefinition workflow, List<String> errors) {
         Set<String> registryIds = new HashSet<>();
-        for (ToolDefinition tool : workflow.getTools()) {
-            if (tool == null) {
-                errors.add("tool entry must not be null");
-                continue;
-            }
-            if (ValidationUtils.isBlank(tool.getId())) {
-                errors.add("tool id is required");
-            } else if (!registryIds.add(tool.getId())) {
-                errors.add("duplicate registry id: " + tool.getId());
-            } else {
-                validateTool(tool, errors);
-            }
-        }
         for (AgentDefinition agent : workflow.getAgents()) {
             if (agent == null) {
                 errors.add("agent entry must not be null");
@@ -82,14 +68,6 @@ final class WorkflowRegistryValidator {
                 errors.add("duplicate extension id: " + extension.getId());
             }
         }
-    }
-
-    private static void validateTool(ToolDefinition tool, List<String> errors) {
-        if (!ToolDefinition.TYPE.equals(tool.getType())) {
-            errors.add("tool " + tool.getId() + ": type must be " + ToolDefinition.TYPE);
-        }
-        WorkflowCapabilityValidator.validateTool(tool, errors);
-        WorkflowRuntimeValidator.validateTool(tool, errors);
     }
 
     private static void validateAgent(AgentDefinition agent, List<String> errors) {

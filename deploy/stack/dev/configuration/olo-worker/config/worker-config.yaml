@@ -4,7 +4,7 @@ server:
   host: "0.0.0.0"
   port: 8080
 workflowDefinitions:
-  scanFolder: "/app/olo-configuration/current-active"
+  scanFolder: "/app/olo-runtime-workflows"
   recursive: true
 temporal:
   namespace: "default"
@@ -18,3 +18,13 @@ input:
 metadata:
   environment: "docker"
   oloApiBaseUrl: "http://olo:7080"
+# Required for governed conversation and RAG lifecycle. No local service or actor fallback.
+toolgate:
+  enabled: true
+  mcpUrl: "${OLO_TOOLGATE_MCP_URL}"
+  userCredentialsUrl: "${OLO_TOOLGATE_USER_CREDENTIALS_URL}"
+  delegatedAgents: true
+  agentMappings: []
+  reservedPrincipals: ["olo-platform-service"]
+  timeoutMs: 20000
+  maxToolRounds: 8

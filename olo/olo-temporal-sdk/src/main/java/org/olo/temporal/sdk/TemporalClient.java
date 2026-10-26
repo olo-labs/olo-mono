@@ -92,6 +92,17 @@ public final class TemporalClient {
         stub.cancel();
     }
 
+    /** Metadata only; callers authorize the corresponding conversation before using this. */
+    public String chatWorkflowStatus(String workflowId) {
+        var description = workflowClient.newUntypedWorkflowStub(workflowId).describe();
+        return switch (description.getStatus()) {
+            case WORKFLOW_EXECUTION_STATUS_RUNNING -> "running";
+            case WORKFLOW_EXECUTION_STATUS_COMPLETED -> "completed";
+            case WORKFLOW_EXECUTION_STATUS_CANCELED -> "cancelled";
+            default -> "failed";
+        };
+    }
+
     public void close() {
         serviceStubs.shutdown();
     }

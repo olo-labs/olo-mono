@@ -30,6 +30,7 @@ final class DynamicSubgraphJsonValidator {
         try {
             String normalized = stripMarkdownFences(rawJson.trim());
             JsonNode root = MAPPER.readTree(normalized);
+            org.olo.definition.serializer.FreshWorkflowContract.validate(root);
             if (!root.isObject()) {
                 return DynamicSubgraphValidationResult.invalid("generated graph JSON must be a single object");
             }
@@ -65,21 +66,15 @@ final class DynamicSubgraphJsonValidator {
                 if (NodeType.END.name().equals(type)) {
                     hasEnd = true;
                 }
-                if (NodeType.TOOL.name().equals(type)) {
-                    JsonNode configuration = node.get("configuration");
-                    String toolId = configuration == null ? null : text(configuration, "toolId");
-                    if (toolId == null || toolId.isBlank()) {
-                        return DynamicSubgraphValidationResult.invalid(
-                                "TOOL node '" + id + "' requires configuration.toolId");
-                    }
-                }
+                if ("TOOL".equalsIgnoreCase(type))
+                    return DynamicSubgraphValidationResult.invalid("Unsupported workflow node type: TOOL");
                 if (!isAllowedNodeType(type)) {
                     return DynamicSubgraphValidationResult.invalid(
                             "invalid node type '"
                                     + type
                                     + "' for node '"
                                     + id
-                                    + "'. Use a single NodeType value such as START, END, AGENT, or TOOL");
+                                    + "'. Use a single NodeType value such as START, END or AGENT");
                 }
             }
             if (!hasStart || !hasEnd) {
@@ -102,9 +97,10 @@ final class DynamicSubgraphJsonValidator {
                 }
             }
             return DynamicSubgraphValidationResult.valid(normalized);
+        } catch (org.olo.definition.serializer.FreshWorkflowContract.Rejected retired) {
+            return DynamicSubgraphValidationResult.invalid(retired.getMessage());
         } catch (Exception e) {
-            return DynamicSubgraphValidationResult.invalid(
-                    "generated graph JSON is not valid JSON: " + e.getMessage());
+            return DynamicSubgraphValidationResult.invalid("generated graph JSON is not valid JSON");
         }
     }
 

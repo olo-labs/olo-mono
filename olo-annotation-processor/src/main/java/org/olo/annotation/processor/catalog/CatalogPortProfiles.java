@@ -110,7 +110,7 @@ public final class CatalogPortProfiles {
         PortDescriptor port = new PortDescriptor();
         port.id = CAPABILITIES_PORT_ID;
         port.name = CAPABILITIES_PORT_ID;
-        port.label = "available tools";
+        port.label = "hooks";
         port.schema = CAPABILITIES_WIRE;
         port.type = CAPABILITIES_WIRE;
         port.acceptType = CAPABILITIES_WIRE;
@@ -140,7 +140,7 @@ public final class CatalogPortProfiles {
         PortDescriptor port = new PortDescriptor();
         port.id = CAPABILITIES_PORT_ID;
         port.name = CAPABILITIES_PORT_ID;
-        port.label = "available tools";
+        port.label = "hooks";
         port.schema = CAPABILITIES_WIRE;
         port.type = CAPABILITIES_WIRE;
         port.required = false;

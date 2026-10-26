@@ -10,6 +10,5 @@ package org.olo.definition.planner;
 public enum CatalogKind {
     WORKFLOW,
     AGENT,
-    TOOL,
     NODE
 }

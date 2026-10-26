@@ -28,7 +28,7 @@ describe('workflowNodePorts', () => {
   it('maps annotation-exported tool ports without UI fallbacks', () => {
     const ports = catalogComponentToPorts({
       id: 'olo-core:web-search',
-      kind: 'TOOL',
+      kind: 'HOOK',
       inputs: [
         {
           id: 'in',
@@ -51,16 +51,16 @@ describe('workflowNodePorts', () => {
   })
 
   it('returns empty ports when catalog component has no annotation ports', () => {
-    expect(catalogComponentToPorts({ id: 'olo-core:calculator', kind: 'TOOL' })).toEqual([])
+    expect(catalogComponentToPorts({ id: 'olo-core:calculator', kind: 'HOOK' })).toEqual([])
   })
 
   it('marks plugin node message ports as planner-routed', () => {
-    expect(usesPlannerRoutedMessagePorts('TOOL', {})).toBe(true)
+    expect(usesPlannerRoutedMessagePorts('HOOK', {})).toBe(true)
     expect(usesPlannerRoutedMessagePorts('HOOK', {})).toBe(true)
     expect(usesPlannerRoutedMessagePorts('AGENT', { delegateAgentId: 'debug' })).toBe(true)
     expect(usesPlannerRoutedMessagePorts('AGENT', {})).toBe(false)
-    expect(isPlannerRoutedMessagePort('TOOL', 'in', {})).toBe(true)
-    expect(isPlannerRoutedMessagePort('TOOL', 'capabilities', {})).toBe(false)
+    expect(isPlannerRoutedMessagePort('HOOK', 'in', {})).toBe(true)
+    expect(isPlannerRoutedMessagePort('HOOK', 'capabilities', {})).toBe(false)
     expect(isMessagePortId('out')).toBe(true)
   })
 
@@ -93,8 +93,8 @@ describe('workflowNodePorts', () => {
     expect(grouped.BOTTOM.map((port) => port.id)).toEqual([CAPABILITIES_PORT_ID, AGENT_PLUG_PORT_ID])
   })
 
-  it('places tool plugin output on the top edge', () => {
-    const merged = resolveCapabilityPluginPorts('TOOL', [], [])
+  it('places hook plugin output on the top edge', () => {
+    const merged = resolveCapabilityPluginPorts('HOOK', [], [])
     expect(merged).toHaveLength(3)
     expect(merged.find((port) => port.id === MESSAGE_IN_PORT_ID)?.ui?.position).toBe('LEFT')
     expect(merged.find((port) => port.id === MESSAGE_OUT_PORT_ID)?.ui?.position).toBe('RIGHT')
@@ -119,10 +119,10 @@ describe('workflowNodePorts', () => {
     expect(hostPorts.some((port) => port.id === MESSAGE_OUT_PORT_ID && port.direction === 'OUTPUT')).toBe(true)
   })
 
-  it('merges missing capabilities output onto stale TOOL workflow ports', () => {
+  it('merges missing capabilities output onto stale HOOK workflow ports', () => {
     const catalogPorts = catalogComponentToPorts({
       id: 'olo-core:calculator',
-      kind: 'TOOL',
+      kind: 'HOOK',
       inputs: [
         { id: 'in', schema: 'message', type: 'message', acceptType: 'message', ui: { color: '#ef4444' } },
       ],
@@ -131,7 +131,7 @@ describe('workflowNodePorts', () => {
         { id: CAPABILITIES_PORT_ID, schema: 'capabilities', type: 'capabilities', ui: { color: '#22c55e' } },
       ],
     })
-    const merged = resolveCapabilityPluginPorts('TOOL', [
+    const merged = resolveCapabilityPluginPorts('HOOK', [
       {
         id: 'in',
         schema: 'message',
@@ -150,14 +150,14 @@ describe('workflowNodePorts', () => {
     expect(merged.some((port) => port.id === CAPABILITIES_PORT_ID && port.direction === 'OUTPUT')).toBe(true)
   })
 
-  it('resolveNodePorts routes TOOL and AGENT through the correct merge', () => {
+  it('resolveNodePorts routes HOOK and AGENT through the correct merge', () => {
     const catalogPorts = catalogComponentToPorts({
       id: 'olo-core:calculator',
-      kind: 'TOOL',
+      kind: 'HOOK',
       outputs: [{ id: CAPABILITIES_PORT_ID, schema: 'capabilities', type: 'capabilities' }],
     })
-    expect(resolveCapabilityPluginPorts('TOOL', [], catalogPorts).some((port) => port.id === CAPABILITIES_PORT_ID)).toBe(true)
-    expect(resolveCapabilityPluginPorts('TOOL', [], catalogPorts).find((port) => port.id === CAPABILITIES_PORT_ID)?.ui?.position).toBe('TOP')
+    expect(resolveCapabilityPluginPorts('HOOK', [], catalogPorts).some((port) => port.id === CAPABILITIES_PORT_ID)).toBe(true)
+    expect(resolveCapabilityPluginPorts('HOOK', [], catalogPorts).find((port) => port.id === CAPABILITIES_PORT_ID)?.ui?.position).toBe('TOP')
     expect(resolveNodePorts('AGENT', [], [])).toHaveLength(AGENT_HOST_PORTS.length)
   })
 
@@ -192,8 +192,8 @@ describe('workflowNodePorts', () => {
     expect(merged.some((port) => port.id === AGENT_PLUG_PORT_ID)).toBe(true)
   })
 
-  it('normalizes stale required message ports on tool nodes', () => {
-    const merged = resolveCapabilityPluginPorts('TOOL', [
+  it('normalizes stale required message ports on hook nodes', () => {
+    const merged = resolveCapabilityPluginPorts('HOOK', [
       {
         id: 'in',
         label: 'message in',

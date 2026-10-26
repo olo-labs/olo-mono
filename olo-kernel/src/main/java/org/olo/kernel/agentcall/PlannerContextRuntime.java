@@ -22,16 +22,8 @@ public final class PlannerContextRuntime {
     private PlannerContextRuntime() {
     }
 
-    public static Optional<Set<String>> selectedToolIds(WorkflowDefinition graph) {
-        return readSelection(graph, PlannerContextDefinition.SELECTED_TOOLS);
-    }
-
     public static Optional<Set<String>> selectedAgentIds(WorkflowDefinition graph) {
         return readSelection(graph, PlannerContextDefinition.SELECTED_AGENTS);
-    }
-
-    public static boolean injectCapabilities(WorkflowDefinition graph) {
-        return readBoolean(graph, PlannerContextDefinition.INJECT_CAPABILITIES, true);
     }
 
     public static boolean injectAgents(WorkflowDefinition graph) {

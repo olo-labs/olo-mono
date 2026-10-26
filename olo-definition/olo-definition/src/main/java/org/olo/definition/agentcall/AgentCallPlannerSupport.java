@@ -10,7 +10,7 @@ import org.olo.definition.node.NodeDefinition;
 import java.util.Map;
 
 /**
- * Shared configuration keys for inline tool-call planner agent nodes and dynamic tool execution.
+ * Shared configuration keys for agent delegation and child-result synthesis.
  */
 public final class AgentCallPlannerSupport {
 
@@ -18,44 +18,19 @@ public final class AgentCallPlannerSupport {
     public static final String CONFIG_OUTPUT_VARIABLE = "outputVariable";
     public static final String CONFIG_MAX_INVALID_JSON_RETRIES = "maxInvalidJsonRetries";
     public static final String CONFIG_CONTINUE_NODE_ID = "continueNodeId";
-    public static final String CONFIG_AGGREGATE_TOOL_RESULT = "aggregateToolResult";
 
-    public static final String METADATA_DYNAMIC_TOOL_EXECUTION = "dynamicToolExecution";
     public static final String METADATA_PLANNER_NODE_ID = "plannerNodeId";
-    public static final String METADATA_AVAILABLE_TOOLS_VARIABLE = "availableToolsVariable";
 
     public static final String DEFAULT_PLANNER_NODE_ID = "agent";
     public static final String DEFAULT_OUTPUT_VARIABLE = "agentCallSequenceJson";
-    public static final String DEFAULT_AVAILABLE_TOOLS_VARIABLE = "availableToolsJson";
     public static final String DEFAULT_AVAILABLE_AGENTS_VARIABLE = "availableAgentsJson";
     public static final String METADATA_AVAILABLE_AGENTS_VARIABLE = "availableAgentsVariable";
-    public static final String DEFAULT_TOOL_RESULTS_VARIABLE = "toolResultsJson";
     public static final String DEFAULT_AGENT_RESULTS_VARIABLE = "agentResultsJson";
     public static final String DEFAULT_RETRY_VARIABLE = "agentCallSequenceJsonRetryCount";
     public static final String DEFAULT_VALIDATION_ERROR_VARIABLE = "agentCallSequenceJsonValidationError";
-    public static final String DEFAULT_SYNTHESIS_NODE_SUFFIX = "tool-synthesis";
     public static final String DEFAULT_AGENT_SYNTHESIS_NODE_SUFFIX = "agent-synthesis";
 
     public static final int DEFAULT_MAX_INVALID_JSON_RETRIES = 3;
-
-    public static final String TOOL_SYNTHESIS_PROMPT_TEMPLATE =
-            "You are an "
-                    + OloProductTerminology.PRODUCT
-                    + """
-                     agent synthesizing a final answer from tool results.
-
-                    User request:
-                    {message}
-
-                    Tool results (JSON):
-                    {toolResultsJson}
-
-                    Instructions:
-                    1. Use the "output" field in each tool result for destinations, offers, prices, dates, and IDs.
-                    2. Quote concrete values from the data (packageId, city, totalUsd, departureDate, etc.).
-                    3. Do not mention internal tool IDs, node IDs, or placeholder brackets like [insert ...].
-                    4. If a tool failed or returned no usable output, say so plainly.
-                    5. Respond in clear, user-facing prose — not JSON.""";
 
     public static final String AGENT_SYNTHESIS_PROMPT_TEMPLATE =
             "You are an "

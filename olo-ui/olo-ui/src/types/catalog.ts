@@ -11,7 +11,6 @@ export interface StudioCatalog {
   defaults?: CatalogDefaults
   catalogMetadata?: CatalogMetadata
   nodes?: CatalogNode[]
-  tools?: CatalogTool[]
   hooks?: CatalogHook[]
   workflowPresets?: CatalogWorkflowPreset[]
   workflowTypes?: CatalogWorkflowType[]
@@ -117,7 +116,6 @@ export interface CatalogPort {
 }
 
 export type CatalogNode = CatalogComponentBase
-export type CatalogTool = CatalogComponentBase
 export type CatalogHook = CatalogComponentBase
 
 export interface CatalogWorkflowPreset {

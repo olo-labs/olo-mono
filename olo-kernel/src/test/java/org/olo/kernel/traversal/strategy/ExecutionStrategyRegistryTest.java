@@ -63,8 +63,8 @@ class ExecutionStrategyRegistryTest {
                 .id("parallel")
                 .nodes(List.of(
                         node("parallel", NodeType.PARALLEL),
-                        node("a", NodeType.TOOL),
-                        node("b", NodeType.TOOL),
+                        node("a", NodeType.MODEL),
+                        node("b", NodeType.MODEL),
                         node("join", NodeType.AGENT),
                         node("end", NodeType.END)))
                 .edges(List.of(

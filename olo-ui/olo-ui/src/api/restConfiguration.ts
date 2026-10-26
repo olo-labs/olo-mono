@@ -100,7 +100,7 @@ export async function getGraphLogRoot(): Promise<string> {
   return data.directory ?? ''
 }
 
-export async function getGraphLog(fileName: string): Promise<WorkflowDocument> {
+export async function getGraphLog(fileName: string): Promise<GraphLogSummary> {
   const res = await fetch(`${API_BASE}/configuration/logs/${encodeWorkflowPath(fileName)}`)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()

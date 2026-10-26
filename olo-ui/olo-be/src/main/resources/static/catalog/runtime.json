@@ -2,7 +2,7 @@
   "schemaVersion" : "1.0",
   "generatedBy" : "olo-annotation-processor",
   "generatedByVersion" : "1.0.0",
-  "generatedAt" : "2026-06-18T17:34:58.171624500Z",
+  "generatedAt" : "2026-10-26T16:37:24.893598800Z",
   "bindings" : [ {
     "kind" : "NODE",
     "id" : "olo-core:AGENT",
@@ -33,46 +33,6 @@
     "id" : "olo-core:SWITCH",
     "implementationClass" : "org.olo.core.node.SwitchNode",
     "spiInterface" : "org.olo.spi.node.Node"
-  }, {
-    "kind" : "TOOL",
-    "id" : "olo-core:calculator",
-    "implementationClass" : "org.olo.core.tool.CalculatorTool",
-    "spiInterface" : "org.olo.spi.tool.Tool"
-  }, {
-    "kind" : "TOOL",
-    "id" : "olo-core:cpu-usage",
-    "implementationClass" : "org.olo.core.tool.CpuUsageTool",
-    "spiInterface" : "org.olo.spi.tool.Tool"
-  }, {
-    "kind" : "TOOL",
-    "id" : "olo-core:http-tool",
-    "implementationClass" : "org.olo.core.tool.HttpTool",
-    "spiInterface" : "org.olo.spi.tool.Tool"
-  }, {
-    "kind" : "TOOL",
-    "id" : "olo-core:log-reader",
-    "implementationClass" : "org.olo.core.tool.LogReaderTool",
-    "spiInterface" : "org.olo.spi.tool.Tool"
-  }, {
-    "kind" : "TOOL",
-    "id" : "olo-core:memory-usage",
-    "implementationClass" : "org.olo.core.tool.MemoryUsageTool",
-    "spiInterface" : "org.olo.spi.tool.Tool"
-  }, {
-    "kind" : "TOOL",
-    "id" : "olo-core:numeric-metric",
-    "implementationClass" : "org.olo.core.tool.NumericMetricTool",
-    "spiInterface" : "org.olo.spi.tool.Tool"
-  }, {
-    "kind" : "TOOL",
-    "id" : "olo-core:recently-changed-code",
-    "implementationClass" : "org.olo.core.tool.RecentlyChangedCodeTool",
-    "spiInterface" : "org.olo.spi.tool.Tool"
-  }, {
-    "kind" : "TOOL",
-    "id" : "olo-core:web-search",
-    "implementationClass" : "org.olo.core.tool.WebSearchTool",
-    "spiInterface" : "org.olo.spi.tool.Tool"
   }, {
     "kind" : "HOOK",
     "id" : "olo-core:logging-hook",

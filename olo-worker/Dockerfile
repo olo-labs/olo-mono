@@ -16,7 +16,7 @@ WORKDIR /app
 
 COPY --from=builder /build/olo-worker/build/install/olo-worker/ /app/
 COPY olo-worker-configuration/samples/worker-config.docker.yaml /app/worker-config.yaml
-COPY olo-definition/olo-configuration/current-active/ /app/olo-configuration/current-active/
+COPY olo-ui/olo-be/docker/runtime-configuration/ /app/olo-configuration/
 
 ENV OLO_WORKER_CONFIG_PATH=/app/worker-config.yaml
 ENV OLO_LLM_BASE_URL=http://ollama:11434

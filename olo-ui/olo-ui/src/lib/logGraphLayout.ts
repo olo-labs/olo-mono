@@ -81,7 +81,7 @@ function isMessageFlowEdge(edge: WorkflowEdge): boolean {
 }
 
 function isCapabilityPluginNode(node: WorkflowNode, edges: WorkflowEdge[]): boolean {
-  if (normalizeNodeType(node.type) !== 'TOOL') {
+  if (normalizeNodeType(node.type) !== 'HOOK') {
     return false
   }
   const hasCapabilityOut = edges.some(

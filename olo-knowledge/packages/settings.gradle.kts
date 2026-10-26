@@ -1,8 +1,10 @@
 pluginManagement {
-    repositories { maven { url = uri("../../../olo-toolgate/build/sdk-repo") }; gradlePluginPortal() }
+    val source = System.getenv("TOOLGATE_SOURCE") ?: file("../../../olo-toolgate").absolutePath
+    repositories { maven { url = uri("$source/build/sdk-repo") }; gradlePluginPortal() }
 }
 dependencyResolutionManagement {
-    repositories { maven { url = uri("../../../olo-toolgate/build/sdk-repo") }; maven { url = uri("../../../olo-toolgate/.dev/maven") }; mavenCentral() }
+    val source = System.getenv("TOOLGATE_SOURCE") ?: file("../../../olo-toolgate").absolutePath
+    repositories { maven { url = uri("$source/build/sdk-repo") }; maven { url = uri("$source/.dev/maven") }; mavenCentral() }
 }
 rootProject.name = "olo-knowledge-packages"
 include("memory", "rag")

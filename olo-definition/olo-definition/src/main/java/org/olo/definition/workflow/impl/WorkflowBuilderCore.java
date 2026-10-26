@@ -9,7 +9,6 @@ import org.olo.definition.agent.AgentDefinition;
 import org.olo.definition.designer.DesignerDefinition;
 import org.olo.definition.extension.ExtensionDefinition;
 import org.olo.definition.hook.HookDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.workflow.ChildWorkflowDefinition;
 import org.olo.definition.workflow.WorkflowBuilder;
 import java.util.Locale;
@@ -135,12 +134,6 @@ public final class WorkflowBuilderCore {
     public WorkflowBuilder extension(ExtensionDefinition extension) {
         Objects.requireNonNull(extension, "extension is required");
         state.extensions.add(extension);
-        return owner;
-    }
-
-    public WorkflowBuilder tool(ToolDefinition tool) {
-        Objects.requireNonNull(tool, "tool is required");
-        state.tools.add(tool);
         return owner;
     }
 

@@ -116,51 +116,6 @@ public final class StudioDesignerDefaults {
                 .build();
     }
 
-    public static NodeTypeDesignerDefinition toolNodeType() {
-        return NodeTypeDesignerDefinition.builder()
-                .emoji("🔧")
-                .typeLabel("Tool")
-                .description("Executes a registered tool plugin (e.g. RAG ingest)")
-                .palette(NodePaletteDesignerDefinition.builder()
-                        .name("Tool")
-                        .category("plugins")
-                        .build())
-                .inlineProperties(List.of(
-                        InlinePropertyDefinition.builder()
-                                .id("toolId")
-                                .widget("STRING")
-                                .label("Tool")
-                                .binding("toolId")
-                                .build(),
-                        InlinePropertyDefinition.builder()
-                                .id("extensionRef")
-                                .widget("STRING")
-                                .label("Vector store")
-                                .binding("extensionRef")
-                                .build(),
-                        InlinePropertyDefinition.builder()
-                                .id("vectorTable")
-                                .widget("STRING")
-                                .label("Collection table")
-                                .binding("vectorTable")
-                                .build(),
-                        InlinePropertyDefinition.builder()
-                                .id("chunkSize")
-                                .widget("NUMBER")
-                                .label("Chunk size")
-                                .binding("chunkSize")
-                                .build()))
-                .build();
-    }
-
-    public static Map<String, NodeTypeDesignerDefinition> toolPipelineNodeTypes() {
-        Map<String, NodeTypeDesignerDefinition> nodeTypes = new LinkedHashMap<>();
-        nodeTypes.put("START", startNodeType());
-        nodeTypes.put("TOOL", toolNodeType());
-        nodeTypes.put("END", endNodeType());
-        return Map.copyOf(nodeTypes);
-    }
-
     public static Map<String, NodeTypeDesignerDefinition> agentPipelineNodeTypes(String agentEmoji) {
         Map<String, NodeTypeDesignerDefinition> nodeTypes = new LinkedHashMap<>();
         nodeTypes.put("START", startNodeType());
@@ -185,19 +140,4 @@ public final class StudioDesignerDefaults {
         return builder.build();
     }
 
-    public static DesignerDefinition studioToolPipelineDesigner(String emoji, String... searchKeywords) {
-        DesignerDefinitionBuilder builder = DesignerDefinition.builder()
-                .paletteGroup("Knowledge")
-                .nodeSize(NODE_WIDTH, NODE_HEIGHT)
-                .resizable(true)
-                .draggable(true)
-                .layout(layout())
-                .canvas(canvas())
-                .portColors(portColors())
-                .nodeTypes(toolPipelineNodeTypes());
-        for (String keyword : searchKeywords) {
-            builder.searchKeyword(keyword);
-        }
-        return builder.build();
-    }
 }

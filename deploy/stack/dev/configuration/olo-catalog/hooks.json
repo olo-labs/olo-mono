@@ -2,7 +2,7 @@
   "schemaVersion" : "1.0",
   "generatedBy" : "olo-annotation-processor",
   "generatedByVersion" : "1.0.0",
-  "generatedAt" : "2026-07-29T00:22:50.219946400Z",
+  "generatedAt" : "2026-10-26T16:37:24.893598800Z",
   "catalogType" : "hooks",
   "hooks" : [ {
     "designer" : {
@@ -48,7 +48,7 @@
     }, {
       "id" : "capabilities",
       "name" : "capabilities",
-      "label" : "available tools",
+      "label" : "hooks",
       "schema" : "capabilities",
       "type" : "capabilities",
       "minConnections" : 0,
@@ -103,7 +103,7 @@
     }, {
       "id" : "capabilities",
       "name" : "capabilities",
-      "label" : "available tools",
+      "label" : "hooks",
       "schema" : "capabilities",
       "type" : "capabilities",
       "minConnections" : 0,
@@ -158,7 +158,7 @@
     }, {
       "id" : "capabilities",
       "name" : "capabilities",
-      "label" : "available tools",
+      "label" : "hooks",
       "schema" : "capabilities",
       "type" : "capabilities",
       "minConnections" : 0,

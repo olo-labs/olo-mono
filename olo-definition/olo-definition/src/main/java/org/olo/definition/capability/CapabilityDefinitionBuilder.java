@@ -32,7 +32,6 @@ public final class CapabilityDefinitionBuilder {
     Double cost;
     Double latency;
     Double confidence;
-    List<String> toolRequirements;
     @JsonProperty("required_context")
     List<String> requiredContext;
 
@@ -141,19 +140,6 @@ public final class CapabilityDefinitionBuilder {
 
     public CapabilityDefinitionBuilder confidence(Double confidence) {
         this.confidence = confidence;
-        return this;
-    }
-
-    public CapabilityDefinitionBuilder toolRequirements(List<String> toolRequirements) {
-        this.toolRequirements = toolRequirements;
-        return this;
-    }
-
-    public CapabilityDefinitionBuilder addToolRequirement(String toolRequirement) {
-        if (this.toolRequirements == null) {
-            this.toolRequirements = new ArrayList<>();
-        }
-        this.toolRequirements.add(toolRequirement);
         return this;
     }
 

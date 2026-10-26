@@ -1,6 +1,6 @@
 /* Copyright (c) 2026 Olo Labs; SPDX-License-Identifier: Apache-2.0 */
 
-const unsupported = new Set(['tools', 'toolCalls', 'tool_requirements', 'toolCallPlanner'])
+const unsupported = new Set(['tools', 'toolCalls', 'tool_requirements', 'toolRequirements', 'toolCallPlanner', 'selectedTools', 'injectCapabilities', 'availableToolsVariable', 'dynamicToolExecution', 'aggregateToolResult', 'toolSynthesis', 'orchestration'])
 
 /** Fresh workflow contract: reject legacy execution fields before import, display or save. */
 export function assertFreshWorkflow(value: unknown): void {
@@ -11,7 +11,7 @@ export function assertFreshWorkflow(value: unknown): void {
   if (value !== null && typeof value === 'object') {
     for (const [key, child] of Object.entries(value)) {
       if (unsupported.has(key)) throw new Error(`Unsupported workflow field: ${key}`)
-      if (key === 'type' && child === 'TOOL') throw new Error('Unsupported workflow node type: TOOL')
+      if (key === 'type' && typeof child === 'string' && child.trim().toUpperCase() === 'TOOL') throw new Error('Unsupported workflow node type: TOOL')
       assertFreshWorkflow(child)
     }
     return

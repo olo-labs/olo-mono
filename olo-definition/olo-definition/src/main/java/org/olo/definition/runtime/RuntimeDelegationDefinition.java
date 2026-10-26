@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import org.olo.definition.orchestration.MemoryScope;
 import org.olo.definition.orchestration.ResultAggregation;
-import org.olo.definition.orchestration.WorkflowOrchestrationDefinition;
 
 import java.util.List;
 import java.util.Objects;
@@ -104,21 +103,6 @@ public final class RuntimeDelegationDefinition {
         if (delegation.getMaxDelegations() != null && delegation.getMaxDelegations() < 1) {
             errors.add(context + ": runtime.delegation.maxDelegations must be at least 1");
         }
-    }
-
-    /** Maps a legacy root-level {@code orchestration} block into {@code runtime.delegation}. */
-    public static RuntimeDelegationDefinition fromLegacy(WorkflowOrchestrationDefinition legacy) {
-        if (legacy == null) {
-            return null;
-        }
-        return builder()
-                .enabled(legacy.getAllowDelegation())
-                .parallelEnabled(legacy.getAllowParallelDelegation())
-                .maxDepth(legacy.getMaxDelegationDepth())
-                .maxDelegations(legacy.getMaxDelegations())
-                .resultAggregation(legacy.getResultAggregation())
-                .memoryScope(legacy.getMemoryScope())
-                .build();
     }
 
     @Override

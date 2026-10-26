@@ -52,6 +52,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "olo.security.bootstrap-memberships[0].tenants=t1"
 })
 class RunIdentityBindingTest {
+    @MockBean org.olo.app.knowledge.ConversationDirectory directory;
+    @MockBean org.olo.app.config.RegionalConfigurationRegistry configurations;
 
     @TestConfiguration
     static class TestBeans {
@@ -121,6 +123,31 @@ class RunIdentityBindingTest {
                 .andExpect(status().isOk());
         verify(knowledge).call(anyString(),eq("memory.append"),eq(conversation),eq(java.util.Map.of("type","check")));
         verify(runService).cancelRun(turn);
+    }
+
+    @Test
+    void selectedPipelineUsesOnlyItsServerOwnedQueue() throws Exception {
+        var workflow=org.olo.definition.workflow.WorkflowDefinition.builder().id("fresh-chat").queue("trusted-queue").enabled(true).build();
+        org.mockito.Mockito.when(configurations.getRegions()).thenReturn(java.util.List.of("default"));
+        org.mockito.Mockito.when(configurations.get("default")).thenReturn(new org.olo.app.config.RegionalConfigurationSnapshot("default",java.util.List.of(workflow)));
+        mvc.perform(post("/api/v1/conversations/"+java.util.UUID.randomUUID()+"/turns")
+                .header("Authorization","Bearer "+TestTokens.token("alice","sid-alice"))
+                .header("Idempotency-Key",java.util.UUID.randomUUID().toString())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"hello\",\"pipelineId\":\"fresh-chat\",\"taskQueue\":\"untrusted\"}"))
+                .andExpect(status().isAccepted());
+        ArgumentCaptor<WorkflowInput> input=ArgumentCaptor.forClass(WorkflowInput.class);
+        verify(runService).startWorkflow(anyString(),input.capture(),eq("trusted-queue"));
+        assertThat(input.getValue().getRouting().getPipeline()).isEqualTo("fresh-chat");
+    }
+
+    @Test
+    void unknownPipelineCannotStartOrPersistATurn() throws Exception {
+        mvc.perform(post("/api/v1/conversations/"+java.util.UUID.randomUUID()+"/turns")
+                .header("Authorization","Bearer "+TestTokens.token("alice","sid-alice"))
+                .header("Idempotency-Key",java.util.UUID.randomUUID().toString())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"hello\",\"pipelineId\":\"untrusted\"}"))
+                .andExpect(status().isBadRequest());
+        org.mockito.Mockito.verifyNoInteractions(runService,knowledge,directory);
     }
 
     @Test

@@ -6,7 +6,8 @@ There is no import, migration, legacy reader, anonymous mode or long-term user-m
 
 ## Build and qualify
 
-Build/publish the sibling ToolGate SDK with `publishJavaSdkLocally` and its contracts with
+This directory is part of `olo-mono`. Set `TOOLGATE_SOURCE` to the separately versioned ToolGate checkout.
+Build/publish that ToolGate SDK with `publishJavaSdkLocally` and its contracts with
 `:contracts-java:publishMavenJavaPublicationToContractProofRepository -PcontractsPublicationVersion=0.10.0-dev`.
 Then run Gradle 8.12 `:olo-memory:installDist :olo-rag:installDist` here. Build the two Java SDK packages in
 `packages/` with Gradle 9.7.1 `build toolgatePackage`. Each declares the exact permission and root resource;
@@ -266,3 +267,14 @@ removal or the final local end-to-end regression, and do not establish productio
 
 See [local qualification evidence](docs/QUALIFICATION-EVIDENCE.md) for the source-pinned incident pass,
 the recovered admission-throttling and cancellation-replay defects, and the remaining acceptance boundary.
+
+## Container builds from the monorepo
+
+After publishing the ToolGate SDK/contracts, use BuildKit named contexts so source and credentials stay separate:
+
+```powershell
+docker build --build-context toolgate-sdk="$env:TOOLGATE_SOURCE/build/sdk-repo" --build-context toolgate-contracts="$env:TOOLGATE_SOURCE/.dev/maven" -f olo-knowledge/Dockerfile --target memory -t olo-memory:local .
+docker build --build-context toolgate-sdk="$env:TOOLGATE_SOURCE/build/sdk-repo" --build-context toolgate-contracts="$env:TOOLGATE_SOURCE/.dev/maven" -f olo-knowledge/Dockerfile --target rag -t olo-rag:local .
+```
+
+Run these from the monorepo root. The named context supplies only published SDK/contracts to the build stage. Runtime images contain service distributions, with no OLO worker, database credentials, local tool plugins or private qualification state.

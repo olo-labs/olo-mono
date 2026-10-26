@@ -25,7 +25,7 @@ import java.util.Map;
 @OloNode(
         type = CoreNodeTypes.AGENT,
         name = "Agent",
-        description = "Autonomous agent node — dispatches to a child workflow (provider runtime pending)",
+        description = "Agent model turn or delegated child workflow with ToolGate-governed business tools",
         featured = true,
         stability = OloStability.EXPERIMENTAL,
         category = "agent",
@@ -52,9 +52,9 @@ import java.util.Map;
                         position = OloPortPosition.LEFT),
                 @OloPort(
                         id = "capabilities",
-                        name = "available tools",
+                        name = "hooks",
                         schema = "capabilities",
-                        description = "Tools and hooks registered for runtime prompt assembly (0 or more)",
+                        description = "Hooks registered for the workflow (0 or more)",
                         minConnections = 0,
                         maxConnections = -1,
                         position = OloPortPosition.BOTTOM),
@@ -73,7 +73,7 @@ import java.util.Map;
                 schema = "message",
                 description = "Outgoing workflow message",
                 position = OloPortPosition.RIGHT),
-        configuration = @OloProperty(
+        configuration = { @OloProperty(
                 name = "systemPrompt",
                 label = "System Prompt",
                 type = OloPropertyType.TEXTAREA,
@@ -82,6 +82,11 @@ import java.util.Map;
                 placeholder = "You are a helpful assistant…",
                 group = "Model Settings",
                 order = 0),
+                @OloProperty(name = "agentName", label = "Delegated actor", type = OloPropertyType.STRING,
+                    group = "Security", help = "Business-tool actor name. The server must explicitly map it for this tenant and workflow. It never authorizes memory or RAG.", order = 1),
+                @OloProperty(name = "maxToolRounds", label = "Maximum business tool rounds", type = OloPropertyType.NUMBER,
+                    group = "Security", defaultValue = "0", minimum = 0, maximum = 32,
+                    help = "Use zero for platform chat. Business tools require user authorization and a mapped delegated actor.", order = 2) },
         capabilityInputSchema =
                 "{\"type\":\"object\",\"properties\":{\"userQuery\":{\"type\":\"string\"}},\"required\":[\"userQuery\"]}",
         capabilityOutputSchema =

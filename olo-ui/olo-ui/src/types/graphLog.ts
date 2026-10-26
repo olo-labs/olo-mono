@@ -12,5 +12,6 @@ export interface GraphLogSummary {
   workflowId: string | null
   timestamp: string | null
   plannerNodeId: string | null
-  toolLabels: string[]
+  nodeCount: number
+  edgeCount: number
 }

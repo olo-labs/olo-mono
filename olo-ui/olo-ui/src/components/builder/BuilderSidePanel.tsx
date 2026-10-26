@@ -14,7 +14,6 @@ import { workflowModelProviders } from '../../lib/workflowModelProviders'
 import { BuilderPaletteItem, handleNodeDragStart } from './BuilderPaletteItem'
 import {
   BuilderAgentsSection,
-  BuilderCapabilitiesSection,
   BuilderHooksSection,
 } from './BuilderPaletteSections'
 
@@ -27,7 +26,6 @@ type SectionId =
   | 'components'
   | 'workflowVariables'
   | 'modelProviders'
-  | 'capabilities'
   | 'agents'
   | 'hooks'
 
@@ -35,7 +33,6 @@ const DEFAULT_EXPANDED = new Set<SectionId>([
   'components',
   'workflowVariables',
   'modelProviders',
-  'capabilities',
   'agents',
   'hooks',
 ])
@@ -48,7 +45,6 @@ export function BuilderSidePanel({ expanded, onToggle }: BuilderSidePanelProps) 
   const workflows = workflowConfigurationStore((s) => s.workflows)
   const nodeGroup = catalogComponentGroups(catalog).find((g) => g.id === 'nodes')
   const boundaryNodes = workflowPaletteNodes(draft)
-  const catalogTools = catalog?.tools ?? []
   const catalogHooks = catalog?.hooks ?? []
   const [expandedSections, setExpandedSections] = useState<Set<SectionId>>(() => new Set(DEFAULT_EXPANDED))
   const [expandedNodeGroups, setExpandedNodeGroups] = useState(true)
@@ -132,13 +128,6 @@ export function BuilderSidePanel({ expanded, onToggle }: BuilderSidePanelProps) 
             <ModelProvidersSection />
           </ExpandableSection>
 
-          <BuilderCapabilitiesSection
-            catalogTools={catalogTools}
-            draft={draft}
-            disabled={disabled}
-            expanded={expandedSections.has('capabilities')}
-            onToggle={() => toggleSection('capabilities')}
-          />
           <BuilderAgentsSection
             otherWorkflows={otherWorkflows}
             workflows={workflows}

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.olo.service;
+import com.olo.config.OloConfigurationProperties;
 
 import com.olo.dto.ConfigurationFolderListResponse;
 import com.olo.dto.ConfigurationFolderListResponse.ConfigurationFolderSummary;
@@ -83,6 +84,16 @@ class ConfigurationFolderServiceTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.activateFolder("../escape"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void rejectsRetiredConfigurationBeforeReplacingActiveFiles() throws Exception {
+        Path catalog=tempDir.resolve("catalog");Path active=tempDir.resolve("active");
+        Files.createDirectories(catalog.resolve("retired"));Files.createDirectories(active);
+        Files.writeString(catalog.resolve("retired/old.json"), "{\"id\":\"old\",\"tools\":[]}");
+        Files.writeString(active.resolve("agent.json"), "{\"id\":\"fresh\"}");
+        assertThatThrownBy(()->serviceWith(catalog,active).activateFolder("retired")).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("tools");
+        assertThat(Files.readString(active.resolve("agent.json"))).contains("fresh");
     }
 
     private static ConfigurationFolderService serviceWith(Path catalogRoot, Path activeDirectory) {

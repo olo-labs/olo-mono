@@ -20,8 +20,16 @@ public final class WorkflowDefinitionCheck {
             System.out.println("Validated workflows: " + validate(Path.of(args[0])));
         } catch (Exception invalid) {
             // Loader/parser exception text can include submitted configuration content.
-            System.err.println("Workflow preflight failed: " + invalid.getClass().getSimpleName());
+            System.err.println("Workflow preflight failed: " + diagnostic(invalid));
             System.exit(1);
         }
+    }
+
+    static String diagnostic(Throwable invalid) {
+        Throwable cause=invalid;
+        for(int depth=0;cause!=null && depth<8;depth++,cause=cause.getCause())
+            if(cause instanceof org.olo.definition.serializer.FreshWorkflowContract.Rejected)
+                return cause.getMessage();
+        return invalid.getClass().getSimpleName();
     }
 }

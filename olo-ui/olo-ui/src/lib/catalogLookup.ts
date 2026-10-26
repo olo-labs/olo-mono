@@ -80,9 +80,7 @@ export function findCatalogComponent(
 
   const configuredId =
 
-    (typeof configuration.toolId === 'string' && configuration.toolId)
-
-    || (typeof configuration.hookId === 'string' && configuration.hookId)
+    (typeof configuration.hookId === 'string' && configuration.hookId)
 
     || (typeof configuration.catalogId === 'string' && configuration.catalogId)
 
@@ -92,9 +90,7 @@ export function findCatalogComponent(
 
     const direct =
 
-      catalog.tools?.find((tool) => tool.id === configuredId)
-
-      ?? catalog.hooks?.find((hook) => hook.id === configuredId)
+      catalog.hooks?.find((hook) => hook.id === configuredId)
 
       ?? catalog.nodes?.find((node) => node.id === configuredId)
 
@@ -128,4 +124,3 @@ export function presetParametersForWorkflow(
   return preset?.parameters ?? []
 
 }
-

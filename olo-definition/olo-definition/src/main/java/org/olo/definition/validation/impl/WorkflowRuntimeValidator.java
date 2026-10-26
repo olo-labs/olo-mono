@@ -11,7 +11,6 @@ import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.runtime.RuntimeBindingValidator;
 import org.olo.definition.runtime.WorkflowRuntimeDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
 
 import java.util.List;
@@ -42,19 +41,13 @@ final class WorkflowRuntimeValidator {
         String type = node.getType();
         boolean allowed =
                 NodeType.AGENT.value().equals(type)
-                        || NodeType.WORKFLOW_REF.value().equals(type)
-                        || NodeType.TOOL.value().equals(type);
+                        || NodeType.WORKFLOW_REF.value().equals(type);
         if (!allowed) {
-            errors.add("runtimeBinding is only valid on AGENT, WORKFLOW_REF, or TOOL nodes, found on: "
+            errors.add("runtimeBinding is only valid on AGENT or WORKFLOW_REF nodes, found on: "
                     + node.getId());
             return;
         }
         RuntimeBindingValidator.validate("node " + node.getId(), node.getRuntimeBinding(), errors);
-    }
-
-    /** Validates runtime binding on a tool registry entry. */
-    static void validateTool(ToolDefinition tool, List<String> errors) {
-        RuntimeBindingValidator.validate("tool " + tool.getId(), tool.getRuntimeBinding(), errors);
     }
 
     /** Validates runtime contract and binding on an agent registry entry. */

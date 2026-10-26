@@ -46,7 +46,7 @@ public final class FilesystemConfigurationRegionLoader {
                 return Map.of("current-active", flat);
             }
         } catch (IOException e) {
-            log.warn("Failed to load flat configuration from {}: {}", rootDir, e.getMessage());
+            log.warn("Failed to load flat configuration from {}: {}", rootDir, e.getClass().getSimpleName());
         }
         return Map.of();
     }
@@ -69,11 +69,11 @@ public final class FilesystemConfigurationRegionLoader {
                                         region, snap.getWorkflows().size());
                             }
                         } catch (Exception e) {
-                            log.warn("Failed to load regional configuration for {}: {}", region, e.getMessage());
+                            log.warn("Failed to load regional configuration for {}: {}", region, e.getClass().getSimpleName());
                         }
                     });
         } catch (IOException e) {
-            log.warn("Failed to scan configuration directory {}: {}", rootDir, e.getMessage());
+            log.warn("Failed to scan configuration directory {}: {}", rootDir, e.getClass().getSimpleName());
         }
         return out;
     }
@@ -108,7 +108,7 @@ public final class FilesystemConfigurationRegionLoader {
             }
             return workflow;
         } catch (Exception e) {
-            log.warn("Skipping invalid workflow JSON {}: {}", file, e.getMessage());
+            log.warn("Skipping invalid workflow JSON {}: {}", file, e.getClass().getSimpleName());
             return null;
         }
     }

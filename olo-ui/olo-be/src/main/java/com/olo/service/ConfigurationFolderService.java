@@ -77,6 +77,11 @@ public class ConfigurationFolderService {
             throw new IllegalArgumentException("configuration folder not found: " + safeFolderId);
         }
 
+        try (var files = Files.walk(source)) {
+            var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            for (Path file : files.filter(Files::isRegularFile).filter(p -> p.toString().endsWith(".json")).toList())
+                FreshWorkflowContract.validate(mapper.readTree(file.toFile()));
+        }
         Path activeDirectory = activeDirectory();
         Files.createDirectories(activeDirectory);
         log.info("Activating configuration folder {} -> {}", source, activeDirectory);
