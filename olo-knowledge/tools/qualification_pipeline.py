@@ -303,16 +303,21 @@ class Pipeline(Stack):
         self.require(status==202 and 'runId' in accepted,'RAG turn was not accepted')
         derived_turn=accepted['runId']
         history=self.turn_history(root,derived_turn)
+        self.verify_derived_turn(derived_turn)
         sources=[dep for message in history['messages'] if message['role']=='assistant'
                  for dep in message.get('dependencies',[]) if dep.get('docId')==doc]
         self.require(sources,'Actual assistant history did not retain its retrieved source dependency')
         held=self.pipeline_directory/'idp/hold-model'
-        held.touch()
         before=self.model_calls()
+        offset=self.held_model_offset()
+        if offset:
+            (self.pipeline_directory/'idp/hold-model-after').write_text(str(before+offset))
+        held.touch()
         status,accepted=self.api_call(root+'/turns',{'message':'Summarize Aurora again.','kbId':self.kb},'POST')
         self.require(status==202 and 'runId' in accepted,'In-flight turn was not accepted')
         inflight=accepted['runId']
-        self.wait(lambda:self.model_calls()>before,'Model held after authorized context loading',60)
+        self.wait(lambda:self.model_calls()>=before+max(offset,1),'Model held after authorized context loading',120)
+        self.verify_derived_turn(inflight)
         began=time.monotonic()
         status,result=self.result('reviewer-1','rag.delete',self.kb,{'docId':doc})
         self.require(status==200 and result.get('deleted') is True,'Governed source deletion failed')
@@ -340,6 +345,12 @@ class Pipeline(Stack):
         self.require(self.model_calls()==calls,'Revoked historical context reached a new model call')
         print('PASS source deletion blocks in-flight release, stored derived response and next model context',flush=True)
         return dict(inflightRevocationSeconds=elapsed,derivedResponseDenied=True,nextModelBlocked=True)
+
+    def held_model_offset(self):
+        return 0
+
+    def verify_derived_turn(self,turn):
+        pass
 
     def qualify_pipeline(self):
         root='/api/v1/conversations/'+self.conversation

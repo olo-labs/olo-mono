@@ -156,6 +156,9 @@ class ToolGateCredentialSecurityTest {
     @Test
     void pendingRevocationsBlockNewCredentialsUntilAuthorityIsSynchronized() throws Exception {
         String user = user("pending", "pending-sid", "t1");
+        // Hold the outage across scheduled retries; the outbox must not drain during this assertion.
+        org.mockito.Mockito.doThrow(new ToolGateClient.ToolGateException(503, "unavailable", "fixture outage"))
+                .when(toolGate).revoke(user);
         identityStore.enqueueRevocation(user, "rev-1");
         mvc.perform(signed(ref("t1", user, "pending-sid", 1))).andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.error").value("revocation_pending"));

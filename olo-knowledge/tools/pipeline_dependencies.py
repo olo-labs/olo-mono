@@ -85,11 +85,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
         with LOCK:
             CALLS += 1
         deadline = time.monotonic()+30
-        while (ROOT/'hold-model').exists() and time.monotonic() < deadline:
+        hold_after = ROOT/'hold-model-after'
+        threshold = int(hold_after.read_text()) if hold_after.exists() else 0
+        should_hold = CALLS >= threshold
+        while should_hold and (ROOT/'hold-model').exists() and time.monotonic() < deadline:
             time.sleep(.1)
-        if (ROOT/'hold-model').exists():
+        if should_hold and (ROOT/'hold-model').exists():
             return self.reply(503, {'error': 'Fixture model deadline'})
         message = {'role': 'assistant', 'content': (ROOT/'reply.txt').read_text()}
+        if not request.get('tools'):
+            message = incident_delegation_reply(request) or message
         if (ROOT/'incident-plan.json').exists():
             try:
                 if request.get('tools'):

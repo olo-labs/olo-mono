@@ -6,6 +6,15 @@ from qualification_incident import incident_workflow, incident_child_workflows
 
 
 class IncidentFixtureTest(unittest.TestCase):
+    def test_rag_child_agents_have_no_tool_rounds_or_actor_authority(self):
+        from qualification_delegation import DelegatedRag
+        definitions=DelegatedRag.workflow_definitions(None)
+        self.assertEqual(4,len(definitions))
+        for child in definitions[1:]:
+            config=child['nodes'][1]['configuration']
+            self.assertEqual(0,config['maxToolRounds'])
+            self.assertTrue(config['agentName'].startswith('unmapped-'))
+
     def test_agent_catalog_is_a_ceiling(self):
         request = {'tools': [{'function': {'name': 'incidents_read'}}]}
         answer = incident_reply(request, [('incidents_remediate', {}), ('incidents_read', {})])
