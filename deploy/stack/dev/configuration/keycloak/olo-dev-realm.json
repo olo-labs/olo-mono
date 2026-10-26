@@ -1,0 +1,33 @@
+{
+  "realm": "olo-dev",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "roles": {"realm": [{"name": "olo-admin"}]},
+  "clients": [{
+    "clientId": "olo-dev",
+    "enabled": true,
+    "publicClient": true,
+    "standardFlowEnabled": true,
+    "directAccessGrantsEnabled": true,
+    "redirectUris": ["http://localhost:43000/*", "http://localhost:43001/*"],
+    "webOrigins": ["http://localhost:43000", "http://localhost:43001"],
+    "attributes": {"pkce.code.challenge.method": "S256"},
+    "protocol": "openid-connect",
+    "protocolMappers": [
+      {"name": "olo-api audience", "protocol": "openid-connect", "protocolMapper": "oidc-audience-mapper", "config": {"included.custom.audience": "olo-api", "access.token.claim": "true"}},
+      {"name": "olo roles", "protocol": "openid-connect", "protocolMapper": "oidc-usermodel-realm-role-mapper", "config": {"claim.name": "roles", "jsonType.label": "String", "multivalued": "true", "access.token.claim": "true"}}
+    ]
+  }],
+  "users": [{
+    "id": "5e6c15f2-2771-426b-b463-c0b932ef85a1",
+    "username": "olo-dev",
+    "enabled": true,
+    "emailVerified": true,
+    "firstName": "OLO",
+    "lastName": "Developer",
+    "email": "developer@localhost.test",
+    "realmRoles": ["olo-admin"],
+    "credentials": [{"type": "password", "value": "${OLO_DEV_USER_PASSWORD}", "temporary": false}]
+  }]
+}

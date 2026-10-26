@@ -142,7 +142,10 @@ rem ============================================================
 
 echo [STEP 5] Building Docker Compose configuration...
 
-set "COMPOSE_FILES=-f docker-compose-db.yml -f docker-compose-cache.yml -f docker-compose-ElasticSearch.yml -f docker-compose-vectordb.yml -f docker-compose-temporal.yml -f docker-compose-olo.yml"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\init-identity.ps1"
+if errorlevel 1 exit /b 1
+
+set "COMPOSE_FILES=-f docker-compose-identity.yml -f docker-compose-db.yml -f docker-compose-cache.yml -f docker-compose-ElasticSearch.yml -f docker-compose-vectordb.yml -f docker-compose-temporal.yml -f docker-compose-olo.yml"
 
 set "AI_SELECTED="
 set "AI_SERVICES=ollama openai-oss"
@@ -215,7 +218,7 @@ rem ============================================================
 echo [STEP 7] Starting OLO development stack...
 echo.
 
-docker compose -p olo !COMPOSE_FILES! up -d db pgadmin redis redisinsight elasticsearch kibana qdrant temporal temporal-admin-tools temporal-ui olo olo-ui olo-chat olo-worker !AI_SERVICES!
+docker compose -p olo !COMPOSE_FILES! up -d keycloak db pgadmin redis redisinsight elasticsearch kibana qdrant temporal temporal-admin-tools temporal-ui olo olo-ui olo-chat olo-worker !AI_SERVICES!
 
 if errorlevel 1 (
     echo.

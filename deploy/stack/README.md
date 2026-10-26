@@ -448,3 +448,15 @@ If you are improving a specific module or scenario, start with [CONTRIBUTING.md]
 
 Scenario authors and maintainers should keep a short credit line in each scenario README under dev/configuration/olo-configuration/ so ownership stays visible to future contributors.
 
+
+## Development identity provider
+
+The dev installer includes Keycloak at http://localhost:48080, with persistent data in the olo-keycloak-data volume. It imports the olo-dev realm, the public olo-dev client (API audience olo-api), and an olo-dev user with membership in the default tenant. The admin-console username is admin. Passwords and the shared backend/worker callback key are generated into ignored dev/.env by scripts/init-identity.ps1 or scripts/init-identity.sh. The installers run this initialization automatically and preserve existing values.
+
+Run the installer again to apply this change, or initialize credentials and add -f docker-compose-identity.yml to the same Compose file list used for your existing stack, then run up -d keycloak olo olo-worker. Recreating the containers applies the new environment; a restart alone does not.
+
+The backend validates issuer http://localhost:48080/realms/olo-dev and audience olo-api, and retrieves signing keys internally from http://keycloak:8080/realms/olo-dev/protocol/openid-connect/certs. Keycloak is bound to host loopback. This development setup uses HTTP and start-dev; production needs an explicitly configured provider and HTTPS. Browser sign-in integration is separate from backend token validation.
+
+For an external provider, override OLO_SECURITY_ISSUER, OLO_SECURITY_AUDIENCE and OLO_SECURITY_JWK_SET_URI together. Configure bootstrap memberships for that provider's real subjects instead of the local development subject. Never disable JWT checks to resolve startup failures. For a remote development host, OLO_DEV_IDP_URL and OLO_SECURITY_ISSUER must refer to the same browser-accessible hostname, and the port binding and client redirect URLs must be changed explicitly.
+
+Deleting the Keycloak volume deletes local accounts and sessions. Changing OLO_DEV_USER_PASSWORD after the initial realm import does not reset the existing user's password; use the Keycloak admin console. Keep dev/.env and the persistent volume together.
