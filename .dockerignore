@@ -8,11 +8,13 @@
 .idea
 
 # Runtime state and local credentials never enter a source build context.
-**/log
-**/logs
+olo-definition/olo-configuration/log
+olo-ui/olo-be/docker/runtime-configuration/log
+deploy/stack/dev/configuration/olo-worker/logs
+**/*.log
 **/.dev
 **/.env
 **/.env.*
-**/bin
+*/bin
 **/conversations
 **/resource-uploads
