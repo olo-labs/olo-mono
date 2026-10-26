@@ -1,0 +1,6 @@
+.gradle/
+**/build/
+.env
+*.p12
+*.pem
+__pycache__/

@@ -1,0 +1,4 @@
+apply plugin: 'application'
+dependencies { implementation project(':service-core'); testImplementation testFixtures(project(':service-core')) }
+application { mainClass = 'org.olo.knowledge.rag.RagMain' }
+tasks.test { systemProperty 'knowledge.rag.classpath', sourceSets.main.runtimeClasspath.asPath }

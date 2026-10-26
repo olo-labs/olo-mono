@@ -1,0 +1,4 @@
+apply plugin: 'application'
+dependencies { implementation project(':service-core'); testImplementation testFixtures(project(':service-core')) }
+application { mainClass = 'org.olo.knowledge.memory.MemoryMain' }
+tasks.test { systemProperty 'knowledge.memory.classpath', sourceSets.main.runtimeClasspath.asPath }

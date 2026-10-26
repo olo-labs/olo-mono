@@ -46,7 +46,7 @@ param(
     # Run Ollama without the NVIDIA GPU reservation.
     [switch]$Cpu,
 
-    # Fresh isolated governed stack, supplied by the adjacent olo-knowledge checkout.
+    # Fresh isolated governed stack, supplied by this monorepo.
     [switch]$ToolGate,
     [string]$QualificationPython = 'python',
     [string]$KnowledgeDir = '',
@@ -84,7 +84,7 @@ $DebugDir = $PSScriptRoot
 $MonoRoot = (Resolve-Path (Join-Path $DebugDir '..')).Path
 $WorkspaceRoot = (Resolve-Path (Join-Path $MonoRoot '..')).Path
 if ($ToolGate) {
-    if (-not $KnowledgeDir) { $KnowledgeDir = Join-Path $WorkspaceRoot 'olo-knowledge' }
+    if (-not $KnowledgeDir) { $KnowledgeDir = Join-Path $MonoRoot 'olo-knowledge' }
     $governedDebug = Join-Path $KnowledgeDir 'governed-debug.ps1'
     if (!(Test-Path -LiteralPath $governedDebug)) { throw 'ToolGate debug requires olo-knowledge/governed-debug.ps1 and its documented qualification prerequisites' }
     if ($Action -notin @('up','check','status','logs','collect','down')) { throw 'ToolGate debug supports up, check, status, logs, collect and down' }
