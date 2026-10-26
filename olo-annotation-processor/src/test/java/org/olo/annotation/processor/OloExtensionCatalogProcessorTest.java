@@ -98,9 +98,9 @@ class OloExtensionCatalogProcessorTest {
         assertThat(catalog).doesNotContain("\"deprecated\"");
         assertThat(catalog).doesNotContain("\"experimental\"");
         assertThat(catalog).contains("\"id\" : \"prompt\"");
-        assertThat(catalog).contains("\"name\" : \"Prompt Template\"");
+        assertThat(catalog).contains("\"label\" : \"Prompt Template\"");
         assertThat(catalog).contains("\"id\" : \"maxIterations\"");
-        assertThat(catalog).contains("\"name\" : \"Max Iterations\"");
+        assertThat(catalog).contains("\"label\" : \"Max Iterations\"");
         assertThat(catalog).contains("\"type\" : \"string\"");
         assertThat(catalog).contains("\"type\" : \"number\"");
         assertThat(catalog).contains("\"widget\" : \"STRING\"");
@@ -167,7 +167,7 @@ class OloExtensionCatalogProcessorTest {
         assertThat(catalog).contains("\"maxInputs\" : 1");
         assertThat(catalog).contains("\"maxOutputs\" : -1");
         assertThat(catalog).contains("\"id\" : \"body\"");
-        assertThat(catalog).contains("\"name\" : \"Body\"");
+        assertThat(catalog).contains("\"label\" : \"Body\"");
         assertThat(catalog).contains("\"visibleWhen\"");
         assertThat(catalog).contains("\"method\" : \"POST\"");
     }

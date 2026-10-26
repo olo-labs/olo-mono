@@ -13,16 +13,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DynamicNodeLabelsTest {
 
     @Test
-    void prefixesToolAndAgentLabels() {
-        assertThat(DynamicNodeLabels.prefixedTool("Calculator")).isEqualTo("Dyn-Tool Calculator");
+    void prefixesAgentLabels() {
         assertThat(DynamicNodeLabels.prefixedAgent("Agent dispatch")).isEqualTo("Dyn-Agent Agent dispatch");
     }
 
     @Test
     void withDynamicLabelUsesCategoryPrefix() {
-        NodeDefinition tool = NodeDefinition.builder()
-                .id("dyn-tool")
-                .type(NodeType.TOOL.name())
+        NodeDefinition prompt = NodeDefinition.builder()
+                .id("dyn-prompt")
+                .type(NodeType.MODEL.name())
                 .label("Research Literature")
                 .build();
         NodeDefinition agent = NodeDefinition.builder()
@@ -31,8 +30,8 @@ class DynamicNodeLabelsTest {
                 .label("Tool synthesis")
                 .build();
 
-        assertThat(DynamicNodeLabels.withDynamicLabel(tool, null).getLabel())
-                .isEqualTo("Dyn-Tool Research Literature");
+        assertThat(DynamicNodeLabels.withDynamicLabel(prompt, null).getLabel())
+                .isEqualTo("Dyn-Research Literature");
         assertThat(DynamicNodeLabels.withDynamicLabel(agent, null).getLabel())
                 .isEqualTo("Dyn-Agent Tool synthesis");
     }

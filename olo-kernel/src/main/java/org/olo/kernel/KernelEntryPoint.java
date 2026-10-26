@@ -13,8 +13,6 @@ import org.olo.kernel.context.KernelContextBuilder;
 import org.olo.kernel.context.KernelRuntimeContext;
 import org.olo.kernel.context.callback.UiCallbackReporter;
 import org.olo.kernel.exception.KernelException;
-import org.olo.core.tool.humaninput.HumanInputPluginOptions;
-import org.olo.core.tool.humaninput.HumanInputSchemaResolver;
 import org.olo.kernel.graph.index.impl.DefaultGraphIndex;
 import org.olo.kernel.human.HumanInputResumeSupport;
 import org.olo.kernel.human.HumanResumeInput;
@@ -166,20 +164,19 @@ public final class KernelEntryPoint {
             output.put("timeoutSeconds", node.getApproval().getTimeoutSeconds());
         }
         output.put("requireCommentOnReject", node.getApproval().isRequireCommentOnReject());
-        if (node.getApproval().getInputPluginId() != null) {
-            HumanInputSchemaResolver.enrichWaitingOutput(output, node.getApproval().getInputPluginId());
-        }
-        ensureHumanWaitingOptions(output, node.getApproval().getInputPluginId());
+        ensureHumanWaitingOptions(output);
     }
 
-    private static void ensureHumanWaitingOptions(Map<String, Object> output, String inputPluginId) {
+    private static void ensureHumanWaitingOptions(Map<String, Object> output) {
         Object existing = output.get("options");
         if (existing instanceof List<?> list && !list.isEmpty()) {
             return;
         }
-        output.put("options", HumanInputPluginOptions.optionsFor(inputPluginId));
+        output.put("options", List.of(
+                Map.of("label", "Approve", "approved", true),
+                Map.of("label", "Cancel", "approved", false)));
         if (output.get("inputType") == null) {
-            output.put("inputType", output.get("inputPluginId") != null ? "plugin" : "options");
+            output.put("inputType", "options");
         }
     }
 

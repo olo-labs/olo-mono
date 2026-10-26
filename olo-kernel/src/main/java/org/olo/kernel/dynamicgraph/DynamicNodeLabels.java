@@ -8,7 +8,6 @@ import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.workflow.WorkflowDefinition;
 import org.olo.kernel.agentcall.AgentLabelResolver;
-import org.olo.kernel.agentcall.ToolLabelResolver;
 
 /**
  * Labels for nodes injected at runtime into the active workflow graph.
@@ -16,14 +15,12 @@ import org.olo.kernel.agentcall.ToolLabelResolver;
 public final class DynamicNodeLabels {
 
     public static final String LEGACY_PREFIX = "Dyn-";
-    public static final String TOOL_PREFIX = "Dyn-Tool ";
     public static final String AGENT_PREFIX = "Dyn-Agent ";
 
     private DynamicNodeLabels() {
     }
 
-    /** @deprecated Prefer {@link #prefixedTool(String)} or {@link #prefixedAgent(String)}. */
-    @Deprecated
+    /** Generic prefix for dynamically inserted non-agent nodes. */
     public static String prefixed(String label) {
         if (label == null || label.isBlank()) {
             return LEGACY_PREFIX + "Node";
@@ -33,10 +30,6 @@ public final class DynamicNodeLabels {
             return trimmed;
         }
         return LEGACY_PREFIX + trimmed;
-    }
-
-    public static String prefixedTool(String label) {
-        return categoryPrefixed(TOOL_PREFIX, label, "Tool");
     }
 
     public static String prefixedAgent(String label) {
@@ -60,11 +53,7 @@ public final class DynamicNodeLabels {
     public static NodeDefinition withDynamicLabel(NodeDefinition node, WorkflowDefinition graph) {
         String baseLabel = node.getLabel();
         if (baseLabel == null || baseLabel.isBlank()) {
-            if (NodeType.TOOL.name().equals(node.getType())) {
-                Object toolIdValue = node.getConfiguration() == null ? null : node.getConfiguration().get("toolId");
-                String toolId = toolIdValue == null ? null : String.valueOf(toolIdValue);
-                baseLabel = ToolLabelResolver.resolve(toolId, graph);
-            } else if (NodeType.AGENT.name().equals(node.getType())) {
+            if (NodeType.AGENT.name().equals(node.getType())) {
                 Object delegateAgentId = node.getConfiguration() == null
                         ? null
                         : node.getConfiguration().get("delegateAgentId");
@@ -81,9 +70,7 @@ public final class DynamicNodeLabels {
                 baseLabel = node.getId();
             }
         }
-        String dynamicLabel = NodeType.TOOL.name().equals(node.getType())
-                ? prefixedTool(baseLabel)
-                : NodeType.AGENT.name().equals(node.getType())
+        String dynamicLabel = NodeType.AGENT.name().equals(node.getType())
                         ? prefixedAgent(baseLabel)
                         : prefixed(baseLabel);
         return NodeDefinition.builder()

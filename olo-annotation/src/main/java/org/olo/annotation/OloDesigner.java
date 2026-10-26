@@ -24,7 +24,7 @@ import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 
  * Studio designer metadata — palette grouping, search, and canvas rendering hints.
 
- * Nested in {@link OloNode}, {@link OloTool}, {@link OloHook}, and {@link OloWorkflowPreset}.
+ * Nested in {@link OloNode}, {@link OloHook}, and {@link OloWorkflowPreset}.
 
  */
 

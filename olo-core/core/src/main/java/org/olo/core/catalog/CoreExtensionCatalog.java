@@ -10,7 +10,7 @@ import org.olo.annotation.catalog.ExtensionRuntimeRegistry;
 import org.olo.annotation.catalog.ExtensionRuntimeRegistryLoader;
 
 /**
- * Loads merged extension metadata generated from {@code @OloNode}, {@code @OloTool}, and {@code @OloHook}
+ * Loads merged extension metadata generated from {@code @OloNode}, and {@code @OloHook}
  * for plug-and-play workflow editing UIs.
  */
 public final class CoreExtensionCatalog {

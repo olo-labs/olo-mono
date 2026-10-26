@@ -11,7 +11,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Declares the registry id for a {@link org.olo.spi.tool.Tool} or {@link org.olo.spi.hook.Hook} implementation.
+ * Declares the registry id for a {@link org.olo.spi.hook.Hook} implementation.
  */
 @Documented
 @Target(ElementType.TYPE)

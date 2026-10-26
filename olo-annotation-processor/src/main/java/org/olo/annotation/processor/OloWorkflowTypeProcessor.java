@@ -67,7 +67,7 @@ public class OloWorkflowTypeProcessor extends AbstractProcessor {
             if (!(element instanceof TypeElement typeElement)) {
                 continue;
             }
-            OloWorkflowType annotation = typeElement.getAnnotation(OloWorkflowType.class);
+            OloWorkflowType annotation = CatalogAnnotations.read(typeElement, OloWorkflowType.class);
             if (annotation == null) {
                 continue;
             }

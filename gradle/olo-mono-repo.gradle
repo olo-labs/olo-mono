@@ -53,9 +53,15 @@ ext.configureOloMonoPublishing = { Project p ->
 ext.configureOloMonoRepositories = { RepositoryHandler repos ->
     def repo = rootProject.ext.oloMonoMavenRepo
     if (repo != null) {
-        repos.maven {
-            name = 'oloMono'
-            url = repo
+        // Snapshot modules must come from this checkout, never an older Maven-local install.
+        repos.exclusiveContent {
+            forRepository {
+                repos.maven {
+                    name = 'oloMono'
+                    url = repo
+                }
+            }
+            filter { includeGroup 'org.olo' }
         }
     }
 }

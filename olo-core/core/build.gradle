@@ -8,7 +8,6 @@ description = 'OLO core implementations — default nodes, tools, hooks, and run
 dependencies {
     api project(':runtime')
     api project(':nodes')
-    api project(':tools')
     api project(':hooks')
     api 'org.olo:olo-annotation:0.1.0-SNAPSHOT'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'

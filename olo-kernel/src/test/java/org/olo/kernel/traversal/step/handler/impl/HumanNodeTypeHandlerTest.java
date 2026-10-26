@@ -48,5 +48,9 @@ class HumanNodeTypeHandlerTest {
         assertThat(result.output()).containsEntry("approvalStatus", "waiting");
         assertThat(result.output()).containsEntry("title", "Approve container restart");
         assertThat(result.output()).containsEntry("description", "Provide containerId and namespace");
+        assertThat(result.output()).containsEntry("inputType", "options");
+        assertThat(result.output().get("options")).isEqualTo(java.util.List.of(
+                java.util.Map.of("label", "Approve", "approved", true),
+                java.util.Map.of("label", "Cancel", "approved", false)));
     }
 }

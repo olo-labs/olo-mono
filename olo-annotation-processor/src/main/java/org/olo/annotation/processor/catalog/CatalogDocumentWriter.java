@@ -9,7 +9,6 @@ import org.olo.annotation.OloCatalogLocations;
 import org.olo.annotation.catalog.HookDescriptor;
 import org.olo.annotation.catalog.NodeDescriptor;
 import org.olo.annotation.catalog.RuntimeBindingDescriptor;
-import org.olo.annotation.catalog.ToolDescriptor;
 import org.olo.annotation.processor.CatalogDefaults;
 import org.olo.annotation.processor.CatalogJsonMapper;
 import org.olo.annotation.processor.model.ExtensionCatalogDocument;
@@ -39,7 +38,6 @@ public final class CatalogDocumentWriter {
     public void write(
             String module,
             List<NodeDescriptor> nodes,
-            List<ToolDescriptor> tools,
             List<HookDescriptor> hooks,
             List<RuntimeBindingDescriptor> runtimeBindings) {
         String generatedAt = Instant.now().toString();
@@ -52,12 +50,7 @@ public final class CatalogDocumentWriter {
                         OloCatalogLocations.NODES_CATALOG,
                         catalogDocument("nodes", module, generatedAt, Map.of("nodes", nodes)));
             }
-            if (!tools.isEmpty()) {
-                writeResource(
-                        mapper,
-                        OloCatalogLocations.TOOLS_CATALOG,
-                        catalogDocument("tools", module, generatedAt, Map.of("tools", tools)));
-            }
+
             if (!hooks.isEmpty()) {
                 writeResource(
                         mapper,
@@ -70,9 +63,7 @@ public final class CatalogDocumentWriter {
             if (!nodes.isEmpty()) {
                 merged.put("nodes", nodes);
             }
-            if (!tools.isEmpty()) {
-                merged.put("tools", tools);
-            }
+
             if (!hooks.isEmpty()) {
                 merged.put("hooks", hooks);
             }
@@ -98,9 +89,7 @@ public final class CatalogDocumentWriter {
         if (body.containsKey("nodes")) {
             document.nodes = (List<NodeDescriptor>) body.get("nodes");
         }
-        if (body.containsKey("tools")) {
-            document.tools = (List<ToolDescriptor>) body.get("tools");
-        }
+
         if (body.containsKey("hooks")) {
             document.hooks = (List<HookDescriptor>) body.get("hooks");
         }

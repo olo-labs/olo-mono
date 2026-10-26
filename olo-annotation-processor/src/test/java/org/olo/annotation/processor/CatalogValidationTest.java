@@ -129,20 +129,20 @@ class CatalogValidationTest {
     }
 
     @Test
-    void failsOnToolIdMismatch() {
+    void failsOnAnotherNodeTypeMismatch() {
         assertFails(
                 "HttpTool",
                 """
                 package sample;
 
-                import org.olo.annotation.OloTool;
-                import org.olo.spi.annotation.ToolId;
+                import org.olo.annotation.OloNode;
+                import org.olo.spi.annotation.NodeType;
 
-                @OloTool(id = "http-tool", name = "HTTP")
-                @ToolId("http-v2")
+                @OloNode(type = "HTTP", name = "HTTP")
+                @NodeType("HTTP_V2")
                 public final class HttpTool {}
                 """,
-                "OLO-AP-002");
+                "OLO-AP-001");
     }
 
     @Test
@@ -152,14 +152,14 @@ class CatalogValidationTest {
                 """
                 package sample;
 
-                import org.olo.annotation.OloTool;
-                import org.olo.spi.annotation.ToolId;
+                import org.olo.annotation.OloNode;
+                import org.olo.spi.annotation.NodeType;
 
-                @OloTool(
-                    id = "bad-timeout",
+                @OloNode(
+                    type = "BAD_TIMEOUT",
                     name = "Bad",
                     defaultTimeout = "30s")
-                @ToolId("bad-timeout")
+                @NodeType("BAD_TIMEOUT")
                 public final class BadTimeoutTool {}
                 """,
                 "OLO-AP-013");
@@ -172,14 +172,14 @@ class CatalogValidationTest {
                 """
                 package sample;
 
-                import org.olo.annotation.OloTool;
-                import org.olo.spi.annotation.ToolId;
+                import org.olo.annotation.OloNode;
+                import org.olo.spi.annotation.NodeType;
 
-                @OloTool(
-                    id = "bad-schema",
+                @OloNode(
+                    type = "BAD_SCHEMA",
                     name = "Bad",
                     capabilityInputSchema = "not-json")
-                @ToolId("bad-schema")
+                @NodeType("BAD_SCHEMA")
                 public final class BadSchemaTool {}
                 """,
                 "OLO-AP-012");

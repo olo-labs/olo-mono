@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PlannerContextRuntimeTest {
 
     @Test
-    void filtersAvailableToolsWhenSelectedToolsEmpty() {
+    void absentAgentDefinitionsProvideNoDelegationAuthority() {
         WorkflowDefinition graph = WorkflowBuilder.create("Test")
                 .id("test")
                 .queue("oloQueue2")
@@ -28,7 +28,7 @@ class PlannerContextRuntimeTest {
                         PlannerContextDefinition.INJECT_AGENTS, true))
                 .build();
 
-        assertThat(AvailableToolsJsonResolver.resolve(graph, "agent")).isEqualTo("[]");
+        assertThat(AvailableAgentsJsonResolver.resolve(graph, "agent")).isEqualTo("[]");
     }
 
     @Test

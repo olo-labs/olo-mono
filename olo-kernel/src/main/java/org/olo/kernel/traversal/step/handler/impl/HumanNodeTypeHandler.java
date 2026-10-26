@@ -4,8 +4,6 @@
  */
 package org.olo.kernel.traversal.step.handler.impl;
 
-import org.olo.core.tool.humaninput.HumanInputPluginOptions;
-import org.olo.core.tool.humaninput.HumanInputSchemaResolver;
 import org.olo.definition.human.HumanApprovalDefinition;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
@@ -53,12 +51,8 @@ public final class HumanNodeTypeHandler implements NodeTypeHandler {
                 output.put("timeoutSeconds", approval.getTimeoutSeconds());
             }
             output.put("requireCommentOnReject", approval.isRequireCommentOnReject());
-            if (approval.getInputPluginId() != null) {
-                output.put("inputPluginId", approval.getInputPluginId());
-                HumanInputSchemaResolver.enrichWaitingOutput(output, approval.getInputPluginId());
-            }
         }
-        ensureHumanWaitingOptions(output, approval != null ? approval.getInputPluginId() : null);
+        ensureHumanWaitingOptions(output);
 
         String prompt = approval != null && approval.getTitle() != null
                 ? approval.getTitle()
@@ -67,14 +61,16 @@ public final class HumanNodeTypeHandler implements NodeTypeHandler {
         return NodeResult.waiting(prompt, output);
     }
 
-    private static void ensureHumanWaitingOptions(Map<String, Object> output, String inputPluginId) {
+    private static void ensureHumanWaitingOptions(Map<String, Object> output) {
         Object existing = output.get("options");
         if (existing instanceof List<?> list && !list.isEmpty()) {
             return;
         }
-        output.put("options", HumanInputPluginOptions.optionsFor(inputPluginId));
+        output.put("options", List.of(
+                Map.of("label", "Approve", "approved", true),
+                Map.of("label", "Cancel", "approved", false)));
         if (output.get("inputType") == null) {
-            output.put("inputType", output.get("inputPluginId") != null ? "plugin" : "options");
+            output.put("inputType", "options");
         }
     }
 }

@@ -89,7 +89,6 @@ class StudioCatalogExporterTest {
         StudioCatalogExporter.applyDocumentHeader(bundle, catalog.schemaVersion(), generatedAt);
         StudioCatalogExporter.applyStudioCatalogEnvelope(bundle);
         bundle.put("nodes", catalog.nodes());
-        bundle.put("tools", catalog.tools());
         bundle.put("hooks", catalog.hooks());
         if (!workflowPresets.isEmpty()) {
             bundle.put("workflowPresets", workflowPresets);

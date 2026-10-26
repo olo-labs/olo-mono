@@ -33,9 +33,7 @@ final class CatalogIdentityValidator {
         return requireUniqueId(typeElement, "OLO-AP-004", "node type", globalId, context.nodeIds());
     }
 
-    boolean requireUniqueToolId(TypeElement typeElement, String globalId) {
-        return requireUniqueId(typeElement, "OLO-AP-005", "tool id", globalId, context.toolIds());
-    }
+
 
     boolean requireUniqueHookId(TypeElement typeElement, String globalId) {
         return requireUniqueId(typeElement, "OLO-AP-006", "hook implementation id", globalId, context.hookIds());

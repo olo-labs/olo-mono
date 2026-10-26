@@ -36,12 +36,7 @@ class KernelExecutionSnapshotSerializationTest {
 
     @Test
     void omitsGraphJsonWhenRegistryMatchesQueue() throws Exception {
-        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
-        if (!Files.exists(presets)) {
-            throw new org.opentest4j.TestAbortedException("olo-configuration presets not found");
-        }
-
-        KernelRuntimeHolder.setRegistry(OloBootstrap.load(presets, false));
+        KernelRuntimeHolder.setRegistry(org.olo.kernel.support.FreshWorkflowInputs.registry("fast"));
         WorkflowDefinition source = KernelRuntimeHolder.registry().findById("fast").orElseThrow();
         WorkflowInput baseInput = org.olo.kernel.support.FreshWorkflowInputs.minimal();
         WorkflowInput input = baseInput.toBuilder()
@@ -65,14 +60,7 @@ class KernelExecutionSnapshotSerializationTest {
 
     @Test
     void roundTripsThroughJacksonLikeTemporalPayloadConverter() throws Exception {
-        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
-        if (!Files.exists(presets)) {
-            throw new org.opentest4j.TestAbortedException("olo-configuration presets not found");
-        }
-
-        WorkflowDefinition source = org.olo.bootstrap.OloBootstrap.load(presets, false)
-                .findById("fast")
-                .orElseThrow();
+        WorkflowDefinition source = org.olo.kernel.support.FreshWorkflowInputs.graph("fast");
         WorkflowInput baseInput = org.olo.kernel.support.FreshWorkflowInputs.minimal();
         WorkflowInput input = baseInput.toBuilder()
                 .routing(new org.olo.input.model.Routing(

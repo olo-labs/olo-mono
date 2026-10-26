@@ -23,7 +23,7 @@ import java.util.function.Function;
 /**
  * Loads and merges extension catalog JSON resources from the classpath for UI and tooling.
  * <p>
- * Reads only authoritative per-type files ({@code nodes.json}, {@code tools.json}, {@code hooks.json}).
+ * Reads only authoritative per-type files ({@code nodes.json}, {@code hooks.json}).
  * Module-level {@code catalog.json} is generated for convenience (indexing, inspection) and is not merged here.
  * <p>
  * Duplicate extension ids across JARs: first occurrence wins; a WARNING is logged naming winner and ignored module.
@@ -46,7 +46,6 @@ public final class ExtensionCatalogLoader {
     public static ExtensionCatalog loadMerged(ClassLoader classLoader) {
         ClassLoader loader = classLoader != null ? classLoader : ExtensionCatalogLoader.class.getClassLoader();
         MergeState<NodeDescriptor> nodes = new MergeState<>("node", NodeDescriptor::id);
-        MergeState<ToolDescriptor> tools = new MergeState<>("tool", ToolDescriptor::id);
         MergeState<HookDescriptor> hooks = new MergeState<>("hook", HookDescriptor::id);
         String schemaVersion = DEFAULT_SCHEMA_VERSION;
 
@@ -57,12 +56,11 @@ public final class ExtensionCatalogLoader {
                 }
                 String module = file.moduleId != null && !file.moduleId.isBlank() ? file.moduleId : resource;
                 nodes.merge(file.nodes, module);
-                tools.merge(file.tools, module);
                 hooks.merge(file.hooks, module);
             }
         }
 
-        return new ExtensionCatalog(schemaVersion, nodes.values(), tools.values(), hooks.values());
+        return new ExtensionCatalog(schemaVersion, nodes.values(), hooks.values());
     }
 
     private static List<CatalogFile> readAllResources(ClassLoader loader, String path) {
@@ -139,7 +137,6 @@ public final class ExtensionCatalogLoader {
         @JsonAlias("module")
         public String moduleId;
         public List<NodeDescriptor> nodes;
-        public List<ToolDescriptor> tools;
         public List<HookDescriptor> hooks;
     }
 }

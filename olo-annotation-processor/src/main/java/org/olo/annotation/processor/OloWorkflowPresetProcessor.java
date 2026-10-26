@@ -122,7 +122,7 @@ public class OloWorkflowPresetProcessor extends AbstractProcessor {
 
             }
 
-            OloWorkflowPreset annotation = typeElement.getAnnotation(OloWorkflowPreset.class);
+            OloWorkflowPreset annotation = CatalogAnnotations.read(typeElement, OloWorkflowPreset.class);
 
             if (annotation == null) {
 

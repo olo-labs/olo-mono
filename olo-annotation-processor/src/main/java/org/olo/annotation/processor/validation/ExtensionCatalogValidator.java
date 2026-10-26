@@ -6,7 +6,6 @@ package org.olo.annotation.processor.validation;
 
 import org.olo.annotation.OloHook;
 import org.olo.annotation.OloNode;
-import org.olo.annotation.OloTool;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
@@ -55,23 +54,7 @@ public final class ExtensionCatalogValidator {
         return valid;
     }
 
-    public boolean validateTool(TypeElement typeElement, OloTool annotation) {
-        boolean valid = true;
-        valid &= identityValidator.requireVersion(typeElement, annotation.version());
-        String globalId = context.globalId(annotation.id(), annotation.provider());
-        valid &= spiValidator.validateToolSpi(typeElement, globalId);
-        valid &= identityValidator.requireUniqueToolId(typeElement, globalId);
-        valid &= portValidator.validatePorts(typeElement, "inputs", annotation.inputs());
-        valid &= portValidator.validatePorts(typeElement, "outputs", annotation.outputs());
-        valid &= portValidator.requireCanvasPorts(
-                typeElement, annotation.canvasPorts(), annotation.inputs(), annotation.outputs());
-        valid &= propertyValidator.validateProperties(
-                typeElement, annotation.arguments(), annotation.configuration());
-        valid &= schemaValidator.validateContractSchemas(
-                typeElement, annotation.capabilityInputSchema(), annotation.capabilityOutputSchema());
-        valid &= schemaValidator.validateDefaultTimeout(typeElement, annotation.defaultTimeout());
-        return valid;
-    }
+
 
     public boolean validateHook(TypeElement typeElement, OloHook annotation) {
         boolean valid = true;
