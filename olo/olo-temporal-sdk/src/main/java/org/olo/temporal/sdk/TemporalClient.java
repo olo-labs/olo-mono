@@ -60,6 +60,8 @@ public final class TemporalClient {
         }
         WorkflowOptions options = WorkflowOptions.newBuilder()
                 .setWorkflowId(workflowId)
+                // An accepted turn owns its ID after completion and failure as well.
+                .setWorkflowIdReusePolicy(io.temporal.api.enums.v1.WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE)
                 .setTaskQueue(taskQueue.trim())
                 .setWorkflowExecutionTimeout(java.time.Duration.ofDays(30))
                 .build();
