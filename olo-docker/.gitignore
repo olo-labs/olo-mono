@@ -1,0 +1,6 @@
+/.idea/*
+log
+.codex_tmp
+/dev/configuration/olo-worker/conversations/
+
+/dev/.env
