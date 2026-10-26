@@ -65,6 +65,17 @@ flowchart TB
 
 Each Gradle module is **standalone** (own `settings.gradle`, wrapper, `publishToMavenLocal`). There is no single root Gradle build yet.
 
+## Start the Docker stack
+
+From this repository root on Windows:
+
+```powershell
+cd olo-docker
+.\install.bat dev
+```
+
+On Linux/macOS, run `cd olo-docker && ./install.sh dev`. See [olo-docker/README.md](olo-docker/README.md) for services, ports, and production setup.
+
 ## Runtime bootstrap (worker)
 
 When `olo-worker` starts:
