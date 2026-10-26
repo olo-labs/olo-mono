@@ -6,7 +6,7 @@
 
 export const CATALOG_DRAG_MIME = 'application/olo-catalog-component'
 
-export type CatalogDragKind = 'NODE' | 'TOOL' | 'HOOK' | 'AGENT'
+export type CatalogDragKind = 'NODE' | 'HOOK' | 'AGENT'
 
 export interface CatalogDragPayload {
   catalogId: string
@@ -27,7 +27,7 @@ export function readCatalogDrag(dataTransfer: DataTransfer): CatalogDragPayload 
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as CatalogDragPayload
-    if (!parsed.catalogId || !parsed.kind) return null
+    if (typeof parsed.catalogId !== 'string' || !parsed.catalogId || !['NODE', 'HOOK', 'AGENT'].includes(parsed.kind)) return null
     return parsed
   } catch {
     return null

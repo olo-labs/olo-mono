@@ -10,7 +10,6 @@ import org.olo.definition.execution.ExecutionModel;
 import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.runtime.RuntimeBindingDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.agentcall.AgentCallPlannerSupport;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
@@ -47,30 +46,7 @@ public final class AgentCallSubgraphMergerTestWorkflows {
                 .build();
     }
 
-    public static WorkflowDefinition baseWorkflowWithTools() {
-        return WorkflowBuilder.from(baseWorkflow())
-                .tool(ToolDefinition.builder()
-                        .id("calculator")
-                        .capability(CapabilityDefinition.builder()
-                                .name("Calculator")
-                                .description("Calculator tool")
-                                .build())
-                        .runtimeBinding(RuntimeBindingDefinition.builder()
-                                .implementationId("olo-core:calculator")
-                                .build())
-                        .build())
-                .tool(ToolDefinition.builder()
-                        .id("cpu-usage")
-                        .capability(CapabilityDefinition.builder()
-                                .name("CPU Usage")
-                                .description("CPU usage tool")
-                                .build())
-                        .runtimeBinding(RuntimeBindingDefinition.builder()
-                                .implementationId("olo-core:cpu-usage")
-                                .build())
-                        .build())
-                .build();
-    }
+
 
     public static WorkflowDefinition baseWorkflow() {
         return WorkflowBuilder.create("Agent")

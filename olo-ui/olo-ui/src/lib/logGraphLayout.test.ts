@@ -13,11 +13,11 @@ const injectedAgentLog: WorkflowDocument = {
   },
   nodes: [
     { id: 'start', type: 'START', ports: [] },
-    { id: 'calculator', type: 'TOOL', ports: [], configuration: { toolId: 'olo-core:calculator' } },
-    { id: 'cpu-usage', type: 'TOOL', ports: [], configuration: { toolId: 'olo-core:cpu-usage' } },
+    { id: 'calculator', type: 'HOOK', ports: [], configuration: { hookId: 'olo-core:calculator' } },
+    { id: 'cpu-usage', type: 'HOOK', ports: [], configuration: { hookId: 'olo-core:cpu-usage' } },
     { id: 'agent', type: 'AGENT', ports: [], configuration: { designer: { position: { x: 440, y: 80 } } } },
     { id: 'end', type: 'END', ports: [], configuration: { designer: { position: { x: 800, y: 80 } } } },
-    { id: 'tool-dyn-step-0', type: 'TOOL', label: 'Dyn-CPU Usage', ports: [] },
+    { id: 'tool-dyn-step-0', type: 'HOOK', label: 'Dyn-CPU Usage', ports: [] },
     { id: 'tool-dyn-synthesis', type: 'AGENT', label: 'Dyn-Tool synthesis', ports: [] },
   ],
   edges: [
@@ -41,7 +41,7 @@ describe('logGraphLayout', () => {
     ])
   })
 
-  it('places main path horizontally and capability tools on a second row', () => {
+  it('places main path horizontally and hooks on a second row', () => {
     const positions = layoutLogWorkflowNodes(injectedAgentLog)
 
     expect(positions.get('start')).toEqual({ x: 80, y: 80 })

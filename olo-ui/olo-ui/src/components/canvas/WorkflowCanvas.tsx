@@ -51,6 +51,17 @@ function WorkflowCanvasInner({ readOnly = false, mode = 'builder' }: WorkflowCan
     )
   }
 
+  if (isLogMode) {
+    return <div className="workflow-canvas">
+      <CanvasToolbar readOnly mode="log" />
+      <section style={{padding: 24}} aria-label="Runtime audit metadata">
+        <p>Runtime audit records contain workflow identifiers and structural counts.</p>
+        <dl>{Object.entries((draft.metadata?.audit ?? {}) as Record<string, unknown>).map(([key, value]) =>
+          <div key={key}><dt>{key}</dt><dd>{String(value ?? '')}</dd></div>)}</dl>
+      </section>
+    </div>
+  }
+
   return (
     <div className="workflow-canvas" ref={graph.canvasContainerRef}>
       <CanvasToolbar readOnly={readOnly} mode={mode} />

@@ -65,7 +65,7 @@ class ExecutionMappingTest {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("bad")
                 .capability(ValidationTestFixtures.minimalCapability())
-                .addNode(ValidationTestFixtures.node("tool", NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("tool", NodeType.MODEL)
                         .workflow(WorkflowReferenceDefinition.builder().workflowId("x").build())
                         .build())
                 .build();

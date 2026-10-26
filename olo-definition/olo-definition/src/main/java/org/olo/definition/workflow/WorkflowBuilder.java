@@ -25,7 +25,6 @@ import org.olo.definition.runtime.RuntimeDelegationDefinition;
 import org.olo.definition.runtime.WorkflowRuntimeDefinition;
 import org.olo.spi.runtime.RuntimeCapability;
 import org.olo.definition.state.StateFieldDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.variable.VariableDefinition;
 import org.olo.definition.workflow.impl.WorkflowBuilderCanvas;
 import org.olo.definition.workflow.impl.WorkflowBuilderCore;
@@ -100,7 +99,6 @@ public final class WorkflowBuilder {
     public WorkflowBuilder metadata(Map<String, Object> metadata) { return core.metadata(metadata); }
     public WorkflowBuilder designer(DesignerDefinition designer) { return core.designer(designer); }
     public WorkflowBuilder extension(ExtensionDefinition extension) { return core.extension(extension); }
-    public WorkflowBuilder tool(ToolDefinition tool) { return core.tool(tool); }
     public WorkflowBuilder agent(AgentDefinition agent) { return core.agent(agent); }
     public WorkflowBuilder hook(HookDefinition hook) { return core.hook(hook); }
 
@@ -112,9 +110,6 @@ public final class WorkflowBuilder {
     @Deprecated public WorkflowBuilder outputNode(String id) { return nodes.outputNode(id); }
     public WorkflowBuilder modelNode(String id) { return nodes.modelNode(id); }
     public WorkflowBuilder modelNode(String id, String subtype) { return nodes.modelNode(id, subtype); }
-    public WorkflowBuilder toolNode(String id) { return nodes.toolNode(id); }
-    public WorkflowBuilder canvasToolNode(String id) { return nodes.canvasToolNode(id); }
-    public WorkflowBuilder canvasToolNode(String id, String label) { return nodes.canvasToolNode(id, label); }
     public WorkflowBuilder canvasChildAgentPluginNode(String id, String childWorkflowId, String label) {
         return nodes.canvasChildAgentPluginNode(id, childWorkflowId, label);
     }
@@ -141,9 +136,7 @@ public final class WorkflowBuilder {
     @Deprecated public WorkflowBuilder variable(VariableDefinition variable) { return nodes.variable(variable); }
 
     // --- canvas: pipelines, layout, ports ---
-    public WorkflowBuilder ragIngestCanvasPipeline() { return canvas.ragIngestCanvasPipeline(); }
-    public WorkflowBuilder localAgentCanvasPipeline(String workflowId) { return canvas.localAgentCanvasPipeline(workflowId); }
-    public WorkflowBuilder agentCanvasPipeline(String workflowId) { return canvas.agentCanvasPipeline(workflowId); }
+    public WorkflowBuilder governedAgentCanvasPipeline(String workflowId) { return canvas.governedAgentCanvasPipeline(workflowId); }
     public WorkflowBuilder nodeCanvasLayout(String nodeId, int columnIndex) { return canvas.nodeCanvasLayout(nodeId, columnIndex); }
     public WorkflowBuilder putNodeConfiguration(String nodeId, Map<String, Object> configuration) {
         return canvas.putNodeConfiguration(nodeId, configuration);
@@ -158,7 +151,6 @@ public final class WorkflowBuilder {
     public WorkflowBuilder withMessageInput() { return infrastructure.withMessageInput(); }
     public WorkflowBuilder withMessageVariable() { return infrastructure.withMessageVariable(); }
     public WorkflowBuilder withMessageContract() { return infrastructure.withMessageContract(); }
-    public WorkflowBuilder withConversationVariables() { return infrastructure.withConversationVariables(); }
     public WorkflowBuilder defaultLocalModelInfrastructure() { return infrastructure.defaultLocalModelInfrastructure(); }
     public WorkflowBuilder presetPlannerContext(String presetId) { return infrastructure.presetPlannerContext(presetId); }
     public WorkflowBuilder withStandardReturnVariable() { return infrastructure.withStandardReturnVariable(); }

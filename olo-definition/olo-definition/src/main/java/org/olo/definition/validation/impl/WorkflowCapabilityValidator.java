@@ -8,7 +8,6 @@ package org.olo.definition.validation.impl;
 import org.olo.definition.agent.AgentDefinition;
 import org.olo.definition.capability.CapabilityValidator;
 import org.olo.definition.node.NodeDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
 
 import java.util.List;
@@ -39,12 +38,6 @@ final class WorkflowCapabilityValidator {
             CapabilityValidator.validate(
                     node.getId(), node.getCapability(), CapabilityValidator.Context.NODE, errors);
         }
-    }
-
-    /** Validates capability on a tool registry entry. */
-    static void validateTool(ToolDefinition tool, List<String> errors) {
-        CapabilityValidator.validate(
-                tool.getId(), tool.getCapability(), CapabilityValidator.Context.TOOL, errors);
     }
 
     /** Validates capability on an agent registry entry. */

@@ -14,5 +14,4 @@ public interface AgentCallRetryVariables {
 
     void resetRetryCount(WorkflowRuntimeVariables variables);
 
-    void resetToolResults(WorkflowRuntimeVariables variables);
 }

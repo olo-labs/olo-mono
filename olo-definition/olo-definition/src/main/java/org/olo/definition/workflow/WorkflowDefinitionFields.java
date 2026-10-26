@@ -19,7 +19,6 @@ import org.olo.definition.planner.AgentReferenceDefinition;
 import org.olo.definition.runtime.RuntimeBindingDefinition;
 import org.olo.definition.runtime.WorkflowRuntimeDefinition;
 import org.olo.definition.state.StateFieldDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.variable.VariableDefinition;
 
 import java.util.Collections;
@@ -61,7 +60,6 @@ record WorkflowDefinitionFields(
         CapabilityDefinition capability,
         WorkflowRuntimeDefinition runtime,
         RuntimeBindingDefinition runtimeBinding,
-        List<ToolDefinition> tools,
         List<AgentDefinition> agents,
         List<HookDefinition> hooks) {
 
@@ -97,7 +95,6 @@ record WorkflowDefinitionFields(
                 builder.capability,
                 builder.runtime,
                 builder.runtimeBinding,
-                copyList(builder.tools),
                 copyList(builder.agents),
                 copyList(builder.hooks));
     }

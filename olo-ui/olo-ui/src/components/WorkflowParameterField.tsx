@@ -2,7 +2,7 @@
  * Copyright (c) 2026 Olo Labs
  * SPDX-License-Identifier: Apache-2.0
  */
-import type { CatalogComponentBase, CatalogParameter } from '../types/catalog'
+import type { CatalogParameter } from '../types/catalog'
 import type { WorkflowDocument } from '../types/workflow'
 import { SYSTEM_PROMPT_PARAMETER_ID } from '../lib/promptTokens'
 import {
@@ -23,7 +23,6 @@ export function WorkflowParameterField({
   workflowVariableNames = [],
   workflow,
   onWorkflowChange,
-  catalogTools,
 }: {
   descriptor: CatalogParameter
   value: unknown
@@ -32,7 +31,6 @@ export function WorkflowParameterField({
   workflowVariableNames?: string[]
   workflow?: WorkflowDocument | null
   onWorkflowChange?: (workflow: WorkflowDocument) => void
-  catalogTools?: CatalogComponentBase[]
 }) {
   const widget = descriptor.ui?.widget ?? 'STRING'
   const label = descriptor.label ?? descriptor.id
@@ -106,7 +104,6 @@ export function WorkflowParameterField({
         workflowVariableNames={workflowVariableNames}
         workflow={workflow}
         onWorkflowChange={onWorkflowChange}
-        catalogTools={catalogTools}
       />
     )
   }

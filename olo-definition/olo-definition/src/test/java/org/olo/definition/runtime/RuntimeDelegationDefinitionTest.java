@@ -44,7 +44,7 @@ class RuntimeDelegationDefinitionTest {
     }
 
     @Test
-    void legacyOrchestrationDeserializesIntoRuntimeDelegation() throws Exception {
+    void rejectsLegacyOrchestration() throws Exception {
         String raw = """
                 {
                   "id": "agent",
@@ -55,7 +55,6 @@ class RuntimeDelegationDefinitionTest {
                     "examples": [],
                     "required_inputs": [],
                     "required_outputs": [],
-                    "tool_requirements": [],
                     "required_context": []
                   },
                   "availableAgents": ["planner"],
@@ -77,8 +76,9 @@ class RuntimeDelegationDefinitionTest {
                 }
                 """;
 
-        WorkflowDefinition workflow = json.deserialize(raw);
-        assertThat(workflow.getRuntime().getDelegation()).isEqualTo(AgentDelegationPolicy.agentPresetDefaults());
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> json.deserialize(raw))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Unsupported workflow field: orchestration");
     }
 
     @Test

@@ -6,13 +6,11 @@
 import { useState } from 'react'
 import { AppShell, useAppEffects } from './components/AppShell'
 import { useUIStore } from './store/ui'
-import { useWebSocketLiveness } from './hooks/useWebSocketLiveness'
 import { useBackendReachable } from './hooks/useBackendReachable'
 import { useAppUiContext } from './hooks/useAppUiContext'
 import { useAppNavigation } from './hooks/useAppNavigation'
 
 function App() {
-  useWebSocketLiveness()
   const backendReachable = useBackendReachable()
   const nav = useAppNavigation()
   const { uiFooter, chatProfiles } = useAppUiContext()

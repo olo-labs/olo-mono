@@ -55,6 +55,7 @@ subprojects {
             }
         }
     }
+    configureOloMonoPublishing(project)
 }
 
 configure(subprojects.findAll { it.name in ['nodes', 'hooks'] }) {

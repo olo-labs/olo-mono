@@ -113,6 +113,7 @@ export function useChatMessaging(opts: UseChatMessagingOptions) {
       sendMessage(sessionId, content.trim(), {
         taskQueue: q ? queueDisplayName(q) : undefined,
         capabilitySource: selectedRagSource.trim() || undefined,
+        pipelineId: conversationPanelStore.getState().selectedPipelineId || undefined,
       })
         .then(({ runId }) => {
           console.log(`${logPrefix} B. sendMessage HTTP resolved`, { runId })
@@ -165,6 +166,7 @@ export function useChatMessaging(opts: UseChatMessagingOptions) {
       sendMessage(sessionId, text, {
         taskQueue: q ? queueDisplayName(q) : undefined,
         capabilitySource: selectedRagSource.trim() || undefined,
+        pipelineId: conversationPanelStore.getState().selectedPipelineId || undefined,
       })
         .then(({ runId }) => {
           console.log('[Chat] B. sendMessage HTTP resolved', { runId })

@@ -36,8 +36,8 @@ class WorkerBootstrapTest {
 
         assertThat(context.settings().id()).isEqualTo("default-worker");
         assertThat(context.workflowRegistry().findById("agent")).isPresent();
-        assertThat(context.workflowRegistry().findById("rag-chat")).isPresent();
-        assertThat(context.workflowRegistry().getWorkflows()).hasSize(13);
+        assertThat(context.workflowRegistry().findById("summary")).isPresent();
+        assertThat(context.workflowRegistry().getWorkflows()).hasSize(11);
     }
 
     @Test

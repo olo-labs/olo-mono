@@ -29,8 +29,4 @@ public final class DefaultAgentCallRetryVariables implements AgentCallRetryVaria
         variables.set(AgentCallPlannerSupport.DEFAULT_RETRY_VARIABLE, 0);
     }
 
-    @Override
-    public void resetToolResults(WorkflowRuntimeVariables variables) {
-        variables.set(AgentCallPlannerSupport.DEFAULT_TOOL_RESULTS_VARIABLE, "[]");
-    }
 }

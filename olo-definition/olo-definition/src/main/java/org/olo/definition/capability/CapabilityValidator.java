@@ -14,8 +14,6 @@ public final class CapabilityValidator {
     public enum Context {
         /** Workflow root artifact — requires non-empty inputs and outputs. */
         WORKFLOW,
-        /** Tool registry entry — name and description only. */
-        TOOL,
         /** Agent registry entry — name and description only. */
         AGENT,
         /** Optional node-level planner hint. */

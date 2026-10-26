@@ -37,8 +37,9 @@ public final class JacksonWorkflowMapper {
         return configure(new ObjectMapper(factory));
     }
 
-    private static ObjectMapper configure(ObjectMapper mapper) {
+    static ObjectMapper configure(ObjectMapper mapper) {
         SimpleModule workflowModule = new SimpleModule();
+        workflowModule.setDeserializerModifier(FreshWorkflowContract.deserializers());
         workflowModule.addDeserializer(ChildWorkflowDefinition.class, new ChildWorkflowDefinitionDeserializer());
         workflowModule.addDeserializer(
                 WorkflowParameterDefinition.class, new WorkflowParameterDefinitionDeserializer());

@@ -8,7 +8,6 @@ import type {
   ChildWorkflowRef,
   WorkflowDocument,
   WorkflowHook,
-  WorkflowTool,
   WorkflowVariable,
 } from '../types/workflow'
 import { normalizeWorkflowVariable } from './workflowVariables'
@@ -38,10 +37,6 @@ export function removeVariable(doc: WorkflowDocument, name: string): WorkflowDoc
   }
 }
 
-export function workflowTools(doc: WorkflowDocument): WorkflowTool[] {
-  return Array.isArray(doc.tools) ? [...doc.tools] : []
-}
-
 export function workflowHooks(doc: WorkflowDocument): WorkflowHook[] {
   return Array.isArray(doc.hooks) ? [...doc.hooks] : []
 }
@@ -54,28 +49,6 @@ export function availableAgentRefs(doc: WorkflowDocument): AgentReference[] {
   return Array.isArray(doc.availableAgents) ? [...doc.availableAgents] : []
 }
 
-export function toolFromCatalog(item: CatalogComponentBase): WorkflowTool {
-  const id = catalogResourceId(item.id)
-  return {
-    id,
-    type: 'TOOL',
-    capability: {
-      name: item.name ?? id,
-      description: item.description,
-      tags: [],
-      examples: item.examples ?? [],
-      required_inputs: [],
-      required_outputs: [],
-      tool_requirements: [],
-      required_context: [],
-    },
-    runtimeBinding: {
-      implementationId: item.id,
-    },
-    configuration: {},
-  }
-}
-
 export function hookFromCatalog(item: CatalogComponentBase, pattern = '**'): WorkflowHook {
   const id = catalogResourceId(item.id)
   return {
@@ -85,37 +58,11 @@ export function hookFromCatalog(item: CatalogComponentBase, pattern = '**'): Wor
   }
 }
 
-export function isCatalogToolEnabled(doc: WorkflowDocument, catalogId: string): boolean {
-  const id = catalogResourceId(catalogId)
-  return workflowTools(doc).some(
-    (t) => t.id === id || t.runtimeBinding?.implementationId === catalogId,
-  )
-}
-
 export function isCatalogHookEnabled(doc: WorkflowDocument, catalogId: string): boolean {
   const id = catalogResourceId(catalogId)
   return workflowHooks(doc).some(
     (h) => h.id === id || h.pre?.implementationId === catalogId,
   )
-}
-
-export function toggleCatalogTool(
-  doc: WorkflowDocument,
-  item: CatalogComponentBase,
-  enabled: boolean,
-): WorkflowDocument {
-  const id = catalogResourceId(item.id)
-  const existing = workflowTools(doc)
-  if (enabled) {
-    if (isCatalogToolEnabled(doc, item.id)) return doc
-    return { ...doc, tools: [...existing, toolFromCatalog(item)] }
-  }
-  return {
-    ...doc,
-    tools: existing.filter(
-      (t) => t.id !== id && t.runtimeBinding?.implementationId !== item.id,
-    ),
-  }
 }
 
 export function toggleCatalogHook(

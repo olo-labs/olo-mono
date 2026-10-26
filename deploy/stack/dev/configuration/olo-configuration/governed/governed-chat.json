@@ -1,0 +1,211 @@
+{
+  "id" : "governed-chat",
+  "enabled" : true,
+  "isDefault" : false,
+  "label" : "governed-chat",
+  "queue" : "oloQueue2",
+  "workflowType" : "olo",
+  "childWorkflows" : [ ],
+  "availableAgents" : [ ],
+  "version" : "1.0.0",
+  "capability" : {
+    "id" : "governed-chat",
+    "name" : "governed-chat",
+    "description" : "User-authorized governed workflow",
+    "tags" : [ ],
+    "examples" : [ ],
+    "required_inputs" : [ "message" ],
+    "required_outputs" : [ "ReturnValue" ],
+    "required_context" : [ ]
+  },
+  "runtime" : {
+    "contractVersion" : "1.0",
+    "executionModel" : "INLINE"
+  },
+  "inputs" : {
+    "message" : {
+      "schema" : "string",
+      "required" : true,
+      "populateState" : true
+    }
+  },
+  "state" : { },
+  "parameters" : { },
+  "nodes" : [ {
+    "id" : "start",
+    "type" : "START",
+    "ports" : [ {
+      "id" : "out",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
+      "ui" : {
+        "position" : "RIGHT",
+        "color" : "#ef4444"
+      }
+    } ],
+    "reads" : [ "input.message" ],
+    "writes" : [ ],
+    "configuration" : {
+      "inputVariableMappings" : [ "message" ],
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 80
+        }
+      }
+    }
+  }, {
+    "id" : "agent",
+    "type" : "AGENT",
+    "label" : "Agent",
+    "ports" : [ {
+      "id" : "in",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : true,
+      "minConnections" : 1,
+      "maxConnections" : 1,
+      "shortDescription" : "Incoming workflow message",
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#ef4444"
+      }
+    }, {
+      "id" : "agentPlug",
+      "label" : "available agents",
+      "schema" : "agent-plug",
+      "type" : "agent-plug",
+      "acceptType" : "agent-plug",
+      "direction" : "INPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Child workflows registered for runtime prompt assembly (0 or more)",
+      "ui" : {
+        "position" : "BOTTOM",
+        "color" : "#a855f7"
+      }
+    }, {
+      "id" : "out",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
+      "direction" : "OUTPUT",
+      "required" : false,
+      "minConnections" : 0,
+      "shortDescription" : "Outgoing workflow message",
+      "ui" : {
+        "position" : "RIGHT",
+        "color" : "#ef4444"
+      }
+    } ],
+    "execution" : {
+      "executionKind" : "ACTIVITY",
+      "executionModel" : "INLINE",
+      "routers" : [ ],
+      "workflowRef" : {
+        "workflowId" : "governed-chat",
+        "version" : "1.0.0",
+        "inputMapping" : { },
+        "outputMapping" : { }
+      }
+    },
+    "reads" : [ ],
+    "writes" : [ ],
+    "configuration" : {
+      "maxToolRounds" : 0,
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 440
+        }
+      },
+      "promptTemplate" : "Address the request clearly and helpfully.\n\nRequest:\n{message}"
+    }
+  }, {
+    "id" : "end",
+    "type" : "END",
+    "ports" : [ {
+      "id" : "in",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "direction" : "INPUT",
+      "required" : true,
+      "minConnections" : 1,
+      "maxConnections" : 1,
+      "shortDescription" : "Incoming workflow message",
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#ef4444"
+      }
+    } ],
+    "reads" : [ ],
+    "writes" : [ ],
+    "configuration" : {
+      "designer" : {
+        "position" : {
+          "y" : 80,
+          "x" : 800
+        }
+      }
+    }
+  } ],
+  "edges" : [ {
+    "sourceNodeId" : "start",
+    "sourcePortId" : "out",
+    "targetNodeId" : "agent",
+    "targetPortId" : "in"
+  }, {
+    "sourceNodeId" : "agent",
+    "sourcePortId" : "out",
+    "targetNodeId" : "end",
+    "targetPortId" : "in"
+  } ],
+  "variables" : [ {
+    "name" : "message",
+    "type" : "string",
+    "description" : "",
+    "required" : true,
+    "scope" : "READONLY_EXTERNAL",
+    "metadata" : { }
+  }, {
+    "name" : "ReturnValue",
+    "type" : "string",
+    "description" : "Workflow return message returned to the caller",
+    "required" : false,
+    "scope" : "LOCAL",
+    "metadata" : {
+      "role" : "return"
+    }
+  } ],
+  "agents" : [ ],
+  "hooks" : [ ],
+  "modelProviders" : [ {
+    "id" : "model-provider",
+    "provider" : "local",
+    "model" : "llama3.2:latest",
+    "configuration" : {
+      "baseUrl" : "http://localhost:11435"
+    }
+  } ],
+  "modelRouting" : [ {
+    "id" : "default-routing",
+    "defaultProviderId" : "model-provider",
+    "rules" : [ ],
+    "metadata" : { }
+  } ],
+  "extensions" : [ ],
+  "metadata" : {
+    "returnVariable" : "ReturnValue",
+    "returnOutputKey" : "agent"
+  }
+}

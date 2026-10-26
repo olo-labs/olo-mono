@@ -4,13 +4,13 @@
  */
 import type { CatalogComponentBase, StudioCatalog } from '../types/catalog'
 import type { WorkflowDocument, WorkflowNode } from '../types/workflow'
-import { togglePlannerAgent, togglePlannerTool } from './plannerContext'
+import { togglePlannerAgent } from './plannerContext'
 import {
   catalogComponentToPorts,
   findWorkflowPresetPorts,
   resolveNodePorts,
 } from './workflowNodePorts'
-import { toggleCatalogHook, toggleCatalogTool } from './workflowResources'
+import { toggleCatalogHook } from './workflowResources'
 
 function findCatalogItem(
   catalog: StudioCatalog | null,
@@ -18,17 +18,10 @@ function findCatalogItem(
 ): CatalogComponentBase | null {
   if (!catalog) return null
   return (
-    catalog.tools?.find((tool) => tool.id === catalogId)
-    ?? catalog.hooks?.find((hook) => hook.id === catalogId)
+    catalog.hooks?.find((hook) => hook.id === catalogId)
     ?? catalog.nodes?.find((node) => node.id === catalogId)
     ?? null
   )
-}
-
-function toolIdFromNode(node: WorkflowNode): string | null {
-  const configuration = node.configuration ?? {}
-  const toolId = configuration.toolId ?? configuration.toolRef
-  return typeof toolId === 'string' && toolId.length > 0 ? toolId : null
 }
 
 function hookIdFromNode(node: WorkflowNode): string | null {
@@ -49,7 +42,6 @@ export function applyWorkflowGraphSemantics(
   catalog: StudioCatalog | null,
 ): WorkflowDocument {
   const nodes = workflow.nodes ?? []
-  const catalogTools = catalog?.tools ?? []
   let next = workflow
 
   next = {
@@ -57,11 +49,7 @@ export function applyWorkflowGraphSemantics(
     nodes: (next.nodes ?? []).map((node) => {
       const nodeType = node.type?.toUpperCase() ?? ''
       let catalogPorts: ReturnType<typeof catalogComponentToPorts> = []
-      if (nodeType === 'TOOL') {
-        const toolId = toolIdFromNode(node)
-        const item = toolId ? findCatalogItem(catalog, toolId) : null
-        catalogPorts = item ? catalogComponentToPorts(item) : []
-      } else if (nodeType === 'HOOK') {
+      if (nodeType === 'HOOK') {
         const hookId = hookIdFromNode(node)
         const item = hookId ? findCatalogItem(catalog, hookId) : null
         catalogPorts = item ? catalogComponentToPorts(item) : []
@@ -86,16 +74,7 @@ export function applyWorkflowGraphSemantics(
 
   for (const node of nodes) {
     const nodeType = node.type?.toUpperCase() ?? ''
-    if (nodeType === 'TOOL') {
-      const toolId = toolIdFromNode(node)
-      if (!toolId) continue
-      const item = findCatalogItem(catalog, toolId)
-      if (item) {
-        next = toggleCatalogTool(next, item, true)
-        next = togglePlannerTool(next, item.id, true, catalogTools)
-      }
-      continue
-    }
+
     if (nodeType === 'HOOK') {
       const hookId = hookIdFromNode(node)
       if (!hookId) continue
@@ -108,7 +87,7 @@ export function applyWorkflowGraphSemantics(
     if (nodeType === 'AGENT') {
       const workflowId = workflowIdFromNode(node)
       if (workflowId) {
-        next = togglePlannerAgent(next, workflowId, true, catalogTools)
+        next = togglePlannerAgent(next, workflowId, true)
       }
     }
   }
@@ -123,16 +102,6 @@ export function hookNodeConfiguration(
   return {
     hookId: item.id,
     pattern: '**',
-    designer: { position },
-  }
-}
-
-export function toolNodeConfiguration(
-  item: CatalogComponentBase,
-  position: { x: number; y: number },
-): Record<string, unknown> {
-  return {
-    toolId: item.id,
     designer: { position },
   }
 }

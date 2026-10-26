@@ -106,7 +106,6 @@ $env:OLO_UI_ROOT = ConvertTo-ComposePath (Join-Path $MonoRoot 'olo-ui')
 $env:OLO_CHAT_ROOT = ConvertTo-ComposePath (Join-Path $MonoRoot 'olo-chat')
 # Workflow JSON and demo tool data come from this checkout so olo, olo-ui and olo-worker agree.
 $env:OLO_CONFIGURATION_SOURCE = ConvertTo-ComposePath (Join-Path $MonoRoot 'olo-definition/olo-configuration')
-$env:OLO_SHARED_SOURCE = ConvertTo-ComposePath (Join-Path $MonoRoot 'olo-core/tools')
 # The olo API embeds this callback URL into runs; it must be reachable from wherever the worker runs.
 if ($Worker -eq 'host') {
     $env:OLO_CHAT_CALLBACK_BASE_URL = 'http://localhost:47080'
@@ -587,4 +586,3 @@ switch ($Action) {
 }
 # Failures throw (exit 1); don't leak the exit code of the last probe.
 exit 0
-

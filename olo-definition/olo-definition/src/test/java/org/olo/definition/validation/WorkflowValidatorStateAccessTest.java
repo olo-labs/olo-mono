@@ -21,7 +21,7 @@ class WorkflowValidatorStateAccessTest {
                 .id("typo-write")
                 .capability(ValidationTestFixtures.minimalCapability())
                 .putState("analysis", StateFieldDefinition.builder().schema("Analysis").build())
-                .addNode(ValidationTestFixtures.node("research", NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("research", NodeType.MODEL)
                         .addWrite("state.analysys")
                         .build())
                 .build();
@@ -38,7 +38,7 @@ class WorkflowValidatorStateAccessTest {
                 .id("typo-read")
                 .capability(ValidationTestFixtures.minimalCapability())
                 .putState("analysis", StateFieldDefinition.builder().schema("Analysis").build())
-                .addNode(ValidationTestFixtures.node("risk", NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("risk", NodeType.MODEL)
                         .addRead("state.analysys")
                         .build())
                 .build();
@@ -53,7 +53,7 @@ class WorkflowValidatorStateAccessTest {
         WorkflowDefinition workflow = WorkflowDefinition.builder()
                 .id("no-state-schema")
                 .capability(ValidationTestFixtures.minimalCapability())
-                .addNode(ValidationTestFixtures.node("agent", NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("agent", NodeType.MODEL)
                         .addRead("state.symbol")
                         .build())
                 .build();
@@ -70,7 +70,7 @@ class WorkflowValidatorStateAccessTest {
                 .capability(ValidationTestFixtures.minimalCapability())
                 .putState("analysis", StateFieldDefinition.builder().schema("Analysis").build())
                 .putState("news", StateFieldDefinition.builder().schema("News[]").build())
-                .addNode(ValidationTestFixtures.node("scorer", NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("scorer", NodeType.MODEL)
                         .addRead("state.analysis.score")
                         .addRead("state.news[0]")
                         .build())
@@ -102,7 +102,7 @@ class WorkflowValidatorStateAccessTest {
                 .capability(ValidationTestFixtures.minimalCapability())
                 .putInput("symbol", WorkflowInputDefinition.builder().schema("String").build())
                 .putState("analysis", StateFieldDefinition.builder().schema("Analysis").build())
-                .addNode(ValidationTestFixtures.node("bad", NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("bad", NodeType.MODEL)
                         .addWrite("input.symbol")
                         .build())
                 .build();
@@ -119,7 +119,7 @@ class WorkflowValidatorStateAccessTest {
                 .capability(ValidationTestFixtures.minimalCapability())
                 .putState("symbol", StateFieldDefinition.builder().schema("String").build())
                 .putState("analysis", StateFieldDefinition.builder().schema("Analysis").build())
-                .addNode(ValidationTestFixtures.node("research", NodeType.TOOL)
+                .addNode(ValidationTestFixtures.node("research", NodeType.MODEL)
                         .addRead("state.symbol")
                         .addWrite("state.analysis")
                         .build())

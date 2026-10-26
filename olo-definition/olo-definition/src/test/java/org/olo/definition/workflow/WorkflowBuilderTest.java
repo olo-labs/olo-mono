@@ -30,7 +30,7 @@ class WorkflowBuilderTest {
                 .capability(ValidationTestFixtures.minimalCapability())
                 .inputNode("request")
                 .modelNode("analysis", "CHAT")
-                .toolNode("screener")
+                .modelNode("screener", "CHAT")
                 .outputNode("response")
                 .connect("request", "analysis")
                 .connect("analysis", "screener")
@@ -114,7 +114,7 @@ class WorkflowBuilderTest {
                                 .title("Approve trade execution?")
                                 .approvers(List.of("trading-desk"))
                                 .build())
-                .toolNode("execute-trade")
+                .modelNode("execute-trade", "CHAT")
                 .outputNode("output")
                 .connect("input", "recommendation")
                 .connect("recommendation", "trade-approval")
@@ -164,7 +164,7 @@ class WorkflowBuilderTest {
     void rejectsDuplicateNodeIds() {
         assertThatThrownBy(() -> WorkflowBuilder.create("Dup")
                 .inputNode("same")
-                .addNode(NodeDefinition.builder().id("same").type(NodeType.TOOL).build())
+                .addNode(NodeDefinition.builder().id("same").type(NodeType.MODEL).build())
                 .build())
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("duplicate node id");

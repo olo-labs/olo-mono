@@ -51,6 +51,7 @@ public class WorkflowConfigurationService {
                     .forEach(path -> {
                         try {
                             JsonNode document = mapper.readTree(path.toFile());
+                            FreshWorkflowContract.validate(document);
                             String id = textOrNull(document, "id");
                             if (id == null || id.isBlank()) {
                                 log.warn("Skipping workflow file without id: {}", path);
@@ -62,7 +63,7 @@ public class WorkflowConfigurationService {
                             String relative = root.relativize(path).toString().replace('\\', '/');
                             summaries.add(new WorkflowSummary(relative, id, label, queue, workflowType));
                         } catch (IOException e) {
-                            log.warn("Skipping invalid workflow JSON {}: {}", path, e.getMessage());
+                            log.warn("Skipping invalid workflow JSON: {}", path);
                         }
                     });
         }
@@ -71,13 +72,16 @@ public class WorkflowConfigurationService {
 
     public JsonNode readWorkflow(String relativePath) throws IOException {
         Path file = resolveFile(relativePath);
-        return mapper.readTree(file.toFile());
+        JsonNode document = mapper.readTree(file.toFile());
+        FreshWorkflowContract.validate(document);
+        return document;
     }
 
     public WorkflowSummary writeWorkflow(String relativePath, JsonNode document) throws IOException {
         if (document == null || !document.isObject()) {
             throw new IllegalArgumentException("workflow document must be a JSON object");
         }
+        FreshWorkflowContract.validate(document);
         String id = textOrNull(document, "id");
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("workflow id is required");

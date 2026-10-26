@@ -26,11 +26,10 @@ class GovernedPipelineTest {
                                 WorkflowDefinition.class);
         assertEquals("governed-chat", graph.getId());
         assertEquals(3, graph.getNodes().size());
-        assertTrue(graph.getTools().isEmpty());
         assertTrue(graph.getHooks().isEmpty());
         var node =
                 graph.getNodes().stream()
-                        .filter(n -> n.getId().equals("answer"))
+                        .filter(n -> n.getId().equals("agent"))
                         .findFirst()
                         .orElseThrow();
         var prompt =

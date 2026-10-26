@@ -30,7 +30,7 @@ class OloBootstrapTest {
 
         WorkflowDefinitionRegistry registry = OloBootstrap.load(presets, false);
 
-        assertThat(registry.getWorkflows()).hasSize(12);
+        assertThat(registry.getWorkflows()).hasSize(11);
         assertThat(registry.findById("agent")).isPresent();
         assertThat(registry.findById("agent")).isPresent();
 
@@ -40,21 +40,13 @@ class OloBootstrapTest {
         assertThat(registry.findByIdAndVersion("agent", "1.0.0")).contains(agent);
         assertThat(registry.findByIdAndVersion("agent", "9.9.9")).contains(agent);
         assertThat(registry.getWorkflowsByIdAndVersion()).containsKey("agent@1.0.0");
-        assertThat(agent.getParameters()).containsKeys(
-                "maxIterations", "systemPrompt", "model", "temperature");
-        assertThat(agent.getMetadata()).containsEntry("role", "agent")
-                .containsEntry("agentType", "autonomous")
-                .containsEntry("planningStrategy", "react")
-                .containsEntry("agentSelectionStrategy", "dynamic");
-        assertThat(agent.getChildWorkflows()).hasSize(4);
-        assertThat(agent.getAvailableAgentIds()).containsExactly("planner", "reviewer", "architect");
-        assertThat(agent.getRuntime().getDelegation().getEnabled()).isTrue();
-        assertThat(agent.getRuntime().getDelegation().getParallelEnabled()).isTrue();
-        assertThat(agent.getRuntime().getDelegation().getMaxDepth()).isEqualTo(3);
-        assertThat(agent.getRuntime().getDelegation().getMaxDelegations()).isEqualTo(10);
-        assertThat(agent.getRuntime().getDelegation().getResultAggregation().name()).isEqualTo("MERGE");
-        assertThat(agent.getRuntime().getDelegation().getMemoryScope().name()).isEqualTo("SHARED");
-        assertThat(agent.getTools()).isEmpty();
+        assertThat(agent.getParameters()).isEmpty();
+        assertThat(agent.getChildWorkflows()).isEmpty();
+        assertThat(agent.getAvailableAgentIds()).isEmpty();
+        assertThat(agent.getRuntime().getExecutionModel().name()).isEqualTo("INLINE");
+        assertThat(agent.getNodes()).extracting(node -> node.getType()).containsExactly("START", "AGENT", "END");
+        assertThat(agent.getNodes().get(1).getConfiguration()).containsEntry("maxToolRounds", 0);
+
     }
 
     @Test

@@ -8,7 +8,6 @@ package org.olo.definition.workflow.impl;
 import org.olo.definition.model.ModelProviderDefinition;
 import org.olo.definition.model.ModelRoutingDefinition;
 import org.olo.definition.input.WorkflowInputDefinition;
-import org.olo.definition.preset.WorkflowConversationPluginSupport;
 import org.olo.definition.preset.WorkflowPresetInfrastructure;
 import org.olo.definition.variable.VariableDefinition;
 import org.olo.definition.workflow.WorkflowBuilder;
@@ -90,12 +89,6 @@ public final class WorkflowBuilderInfrastructure {
 
     public WorkflowBuilder withMessageContract() {
         return withMessageInput().withMessageVariable();
-    }
-
-    public WorkflowBuilder withConversationVariables() {
-        addVariableIfAbsent(WorkflowConversationPluginSupport.conversationSummaryVariable());
-        addVariableIfAbsent(WorkflowConversationPluginSupport.conversationHistoryVariable());
-        return owner;
     }
 
     // --- planner context presets ---

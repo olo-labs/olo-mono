@@ -12,7 +12,6 @@ import org.olo.definition.serializer.JsonWorkflowSerializer;
 import org.olo.definition.serializer.WorkflowSerializer;
 import org.olo.definition.serializer.YamlWorkflowSerializer;
 import org.olo.definition.validation.WorkflowValidator;
-import org.olo.definition.dynamicgraph.DynamicSubgraphInjectionSupport;
 import org.olo.definition.workflow.WorkflowDefinition;
 
 import java.io.IOException;
@@ -110,9 +109,6 @@ public final class DirectoryWorkflowDefinitionLoader {
     private WorkflowDefinition deserialize(Path file) throws IOException {
         String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
         String content = Files.readString(file);
-        if (name.endsWith(".json") && DynamicSubgraphInjectionSupport.isInjectionDocument(content)) {
-            return DynamicSubgraphInjectionSupport.loadBuilderWorkflow(content);
-        }
         if (name.endsWith(".json")) {
             return jsonSerializer.deserialize(content);
         }

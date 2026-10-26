@@ -43,8 +43,8 @@ public class GraphLogController {
     }
 
     @GetMapping(value = "/{*relativePath}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public JsonNode read(@PathVariable String relativePath) throws IOException {
-        return logs.readMergedGraph(normalizePath(relativePath));
+    public GraphLogSummary read(@PathVariable String relativePath) throws IOException {
+        return logs.readMetadata(normalizePath(relativePath));
     }
 
     private static String normalizePath(String relativePath) {
@@ -60,11 +60,11 @@ public class GraphLogController {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> badRequest(IllegalArgumentException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Audit entry unavailable"));
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, String>> unavailable(IllegalStateException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "Audit entry unavailable"));
     }
 }

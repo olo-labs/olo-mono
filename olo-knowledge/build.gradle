@@ -5,8 +5,8 @@ subprojects {
     version = '0.1.0-SNAPSHOT'
     java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
     repositories {
-        maven { url = uri(rootProject.file('../../olo-toolgate/build/sdk-repo')) }
-        maven { url = uri(rootProject.file('../../olo-toolgate/.dev/maven')) }
+        maven { url = uri(new File(System.getenv('TOOLGATE_SOURCE') ?: rootProject.file('../../olo-toolgate').absolutePath, 'build/sdk-repo')) }
+        maven { url = uri(new File(System.getenv('TOOLGATE_SOURCE') ?: rootProject.file('../../olo-toolgate').absolutePath, '.dev/maven')) }
         mavenCentral()
     }
     dependencies {

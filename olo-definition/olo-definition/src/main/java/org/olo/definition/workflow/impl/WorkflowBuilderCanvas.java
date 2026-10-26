@@ -11,7 +11,6 @@ import org.olo.definition.node.NodeDefinition;
 import org.olo.definition.node.NodeType;
 import org.olo.definition.port.PortDirection;
 import org.olo.definition.port.PortWireType;
-import org.olo.definition.preset.WorkflowConversationPluginSupport;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowReferenceDefinition;
 
@@ -38,94 +37,25 @@ public final class WorkflowBuilderCanvas {
         this.nodes = nodes;
     }
 
-    /** Dedicated RAG ingest canvas: START → rag-ingest TOOL → END (no human step). */
-    public WorkflowBuilder ragIngestCanvasPipeline() {
-        String ingestNodeId = "rag-ingest";
-        return nodes.startNodeWithMessageInput("start")
-                .canvasToolNode(ingestNodeId, "RAG Ingest")
-                .putNodeConfiguration(
-                        ingestNodeId,
-                        Map.of(
-                                "toolId", "olo-core:rag-ingest",
-                                "extensionRef", "pgvector-store",
-                                "vectorTable", "${env:OLO_VECTOR_STORE_TABLE}",
-                                "driver", "${env:OLO_VECTOR_STORE_DRIVER}",
-                                "connectionRef", "${env:OLO_VECTOR_STORE_URL}",
-                                "collection", "${env:OLO_VECTOR_STORE_COLLECTION}",
-                                "vectorSize", "${env:OLO_VECTOR_STORE_VECTOR_SIZE}",
-                                "distance", "${env:OLO_VECTOR_STORE_DISTANCE}",
-                                "chunkSize", 512))
-                .endNode("end")
-                .connect("start", "out", ingestNodeId, "in")
-                .connect(ingestNodeId, "out", "end", "in")
-                .nodeCanvasLayout("start", 0)
-                .nodeCanvasLayout(ingestNodeId, 1)
-                .nodeCanvasLayout("end", 2);
-    }
-
-    /** Leaf agent canvas: START → conversation-load → AGENT (inline local LLM) → conversation-store → END. */
-    public WorkflowBuilder localAgentCanvasPipeline(String workflowId) {
+    /** START -> inline AGENT -> END. The governed lifecycle owns memory and RAG. */
+    public WorkflowBuilder governedAgentCanvasPipeline(String workflowId) {
         Objects.requireNonNull(workflowId, "workflowId is required");
-        String loadNodeId = WorkflowConversationPluginSupport.CONVERSATION_LOAD_NODE_ID;
-        String storeNodeId = WorkflowConversationPluginSupport.CONVERSATION_STORE_NODE_ID;
-        owner.withConversationVariables();
-        WorkflowConversationPluginSupport.registerConversationTools(owner);
         return nodes.startNodeWithMessageInput("start")
-                .toolNode(loadNodeId)
-                .putNodeConfiguration(loadNodeId, Map.of("toolId", WorkflowConversationPluginSupport.CONVERSATION_LOAD_TOOL_ID))
                 .addNode(NodeDefinition.builder()
-                        .id("agent")
-                        .type(NodeType.AGENT.name())
+                        .id("agent").label("Agent").type(NodeType.AGENT.name())
                         .workflow(WorkflowReferenceDefinition.builder()
-                                .workflowId(workflowId)
-                                .version("1.0.0")
-                                .build())
+                                .workflowId(workflowId).version("1.0.0").build())
                         .executionKind(ExecutionKind.ACTIVITY)
                         .executionModel(ExecutionModel.INLINE)
+                        .configuration(Map.of("maxToolRounds", 0))
                         .addPort(WorkflowBuilderPorts.messagePort("in", PortDirection.INPUT))
-                        .addPort(WorkflowBuilderPorts.pluginPort("capabilities", PortWireType.CAPABILITIES, PortDirection.INPUT))
                         .addPort(WorkflowBuilderPorts.pluginPort("agentPlug", PortWireType.AGENT_PLUG, PortDirection.INPUT))
                         .addPort(WorkflowBuilderPorts.messagePort("out", PortDirection.OUTPUT))
                         .build())
-                .toolNode(storeNodeId)
-                .putNodeConfiguration(storeNodeId, Map.of("toolId", WorkflowConversationPluginSupport.CONVERSATION_STORE_TOOL_ID))
                 .endNode("end")
-                .connect("start", "out", loadNodeId, "in")
-                .connect(loadNodeId, "out", "agent", "in")
-                .connect("agent", "out", storeNodeId, "in")
-                .connect(storeNodeId, "out", "end", "in")
-                .nodeCanvasLayout("start", 0)
-                .nodeCanvasLayout(loadNodeId, 1)
-                .nodeCanvasLayout("agent", 2)
-                .nodeCanvasLayout(storeNodeId, 3)
-                .nodeCanvasLayout("end", 4);
-    }
-
-    /** Canonical Studio canvas: START → conversation-load → AGENT (self workflow) → conversation-store → END. */
-    public WorkflowBuilder agentCanvasPipeline(String workflowId) {
-        String loadNodeId = WorkflowConversationPluginSupport.CONVERSATION_LOAD_NODE_ID;
-        String storeNodeId = WorkflowConversationPluginSupport.CONVERSATION_STORE_NODE_ID;
-        owner.withConversationVariables();
-        WorkflowConversationPluginSupport.registerConversationTools(owner);
-        return nodes.startNodeWithMessageInput("start")
-                .toolNode(loadNodeId)
-                .putNodeConfiguration(loadNodeId, Map.of("toolId", WorkflowConversationPluginSupport.CONVERSATION_LOAD_TOOL_ID))
-                .agentNode("agent", WorkflowReferenceDefinition.builder()
-                        .workflowId(workflowId)
-                        .version("1.0.0")
-                        .build())
-                .toolNode(storeNodeId)
-                .putNodeConfiguration(storeNodeId, Map.of("toolId", WorkflowConversationPluginSupport.CONVERSATION_STORE_TOOL_ID))
-                .endNode("end")
-                .connect("start", "out", loadNodeId, "in")
-                .connect(loadNodeId, "out", "agent", "in")
-                .connect("agent", "out", storeNodeId, "in")
-                .connect(storeNodeId, "out", "end", "in")
-                .nodeCanvasLayout("start", 0)
-                .nodeCanvasLayout(loadNodeId, 1)
-                .nodeCanvasLayout("agent", 2)
-                .nodeCanvasLayout(storeNodeId, 3)
-                .nodeCanvasLayout("end", 4);
+                .connect("start", "out", "agent", "in")
+                .connect("agent", "out", "end", "in")
+                .nodeCanvasLayout("start", 0).nodeCanvasLayout("agent", 1).nodeCanvasLayout("end", 2);
     }
 
     /** Studio canvas position ({@code configuration.designer.position}). */

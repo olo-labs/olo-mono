@@ -10,7 +10,7 @@ From this repository, follow the prerequisites and source-build instructions in 
 Python installation with `cryptography`, Java 21, Docker Desktop Linux containers and kubectl.
 
 ```powershell
-.\qualification.ps1 start -BuildImages -BuildPipelineImages -ToolGateSource C:\src\olo-toolgate -BackendSource C:\src\olo -WorkerSource C:\src\olo-mono
+.\qualification.ps1 start -BuildImages -BuildPipelineImages -ToolGateSource C:\src\olo-toolgate -BackendSource C:\src\olo-mono -WorkerSource C:\src\olo-mono
 .\qualification.ps1 test -FullStack -Pipeline
 .\qualification.ps1 test -Incident -IncidentPackage C:\src\olo-toolgate\examples\mocked-tools\server-recovery\build\toolgate\server-recovery-0.1.0.tgpkg
 .\qualification.ps1 stop
@@ -130,3 +130,11 @@ Missing local PHP cross-language contract validation is deferred in
 These are scope deferrals, not passing test results or production-readiness sign-off. The local fixture uses
 development transport and a scripted IdP/model. Local authorization, revocation/freshness, retry/cancellation,
 quotas, legacy-code removal and final clean-install regression remain required.
+
+## Fresh Chat and Studio boundary
+
+Chat creates opaque conversations with `POST /api/v1/conversations/{uuid}` and sends turns with an `Idempotency-Key`. The optional `pipelineId` must identify an enabled, server-loaded non-child workflow; its queue comes from the server. Tenant, user and actor names in request bodies do not authorize operations. Conversation and knowledge listings use a durable Redis index containing opaque references only, under the verified issuer/tenant/user. Every returned resource is checked through ToolGate. Message content is never stored in this index.
+
+Read history through `/api/v1/conversations/{id}/messages` or a turn endpoint. `/api/v1/runs/{turn}` and its `/response` endpoint resolve the caller's reference, reauthorize and validate source dependencies before returning status or a response. The response comes from governed durable memory, never raw event output. Cancellation reauthorizes append access and rebuilds the accepted-message binding from governed history after backend restart. Chat polls these endpoints; raw WebSocket/SSE content paths remain closed.
+
+Knowledge accepts only bounded text/plain or text/markdown through `/api/v1/knowledge/{kb}/{ingest|update|query|delete|share}`. Each write has an idempotency key and explicit expected document version. Studio rejects retired fields on import, read, save and folder activation, and displays structural audit metadata without graph or planner payloads. `scripts/check-fresh-install.py` runs in PR CI.

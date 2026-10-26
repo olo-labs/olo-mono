@@ -66,7 +66,6 @@ class AgentWorkflowParametersTest {
                     "examples": [],
                     "required_inputs": [],
                     "required_outputs": [],
-                    "tool_requirements": [],
                     "required_context": []
                   },
                   "parameters": {
@@ -94,7 +93,6 @@ class AgentWorkflowParametersTest {
                     "examples": [],
                     "required_inputs": [],
                     "required_outputs": [],
-                    "tool_requirements": [],
                     "required_context": []
                   },
                   "parameters": {
@@ -113,36 +111,7 @@ class AgentWorkflowParametersTest {
         assertThat(workflow.getParameters().get("temperature").getDefaultValue()).isEqualTo(0.2);
     }
 
-    @Test
-    void agentPresetCarriesAgentParameters() throws Exception {
-        Path preset = Path.of("olo-configuration/default/agent.json").toAbsolutePath().normalize();
-        if (!preset.toFile().exists()) {
-            preset = Path.of("../olo-configuration/default/agent.json").toAbsolutePath().normalize();
-        }
-        if (!preset.toFile().exists()) {
-            throw new org.opentest4j.TestAbortedException("agent preset not found");
-        }
 
-        WorkflowDefinition workflow = json.deserialize(Files.readString(preset));
-        assertThat(WorkflowValidator.validate(workflow).valid()).isTrue();
-        assertThat(workflow.getParameters().keySet()).containsExactlyInAnyOrder(
-                AgentWorkflowParameters.MAX_ITERATIONS,
-                AgentWorkflowParameters.SYSTEM_PROMPT,
-                AgentWorkflowParameters.MODEL,
-                AgentWorkflowParameters.TEMPERATURE);
-        assertThat(workflow.getMetadata().get(WorkflowPlannerMetadata.ROLE))
-                .isEqualTo(WorkflowPlannerMetadata.ROLE_AGENT);
-        assertThat(workflow.getMetadata().get(WorkflowPlannerMetadata.AGENT_TYPE))
-                .isEqualTo(WorkflowPlannerMetadata.AGENT_TYPE_AUTONOMOUS);
-        assertThat(workflow.getMetadata().get(WorkflowPlannerMetadata.PLANNING_STRATEGY))
-                .isEqualTo(WorkflowPlannerMetadata.PLANNING_STRATEGY_REACT);
-        assertThat(workflow.getMetadata().get(WorkflowPlannerMetadata.AGENT_SELECTION_STRATEGY))
-                .isEqualTo(WorkflowPlannerMetadata.AGENT_SELECTION_STRATEGY_DYNAMIC);
-        assertThat(workflow.getChildWorkflows()).hasSize(4);
-        assertThat(workflow.getAvailableAgents()).isEqualTo(AgentAvailableAgents.agentPresetDefaults());
-        assertThat(workflow.getRuntime().getDelegation()).isEqualTo(AgentDelegationPolicy.agentPresetDefaults());
-        assertThat(workflow.getTools()).hasSize(5);
-    }
 
     @Test
     void deserializesChildWorkflowIdShorthand() throws Exception {
@@ -156,7 +125,6 @@ class AgentWorkflowParametersTest {
                     "examples": [],
                     "required_inputs": [],
                     "required_outputs": [],
-                    "tool_requirements": [],
                     "required_context": []
                   },
                   "childWorkflows": ["planner", "research-agent"]

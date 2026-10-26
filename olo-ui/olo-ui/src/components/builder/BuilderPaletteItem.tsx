@@ -14,15 +14,6 @@ export function handleNodeDragStart(event: React.DragEvent, item: CatalogCompone
   })
 }
 
-export function handleToolDragStart(event: React.DragEvent, item: CatalogComponentBase) {
-  writeCatalogDrag(event.dataTransfer, {
-    catalogId: item.id,
-    kind: 'TOOL',
-    name: item.name,
-    emoji: item.emoji,
-  })
-}
-
 export function handleHookDragStart(event: React.DragEvent, item: CatalogComponentBase) {
   writeCatalogDrag(event.dataTransfer, {
     catalogId: item.id,
