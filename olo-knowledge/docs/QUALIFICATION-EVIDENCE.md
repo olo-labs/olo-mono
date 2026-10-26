@@ -1,5 +1,32 @@
 # Local qualification evidence
 
+## Consolidated monorepo runs — 2026-10-26
+
+All OLO source and qualification scripts now live in `olo-mono`, including this directory.
+ToolGate remains an independently versioned dependency. These runs use a scripted IdP/model
+and development transport; the approved performance/PHP/production deferrals remain separate.
+
+| Check | Evidence and outcome |
+|---|---|
+| Real commander/child workflow incident | `olo-qualification-9eb8283b8a48`: three completed Temporal children, hard worker stop during child ASK, original invocation resumed, seven tools once, correct completion audits and all approval negatives; private canary absent from application logs |
+| Memory/RAG pipeline | `olo-qualification-12ac942e0a5f`: encrypted history, completed-turn restart replay, concurrent turns, agent-independent authority; in-flight source revocation excluded within 8.563 seconds, stored derived response denied, next model call blocked |
+| Service component qualification | 10 memory and 15 RAG tests, zero failures/errors/skips, real PostgreSQL/TLS/Qdrant/Ollama dependencies |
+| Retrieval corpus | 200 documents, 150 queries, recall@5 1.0, precision@5 0.7333, zero unauthorized chunks, 750 citations with zero errors; service component measurement |
+| Backend / Studio | 87 backend tests with isolated Redis; 135 Studio tests and production build; zero test failures/skips |
+| Local runtime removal | `0208373`: SPI 20, annotation 9, processor 27, kernel 138 and core 15 tests, zero failures/errors/skips |
+
+The incident/pipeline images record backend `f3ead5a`, worker `8227a8d`, and ToolGate `297f3979`.
+They precede local-runtime removal and do not replace the mandatory final rerun. Reports are
+under `build/qualification/<run-id>/`, with image IDs/source labels and scoped assertions.
+
+Consolidation had restored request body logging and omitted completed-turn reuse protection.
+The backend now logs method, matched route template and status only, and Temporal rejects reuse
+of an accepted turn ID after completion/failure. Bounded read recovery preserves one operation
+ID while refreshing user credentials, without retrying denials or unknown outcomes.
+
+M9 schema/workflow/Studio/deployment cleanup, child-summary revocation qualification and the
+post-removal M8/M10 clean-install run remain open. Historical sections below preserve earlier evidence.
+
 ## Incident and approval lifecycle — 2026-10-26
 
 Run `olo-qualification-e32d652c9182` passed the complete currently implemented incident fixture.

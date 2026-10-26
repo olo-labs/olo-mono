@@ -40,27 +40,33 @@ integration plan. Functional authorization/cancellation, legacy-code removal, st
 owned-resource cleanup and the final local end-to-end regression remain required. The selected local DB
 restore/rotation drills remain useful evidence without replacing production qualification.
 
-**Latest functional checkpoint (2026-10-26).** The clean-source Temporal pipeline (`3f9d62b`, run
-`olo-qualification-bf4658686f9f`) passed restart/replay, encrypted history, agent-independent user authority,
-concurrent turns and source deletion blocking in-flight release in 9.157 s. The main seven-tool incident run
-(`olo-qualification-8d3171d2df6b`) passed delegated ceilings, independent approval of the original invocation
-and audited subject/actor/resource bindings. It uses sequential workflow orchestration; commander-generated
-delegation is not proved. The reusable governed debug start/check/stop passed, including removal of captured
-anonymous volumes. The separate operations drill passed encrypted backup/restore, database credential rotation,
-restored isolation/tombstones, reindexing and retention of an uncertain write without redispatch.
+**Latest monorepo checkpoint (2026-10-26).** `main` was synchronized to `9d66722` before
+continuing on `feature/finish-integration-plan`. Memory/RAG services, packages and repeatable
+qualification now live in this repository under `olo-knowledge/`.
 
-Follow-up ToolGate approval terminal-state changes passed the Java checks and PostgreSQL/SQLite enterprise
-suites (386 tests, seven skips, zero failures/errors). The source-pinned full incident run
-`olo-qualification-e32d652c9182` now passes all seven tools, independent original-invocation approval,
-completion audit, denial, cancellation replay, revoked grants and expired authority. ToolGate `297f3979`,
-backend `f66c4bf`, worker `8d9c958` and clean knowledge fixture `a1023b2` were tested.
-The earlier HTTP 403 was caused by Control returning 429 while issuing a downstream service permit.
-Bounded pre-dispatch permit backoff fixes that transient failure without retrying downstream effects;
-[backend #11](https://github.com/olo-labs/olo/issues/11) is closed after the passing rerun. Gateway also now
-preserves Control's cancellation replay conflict as HTTP 409 instead of 500. The original cancelled
-invocation retains no reserved permit or completed resources. All 46 Tool Host and 42 Gateway tests pass
-without failures or ignored tests. [Source and evidence details](../olo-knowledge/docs/QUALIFICATION-EVIDENCE.md)
-retain the sequential-orchestration limitation: commander-generated delegation and the post-M9 run remain open.
+- `olo-qualification-9eb8283b8a48`: commander-generated delegation starts and completes three real
+  Temporal child workflows. A worker crash during the child ASK wait resumes the original invocation.
+  All seven business tools execute once; subject/actor/resource completion audit, independent approval,
+  denial, cancellation replay, revoked/expired authority and diagnostic canary checks pass.
+- `olo-qualification-12ac942e0a5f`: encrypted history, completed-turn restart/replay, agent-independent
+  platform authority and concurrent turns pass. Source deletion blocks in-flight release in **8.563 s**,
+  stored derived responses and the next model call. These are pre-removal image runs.
+- Service qualification: 25 memory/RAG tests pass without skips, with real PostgreSQL, TLS, Qdrant
+  and embeddings. Corpus evaluation covers 200 documents/150 queries: recall@5 1.0, precision@5
+  0.7333, zero unauthorized chunks, and 750 correct citations. This is component-quality evidence.
+- Monorepo backend: 87 tests pass, including isolated Redis; Studio: 135 tests and production build pass.
+- `0208373`: M9.2/M9.3 local-tool SPI, annotation/catalog generation and execution module are removed.
+  SPI 20, annotation 9, processor 27, kernel 138 and core 15 tests pass, all without skips.
+  Declarative HUMAN pause/resume and the ToolGate business-tool approval loop remain covered.
+- Consolidation regressions fixed: request payload/query logging, completed Temporal turn reuse and
+  the Studio fixture path. History reads recover with bounded retries under the same operation ID
+  and fresh user credentials; policy failures and unknown outcomes are not retried.
+
+M9.4 schema cleanup, fresh shipped workflows, deployment/Studio removal, the final post-removal M8
+rerun and M10 clean installation remain open. Child-output/summary revocation qualification is running.
+[Evidence](olo-knowledge/docs/QUALIFICATION-EVIDENCE.md) distinguishes these checks from production
+qualification and the agreed deferrals. No final M8–M10 completion is claimed.
+
 The foundation check's Python suites passed,
 but the overall command stopped at missing local PHP. This local cross-language validation limitation is
 explicitly deferred in [ToolGate #205](https://github.com/olo-labs/olo-toolgate/issues/205) by the user; it does
@@ -151,9 +157,9 @@ that replaces D8.
 | M6 | Memory and RAG services and ToolGate packages | olo-knowledge, ToolGate | 12 | 100% | 100% | ✅ Merged (#1, ToolGate #194); service/component tests and package validation passed |
 | M7 | OLO conversation and document lifecycles | olo-mono, olo | 10 | 100% | 100% | ✅ Merged (olo-mono #16, backend #9); lifecycle/client/worker/backend checks passed |
 | M8 | Isolation, revocation, recovery and real-stack tests | all | 8 | 0% | 0% | Incident/approval matrix passes; commander delegation, remaining coverage and post-removal rerun open |
-| M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono, olo, olo-ui, olo-chat, olo-docker | 10 | 12.5% | 0% | 9.1 implemented/tested in PR #18; runtime/catalog removal remains |
+| M9 | Remove legacy local tool code; coordinate backend and UI | olo-mono | 10 | 37.5% | 12.5% | 9.1 merged; 9.2/9.3 implemented and tested; schema/workflow/UI/deployment cleanup remains |
 | M10 | Deployment, clean install and operational qualification | all | 5 | 0% | 0% | Final local qualification remains; production qualification deferred to #19 |
-| | **Overall** | | **100** | **78.25%** | **77%** | Delegation baseline → runtime removal → post-removal M8 → local M10 remain |
+| | **Overall** | | **100** | **80.75%** | **78.25%** | Remaining schema/workflow/UI removal → post-removal M8 → local M10 |
 
 **How the percentages work.**
 - A milestone's weight is its share of the total effort, and inside a milestone every step has an equal share.
@@ -922,10 +928,10 @@ stay.
       - Rename `kernel/toolcall` to `kernel/agentcall`, and `ToolCallExpansionExecutionStrategy` to
         `AgentCallExpansionExecutionStrategy`
       - The planner schema keeps only `agentCalls`
-- [ ] **9.2** `olo-spi`, `olo-annotation`, `olo-annotation-processor`: delete the local tool SPI (`org.olo.spi.tool.*`,
+- [x] **9.2** `olo-spi`, `olo-annotation`, `olo-annotation-processor`: delete the local tool SPI (`org.olo.spi.tool.*`,
       `@ToolId`, `ToolProvider`), `@OloTool`, `ToolDescriptor`, `CatalogToolCollector`, the tool validator branches,
       and `tools.json`
-- [ ] **9.3** `olo-core`: delete the `tools` module, its demo data and the tool human-input plugins, plus
+- [x] **9.3** `olo-core`: delete the `tools` module, its demo data and the tool human-input plugins, plus
       `ToolRegistry` and the tool branch in `ExecutionEngine`
 - [ ] **9.4** `olo-definition` and `olo-kernel`:
       - Delete `ToolDefinition`, `ToolCallPlannerSupport`, `NodeType.TOOL`, `WorkflowDefinition.tools` and
