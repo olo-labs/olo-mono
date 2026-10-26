@@ -50,13 +50,18 @@ anonymous volumes. The separate operations drill passed encrypted backup/restore
 restored isolation/tombstones, reindexing and retention of an uncertain write without redispatch.
 
 Follow-up ToolGate approval terminal-state changes passed the Java checks and PostgreSQL/SQLite enterprise
-suites (386 tests, seven skips, zero failures/errors). Follow-up Gateway changes register the canonical
-cancellation acknowledgement; all 41 Gateway Rust tests pass and the deployed acknowledgement now returns
-200. The fixture now checks Control's deliberate 409 replay rejection plus the original cancelled state and
-absence of dispatch, rather than requiring a terminal envelope. The latest full run
-`olo-qualification-8d364466e508` stopped earlier with HTTP 403 reading the independently approved incident turn.
-[Backend #11](https://github.com/olo-labs/olo/issues/11) tracks this required functional failure; it is not
-waived by the scope decisions. The complete negative approval matrix remains unsigned. The foundation check's Python suites passed,
+suites (386 tests, seven skips, zero failures/errors). The source-pinned full incident run
+`olo-qualification-e32d652c9182` now passes all seven tools, independent original-invocation approval,
+completion audit, denial, cancellation replay, revoked grants and expired authority. ToolGate `297f3979`,
+backend `f66c4bf`, worker `8d9c958` and clean knowledge fixture `a1023b2` were tested.
+The earlier HTTP 403 was caused by Control returning 429 while issuing a downstream service permit.
+Bounded pre-dispatch permit backoff fixes that transient failure without retrying downstream effects;
+[backend #11](https://github.com/olo-labs/olo/issues/11) is closed after the passing rerun. Gateway also now
+preserves Control's cancellation replay conflict as HTTP 409 instead of 500. The original cancelled
+invocation retains no reserved permit or completed resources. All 46 Tool Host and 42 Gateway tests pass
+without failures or ignored tests. [Source and evidence details](../olo-knowledge/docs/QUALIFICATION-EVIDENCE.md)
+retain the sequential-orchestration limitation: commander-generated delegation and the post-M9 run remain open.
+The foundation check's Python suites passed,
 but the overall command stopped at missing local PHP. This local cross-language validation limitation is
 explicitly deferred in [ToolGate #205](https://github.com/olo-labs/olo-toolgate/issues/205) by the user; it does
 not block this plan and is not reported as a passing PHP test. PHP is a contract-test dependency, not an OLO,
@@ -882,6 +887,13 @@ required. No complete M8 step is credited from these selected checks; overall co
   resource and decision.
 
 ## M9 — Remove legacy local tool code; coordinate backend and UI (weight 10)
+
+**In progress, 2026-10-26:** commit `1579778` in PR #18 renames the delegation packages and public
+collaborators to `agentcall`/`AgentCall...`, including `AgentCallExpansionExecutionStrategy`.
+Clean-checkout kernel tests no longer depend on untracked generated input samples. All 144 kernel tests
+pass without failures/skips; definition tests report 236 tests, zero failures/errors and one existing skip.
+The planner still needs the agent-only schema and the local-tool APIs, runtime, catalogs and shipped
+workflows still need removal. No complete M9 checkbox is credited for the structural rename alone.
 
 Fresh installation only: no deprecations, shims, compatibility readers or migration of existing workflows or data. A
 workflow that still contains `tools[]` or a TOOL node fails validation. The ToolGate client and the path B tool loop
