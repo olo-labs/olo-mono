@@ -340,7 +340,11 @@ print(tag['digest'])
         finally:
             current=self.api('/grants/knowledge-human')
             self.api('/grants/knowledge-human',{**original,'revision':current['revision']},'PUT',revision=current['revision'])
+        self.cached_credentials.pop('reviewer-1',None)
         status,value=self.result('reviewer-1','rag.query',self.kb,{'query':'Quota qualification'})
+        if status!=200 or 'chunks' not in value:
+            data=(value.get('error') or {}).get('data') or {}
+            self.artifact('quota-restore-diagnostic.json',json.dumps(dict(status=status,errorCode=data.get('code'),state=(value.get('result') or {}).get('structuredContent',{}).get('state')))+'\n')
         self.require(status==200 and 'chunks' in value,'Restored user quota did not permit a fresh authorized query')
         print('PASS ToolGate durable per-user quotas block only the exhausted user and preserve fresh queries for another user',flush=True)
         return dict(limitPerMinute=600,quotaAuthority='ToolGate',exhaustedUserDenied=True,otherUserUnaffected=True)
