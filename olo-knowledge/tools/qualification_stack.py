@@ -360,7 +360,8 @@ print(tag['digest'])
             status,response=self.call(user,operation,resource,request,logical_id)
             data=(((response or {}).get('error') or {}).get('data') or {})
             unknown=data.get('outcome')=='OUTCOME_UNKNOWN' or (data.get('error') or {}).get('code')=='OUTCOME_UNKNOWN'
-            if status in (429,503) and not unknown:
+            retry_read=operation in ('memory.read','rag.query') and data.get('code')=='DEPENDENCY_UNAVAILABLE'
+            if (status in (429,503) or retry_read) and not unknown:
                 self.backpressure_events.append(status)
                 time.sleep(.5);continue
             if status!=200 or 'error' in response:return status,response

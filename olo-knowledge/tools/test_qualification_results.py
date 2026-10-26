@@ -20,6 +20,13 @@ class QualificationResultsTest(unittest.TestCase):
         self.assertEqual('original-id',stack.call.call_args.args[-1])
         self.assertEqual([503],stack.backpressure_events)
 
+    def test_mcp_read_dependency_error_recovers_under_same_invocation(self):
+        stack=Stack.__new__(Stack);stack.backpressure_events=[]
+        stack.call=Mock(side_effect=[(200,{'error':{'data':{'code':'DEPENDENCY_UNAVAILABLE'}}}),(200,{'result':{'structuredContent':{'json':'{"chunks":[]}'}}})])
+        with patch('qualification_stack.time.sleep'):
+            self.assertEqual((200,{'chunks':[]}),stack.result('user','rag.query','root',{'query':'test'},'same-id'))
+        self.assertEqual(stack.call.call_args_list[0],stack.call.call_args_list[1])
+
     def test_unknown_write_is_never_retried(self):
         stack=Stack.__new__(Stack)
         stack.backpressure_events=[]

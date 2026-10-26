@@ -339,7 +339,7 @@ class Pipeline(Stack):
         status,_=self.api_call(root+'/turns/'+derived_turn)
         self.require(status==403,'Backend released an older response derived from a deleted source')
         status,_=self.api_call('/api/v1/runs/'+derived_turn+'/response')
-        self.require(status==403,'Fresh Chat response bypassed source revocation')
+        self.require(status==403,'Fresh Chat must return an explicit 403 for a revoked source; HTTP '+str(status))
         calls=self.model_calls()
         status,accepted=self.api_call(root+'/turns',{'message':'Continue the conversation.'},'POST')
         self.require(status==202 and 'runId' in accepted,'Post-revocation turn was not accepted')
@@ -354,6 +354,22 @@ class Pipeline(Stack):
     def verify_derived_turn(self,turn):
         pass
 
+    def qualify_ui_knowledge(self):
+        document=str(uuid.uuid4());root='/api/v1/knowledge/'+self.kb
+        status,created=self.api_call(root+'/ingest',dict(docId=document,create=True,content=self.canary+' Aurora launches in December.',mediaType='text/plain',expectedVersion=0),'POST')
+        self.require(status==200 and created.get('version')==1,'Fresh knowledge API ingest failed HTTP '+str(status))
+        status,collections=self.api_call('/api/v1/knowledge')
+        self.require(status==200 and self.kb in collections,'Fresh knowledge directory did not list the authorized KB')
+        status,found=self.api_call(root+'/query',{'query':'When does Aurora launch?'},'POST')
+        self.require(status==200 and any(chunk.get('doc_id')==document for chunk in found.get('chunks',[])),'Fresh knowledge API query lost its citation')
+        status,updated=self.api_call(root+'/update',dict(docId=document,content=self.canary+' Aurora now launches in January.',mediaType='text/plain',expectedVersion=1),'POST')
+        self.require(status==200 and updated.get('version')==2,'Fresh knowledge API update did not publish version two')
+        status,_=self.api_call(root+'/delete',{'docId':document},'POST')
+        self.require(status==200,'Fresh knowledge API deletion failed')
+        status,found=self.api_call(root+'/query',{'query':'When does Aurora launch?'},'POST')
+        self.require(status==200 and not found.get('chunks'),'Fresh knowledge API released deleted content')
+        print('PASS fresh Chat knowledge HTTP ingress, directory, cited query, versioned update and deletion',flush=True)
+
     def qualify_pipeline(self):
         root='/api/v1/conversations/'+self.conversation
         status,_=self.api_call(root,method='POST')
@@ -367,6 +383,7 @@ class Pipeline(Stack):
         print('PASS fresh real backend -> Temporal worker -> governed memory -> scripted model -> governed final result',flush=True)
         raw=docker('exec',self.temporal,'temporal','workflow','show','--workflow-id','run-'+self.tenant+'~'+turn,'--output','json')
         self.require(protected_history(raw,self.canary),'Temporal payload protection failed (including decoded payload inspection)')
+        self.qualify_ui_knowledge()
         self.recovered_replay(root,key,turn)
         self.concurrent_turns(root)
         self.terminal(turn)

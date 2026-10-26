@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-@RestControllerAdvice(assignableTypes = KnowledgeController.class)
+@RestControllerAdvice(assignableTypes = {KnowledgeController.class, GovernedRunController.class})
 public final class KnowledgeErrors {
     @ExceptionHandler(GovernedCalls.Pending.class)
     ResponseEntity<?> pending() {

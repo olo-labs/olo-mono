@@ -116,6 +116,21 @@ class RagStorageTest {
     }
 
     @Test
+    void maximumSizePublicationIsAtomicAndContextStaysBounded() throws Exception {
+        // Real SQL, deterministic vector/model doubles: this is a size/atomicity check, not a throughput claim.
+        String content="a".repeat(5_242_880);
+        var result=json(call(TENANT,"alice","rag.ingest",document(content,0)));
+        assertEquals(1,result.path("version").asLong());
+        assertEquals(5243,points.size());
+        var found=json(call(TENANT,"alice","rag.query",Map.of("kbId",kb,"query","source")));
+        assertTrue(found.path("budgetUsed").asInt()<=4000);
+        assertTrue(found.path("chunks").size()>0);
+        for(var chunk:found.path("chunks")) assertEquals(1,chunk.path("version").asLong());
+        assertThrows(IllegalArgumentException.class,()->call(TENANT,"alice","rag.update",document(content+"x",1)));
+        assertEquals(5243,points.size());
+    }
+
+    @Test
     void candidateJoinPreservesRankAndRejectsPrivateAndDuplicateVectorHits() throws Exception {
         call(TENANT, "alice", "rag.ingest", document("first public source", 0));
         String first = points.getLast().id();
