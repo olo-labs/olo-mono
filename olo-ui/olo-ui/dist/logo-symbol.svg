@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 2 2" fill="none" stroke="currentColor" stroke-width="0.12" stroke-linecap="round" aria-hidden="true">
+  <!-- Two overlapping circles -->
+  <circle cx="-0.22" cy="0" r="0.5" />
+  <circle cx="0.22" cy="0" r="0.5" />
+  <!-- Vertical line through intersection -->
+  <line x1="0" y1="-0.52" x2="0" y2="0.52" />
+</svg>

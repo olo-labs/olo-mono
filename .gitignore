@@ -12,3 +12,7 @@ dist
 node_modules/
 **/storybook-static/
 *.tsbuildinfo
+
+# Frontend source helpers are source code, not generated Java libraries.
+!**/src/lib/
+!**/src/lib/**
