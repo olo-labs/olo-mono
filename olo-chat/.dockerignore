@@ -1,0 +1,23 @@
+# Copyright (c) 2026 Olo Labs
+# SPDX-License-Identifier: Apache-2.0
+
+node_modules
+dist
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+*.md
+docs
+.cursor
+.vscode
+coverage
+*.log
+npm-debug.log*
+.DS_Store
+storybook-static
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx

@@ -1,0 +1,41 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+// CI: resolve published olo-mono libs from build/repo during sparse checkout builds.
+def resolveOloMonoRepoDir = { Project p ->
+    [
+        p.rootProject.file('../../build/repo'),
+        p.file('../../olo-mono/build/repo'),
+        p.file('../olo-mono/build/repo'),
+        p.layout.projectDirectory.dir('../build/repo').asFile,
+    ].find { it.directory }
+}
+
+allprojects { p ->
+    repositories {
+        def repo = resolveOloMonoRepoDir(p)
+        if (repo != null) {
+            maven {
+                name = 'oloMono'
+                url = repo
+            }
+        }
+        mavenCentral()
+        mavenLocal()
+    }
+
+    p.plugins.withId('maven-publish') {
+        p.afterEvaluate {
+            def repo = resolveOloMonoRepoDir(p)
+            if (repo == null || p.publishing.repositories.findByName('oloMono') != null) {
+                return
+            }
+            p.publishing.repositories.maven {
+                name = 'oloMono'
+                url = repo
+            }
+        }
+    }
+}

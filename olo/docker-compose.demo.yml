@@ -1,0 +1,78 @@
+# Demo: one-command stack (backend + Redis + Temporal). Run worker/executor on host.
+# Usage: docker compose -f docker-compose.demo.yml up -d
+# Then: run executor on host (see docs/DOCKER_COMPOSE.md). Swagger: http://localhost:7080/swagger-ui.html
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "46379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB: temporal
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temporal"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  temporal:
+    image: temporalio/auto-setup:1.24.2
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "tctl", "--address", "temporal:7233", "workflow", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  olo-backend:
+    image: olo:demo
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env.example
+    ports:
+      - "7080:7080"
+    environment:
+      SERVER_PORT: "7080"
+      OLO_CACHE_HOST: redis
+      OLO_CACHE_PORT: "46379"
+      OLO_CACHE_DATABASE: "0"
+      OLO_TEMPORAL_TARGET: temporal:7233
+      OLO_CONFIGURATION_DIR: /app/olo-configuration
+      OLO_CHAT_CALLBACK_BASE_URL: "http://localhost:7080"
+      OLO_SECURITY_ISSUER: ${OLO_SECURITY_ISSUER:?set OLO_SECURITY_ISSUER (see .env.example)}
+      OLO_SECURITY_AUDIENCE: ${OLO_SECURITY_AUDIENCE:?set OLO_SECURITY_AUDIENCE (see .env.example)}
+      OLO_SECURITY_JWK_SET_URI: ${OLO_SECURITY_JWK_SET_URI:-}
+      OLO_CALLBACK_KEY_ID: ${OLO_CALLBACK_KEY_ID:?set OLO_CALLBACK_KEY_ID}
+      OLO_CALLBACK_KEY: ${OLO_CALLBACK_KEY:?set OLO_CALLBACK_KEY}
+      # Temporal payload protection (M5.2) is off for this local stack only; production mounts a key ring.
+      OLO_PAYLOAD_PROTECTION: ${OLO_PAYLOAD_PROTECTION:-disabled-for-development}
+    depends_on:
+      redis:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy

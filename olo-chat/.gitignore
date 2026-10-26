@@ -1,0 +1,59 @@
+# Copyright (c) 2026 Olo Labs
+# SPDX-License-Identifier: Apache-2.0
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+
+# Vite
+.vite/
+
+# Logs and temp
+*.log
+logs/
+*.tmp
+*.temp
+*.swp
+*~
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Test / coverage
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Cache
+.cache/
+.npm
+
+# Editor
+.cursor/

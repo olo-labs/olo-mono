@@ -1,0 +1,128 @@
+/* Configuration scenario folder activation */
+.configuration-folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  min-height: 0;
+}
+
+.configuration-folder-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #27272a;
+}
+
+.configuration-folder-list-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e4e4e7;
+}
+
+.configuration-folder-meta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #a1a1aa;
+  word-break: break-all;
+}
+
+.configuration-folder-meta code {
+  color: #d4d4d8;
+}
+
+.configuration-folder-active-badge {
+  margin-left: 0.5rem;
+  color: #86efac;
+}
+
+.configuration-folder-message,
+.configuration-folder-error {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.configuration-folder-error {
+  color: #fca5a5;
+}
+
+.configuration-folder-list-ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.configuration-folder-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #3f3f46;
+  border-radius: 8px;
+  background: #27272a;
+}
+
+.configuration-folder-list-item.active {
+  border-color: #22c55e;
+}
+
+.configuration-folder-item-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.configuration-folder-item-id {
+  font-size: 0.92rem;
+  color: #f4f4f5;
+  word-break: break-word;
+}
+
+.configuration-folder-active-pill {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #86efac;
+  border: 1px solid #22c55e;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
+.configuration-folder-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.configuration-folder-refresh-steps {
+  font-size: 0.82rem;
+  color: #a1a1aa;
+  border-top: 1px solid #27272a;
+  padding-top: 0.5rem;
+}
+
+.configuration-folder-refresh-steps ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.configuration-folder-refresh-title {
+  margin: 0;
+  font-weight: 600;
+  color: #d4d4d8;
+}
+
+.configuration-folder-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #71717a;
+  line-height: 1.45;
+}

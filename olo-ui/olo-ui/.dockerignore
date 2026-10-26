@@ -1,0 +1,10 @@
+node_modules
+.gradle
+build
+dist
+.git
+.gitignore
+*.md
+docs
+.github
+.DS_Store

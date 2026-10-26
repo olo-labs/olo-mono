@@ -1,0 +1,42 @@
+# Development: Redis + optional backend in Docker. Run from repo root.
+# Optional: cp .env.dev.sample .env.dev and add env_file: .env.dev to olo-be.
+#
+# Internal URLs (when on shared network, e.g. olo-docker): redis:6379, http://olo:7080 (main OLO API).
+# This compose uses service name "redis" so olo-be reaches Redis at redis:6379.
+#
+# Option A — Redis only (run backend & frontend on host):
+#   docker compose -f docker-compose.dev.yml up -d redis
+#   cd olo-be && ./gradlew bootRun
+#   cd olo-ui && npm run dev   → http://localhost:3000
+#
+# Option B — Redis + backend in Docker, frontend on host:
+#   docker compose -f docker-compose.dev.yml up -d
+#   cd olo-ui && npm run dev   → http://localhost:3000 (proxy to backend at localhost:8082)
+#
+# Option C — With olo-docker stack: use olo API at http://olo:7080; ensure this stack joins olo-net if needed.
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  olo-be:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: olo:dev
+    command: ["java", "-jar", "/app/olo-be.jar"]
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+    ports:
+      - "8082:8082"
+    depends_on:
+      redis:
+        condition: service_healthy

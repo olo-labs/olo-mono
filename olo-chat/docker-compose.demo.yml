@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Olo Labs
+# SPDX-License-Identifier: Apache-2.0
+
+# Demo: frontend container. Backend on host (Docker Desktop: host.docker.internal:7080)
+# or override OLO_BACKEND_URL for a remote API.
+# Usage: docker compose -f docker-compose.demo.yml up --build
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      OLO_BACKEND_URL: ${OLO_BACKEND_URL:-http://host.docker.internal:7080}
+    ports:
+      - "3000:80"

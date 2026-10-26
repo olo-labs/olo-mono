@@ -1,0 +1,32 @@
+# Demo: combined app + Redis, single-node. Run from repo root.
+# Copy env: cp .env.demo.sample .env.demo
+#
+# Usage:
+#   docker compose -f docker-compose.demo.yml up -d
+#   App: http://localhost:3000
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  olo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: olo:demo
+    env_file: .env.demo
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+    ports:
+      - "3000:80"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped

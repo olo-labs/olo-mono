@@ -8,3 +8,7 @@ build
 lib
 dist
 /olo-core/tools/demo-data/conversations/*.json
+
+node_modules/
+**/storybook-static/
+*.tsbuildinfo

@@ -1,0 +1,103 @@
+/* Width + collapse: inherited from .tools-panel.side-panel in side-panels.css via --panel-width-tools */
+
+.components-panel .side-panel-inner {
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.components-panel-group {
+  margin-bottom: 0.35rem;
+}
+
+.components-panel-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.4rem 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-muted, #a1a1aa);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+
+.components-panel-group-header:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.04));
+  color: #e4e4e7;
+}
+
+.components-panel-group-header:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.components-panel-group.expanded .components-panel-group-header {
+  color: #e4e4e7;
+}
+
+.components-panel-group-chevron {
+  flex-shrink: 0;
+  font-size: 0.55rem;
+  width: 0.75rem;
+}
+
+.components-panel-group-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.components-panel-group-count {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  color: #71717a;
+}
+
+.components-panel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0.25rem 0.75rem;
+}
+
+.components-panel-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.25rem;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  cursor: default;
+}
+
+.components-panel-item:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.04));
+}
+
+.components-panel-emoji {
+  flex-shrink: 0;
+  width: 1.25rem;
+  text-align: center;
+}
+
+.components-panel-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.components-panel-message,
+.components-panel-error {
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+  color: var(--text-muted, #a1a1aa);
+}
+
+.components-panel-error {
+  color: #fca5a5;
+}

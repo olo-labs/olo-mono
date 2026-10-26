@@ -1,0 +1,62 @@
+/* Base: resets, body, app shell, loading state */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: #0f0f12;
+  color: #e4e4e7;
+  min-height: 100vh;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-waiting-backend {
+  align-items: center;
+  justify-content: center;
+  background: #0f0f12;
+}
+
+.app-backend-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.app-backend-loading-logo {
+  color: #e4e4e7;
+}
+
+.app-backend-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #27272a;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: app-spin 0.8s linear infinite;
+}
+
+@keyframes app-spin {
+  to { transform: rotate(360deg); }
+}
+
+.app-backend-loading-text {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #e4e4e7;
+}
+
+.app-backend-loading-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #71717a;
+}

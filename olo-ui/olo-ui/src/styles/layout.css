@@ -1,0 +1,65 @@
+/* Layout: top bar (thinnest possible), app body */
+.top-bar {
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  padding: 2px 8px;
+  background: #18181b;
+  border-bottom: 1px solid #27272a;
+  flex-shrink: 0;
+}
+
+.top-bar-brand {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #fafafa;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin: 0;
+  border: none;
+  background: none;
+  text-decoration: none;
+  border-radius: var(--radius-sm, 4px);
+}
+.top-bar-brand:hover {
+  color: #fff;
+  background: #27272a;
+}
+.top-bar-brand:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+.top-bar-brand .top-bar-logo {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+}
+.top-bar-brand .top-bar-logo svg {
+  color: inherit;
+}
+.top-bar-brand .top-bar-logo span {
+  color: inherit;
+}
+
+.top-bar-theme-toggle {
+  margin-left: auto;
+  padding: 2px 6px;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 4px;
+  color: #e4e4e7;
+  font-size: 0.875rem;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.top-bar-theme-toggle:hover {
+  background: #3f3f46;
+  color: #fafafa;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
