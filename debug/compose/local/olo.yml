@@ -3,5 +3,5 @@ services:
   olo:
     image: olo:debug
     build:
-      context: ${OLO_BACKEND_ROOT}
-      dockerfile: Dockerfile
+      context: ${OLO_MONO_ROOT}
+      dockerfile: olo/Dockerfile

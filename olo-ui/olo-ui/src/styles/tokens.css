@@ -1,0 +1,31 @@
+/**
+ * Design tokens: single source for radius, space, panel widths, shadows.
+ * Use these so Tree view, Timeline, Diff, Charts stay visually consistent.
+ */
+:root {
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Spacing (multiples of 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+
+  /* Panel widths */
+  --panel-width-left: 260px;
+  --panel-width-left-collapsed: 18px;
+  --panel-width-tools: 220px;
+  --panel-width-tools-collapsed: 18px;
+  --panel-width-properties: 260px;
+  --panel-width-properties-collapsed: 18px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
+}

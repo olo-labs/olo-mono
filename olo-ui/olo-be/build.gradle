@@ -1,0 +1,61 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'com.olo'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+}
+
+def oloCoreDistCatalog = file('../../olo-core/dist/catalog')
+if (!oloCoreDistCatalog.exists()) {
+    oloCoreDistCatalog = file('../../olo-mono/olo-core/dist/catalog')
+}
+def bundledCatalog = file('src/main/resources/static/catalog')
+
+tasks.register('syncExtensionCatalog', Copy) {
+    description = 'Copy olo-core dist/catalog JSON for editor rendering (JSON only — no org.olo runtime deps)'
+    def oloCoreBuild = gradle.includedBuilds.find { it.name == 'olo-core-build' }
+    if (oloCoreBuild != null) {
+        dependsOn oloCoreBuild.task(':dist')
+    }
+    from(oloCoreDistCatalog.exists() ? oloCoreDistCatalog : bundledCatalog)
+    into layout.buildDirectory.dir('resources/main/static/catalog')
+    include('*.json')
+    onlyIf { oloCoreDistCatalog.exists() || bundledCatalog.exists() }
+}
+
+tasks.register('updateExtensionCatalog', Copy) {
+    description = 'Refresh committed static/catalog from olo-mono/olo-core/dist/catalog (run olo-core dist first)'
+    group = 'build'
+    from(oloCoreDistCatalog)
+    into bundledCatalog
+    include('*.json')
+    onlyIf { oloCoreDistCatalog.exists() }
+}
+
+processResources.dependsOn syncExtensionCatalog
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

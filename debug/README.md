@@ -1,6 +1,6 @@
 # OLO debug stack
 
-Brings up the [olo-docker](../../olo-docker/dev) **dev** stack around this olo-mono checkout so an issue
+Brings up the [olo-docker](../deploy/stack/dev) **dev** stack around this olo-mono checkout so an issue
 can be reproduced end to end, with **one text model** in Ollama.
 
 ```powershell
@@ -69,12 +69,12 @@ removes it. Run only this check with:
 
 Options:
 
-- `-LocalBuild olo-worker,olo,olo-ui,olo-chat` — build those images from `D:\olo\olo-mono`, `D:\olo\olo`,
-  `D:\olo\olo-ui`, `D:\olo\olo-chat` instead of pulling. Default: `olo-worker` only.
+- `-LocalBuild olo-worker,olo,olo-ui,olo-chat` — build those images from `D:\olo\olo-mono`, `D:\olo\olo-mono\olo`,
+  `D:\olo\olo-mono\olo-ui`, `D:\olo\olo-mono\olo-chat` instead of pulling. Default: `olo-worker` only.
 - `-Rebuild` — force rebuilding the local images (after code changes).
 - `-Cpu` — run Ollama without the NVIDIA GPU reservation.
 - `-Timeout 180` — seconds to wait per container.
-- `-OloDockerDir` / `OLO_DOCKER_DIR` — location of olo-docker (default `..\..\olo-docker`).
+- `-OloDockerDir` / `OLO_DOCKER_DIR` — location of olo-docker (default `..\deploy\stack`).
 
 ## Worker on the host
 
@@ -95,5 +95,5 @@ debug/
   logs/                             output of `collect` (git-ignored)
 ```
 
-The compose project name is `olo` and the network `olo-net`, the same as `olo-docker/dev/install.*`, so
+The compose project name is `olo` and the network `olo-net`, the same as `deploy/stack/dev/install.*`, so
 containers and volumes created by the regular installer are reused rather than duplicated.

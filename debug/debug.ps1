@@ -91,7 +91,7 @@ if ($ToolGate) {
     & $governedDebug -Action $Action -Python $QualificationPython
     exit $LASTEXITCODE
 }
-if (-not $OloDockerDir) { $OloDockerDir = Join-Path $WorkspaceRoot 'olo-docker' }
+if (-not $OloDockerDir) { $OloDockerDir = Join-Path $MonoRoot 'deploy/stack' }
 $DevDir = Join-Path $OloDockerDir 'dev'
 $ComposeDir = Join-Path $DebugDir 'compose'
 $LogRoot = Join-Path $DebugDir 'logs'
@@ -100,9 +100,9 @@ $ProjectName = 'olo'
 function ConvertTo-ComposePath([string]$Path) { return ($Path -replace '\\', '/') }
 
 $env:OLO_MONO_ROOT = ConvertTo-ComposePath $MonoRoot
-$env:OLO_BACKEND_ROOT = ConvertTo-ComposePath (Join-Path $WorkspaceRoot 'olo')
-$env:OLO_UI_ROOT = ConvertTo-ComposePath (Join-Path $WorkspaceRoot 'olo-ui')
-$env:OLO_CHAT_ROOT = ConvertTo-ComposePath (Join-Path $WorkspaceRoot 'olo-chat')
+$env:OLO_BACKEND_ROOT = ConvertTo-ComposePath (Join-Path $MonoRoot 'olo')
+$env:OLO_UI_ROOT = ConvertTo-ComposePath (Join-Path $MonoRoot 'olo-ui')
+$env:OLO_CHAT_ROOT = ConvertTo-ComposePath (Join-Path $MonoRoot 'olo-chat')
 # Workflow JSON and demo tool data come from this checkout so olo, olo-ui and olo-worker agree.
 $env:OLO_CONFIGURATION_SOURCE = ConvertTo-ComposePath (Join-Path $MonoRoot 'olo-definition/olo-configuration')
 $env:OLO_SHARED_SOURCE = ConvertTo-ComposePath (Join-Path $MonoRoot 'olo-core/tools')
@@ -584,3 +584,4 @@ switch ($Action) {
 }
 # Failures throw (exit 1); don't leak the exit code of the last probe.
 exit 0
+

@@ -1,0 +1,190 @@
+.workflow-config-list .tenant-config-list-header {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.workflow-config-actions {
+  display: flex;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.workflow-config-file-input {
+  display: none;
+}
+
+.workflow-config-root {
+  font-size: 0.75rem;
+  color: var(--text-muted, #a1a1aa);
+  margin: 0 0 0.75rem;
+  word-break: break-all;
+}
+
+.workflow-config-item-label {
+  display: block;
+}
+
+.workflow-config-item-meta {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted, #a1a1aa);
+}
+
+.workflow-config-editor-meta {
+  font-size: 0.85rem;
+  color: var(--text-muted, #a1a1aa);
+  margin: 0 0 1rem;
+}
+
+.workflow-config-section {
+  margin-bottom: 1.25rem;
+}
+
+.workflow-config-section-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #a1a1aa);
+  margin: 0 0 0.5rem;
+}
+
+.workflow-param-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.workflow-param-textarea,
+.workflow-config-json {
+  min-height: 8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+}
+
+.workflow-config-json {
+  min-height: 12rem;
+}
+
+.workflow-param-help {
+  font-size: 0.75rem;
+  color: var(--text-muted, #a1a1aa);
+  margin: -0.25rem 0 0.75rem;
+}
+
+.workflow-config-graph-summary {
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}
+
+.workflow-config-node-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.workflow-config-node-list li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border, #27272a);
+  font-size: 0.85rem;
+}
+
+.workflow-config-node-type {
+  margin-left: 0.5rem;
+  color: var(--text-muted, #a1a1aa);
+}
+
+.tenant-config-btn.danger {
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
+
+.studio-canvas {
+  padding: 0.5rem 0;
+}
+
+.studio-canvas-header {
+  margin-bottom: 1rem;
+}
+
+.studio-canvas-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+}
+
+.studio-canvas-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted, #a1a1aa);
+}
+
+.studio-canvas-selection {
+  margin: 0 0 1rem;
+}
+
+.studio-canvas-palette-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.35rem;
+}
+
+.studio-canvas-palette-list li {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border, #27272a);
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.studio-canvas-emoji {
+  margin-right: 0.35rem;
+}
+
+.workflow-emoji-field {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.workflow-emoji-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.workflow-emoji-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.workflow-emoji-picker-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 1.35rem;
+  border: 1px solid var(--border, #27272a);
+  border-radius: 6px;
+  background: var(--surface-raised, #18181b);
+}
+
+.workflow-emoji-picker-panel {
+  border: 1px solid var(--border, #27272a);
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.workflow-emoji-picker-panel .EmojiPickerReact {
+  --epr-bg-color: var(--surface-raised, #18181b);
+  --epr-category-label-bg-color: var(--surface-raised, #18181b);
+  --epr-text-color: var(--text, #fafafa);
+  --epr-hover-bg-color: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent);
+  --epr-highlight-color: var(--accent, #3b82f6);
+  --epr-search-border-color: var(--border, #27272a);
+  --epr-picker-border-color: var(--border, #27272a);
+}

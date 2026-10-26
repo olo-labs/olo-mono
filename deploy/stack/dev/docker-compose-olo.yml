@@ -1,0 +1,127 @@
+services:
+  olo:
+    image: ololab/olo:latest
+    container_name: olo
+    restart: unless-stopped
+    ports:
+      - "47080:7080"
+    environment:
+      SERVER_PORT: "7080"
+      OLO_VERSION: "v1.0.0-Dev"
+      OLO_SWAGGER_UI_ENABLED: "true"
+      OLO_CACHE_HOST: redis
+      OLO_CACHE_PORT: "6379"
+      OLO_CACHE_DATABASE: "0"
+      OLO_TEMPORAL_TARGET: temporal:7233
+      # Temporal payload protection (OLO M5.2). This dev stack keeps history readable; production mounts a key ring
+      # and sets OLO_PAYLOAD_KEYS_FILE instead.
+      OLO_PAYLOAD_PROTECTION: ${OLO_PAYLOAD_PROTECTION:-disabled-for-development}
+      OLO_UI_TENANT_DISPLAY_NAME: "Default"
+      OLO_UI_USER_DISPLAY_NAME: "Public"
+      # URL workers use to POST run events. Host-run worker (gradlew/IDE): localhost:47080.
+      # Override when worker runs in Docker on olo-net: OLO_CHAT_CALLBACK_BASE_URL=http://olo:7080
+      OLO_CHAT_CALLBACK_BASE_URL: ${OLO_CHAT_CALLBACK_BASE_URL:-http://olo:7080}
+      OLO_WS_JWT_REQUIRED: "false"
+      # Must match Dockerfile WORKDIR (/app) and image default OLO_CONFIGURATION_DIR.
+      OLO_CONFIGURATION_DIR: /app/olo-configuration
+      # Shared raw document upload folder. Keep mounted so uploads are visible to
+      # Knowledge source listing and available later for ingest/S3 migration.
+      OLO_RESOURCE_UPLOAD_BASE_DIR: /app/shared/resource-uploads
+      # Vector store defaults consumed by workflow JSON via ${env:...} placeholders.
+      OLO_VECTOR_STORE_DRIVER: ${OLO_VECTOR_STORE_DRIVER:-qdrant}
+      OLO_VECTOR_STORE_URL: ${OLO_VECTOR_STORE_URL:-http://qdrant:6333}
+      OLO_VECTOR_STORE_TABLE: ${OLO_VECTOR_STORE_TABLE:-documents}
+      OLO_VECTOR_STORE_COLLECTION: ${OLO_VECTOR_STORE_COLLECTION:-documents}
+      OLO_VECTOR_STORE_VECTOR_SIZE: ${OLO_VECTOR_STORE_VECTOR_SIZE:-384}
+      OLO_VECTOR_STORE_DISTANCE: ${OLO_VECTOR_STORE_DISTANCE:-Cosine}
+    volumes:
+      # Regional workflow presets (default/*.json). Default: dev/configuration/olo-configuration.
+      # Override to bind directly from a monorepo checkout, e.g.:
+      #   OLO_CONFIGURATION_SOURCE=../../olo-definition/olo-configuration
+      #   OLO_CONFIGURATION_SOURCE=../../olo-labs/olo/olo-configuration
+      - ${OLO_CONFIGURATION_SOURCE:-./configuration/olo-configuration}:/app/olo-configuration
+      - ${OLO_RESOURCE_UPLOAD_SOURCE:-./configuration/olo-resource-uploads}:/app/shared/resource-uploads
+    depends_on:
+      - redis
+      - db
+    networks:
+      - olo-net
+
+  olo-ui:
+    image: ololab/olo-ui:latest
+    container_name: olo-ui
+    restart: unless-stopped
+    ports:
+      - "43001:80"
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      # Re-enable after pulling an olo-ui image built without RedisConfig bean conflict.
+      # OLO_REDIS_ENABLED: "true"
+      OLO_TENANT_IDS: olo:tenants
+      OLO_CONFIGURATION_DIRECTORY: /app/olo-configuration/current-active
+      OLO_CATALOG_DIRECTORY: /app/catalog
+      OLO_RUNTIME_BASE_URL: http://olo:7080
+    volumes:
+      - ${OLO_UI_NGINX_CONFIG_SOURCE:-./configuration/olo-ui/nginx-default.conf}:/etc/nginx/http.d/default.conf:ro
+      - ${OLO_CONFIGURATION_SOURCE:-./configuration/olo-configuration}:/app/olo-configuration
+      - ${OLO_CATALOG_SOURCE:-./configuration/olo-catalog}:/app/catalog
+    depends_on:
+      - redis
+      - olo
+    networks:
+      - olo-net
+
+  olo-chat:
+    image: ololab/olo-chat:latest
+    container_name: olo-chat
+    restart: unless-stopped
+    ports:
+      - "43000:80"
+    environment:
+      OLO_BACKEND_URL: http://olo:7080
+    depends_on:
+      - olo
+    networks:
+      - olo-net
+
+  olo-worker:
+    image: ololab/olo-worker:latest
+    container_name: olo-worker
+    restart: unless-stopped
+    environment:
+      OLO_WORKER_CONFIG_PATH: /app/worker/config/worker-config.yaml
+      # Temporal payload protection (OLO M5.2). This dev stack keeps history readable; production mounts a key ring
+      # and sets OLO_PAYLOAD_KEYS_FILE instead.
+      OLO_PAYLOAD_PROTECTION: ${OLO_PAYLOAD_PROTECTION:-disabled-for-development}
+      OLO_LLM_BASE_URL: http://ollama:11434
+      OLO_CHAT_CALLBACK_BASE_URL: http://olo:7080
+      OLO_DEMO_DATA_ROOT: /app/shared/olo-core/tools
+      OLO_RESOURCE_UPLOAD_DIR: /app/shared/resource-uploads
+      OLO_LOG_DIRECTORY: /app/logs
+      # Vector store defaults consumed by workflow JSON via ${env:...} placeholders.
+      OLO_VECTOR_STORE_DRIVER: ${OLO_VECTOR_STORE_DRIVER:-qdrant}
+      OLO_VECTOR_STORE_URL: ${OLO_VECTOR_STORE_URL:-http://qdrant:6333}
+      OLO_VECTOR_STORE_TABLE: ${OLO_VECTOR_STORE_TABLE:-documents}
+      OLO_VECTOR_STORE_COLLECTION: ${OLO_VECTOR_STORE_COLLECTION:-documents}
+      OLO_VECTOR_STORE_VECTOR_SIZE: ${OLO_VECTOR_STORE_VECTOR_SIZE:-384}
+      OLO_VECTOR_STORE_DISTANCE: ${OLO_VECTOR_STORE_DISTANCE:-Cosine}
+    depends_on:
+      - olo
+      - temporal
+      - redis
+    volumes:
+      - ${OLO_CONFIGURATION_SOURCE:-./configuration/olo-configuration}:/app/olo-configuration
+      - ${OLO_WORKER_CONFIG_SOURCE:-./configuration/olo-worker/config}:/app/worker/config:ro
+      - ${OLO_WORKER_LOG_SOURCE:-./configuration/olo-worker/logs}:/app/logs
+      - ${OLO_RESOURCE_UPLOAD_SOURCE:-./configuration/olo-resource-uploads}:/app/shared/resource-uploads:ro
+      - ${OLO_SHARED_SOURCE:-../../../olo-core/tools}:/app/shared/olo-core/tools
+      # Conversation tools persist session JSON here; keep this writable even when demo fixtures are read-only.
+      - ${OLO_CONVERSATION_STORE_SOURCE:-./configuration/olo-worker/conversations}:/app/shared/olo-core/tools/demo-data/conversations
+    networks:
+      - olo-net
+
+networks:
+  olo-net:
+    external: true
+    name: olo-net

@@ -1,0 +1,92 @@
+/* Light theme overrides. Toggle in top bar; persisted in localStorage. */
+[data-theme="light"] body,
+[data-theme="light"] .app,
+[data-theme="light"] .app-waiting-backend {
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+[data-theme="light"] .app-backend-loading-text { color: #18181b; }
+[data-theme="light"] .app-backend-loading-hint { color: #52525b; }
+[data-theme="light"] .app-backend-loading-logo { color: #18181b; }
+[data-theme="light"] .app-backend-loading-spinner { border-color: #e4e4e7; border-top-color: #3b82f6; }
+
+[data-theme="light"] .top-bar {
+  background: #ffffff;
+  border-bottom-color: #e4e4e7;
+}
+[data-theme="light"] .top-bar-brand { color: #18181b; }
+[data-theme="light"] .top-bar-theme-toggle {
+  background: #e4e4e7;
+  border-color: #d4d4d8;
+  color: #18181b;
+}
+[data-theme="light"] .top-bar-theme-toggle:hover {
+  background: #d4d4d8;
+  color: #09090b;
+}
+
+[data-theme="light"] .left-panel,
+[data-theme="light"] .side-panel {
+  background: #ffffff;
+  border-color: #e4e4e7;
+}
+[data-theme="light"] .left-panel-category-label,
+[data-theme="light"] .side-panel-title,
+[data-theme="light"] .side-panel-collapsed-label,
+[data-theme="light"] .left-panel-collapsed-label { color: #52525b; }
+[data-theme="light"] .left-panel-item-subtitle,
+[data-theme="light"] .left-panel-category-subtitle,
+[data-theme="light"] .left-panel-sub-item,
+[data-theme="light"] .tools-list-label { color: #71717a; }
+[data-theme="light"] .left-panel-item:hover,
+[data-theme="light"] .left-panel-category-header:hover,
+[data-theme="light"] .left-panel-sub-item:hover,
+[data-theme="light"] .tools-list-item:hover { background: #f4f4f5; color: #18181b; }
+[data-theme="light"] .left-panel-item.active,
+[data-theme="light"] .left-panel-category-header.active,
+[data-theme="light"] .left-panel-sub-item.active { background: #e4e4e7; color: #18181b; }
+[data-theme="light"] .tenant-config-input {
+  background: #f4f4f5;
+  border-color: #d4d4d8;
+  color: #18181b;
+}
+
+[data-theme="light"] .main-content-header { border-bottom-color: #e4e4e7; }
+[data-theme="light"] .main-content-title { color: #18181b; }
+[data-theme="light"] .main-content-subtitle,
+[data-theme="light"] .main-content-run-label { color: #52525b; }
+[data-theme="light"] .main-content-placeholder,
+[data-theme="light"] .main-content-placeholder-inner,
+[data-theme="light"] .tenant-config-form-empty,
+[data-theme="light"] .tools-list-desc { color: #71717a; }
+[data-theme="light"] .main-content-run-select-el,
+[data-theme="light"] .tenant-config-btn {
+  background: #e4e4e7;
+  border-color: #d4d4d8;
+  color: #18181b;
+}
+[data-theme="light"] .tenant-config-btn.primary { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+[data-theme="light"] .tenant-config-list-item { color: #18181b; }
+[data-theme="light"] .tenant-config-list-item.selected { background: #e4e4e7; color: #09090b; }
+[data-theme="light"] .side-panel-toggle:hover,
+[data-theme="light"] .left-panel-toggle:hover { background: #e4e4e7; color: #18181b; }
+[data-theme="light"] .side-panel.expanded .side-panel-toggle { background: #e4e4e7; color: #18181b; }
+[data-theme="light"] .left-panel.expanded .left-panel-toggle { background: #3f3f46; color: #fff; }
+[data-theme="light"] .tenant-config-table th,
+[data-theme="light"] .tenant-config-table td { border-bottom-color: #e4e4e7; }
+[data-theme="light"] .tenant-config-table th { color: #71717a; }
+[data-theme="light"] .tenant-config-form-inner .tenant-config-label { color: #52525b; }
+
+[data-theme="light"] .left-panel-menu-context-menu {
+  background: #ffffff;
+  border-color: #e4e4e7;
+}
+[data-theme="light"] .left-panel-menu-context-item { color: #18181b; }
+[data-theme="light"] .left-panel-menu-context-item:hover { background: #f4f4f5; }
+
+[data-theme="light"] .loading-state-message,
+[data-theme="light"] .empty-state-message { color: #52525b; }
+[data-theme="light"] .empty-state-hint { color: #71717a; }
+[data-theme="light"] .error-state-message { color: #dc2626; }
+[data-theme="light"] .loading-state-spinner { border-color: #e4e4e7; border-top-color: #3b82f6; }

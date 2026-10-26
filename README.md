@@ -70,11 +70,11 @@ Each Gradle module is **standalone** (own `settings.gradle`, wrapper, `publishTo
 From this repository root on Windows:
 
 ```powershell
-cd olo-docker
+cd deploy/stack
 .\install.bat dev
 ```
 
-On Linux/macOS, run `cd olo-docker && ./install.sh dev`. See [olo-docker/README.md](olo-docker/README.md) for services, ports, and production setup.
+On Linux/macOS, run `cd deploy/stack && ./install.sh dev`. See [deploy/stack/README.md](deploy/stack/README.md) for services, ports, and production setup.
 
 ## Runtime bootstrap (worker)
 
@@ -124,7 +124,7 @@ Windows: use `gradlew.bat` instead of `./gradlew`.
 Run **olo-docker** for API, Temporal, Redis, and chat UI. Run **olo-worker** on the host in debug mode:
 
 - Worker config: [`olo-worker-configuration/samples/worker-config.local-debug.yaml`](olo-worker-configuration/samples/worker-config.local-debug.yaml)
-- Docker `olo` service mounts `olo-docker/dev/configuration/olo-configuration` at `/app/olo-configuration` (`OLO_CONFIGURATION_DIR`); keep it aligned with `olo-definition/olo-configuration/current-active` in this repo (activate scenarios from olo-ui or copy manually)
+- Docker `olo` service mounts `deploy/stack/dev/configuration/olo-configuration` at `/app/olo-configuration` (`OLO_CONFIGURATION_DIR`); keep it aligned with `olo-definition/olo-configuration/current-active` in this repo (activate scenarios from olo-ui or copy manually)
 - Docker `olo` service: `OLO_CHAT_CALLBACK_BASE_URL=http://localhost:47080` (so the API passes a host-reachable callback into workflow input)
 
 See [olo-worker/README.md](olo-worker/README.md) for ports and IDE launch settings.
@@ -152,3 +152,17 @@ Apache License 2.0 — see [olo-definition/LICENSE](olo-definition/LICENSE) if p
 ## Contributors and owners
 
 Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), use the [contributor guide](docs/CONTRIBUTOR_GUIDE.md) to find the right module or scenario, route review through [OWNERS.md](OWNERS.md), and record meaningful module or scenario credit in [CREDITS.md](CREDITS.md).
+
+
+## Production repository layout
+
+The three production repositories are **olo-mono** (applications, libraries and deployment), **olo-toolgate** (governed tool execution), and **olo-knowledge** (knowledge services).
+
+- `olo/`: backend API and Temporal SDK.
+- `olo-chat/`: chat frontend.
+- `olo-ui/`: studio frontend and backend.
+- `deploy/stack/`: dev, demo and production Compose stacks and installers.
+
+Build the backend from the monorepo root with `docker build -f olo/Dockerfile .`. Chat and studio use their application folders as build contexts. The image workflow builds all four images on pull requests and publishes olo, olo-worker, olo-chat and olo-ui on main/master pushes. Configure DOCKERHUB_USERNAME and DOCKERHUB_TOKEN in olo-mono. Docker Hub names stay unchanged; GHCR images live under ghcr.io/olo-labs/olo-mono/.
+
+Archive the old application repositories after this migration is merged and its images verified. Original local checkouts remain available during review. Historical progress reports and old registry marketing copies have been removed; architecture, operating instructions, licenses and reference documentation remain.

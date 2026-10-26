@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+allprojects {
+    group = 'org.olo'
+    version = '0.1.0-SNAPSHOT'
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+}

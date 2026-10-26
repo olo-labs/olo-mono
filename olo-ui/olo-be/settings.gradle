@@ -1,0 +1,19 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+rootProject.name = 'olo-be'
+
+// Optional composite build when olo-mono is checked out beside or above this repo (local monorepo or CI).
+def oloCoreComposite = file('../olo-mono/olo-core')
+if (!oloCoreComposite.exists()) {
+    oloCoreComposite = file('../../olo-mono/olo-core')
+}
+if (oloCoreComposite.exists()) {
+    includeBuild(oloCoreComposite) {
+        dependencySubstitution {
+            substitute module('org.olo:olo-core') using project(':core')
+        }
+    }
+}

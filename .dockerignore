@@ -1,0 +1,8 @@
+.git
+**/.git
+**/node_modules
+**/.gradle
+**/build
+**/dist
+**/storybook-static
+.idea

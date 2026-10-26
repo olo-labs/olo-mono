@@ -1,0 +1,16 @@
+# Ignore when building combined image from repo root
+.git
+.gitignore
+*.md
+.github
+olo-mono
+.DS_Store
+
+# Frontend build artifacts
+olo-ui/node_modules
+olo-ui/.gradle
+olo-ui/build
+olo-ui/dist
+
+# Backend build artifacts
+olo-be/target

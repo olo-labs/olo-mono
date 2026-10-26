@@ -1,0 +1,64 @@
+/*
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.5'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'org.olo'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+def oloMonoRepoScript = ['../gradle/olo-mono-repo.gradle',
+        '../olo-mono/gradle/olo-mono-repo.gradle',
+        '../../olo-mono/gradle/olo-mono-repo.gradle']
+        .collect { rootProject.file(it) }
+        .find { it.exists() }
+if (oloMonoRepoScript != null) {
+    apply from: oloMonoRepoScript
+}
+
+repositories {
+    if (oloMonoRepoScript != null) {
+        configureOloMonoRepositories(repositories)
+    }
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation 'org.olo:olo-toolgate-client:0.1.0-SNAPSHOT'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
+    implementation project(':olo-temporal-sdk')
+    implementation 'org.olo:olo-workflow-input:0.1.0-SNAPSHOT'
+    implementation 'org.olo:olo-definition:0.1.0-SNAPSHOT'
+
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.named('bootRun') {
+    environment 'OLO_CHAT_CALLBACK_BASE_URL',
+            System.getenv('OLO_CHAT_CALLBACK_BASE_URL') ?: 'http://192.168.0.114:7080'
+}

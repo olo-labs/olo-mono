@@ -1,0 +1,141 @@
+/**
+ * Copyright (c) 2026 Olo Labs
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* Main content area: header, run selector, body, placeholders */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0; /* allow shrink in app-body row; scroll lives in .main-content-body */
+  overflow: hidden;
+}
+
+.main-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #27272a;
+  flex-shrink: 0;
+}
+
+.main-content-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fafafa;
+}
+
+.main-content-subtitle {
+  font-weight: 400;
+  color: #71717a;
+  font-size: 0.9rem;
+}
+
+.main-content-run-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.main-content-run-label {
+  font-size: 0.8rem;
+  color: #71717a;
+}
+
+.main-content-run-select-el {
+  padding: 0.4rem 0.6rem;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+  color: #e4e4e7;
+  font-size: 0.85rem;
+  cursor: pointer;
+  min-width: 120px;
+  color-scheme: dark;
+}
+
+.main-content-body {
+  flex: 1;
+  padding: 1.25rem;
+  overflow: auto;
+}
+
+.main-content-placeholder,
+.main-content-placeholder-inner {
+  color: #a1a1aa;
+  font-size: 0.9rem;
+}
+
+.main-content-placeholder {
+  padding: 2rem;
+  text-align: center;
+}
+
+.main-content-placeholder-inner {
+  padding: 1rem;
+  background: #18181b;
+  border-radius: 8px;
+  border: 1px dashed #3f3f46;
+}
+
+.main-content-chat .main-content-body-chat {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Knowledge section main content */
+.knowledge-view {
+  padding: 0.5rem 0;
+}
+.knowledge-view-description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #a1a1aa;
+  line-height: 1.5;
+}
+
+/* Queues list (Redis <tenantId>:olo:kernel:config:*) under Chat */
+.queues-list {
+  flex-shrink: 0;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #27272a;
+}
+.main-content-body .main-content-queues.queues-list {
+  border-bottom: 1px solid #3f3f46;
+}
+.queues-list-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #a1a1aa;
+}
+.queues-list-message {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #71717a;
+}
+.queues-list-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+.queues-list-item {
+  list-style: none;
+}
+.queues-list-name {
+  font-size: 0.8rem;
+  background: #27272a;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  color: #e4e4e7;
+}

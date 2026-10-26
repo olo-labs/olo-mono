@@ -1,0 +1,23 @@
+# Copyright (c) 2026 Olo Labs
+# SPDX-License-Identifier: Apache-2.0
+
+# Development: frontend container proxies /api and /ws to the olo backend service on olo-net.
+# Usage: docker compose -f docker-compose.dev.yml up --build
+# Open http://localhost:3000
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      OLO_BACKEND_URL: ${OLO_BACKEND_URL:-http://olo:7080}
+    ports:
+      - "3000:80"
+    networks:
+      - olo-net
+
+networks:
+  olo-net:
+    external: true
+    name: olo-net
