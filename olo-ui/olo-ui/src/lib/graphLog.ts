@@ -5,11 +5,6 @@
 import type { GraphLogSummary } from '../types/graphLog'
 
 export function graphLogOptionLabel(entry: GraphLogSummary): string {
-  const tools = entry.toolLabels?.filter(Boolean) ?? []
-  if (tools.length > 0) {
-    const base = entry.workflowId ?? entry.label?.trim() ?? entry.id
-    return `${base} · ${tools.join(', ')}`
-  }
   if (entry.label?.trim()) return entry.label.trim()
   const parts = [entry.kind, entry.workflowId].filter(Boolean)
   if (parts.length > 0) return parts.join(' · ')

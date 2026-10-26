@@ -4,7 +4,6 @@
  */
 import { create } from 'zustand'
 import * as api from '../api/rest'
-import { normalizeWorkflowDraft } from '../lib/workflowDraftSnapshot'
 import type { GraphLogSummary } from '../types/graphLog'
 import type { WorkflowDocument } from '../types/workflow'
 
@@ -72,7 +71,8 @@ export const graphLogStore = create<GraphLogState>((set, get) => ({
   selectLog: async (fileName) => {
     set({ loading: true, error: null })
     try {
-      const document = normalizeWorkflowDraft(await api.getGraphLog(fileName))
+      const record = await api.getGraphLog(fileName)
+      const document: WorkflowDocument = { id: record.workflowId ?? record.id, nodes: [], edges: [], metadata: { audit: record } }
       set({
         selectedFileName: fileName,
         draft: document,

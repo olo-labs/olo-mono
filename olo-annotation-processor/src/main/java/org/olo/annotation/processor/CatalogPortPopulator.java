@@ -85,7 +85,7 @@ public final class CatalogPortPopulator {
         descriptor.type = wire;
         descriptor.label = switch (wire) {
             case MESSAGE_WIRE -> output ? "message out" : "message in";
-            case CAPABILITIES_WIRE -> "available tools";
+            case CAPABILITIES_WIRE -> "hooks";
             case AGENT_PLUG_WIRE -> "available agents";
             default -> descriptor.label;
         };

@@ -56,7 +56,6 @@ public final class StudioCatalogExporter {
         String generatedAt = Instant.now().toString();
 
         writePerTypeCatalog(outDir.resolve("nodes.json"), catalog, "nodes", generatedAt, mapper);
-        writePerTypeCatalog(outDir.resolve("tools.json"), catalog, "tools", generatedAt, mapper);
         writePerTypeCatalog(outDir.resolve("hooks.json"), catalog, "hooks", generatedAt, mapper);
         List<WorkflowPresetDescriptor> workflowPresets =
                 WorkflowPresetCatalogLoader.loadMerged(CoreExtensionCatalog.class.getClassLoader());
@@ -120,13 +119,12 @@ public final class StudioCatalogExporter {
             throws IOException {
         Map<String, Object> document = new LinkedHashMap<>();
         applyDocumentHeader(document, catalog.schemaVersion(), generatedAt);
-        if ("nodes".equals(catalogType) || "tools".equals(catalogType)) {
+        if ("nodes".equals(catalogType)) {
             applyStudioCatalogEnvelope(document);
         }
         document.put("catalogType", catalogType);
         switch (catalogType) {
             case "nodes" -> document.put("nodes", catalog.nodes());
-            case "tools" -> document.put("tools", catalog.tools());
             case "hooks" -> document.put("hooks", catalog.hooks());
             default -> throw new IllegalArgumentException("Unknown catalogType: " + catalogType);
         }
@@ -145,7 +143,6 @@ public final class StudioCatalogExporter {
         applyDocumentHeader(bundle, catalog.schemaVersion(), generatedAt);
         applyStudioCatalogEnvelope(bundle);
         bundle.put("nodes", catalog.nodes());
-        bundle.put("tools", catalog.tools());
         bundle.put("hooks", catalog.hooks());
         if (!workflowPresets.isEmpty()) {
             bundle.put("workflowPresets", workflowPresets);

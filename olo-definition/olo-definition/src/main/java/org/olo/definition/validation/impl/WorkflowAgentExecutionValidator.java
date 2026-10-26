@@ -35,11 +35,7 @@ final class WorkflowAgentExecutionValidator {
             return;
         }
         if (org.olo.definition.agentcall.AgentCallPlannerSupport.isAgentCallPlanner(node)) {
-            requireInlineActivity(nodeId, "tool-call planner AGENT node", node, errors);
-            return;
-        }
-        if (org.olo.definition.dynamicgraph.DynamicSubgraphInjectionSupport.isToolSynthesis(node)) {
-            requireInlineActivity(nodeId, "tool synthesis AGENT node", node, errors);
+            requireInlineActivity(nodeId, "agent-call planner AGENT node", node, errors);
             return;
         }
         if (isLeafSelfAgent(workflowId, node)) {

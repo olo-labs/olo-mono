@@ -23,7 +23,9 @@ class ParameterValidationPopulatorTest {
 
     @Test
     void materializesStringValidation() throws Exception {
-        OloProperty property = UrlProperty.class.getAnnotation(OloProperty.class);
+        OloProperty property = AnnotationTestValues.of(OloProperty.class,
+                java.util.Map.of("name", "url", "type", OloPropertyType.STRING,
+                        "required", true, "minLength", 8, "maxLength", 2048));
         ParameterValidationDescriptor validation = ParameterValidationPopulator.from(property);
         assertThat(validation.minLength).isEqualTo(8);
         assertThat(validation.maxLength).isEqualTo(2048);

@@ -41,7 +41,7 @@ public final class DynamicSubgraphStudioPreparer {
                 .label(merged.getLabel() == null ? builderId : merged.getLabel() + " (injected)")
                 .designer(studioDesigner(merged))
                 .metadata(
-                        DynamicSubgraphInjectionSupport.METADATA_INJECTED_SUBGRAPH,
+                        "injectedSubgraph",
                         Map.of(
                                 "kind", kind == null ? "unknown" : kind,
                                 "sourceWorkflowId", merged.getId() == null ? builderId : merged.getId(),
@@ -52,9 +52,6 @@ public final class DynamicSubgraphStudioPreparer {
             Map<String, Object> configuration = new LinkedHashMap<>();
             if (node.getConfiguration() != null) {
                 configuration.putAll(node.getConfiguration());
-            }
-            if (isLikelyToolSynthesis(node)) {
-                configuration.put(ToolSynthesisSupport.CONFIG_TOOL_SYNTHESIS, true);
             }
             Map<String, Object> layout = positions.get(node.getId());
             if (layout != null) {
@@ -67,20 +64,6 @@ public final class DynamicSubgraphStudioPreparer {
         return builder.build();
     }
 
-    private static boolean isLikelyToolSynthesis(NodeDefinition node) {
-        if (!"AGENT".equalsIgnoreCase(node.getType())) {
-            return false;
-        }
-        if (node.getConfiguration() != null
-                && Boolean.TRUE.equals(node.getConfiguration().get(ToolSynthesisSupport.CONFIG_TOOL_SYNTHESIS))) {
-            return true;
-        }
-        if (node.getId() != null && node.getId().endsWith(AgentCallPlannerSupport.DEFAULT_SYNTHESIS_NODE_SUFFIX)) {
-            return true;
-        }
-        return "Tool synthesis".equalsIgnoreCase(node.getLabel());
-    }
-
     private static DesignerDefinition studioDesigner(WorkflowDefinition workflow) {
         DesignerDefinition existing = workflow.getDesigner();
         Map<String, NodeTypeDesignerDefinition> nodeTypes = new LinkedHashMap<>();
@@ -90,9 +73,6 @@ public final class DynamicSubgraphStudioPreparer {
         if (nodeTypes.isEmpty()) {
             nodeTypes.putAll(StudioDesignerDefaults.agentPipelineNodeTypes(
                     workflow.getEmoji() == null ? "🤖" : workflow.getEmoji()));
-        }
-        if (containsNodeType(workflow, "TOOL") && !nodeTypes.containsKey("TOOL")) {
-            nodeTypes.put("TOOL", toolNodeType());
         }
         DesignerDefinitionBuilder designer = DesignerDefinition.builder()
                 .paletteGroup(existing == null || existing.getPaletteGroup() == null
@@ -110,29 +90,6 @@ public final class DynamicSubgraphStudioPreparer {
         }
         designer.searchKeyword("injected");
         return designer.build();
-    }
-
-    private static NodeTypeDesignerDefinition toolNodeType() {
-        return NodeTypeDesignerDefinition.builder()
-                .emoji("🔧")
-                .typeLabel("Tool")
-                .description("Registered tool invocation")
-                .palette(NodePaletteDesignerDefinition.builder()
-                        .name("Tool")
-                        .category("tools")
-                        .build())
-                .inlineProperties(List.of(
-                        InlinePropertyDefinition.builder()
-                                .id("toolId")
-                                .widget("TEXT")
-                                .label("Tool id")
-                                .binding("toolId")
-                                .build()))
-                .build();
-    }
-
-    private static boolean containsNodeType(WorkflowDefinition workflow, String type) {
-        return workflow.getNodes().stream().anyMatch(node -> type.equalsIgnoreCase(node.getType()));
     }
 
     static Map<String, Map<String, Object>> layoutPositions(WorkflowDefinition workflow) {

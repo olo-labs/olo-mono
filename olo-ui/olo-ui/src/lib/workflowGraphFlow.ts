@@ -58,8 +58,7 @@ export function workflowToFlow(
       ?? readDesignerPosition(node)
       ?? defaultNodePosition(workflow, index)
     const catalogId =
-      (typeof node.configuration?.toolId === 'string' && node.configuration.toolId)
-      || (typeof node.configuration?.hookId === 'string' && node.configuration.hookId)
+      (typeof node.configuration?.hookId === 'string' && node.configuration.hookId)
       || descriptor?.id
     return {
       id: node.id,

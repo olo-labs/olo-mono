@@ -30,7 +30,6 @@ public final class PlannerCapability {
     private final Double cost;
     private final Double latency;
     private final Double confidence;
-    private final List<String> toolRequirements;
     private final List<String> requiredContext;
 
     public PlannerCapability(String id, CatalogKind kind, CapabilityDefinition capability) {
@@ -46,7 +45,6 @@ public final class PlannerCapability {
         this.cost = capability.getCost();
         this.latency = capability.getLatency();
         this.confidence = capability.getConfidence();
-        this.toolRequirements = emptyToNull(capability.getToolRequirements());
         this.requiredContext = emptyToNull(capability.getRequiredContext());
     }
 
@@ -96,11 +94,6 @@ public final class PlannerCapability {
         return confidence;
     }
 
-    @JsonProperty("tool_requirements")
-    public List<String> getToolRequirements() {
-        return toolRequirements == null ? List.of() : toolRequirements;
-    }
-
     @JsonProperty("required_context")
     public List<String> getRequiredContext() {
         return requiredContext == null ? List.of() : requiredContext;
@@ -129,7 +122,6 @@ public final class PlannerCapability {
                 && Objects.equals(cost, that.cost)
                 && Objects.equals(latency, that.latency)
                 && Objects.equals(confidence, that.confidence)
-                && Objects.equals(toolRequirements, that.toolRequirements)
                 && Objects.equals(requiredContext, that.requiredContext);
     }
 
@@ -147,7 +139,6 @@ public final class PlannerCapability {
                 cost,
                 latency,
                 confidence,
-                toolRequirements,
                 requiredContext);
     }
 }

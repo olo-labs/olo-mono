@@ -24,7 +24,6 @@ export interface WorkflowDocument {
   nodes?: WorkflowNode[]
   edges?: WorkflowEdge[]
   variables?: WorkflowVariable[]
-  tools?: WorkflowTool[]
   hooks?: WorkflowHook[]
   childWorkflows?: ChildWorkflowRef[]
   availableAgents?: AgentReference[]
@@ -71,25 +70,6 @@ export interface WorkflowVariable {
   required?: boolean
   scope?: VariableScope
   metadata?: Record<string, unknown>
-}
-
-export interface WorkflowTool {
-  id: string
-  type?: string
-  capability?: {
-    name?: string
-    description?: string
-    tags?: string[]
-    examples?: string[]
-    required_inputs?: string[]
-    required_outputs?: string[]
-    tool_requirements?: string[]
-    required_context?: string[]
-  }
-  runtimeBinding?: {
-    implementationId?: string
-  }
-  configuration?: Record<string, unknown>
 }
 
 export interface WorkflowHook {

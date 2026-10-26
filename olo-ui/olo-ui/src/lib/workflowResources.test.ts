@@ -5,14 +5,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   toggleAvailableAgent,
-  toggleCatalogTool,
+  toggleCatalogHook,
   toggleChildWorkflow,
-  toolFromCatalog,
+  hookFromCatalog,
   upsertVariable,
 } from './workflowResources'
 import type { WorkflowDocument } from '../types/workflow'
 
-const baseDoc: WorkflowDocument = { id: 'agent', variables: [], tools: [], hooks: [] }
+const baseDoc: WorkflowDocument = { id: 'agent', variables: [], hooks: [] }
 
 describe('workflowResources', () => {
   it('upserts variables by name', () => {
@@ -32,27 +32,27 @@ describe('workflowResources', () => {
     expect(updated.variables?.[0].description).toBe('updated')
   })
 
-  it('toggles catalog tools', () => {
+  it('toggles catalog hooks', () => {
     const item = {
       id: 'olo-core:calculator',
-      kind: 'TOOL',
+      kind: 'HOOK',
       name: 'Calculator',
       description: 'Math',
     }
-    const enabled = toggleCatalogTool(baseDoc, item, true)
-    expect(enabled.tools).toHaveLength(1)
-    expect(enabled.tools?.[0].id).toBe('calculator')
-    const disabled = toggleCatalogTool(enabled, item, false)
-    expect(disabled.tools).toHaveLength(0)
+    const enabled = toggleCatalogHook(baseDoc, item, true)
+    expect(enabled.hooks).toHaveLength(1)
+    expect(enabled.hooks?.[0].id).toBe('calculator')
+    const disabled = toggleCatalogHook(enabled, item, false)
+    expect(disabled.hooks).toHaveLength(0)
   })
 
-  it('creates tool from catalog', () => {
-    const tool = toolFromCatalog({
+  it('creates hook from catalog', () => {
+    const tool = hookFromCatalog({
       id: 'olo-core:calculator',
       name: 'Calculator',
       description: 'Math',
     })
-    expect(tool.runtimeBinding?.implementationId).toBe('olo-core:calculator')
+    expect(tool.pre?.implementationId).toBe('olo-core:calculator')
   })
 
   it('toggles child workflows and agents', () => {

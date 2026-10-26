@@ -46,7 +46,6 @@ public enum NodeType {
 
     /** Deterministic or registered callable (API, function, MCP tool). */
 
-    TOOL,
 
     /** Legacy alias for retrieval-focused nodes; prefer {@link #VECTOR_SEARCH} for new graphs. */
 
@@ -125,5 +124,3 @@ public enum NodeType {
     }
 
 }
-
-

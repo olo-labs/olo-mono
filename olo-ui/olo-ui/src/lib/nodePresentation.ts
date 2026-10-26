@@ -11,7 +11,6 @@ import type {
 } from '../types/workflow'
 import { normalizeNodeType } from './boundaryNodes'
 import { findCatalogNode } from './catalogLookup'
-import { readToolSubtypeKey } from './nodeConfiguration'
 import {
   readNodeDesigner,
   readNodeTypeDesigner,
@@ -41,25 +40,7 @@ function resolveTypeDesignerForNode(
   node: WorkflowNode,
 ): NodeTypeDesignerConfig {
   const workflowType = normalizeNodeType(node.type)
-  const base = readNodeTypeDesigner(workflow, workflowType)
-  if (workflowType !== 'TOOL') {
-    return base
-  }
-  const subtypeKey = readToolSubtypeKey(node)
-  if (!subtypeKey) {
-    return base
-  }
-  const nested = base as unknown as Record<string, NodeTypeDesignerConfig>
-  const subtype = nested[subtypeKey]
-  if (!subtype || typeof subtype !== 'object') {
-    return base
-  }
-  return {
-    emoji: subtype.emoji ?? base.emoji,
-    typeLabel: subtype.typeLabel ?? base.typeLabel,
-    description: subtype.description ?? base.description,
-    inlineProperties: subtype.inlineProperties ?? base.inlineProperties,
-  }
+  return readNodeTypeDesigner(workflow, workflowType)
 }
 
 export function resolveNodePresentation(

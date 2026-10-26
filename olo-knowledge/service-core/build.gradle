@@ -1,0 +1,8 @@
+apply plugin: 'java-test-fixtures'
+dependencies {
+    api 'io.github.olo-labs:toolgate-service-authorization:0.10.0-dev'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    implementation 'org.postgresql:postgresql:42.7.7'
+    testFixturesImplementation 'org.postgresql:postgresql:42.7.7'
+    testFixturesImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+}

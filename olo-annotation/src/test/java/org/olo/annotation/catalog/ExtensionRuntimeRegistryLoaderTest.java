@@ -17,8 +17,8 @@ class ExtensionRuntimeRegistryLoaderTest {
 
         assertThat(registry.schemaVersion()).isEqualTo("1.0");
         assertThat(registry.bindings()).hasSize(1);
-        assertThat(registry.bindings().getFirst().id).isEqualTo("olo-core:http-tool");
-        assertThat(registry.bindings().getFirst().implementationClass).isEqualTo("core.HttpTool");
-        assertThat(registry.bindings().getFirst().spiInterface).isEqualTo("org.olo.spi.tool.Tool");
+        assertThat(registry.bindings().getFirst().id).isEqualTo("olo-core:prompt");
+        assertThat(registry.bindings().getFirst().implementationClass).isEqualTo("core.PromptNode");
+        assertThat(registry.bindings().getFirst().spiInterface).isEqualTo("org.olo.spi.node.Node");
     }
 }

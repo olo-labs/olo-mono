@@ -42,6 +42,13 @@ class WorkerToolGateSetupTest {
     }
 
     @Test
+    void requiresExplicitEndpointEnvironmentValues() {
+        assertThat(WorkerToolGateSetup.endpoint("https://gateway.example/mcp")).isEqualTo("https://gateway.example/mcp");
+        assertThatThrownBy(()->WorkerToolGateSetup.endpoint("${OLO_QUALIFICATION_UNSET_ENDPOINT_3917}"))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("OLO_QUALIFICATION_UNSET_ENDPOINT_3917");
+    }
+
+    @Test
     void disabledLeavesAgentsWithoutTools() {
         AgentToolAccess access = WorkerToolGateSetup.install(settings(ToolGateSettings.builder().enabled(false).build()), Path.of("."));
 

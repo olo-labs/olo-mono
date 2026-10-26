@@ -36,6 +36,10 @@ final class WorkflowNodeValidator {
             Set<String> nodeIds,
             WorkflowValidationState state,
             List<String> errors) {
+        if ("TOOL".equalsIgnoreCase(node.getType())) {
+            errors.add("Unsupported workflow node type: TOOL");
+            return;
+        }
         WorkflowNodeFailureValidator.validateNodeRouters(node, nodeIds, errors);
         WorkflowNodeFailureValidator.validateOnFailure(node, nodeIds, errors);
         validateHumanApproval(node, errors);
@@ -113,8 +117,7 @@ final class WorkflowNodeValidator {
         if (NodeType.AGENT.value().equals(type)
                 && workflow == null
                 && !org.olo.definition.dynamicgraph.DynamicGraphPlannerSupport.isDynamicGraphPlanner(node)
-                && !org.olo.definition.agentcall.AgentCallPlannerSupport.isAgentCallPlanner(node)
-                && !org.olo.definition.dynamicgraph.DynamicSubgraphInjectionSupport.isToolSynthesis(node)) {
+                && !org.olo.definition.agentcall.AgentCallPlannerSupport.isAgentCallPlanner(node)) {
             errors.add("AGENT node " + nodeId + " requires a workflow reference (agent = workflow)");
         }
         if (NodeType.WORKFLOW_REF.value().equals(type) && workflow == null) {

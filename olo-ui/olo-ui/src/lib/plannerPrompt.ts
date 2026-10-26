@@ -2,13 +2,10 @@
  * Copyright (c) 2026 Olo Labs
  * SPDX-License-Identifier: Apache-2.0
  */
-import type { CatalogComponentBase } from '../types/catalog'
 import type { WorkflowDocument } from '../types/workflow'
-import { normalizePromptMacroAliases } from './promptTokens'
 import { workflowVariables } from './workflowResources'
 import {
   PLANNER_MACRO_AGENTS,
-  PLANNER_MACRO_CAPABILITIES,
   PLANNER_MACROS,
   PLACEHOLDER_PATTERN,
   type AgentPromptInfo,
@@ -16,7 +13,6 @@ import {
   type PlannerPromptValidationIssue,
 } from './plannerContextTypes'
 
-const INTERNAL_TOOLS_HEADING = '## Available tools'
 const INTERNAL_AGENTS_HEADING = '## Available agents'
 
 function appendPromptSection(body: string, heading: string, block: string): string {
@@ -71,20 +67,6 @@ export function estimateTokenCount(text: string): number {
   return Math.max(1, Math.ceil(text.length / 4))
 }
 
-export function formatCapabilityLines(
-  toolIds: string[],
-  catalogTools: CatalogComponentBase[],
-): string[] {
-  const byId = new Map(catalogTools.map((tool) => [tool.id, tool]))
-  return toolIds
-    .map((id) => byId.get(id))
-    .filter((tool): tool is CatalogComponentBase => Boolean(tool))
-    .map((tool) => {
-      const description = tool.description?.trim()
-      return description ? `${tool.name}\n- ${description}` : tool.name ?? tool.id
-    })
-}
-
 export function formatAgentLines(agents: AgentPromptInfo[]): string[] {
   return agents.map((agent) => {
     const description = agent.description?.trim()
@@ -95,32 +77,14 @@ export function formatAgentLines(agents: AgentPromptInfo[]): string[] {
 export function generatePlannerPrompt(
   template: string,
   context: PlannerContextSelection,
-  catalogTools: CatalogComponentBase[],
   agents: AgentPromptInfo[],
 ): string {
-  let text = normalizePromptMacroAliases(template)
-
-  const toolsBlock = formatCapabilityLines(context.selectedTools, catalogTools).join('\n\n')
-  const selectedAgents = agents.filter((agent) => context.selectedAgents.includes(agent.id))
-  const agentsBlock = formatAgentLines(selectedAgents).join('\n\n')
-
-  if (text.includes(`{${PLANNER_MACRO_CAPABILITIES}}`)) {
-    text = text.replaceAll(`{${PLANNER_MACRO_CAPABILITIES}}`, toolsBlock || '(none)')
+  const selected = agents.filter(agent => context.selectedAgents.includes(agent.id))
+  const block = context.injectAgents ? formatAgentLines(selected).join('\n\n') : ''
+  if (template.includes(`{${PLANNER_MACRO_AGENTS}}`)) {
+    return template.replaceAll(`{${PLANNER_MACRO_AGENTS}}`, block || '(none)').trim()
   }
-
-  if (text.includes(`{${PLANNER_MACRO_AGENTS}}`)) {
-    text = text.replaceAll(`{${PLANNER_MACRO_AGENTS}}`, agentsBlock || '(none)')
-  }
-
-  if (context.injectCapabilities) {
-    text = appendPromptSection(text, INTERNAL_TOOLS_HEADING, toolsBlock)
-  }
-
-  if (context.injectAgents) {
-    text = appendPromptSection(text, INTERNAL_AGENTS_HEADING, agentsBlock)
-  }
-
-  return text.trim()
+  return context.injectAgents ? appendPromptSection(template, INTERNAL_AGENTS_HEADING, block) : template.trim()
 }
 
 export function plannerAutocompleteOptions(
@@ -132,7 +96,6 @@ export function plannerAutocompleteOptions(
     group: 'Workflow variables',
   }))
   options.push(
-    { value: `{${PLANNER_MACRO_CAPABILITIES}}`, label: PLANNER_MACRO_CAPABILITIES, group: 'Macros' },
     { value: `{${PLANNER_MACRO_AGENTS}}`, label: PLANNER_MACRO_AGENTS, group: 'Macros' },
   )
   return options

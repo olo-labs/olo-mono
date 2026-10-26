@@ -51,7 +51,6 @@ final class WorkflowDefinitionEquality {
                 && Objects.equals(left.getCapability(), that.getCapability())
                 && Objects.equals(left.getRuntime(), that.getRuntime())
                 && Objects.equals(left.getRuntimeBinding(), that.getRuntimeBinding())
-                && Objects.equals(left.getTools(), that.getTools())
                 && Objects.equals(left.getAgents(), that.getAgents())
                 && Objects.equals(left.getHooks(), that.getHooks());
     }
@@ -87,7 +86,6 @@ final class WorkflowDefinitionEquality {
                 workflow.getCapability(),
                 workflow.getRuntime(),
                 workflow.getRuntimeBinding(),
-                workflow.getTools(),
                 workflow.getAgents(),
                 workflow.getHooks());
     }

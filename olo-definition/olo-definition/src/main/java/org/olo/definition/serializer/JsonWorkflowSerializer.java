@@ -29,7 +29,7 @@ public final class JsonWorkflowSerializer implements WorkflowSerializer {
     }
 
     public JsonWorkflowSerializer(ObjectMapper mapper, Charset charset) {
-        this.mapper = mapper;
+        this.mapper = JacksonWorkflowMapper.configure(mapper.copy());
         this.charset = charset;
     }
 

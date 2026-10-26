@@ -20,7 +20,6 @@ import org.olo.definition.runtime.RuntimeBindingDefinition;
 import org.olo.definition.runtime.RuntimeDelegationDefinition;
 import org.olo.definition.runtime.WorkflowRuntimeDefinition;
 import org.olo.definition.state.StateFieldDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.variable.VariableDefinition;
 
 import java.util.ArrayList;
@@ -142,19 +141,6 @@ public final class WorkflowDefinitionBuilder extends WorkflowDefinitionBuilderBa
 
     public WorkflowDefinitionBuilder runtimeBinding(RuntimeBindingDefinition runtimeBinding) {
         this.runtimeBinding = runtimeBinding;
-        return this;
-    }
-
-    public WorkflowDefinitionBuilder tools(List<ToolDefinition> tools) {
-        this.tools = tools;
-        return this;
-    }
-
-    public WorkflowDefinitionBuilder addTool(ToolDefinition tool) {
-        if (this.tools == null) {
-            this.tools = new ArrayList<>();
-        }
-        this.tools.add(tool);
         return this;
     }
 

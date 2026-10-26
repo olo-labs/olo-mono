@@ -40,7 +40,7 @@ RUN adduser -D -h /app appuser
 USER appuser
 
 COPY --from=builder /workspace/olo/build/libs/olo-backend-*.jar app.jar
-COPY olo-definition/olo-configuration /app/olo-configuration
+COPY olo-ui/olo-be/docker/runtime-configuration /app/olo-configuration
 
 ENV OLO_CONFIGURATION_DIR=/app/olo-configuration
 

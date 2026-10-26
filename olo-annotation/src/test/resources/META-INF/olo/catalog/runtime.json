@@ -3,10 +3,10 @@
   "moduleId": "olo-core",
   "bindings": [
     {
-      "kind": "TOOL",
-      "id": "olo-core:http-tool",
-      "implementationClass": "core.HttpTool",
-      "spiInterface": "org.olo.spi.tool.Tool"
+      "kind": "NODE",
+      "id": "olo-core:prompt",
+      "implementationClass": "core.PromptNode",
+      "spiInterface": "org.olo.spi.node.Node"
     }
   ]
 }

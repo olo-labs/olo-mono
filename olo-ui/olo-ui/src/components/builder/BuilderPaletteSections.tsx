@@ -4,57 +4,14 @@
  */
 import type { CatalogComponentBase } from '../../types/catalog'
 import type { WorkflowDocument, WorkflowSummary } from '../../types/workflow'
-import { isPlannerAgentEnabled, isPlannerToolEnabled } from '../../lib/plannerContext'
+import { isPlannerAgentEnabled } from '../../lib/plannerContext'
 import { workflowHooks } from '../../lib/workflowResources'
 import { ExpandableSection } from './ExpandableSection'
 import {
   BuilderPaletteItem,
   handleAgentDragStart,
   handleHookDragStart,
-  handleToolDragStart,
 } from './BuilderPaletteItem'
-
-export function BuilderCapabilitiesSection({
-  catalogTools,
-  draft,
-  disabled,
-  expanded,
-  onToggle,
-}: {
-  catalogTools: CatalogComponentBase[]
-  draft: WorkflowDocument | null
-  disabled: boolean
-  expanded: boolean
-  onToggle: () => void
-}) {
-  return (
-    <ExpandableSection
-      title="Capabilities"
-      count={catalogTools.length}
-      expanded={expanded}
-      onToggle={onToggle}
-      hint="Drag catalog tools onto the canvas to add them to the workflow."
-    >
-      {catalogTools.length === 0 ? (
-        <p className="builder-empty">No catalog tools loaded.</p>
-      ) : (
-        <ul className="builder-node-list">
-          {catalogTools.map((tool) => (
-            <BuilderPaletteItem
-              key={tool.id}
-              title={tool.name ?? tool.id}
-              emoji={tool.emoji ?? '🔧'}
-              description={tool.description ?? tool.id}
-              disabled={disabled}
-              active={draft ? isPlannerToolEnabled(draft, tool.id) : false}
-              onDragStart={(e) => handleToolDragStart(e, tool)}
-            />
-          ))}
-        </ul>
-      )}
-    </ExpandableSection>
-  )
-}
 
 export function BuilderAgentsSection({
   otherWorkflows,

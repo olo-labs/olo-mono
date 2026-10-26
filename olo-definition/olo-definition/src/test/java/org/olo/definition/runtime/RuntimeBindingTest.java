@@ -8,7 +8,6 @@ import org.olo.definition.agent.AgentDefinition;
 import org.olo.definition.execution.ExecutionModel;
 import org.olo.definition.capability.CapabilityDefinition;
 import org.olo.definition.serializer.JsonWorkflowSerializer;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowBuilder;
 import org.olo.definition.workflow.WorkflowDefinition;
@@ -96,61 +95,16 @@ class RuntimeBindingTest {
         assertThat(agent.getRuntimeBinding().getImplementationId()).isEqualTo("default-agent-runner");
     }
 
-    @Test
-    void roundTripsCustomToolClassBinding() throws Exception {
-        WorkflowDefinition workflow = WorkflowBuilder.create("Custom Tool")
-                .id("custom-tool")
-                .capability(CapabilityDefinition.builder()
-                        .name("Custom Tool Flow")
-                        .description("Test")
-                        .addInput("in")
-                        .addOutput("out")
-                        .build())
-                .tool(ToolDefinition.builder()
-                        .id("screener")
-                        .capability(CapabilityDefinition.builder()
-                                .name("Screener")
-                                .description("Screen stocks")
-                                .build())
-                        .runtimeBinding(RuntimeBindingDefinition.builder()
-                                .runtime(RuntimeKind.JAVA)
-                                .implementationClass("com.company.trading.AdvancedStockScreener")
-                                .build())
-                        .build())
-                .inputNode("input")
-                .outputNode("output")
-                .connect("input", "output")
-                .build();
 
-        WorkflowValidator.validateOrThrow(workflow);
-        WorkflowDefinition restored = json.deserialize(json.serialize(workflow));
-        assertThat(restored.getTools().get(0).getRuntimeBinding().getImplementationClass())
-                .isEqualTo("com.company.trading.AdvancedStockScreener");
-    }
+
 
     @Test
-    void rejectsEmptyRuntimeBinding() {
-        WorkflowDefinition workflow = WorkflowBuilder.create("Bad Binding")
-                .id("bad")
-                .capability(CapabilityDefinition.builder()
-                        .name("Bad")
-                        .description("Bad")
-                        .addInput("in")
-                        .addOutput("out")
-                        .build())
-                .tool(ToolDefinition.builder()
-                        .id("t")
-                        .capability(CapabilityDefinition.builder()
-                                .name("T")
-                                .description("T")
-                                .build())
-                        .runtimeBinding(RuntimeBindingDefinition.builder().build())
-                        .build())
-                .inputNode("input")
-                .outputNode("output")
-                .connect("input", "output")
-                .build();
-
-        assertThat(WorkflowValidator.validate(workflow).valid()).isFalse();
+    void rejectsEmptyRuntimeBindingOnAFreshWorkflow() {
+        var source=org.olo.definition.fresh.FreshWorkflows.chat("binding-test");
+        assertThat(WorkflowValidator.validate(source).valid()).isTrue();
+        var changed=source.toBuilder().runtimeBinding(RuntimeBindingDefinition.builder().build()).build();
+        var result=WorkflowValidator.validate(changed);
+        assertThat(result.valid()).isFalse();
+        assertThat(result.errors()).anyMatch(error->error.contains("runtimeBinding"));
     }
 }

@@ -41,10 +41,3 @@ export function applyNodeConfigValue(
     ),
   }
 }
-
-export function readToolSubtypeKey(node: WorkflowNode): string {
-  const toolId = readNodeConfigValue(node, 'toolId')
-  if (!toolId) return ''
-  const idx = toolId.lastIndexOf(':')
-  return idx >= 0 ? toolId.slice(idx + 1) : toolId
-}

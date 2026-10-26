@@ -1,106 +1,30 @@
-/**
- * Copyright (c) 2026 Olo Labs
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import { CHAT_API, tenantIdForApiPath, withAuth } from './chatApiClient'
-import type {
-  ChatMessageDto,
-  CreateSessionBody,
-  CreateSessionResponse,
-  SendMessageResponse,
-  SessionSummaryDto,
-} from './chatTypes'
-
-/** List chat sessions for a tenant, optionally scoped by queue and pipeline (per workflow queue and pipeline view). */
-export async function listSessions(
-  tenantId: string,
-  options?: { queue?: string; pipeline?: string }
-): Promise<SessionSummaryDto[]> {
-  const tid = tenantIdForApiPath(tenantId)
-  if (!tid) return []
-  try {
-    const params = new URLSearchParams()
-    if (options?.queue) params.set('queue', options.queue)
-    if (options?.pipeline) params.set('pipeline', options.pipeline)
-    const qs = params.toString()
-    const url = `${CHAT_API}/tenants/${encodeURIComponent(tid)}/sessions` + (qs ? `?${qs}` : '')
-    const res = await fetch(url, { headers: withAuth() })
-    if (!res.ok) return []
-    const data = await res.json()
-    return Array.isArray(data) ? data : []
-  } catch {
-    return []
-  }
+/* Copyright 2026 Olo Labs; SPDX-License-Identifier: Apache-2.0 */
+import { CHAT_API, withAuth } from './chatApiClient'
+import type { ChatMessageDto, CreateSessionResponse, SendMessageResponse, SessionSummaryDto } from './chatTypes'
+const API = `${CHAT_API}/v1/conversations`
+async function checked(res: Response): Promise<Response> {
+ if (!res.ok) throw new Error(`Conversation request failed: ${res.status}`)
+ return res
 }
-
-/** Delete all chat sessions for the tenant, optionally scoped by queue and pipeline (current view). */
-export async function deleteAllSessions(
-  tenantId: string,
-  options?: { queue?: string; pipeline?: string }
-): Promise<void> {
-  const tid = tenantIdForApiPath(tenantId)
-  if (!tid) return
-  const params = new URLSearchParams()
-  if (options?.queue) params.set('queue', options.queue)
-  if (options?.pipeline) params.set('pipeline', options.pipeline)
-  const qs = params.toString()
-  const url = `${CHAT_API}/tenants/${encodeURIComponent(tid)}/sessions` + (qs ? `?${qs}` : '')
-  const res = await fetch(url, { method: 'DELETE', headers: withAuth() })
-  if (!res.ok) throw new Error(`Delete all sessions failed: ${res.status}`)
+const writeHeaders = () => withAuth({'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()})
+export async function listSessions(_tenant: string, _options?: {queue?:string;pipeline?:string}): Promise<SessionSummaryDto[]> {
+ return (await checked(await fetch(API,{headers:withAuth()}))).json()
 }
-
-/** Delete one chat session and its messages. Used by Conversation per-conversation delete button. */
-export async function deleteSession(sessionId: string): Promise<void> {
-  if (!sessionId) return
-  const res = await fetch(`${CHAT_API}/sessions/${encodeURIComponent(sessionId)}`, {
-    method: 'DELETE',
-    headers: withAuth(),
-  })
-  if (!res.ok) throw new Error(`Delete session failed: ${res.status}`)
+export async function deleteAllSessions(tenant:string, options?:{queue?:string;pipeline?:string}):Promise<void> {
+ for(const session of await listSessions(tenant,options)) await deleteSession(session.sessionId)
 }
-
-export async function createSession(
-  tenantId: string,
-  options?: { taskQueue?: string; queueName?: string; pipelineId?: string; overrides?: Record<string, unknown> }
-): Promise<CreateSessionResponse> {
-  const body: CreateSessionBody = {
-    tenantId: tenantIdForApiPath(tenantId),
-    taskQueue: options?.taskQueue,
-    queueName: options?.queueName ?? options?.taskQueue,
-    pipelineId: options?.pipelineId,
-    overrides: options?.overrides,
-  }
-  const res = await fetch(`${CHAT_API}/sessions`, {
-    method: 'POST',
-    headers: withAuth({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`Create session failed: ${res.status}`)
-  return res.json()
+export async function deleteSession(id:string):Promise<void> {
+ await checked(await fetch(`${API}/${encodeURIComponent(id)}`,{method:'DELETE',headers:writeHeaders()}))
 }
-
-export async function sendMessage(
-  sessionId: string,
-  content: string,
-  options?: { taskQueue?: string; capabilitySource?: string }
-): Promise<SendMessageResponse> {
-  const body: Record<string, unknown> = { content, taskQueue: options?.taskQueue }
-  const src = options?.capabilitySource?.trim()
-  if (src) body.capabilitySource = src
-  const res = await fetch(`${CHAT_API}/sessions/${encodeURIComponent(sessionId)}/messages`, {
-    method: 'POST',
-    headers: withAuth({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`Send message failed: ${res.status}`)
-  return res.json()
+export async function createSession(_tenant:string,_options?:{taskQueue?:string;queueName?:string;pipelineId?:string;overrides?:Record<string,unknown>}):Promise<CreateSessionResponse> {
+ const sessionId=crypto.randomUUID()
+ await checked(await fetch(`${API}/${sessionId}`,{method:'POST',headers:writeHeaders()}))
+ return {sessionId}
 }
-
-export async function listMessages(sessionId: string): Promise<ChatMessageDto[]> {
-  const res = await fetch(`${CHAT_API}/sessions/${encodeURIComponent(sessionId)}/messages`, {
-    headers: withAuth(),
-  })
-  if (!res.ok) throw new Error(`List messages failed: ${res.status}`)
-  return res.json()
+export async function sendMessage(id:string, content:string, options?:{taskQueue?:string;capabilitySource?:string;pipelineId?:string}):Promise<SendMessageResponse> {
+ return (await checked(await fetch(`${API}/${encodeURIComponent(id)}/turns`,{method:'POST',headers:writeHeaders(),body:JSON.stringify({message:content,kbId:options?.capabilitySource || undefined,pipelineId:options?.pipelineId || undefined})}))).json()
+}
+export async function listMessages(id:string):Promise<ChatMessageDto[]> {
+ const data=await (await checked(await fetch(`${API}/${encodeURIComponent(id)}/messages`,{headers:withAuth()}))).json()
+ return (data.messages ?? []).filter((m:{role:string})=>m.role==='user'||m.role==='assistant').map((m:{message_id:string;turn_id:string;role:string;content:string;sequence:number})=>({messageId:m.message_id,sessionId:id,role:m.role,content:m.content,runId:m.turn_id,createdAt:m.sequence}))
 }

@@ -25,12 +25,12 @@ class DirectoryWorkflowDefinitionLoaderTest {
         assertThat(folder).isDirectory();
         var registry = loader.load(folder, false);
         assertThat(registry.findById("governed-chat")).isPresent();
-        assertThat(registry.findByQueue("olo-governed")).isPresent();
+        assertThat(registry.findByQueue("oloQueue2")).isPresent();
     }
 
     @Test
     void loadsMultipleVersionsForSameWorkflowId(@TempDir Path scanFolder) throws Exception {
-        String fastJson = readPreset("fast.json");
+        String fastJson = readPreset("fast.json").replaceFirst("\"isDefault\" : false", "\"isDefault\" : true");
         Files.writeString(scanFolder.resolve("fast-1.0.0.json"), fastJson);
         Files.writeString(
                 scanFolder.resolve("fast-2.0.0.json"),

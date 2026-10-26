@@ -16,17 +16,14 @@ public final class ExtensionCatalog {
 
     private final String schemaVersion;
     private final List<NodeDescriptor> nodes;
-    private final List<ToolDescriptor> tools;
     private final List<HookDescriptor> hooks;
 
     ExtensionCatalog(
             String schemaVersion,
             List<NodeDescriptor> nodes,
-            List<ToolDescriptor> tools,
             List<HookDescriptor> hooks) {
         this.schemaVersion = schemaVersion;
         this.nodes = List.copyOf(nodes);
-        this.tools = List.copyOf(tools);
         this.hooks = List.copyOf(hooks);
     }
 
@@ -39,9 +36,7 @@ public final class ExtensionCatalog {
         return nodes;
     }
 
-    public List<ToolDescriptor> tools() {
-        return tools;
-    }
+
 
     public List<HookDescriptor> hooks() {
         return hooks;

@@ -18,23 +18,19 @@ class PlannerContextDefinitionTest {
         Map<String, Object> defaults = PlannerContextDefinition.agentDefaults();
 
         @SuppressWarnings("unchecked")
-        List<String> selectedTools = (List<String>) defaults.get(PlannerContextDefinition.SELECTED_TOOLS);
-        @SuppressWarnings("unchecked")
         List<String> selectedAgents = (List<String>) defaults.get(PlannerContextDefinition.SELECTED_AGENTS);
         @SuppressWarnings("unchecked")
         List<String> selectedVariables = (List<String>) defaults.get(PlannerContextDefinition.SELECTED_VARIABLES);
 
-        assertTrue(selectedTools.isEmpty());
         assertTrue(selectedAgents.containsAll(List.of("planner", "reviewer", "architect")));
-        assertEquals(false, defaults.get(PlannerContextDefinition.INJECT_CAPABILITIES));
-        assertEquals(List.of("message", "conversationSummary"), selectedVariables);
+        assertEquals(List.of("message"), selectedVariables);
     }
 
     @Test
     void presetDefaultsIncludeMessageVariableSelection() {
         Map<String, Object> planner = PlannerContextDefinition.presetDefaults("planner");
         assertEquals(
-                List.of("message", "conversationSummary"),
+                List.of("message"),
                 planner.get(PlannerContextDefinition.SELECTED_VARIABLES));
     }
 

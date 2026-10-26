@@ -82,7 +82,7 @@ describe('workflowDraftSnapshot', () => {
   it('keeps current-active agent.json clean after canvas mount adjustments', () => {
     const agentPath = path.resolve(
       __dirname,
-      '../../../../olo-mono/olo-definition/olo-configuration/default/agent.json',
+      '../../../../olo-definition/olo-configuration/default/agent.json',
     )
     const agent = JSON.parse(fs.readFileSync(agentPath, 'utf8')) as WorkflowDocument
     const normalized = normalizeWorkflowDraft(agent)

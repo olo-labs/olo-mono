@@ -7,7 +7,6 @@ package org.olo.definition.planner;
 import org.olo.definition.agent.AgentDefinition;
 import org.olo.definition.execution.ExecutionModel;
 import org.olo.definition.capability.CapabilityDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.validation.ValidationTestFixtures;
 import org.olo.definition.validation.WorkflowValidator;
 import org.olo.definition.workflow.WorkflowBuilder;
@@ -28,15 +27,6 @@ class PlannerCatalogTest {
                         .description("Produces investment analysis.")
                         .addInput("symbol")
                         .addOutput("analysis")
-                        .build())
-                .tool(ToolDefinition.builder()
-                        .id("screener-tool")
-                        .capability(CapabilityDefinition.builder()
-                                .name("Stock Screener")
-                                .description("Filters stocks by technical criteria.")
-                                .addExample("Find breakout candidates")
-                                .build())
-                        .putConfiguration("implementation", "com.example.Screener")
                         .build())
                 .agent(AgentDefinition.builder()
                         .id("research-agent")
@@ -59,20 +49,17 @@ class PlannerCatalogTest {
         PlannerCatalog catalog = PlannerCatalog.from(workflow);
 
         assertThat(catalog.getWorkflows()).hasSize(1);
-        assertThat(catalog.getTools()).extracting(PlannerCapability::getName)
-                .containsExactly("Stock Screener");
         assertThat(catalog.getAgents()).extracting(PlannerCapability::getName)
                 .containsExactly("Research Agent");
         assertThat(catalog.getNodes()).isEmpty();
 
         assertThat(catalog.plannerView())
                 .extracting(PlannerCapability::getName)
-                .containsExactly("Stock Analysis Workflow", "Research Agent", "Stock Screener");
+                .containsExactly("Stock Analysis Workflow", "Research Agent");
 
         PlannerCapability workflowCapability = catalog.plannerView().get(0);
         assertThat(workflowCapability.getDescription()).isEqualTo("Produces investment analysis.");
         assertThat(workflowCapability.getRequiredInputs()).containsExactly("symbol");
-        assertThat(catalog.getTools().get(0).getExamples()).contains("Find breakout candidates");
     }
 
     @Test
@@ -84,7 +71,6 @@ class PlannerCatalogTest {
                         .description("Research topics and summarize findings")
                         .addInput("query")
                         .addOutput("summary")
-                        .addToolRequirement("web-search")
                         .addRequiredContext("user_profile")
                         .cost(0.15)
                         .latency(45_000.0)
@@ -100,7 +86,6 @@ class PlannerCatalogTest {
         assertThat(planner.getCost()).isEqualTo(0.15);
         assertThat(planner.getLatency()).isEqualTo(45_000.0);
         assertThat(planner.getConfidence()).isEqualTo(0.85);
-        assertThat(planner.getToolRequirements()).containsExactly("web-search");
         assertThat(planner.getRequiredContext()).containsExactly("user_profile");
         assertThat(planner.getRequiredInputs()).containsExactly("query");
     }

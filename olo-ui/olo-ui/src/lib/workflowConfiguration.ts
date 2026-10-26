@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import type { WorkflowDocument, WorkflowSummary } from '../types/workflow'
+import { assertFreshWorkflow } from './freshWorkflowContract'
 
 export function parseWorkflowJson(text: string): WorkflowDocument {
   const parsed = JSON.parse(text) as unknown
@@ -13,6 +14,7 @@ export function parseWorkflowJson(text: string): WorkflowDocument {
   if (!doc.id || typeof doc.id !== 'string') {
     throw new Error('Workflow JSON must include string "id"')
   }
+  assertFreshWorkflow(doc)
   return doc
 }
 

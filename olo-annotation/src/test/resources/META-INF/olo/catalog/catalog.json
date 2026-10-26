@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1.0",
   "moduleId": "company-extension",
-  "tools": [
+  "nodes": [
     {
-      "kind": "TOOL",
-      "id": "company-extension:catalog-only-tool",
+      "kind": "NODE",
+      "id": "CATALOG_ONLY_NODE",
       "name": "Catalog Only"
     }
   ]

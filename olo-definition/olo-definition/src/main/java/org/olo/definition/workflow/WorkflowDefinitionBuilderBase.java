@@ -16,7 +16,6 @@ import org.olo.definition.input.WorkflowInputDefinition;
 import org.olo.definition.model.ModelProviderDefinition;
 import org.olo.definition.model.ModelRoutingDefinition;
 import org.olo.definition.node.NodeDefinition;
-import org.olo.definition.orchestration.WorkflowOrchestrationDefinition;
 import org.olo.definition.parameter.WorkflowParameterDefinition;
 import org.olo.definition.parameter.WorkflowParameterDefinitionDeserializer;
 import org.olo.definition.planner.AgentReferenceDefinition;
@@ -25,7 +24,6 @@ import org.olo.definition.runtime.RuntimeBindingDefinition;
 import org.olo.definition.runtime.WorkflowRuntimeDefinition;
 import org.olo.definition.state.StateFieldDefinition;
 import org.olo.definition.agent.AgentDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.variable.VariableDefinition;
 
 import java.util.ArrayList;
@@ -62,7 +60,6 @@ class WorkflowDefinitionBuilderBase {
     List<ChildWorkflowDefinition> childWorkflows;
     @JsonDeserialize(contentUsing = AgentReferenceDefinitionDeserializer.class)
     List<AgentReferenceDefinition> availableAgents;
-    WorkflowOrchestrationDefinition legacyOrchestration;
     String version;
     List<NodeDefinition> nodes;
     List<EdgeDefinition> edges;
@@ -78,7 +75,6 @@ class WorkflowDefinitionBuilderBase {
     CapabilityDefinition capability;
     WorkflowRuntimeDefinition runtime;
     RuntimeBindingDefinition runtimeBinding;
-    List<ToolDefinition> tools;
     List<AgentDefinition> agents;
     List<HookDefinition> hooks;
 
@@ -185,12 +181,6 @@ class WorkflowDefinitionBuilderBase {
             this.availableAgents = new ArrayList<>();
         }
         this.availableAgents.add(agentReference);
-        return self();
-    }
-
-    @com.fasterxml.jackson.annotation.JsonSetter("orchestration")
-    public WorkflowDefinitionBuilder legacyOrchestration(WorkflowOrchestrationDefinition legacyOrchestration) {
-        this.legacyOrchestration = legacyOrchestration;
         return self();
     }
 

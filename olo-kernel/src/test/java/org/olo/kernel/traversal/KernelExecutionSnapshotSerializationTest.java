@@ -36,12 +36,7 @@ class KernelExecutionSnapshotSerializationTest {
 
     @Test
     void omitsGraphJsonWhenRegistryMatchesQueue() throws Exception {
-        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
-        if (!Files.exists(presets)) {
-            throw new org.opentest4j.TestAbortedException("olo-configuration presets not found");
-        }
-
-        KernelRuntimeHolder.setRegistry(OloBootstrap.load(presets, false));
+        KernelRuntimeHolder.setRegistry(org.olo.kernel.support.FreshWorkflowInputs.registry("fast"));
         WorkflowDefinition source = KernelRuntimeHolder.registry().findById("fast").orElseThrow();
         WorkflowInput baseInput = org.olo.kernel.support.FreshWorkflowInputs.minimal();
         WorkflowInput input = baseInput.toBuilder()
@@ -65,14 +60,7 @@ class KernelExecutionSnapshotSerializationTest {
 
     @Test
     void roundTripsThroughJacksonLikeTemporalPayloadConverter() throws Exception {
-        Path presets = Paths.get("../olo-definition/olo-configuration/default").toAbsolutePath().normalize();
-        if (!Files.exists(presets)) {
-            throw new org.opentest4j.TestAbortedException("olo-configuration presets not found");
-        }
-
-        WorkflowDefinition source = org.olo.bootstrap.OloBootstrap.load(presets, false)
-                .findById("fast")
-                .orElseThrow();
+        WorkflowDefinition source = org.olo.kernel.support.FreshWorkflowInputs.graph("fast");
         WorkflowInput baseInput = org.olo.kernel.support.FreshWorkflowInputs.minimal();
         WorkflowInput input = baseInput.toBuilder()
                 .routing(new org.olo.input.model.Routing(
@@ -109,14 +97,10 @@ class KernelExecutionSnapshotSerializationTest {
     }
 
     @Test
-    void roundTripsDynamicGraphCreationPreset() throws Exception {
-        Path workflowJson = Paths.get("../olo-definition/olo-configuration/dynamic-graph-creation/dynamic-graph-creation.json")
+    void roundTripsFreshDelegationPreset() throws Exception {
+        Path workflowJson = Paths.get("../olo-definition/olo-configuration/incident-recovery/incident-recovery.json")
                 .toAbsolutePath()
                 .normalize();
-        if (!Files.exists(workflowJson)) {
-            throw new org.opentest4j.TestAbortedException("dynamic-graph-creation preset not found");
-        }
-
         WorkflowDefinition graph = new org.olo.definition.serializer.JsonWorkflowSerializer()
                 .deserialize(Files.readString(workflowJson));
         Path presets = workflowJson.getParent();
@@ -124,7 +108,7 @@ class KernelExecutionSnapshotSerializationTest {
         WorkflowInput baseInput = org.olo.kernel.support.FreshWorkflowInputs.minimal();
         WorkflowInput input = baseInput.toBuilder()
                 .routing(new org.olo.input.model.Routing(
-                        "dynamic-graph-creation",
+                        "incident-recovery",
                         baseInput.getRouting().getTransactionType(),
                         baseInput.getRouting().getTransactionId(),
                         baseInput.getRouting().getConfigVersion()))
@@ -138,11 +122,11 @@ class KernelExecutionSnapshotSerializationTest {
 
         KernelExecutionSnapshot restored = MAPPER.readValue(json, KernelExecutionSnapshot.class);
 
-        assertThat(restored.getGraph().getId()).isEqualTo("dynamic-graph-creation");
+        assertThat(restored.getGraph().getId()).isEqualTo("incident-recovery");
         assertThat(restored.getGraphJson()).isNull();
         assertThat(restored.isNextRequiresDedicatedActivity()).isTrue();
         assertThat(restored.getWorkflowActivityName())
-                .isEqualTo("dynamic-graph-creation:Dynamic Graph Creation");
-        assertThat(restored.getNextActivityName()).isEqualTo("start:Start");
+                .isEqualTo("incident-recovery:Incident recovery");
+        assertThat(restored.getNextActivityName()).startsWith("start:");
     }
 }

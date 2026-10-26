@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copy olo-mono workflow JSON (default + scenario collections) for Docker builds.
+# Copy olo-mono workflow JSON (fresh chat and incident recovery) for Docker builds.
 # Does not use current-active/ — that folder is for manual local testing only.
 set -euo pipefail
 
@@ -16,19 +16,13 @@ if [ ! -d "$DEFAULT" ]; then
   exit 1
 fi
 
-echo "Bundling workflow presets from default + scenario collections"
-cp "$DEFAULT"/*.json "$DEST/"
-for scenario in research-planner travel-planner travel-Planner dynamic-graph-creation; do
-  scenario_dir="$CONFIG_ROOT/$scenario"
-  if [ -d "$scenario_dir" ] && [ -n "$(find "$scenario_dir" -maxdepth 1 -name '*.json' -print -quit)" ]; then
-    target_name="$(basename "$scenario_dir" | tr '[:upper:]' '[:lower:]')"
-    mkdir -p "$DEST/$target_name"
-    cp "$scenario_dir"/*.json "$DEST/$target_name/"
-  fi
+echo "Bundling workflow presets from fresh chat and incident recovery"
+mkdir -p "$DEST/default"
+cp "$DEFAULT"/*.json "$DEST/default/"
+for scenario in governed incident-recovery; do
+  mkdir -p "$DEST/$scenario"
+  cp "$CONFIG_ROOT/$scenario"/*.json "$DEST/$scenario/"
 done
-if [ -f "$CONFIG_ROOT/dynamic-graph-creation/dynamic-graph-creation.json" ]; then
-  cp "$CONFIG_ROOT/dynamic-graph-creation/dynamic-graph-creation.json" "$DEST/dynamic-graph-creation.json"
-fi
 
 count="$(find "$DEST" -name '*.json' ! -path '*/log/*' | wc -l | tr -d ' ')"
 if [ "$count" = "0" ]; then

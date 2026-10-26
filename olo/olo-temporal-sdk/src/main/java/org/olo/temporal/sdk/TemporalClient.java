@@ -60,6 +60,8 @@ public final class TemporalClient {
         }
         WorkflowOptions options = WorkflowOptions.newBuilder()
                 .setWorkflowId(workflowId)
+                // An accepted turn owns its ID after completion and failure as well.
+                .setWorkflowIdReusePolicy(io.temporal.api.enums.v1.WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE)
                 .setTaskQueue(taskQueue.trim())
                 .setWorkflowExecutionTimeout(java.time.Duration.ofDays(30))
                 .build();
@@ -88,6 +90,17 @@ public final class TemporalClient {
         }
         WorkflowStub stub = workflowClient.newUntypedWorkflowStub(workflowId);
         stub.cancel();
+    }
+
+    /** Metadata only; callers authorize the corresponding conversation before using this. */
+    public String chatWorkflowStatus(String workflowId) {
+        var description = workflowClient.newUntypedWorkflowStub(workflowId).describe();
+        return switch (description.getStatus()) {
+            case WORKFLOW_EXECUTION_STATUS_RUNNING -> "running";
+            case WORKFLOW_EXECUTION_STATUS_COMPLETED -> "completed";
+            case WORKFLOW_EXECUTION_STATUS_CANCELED -> "cancelled";
+            default -> "failed";
+        };
     }
 
     public void close() {

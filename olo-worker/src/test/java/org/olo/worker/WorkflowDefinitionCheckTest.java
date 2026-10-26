@@ -35,4 +35,12 @@ class WorkflowDefinitionCheckTest {
         Files.writeString(folder.resolve("fresh.json"), WORKFLOW.replace("\"label\":\"out\",", ""));
         assertThatThrownBy(() -> WorkflowDefinitionCheck.validate(folder)).isInstanceOf(RuntimeException.class);
     }
+    @Test void retiredFieldNamesAreSafeToExplainWithoutLoggingSubmittedContent() throws Exception {
+        Files.writeString(folder.resolve("fresh.json"), WORKFLOW.replace("\"id\":\"fresh\",",
+                "\"id\":\"private-id\",\"tools\":[\"private-prompt\"],"));
+        var failure=catchThrowable(()->WorkflowDefinitionCheck.validate(folder));
+        assertThat(WorkflowDefinitionCheck.diagnostic(failure)).isEqualTo("Unsupported workflow field: tools");
+        assertThat(WorkflowDefinitionCheck.diagnostic(new IllegalArgumentException("private-secret")))
+                .isEqualTo("IllegalArgumentException");
+    }
 }

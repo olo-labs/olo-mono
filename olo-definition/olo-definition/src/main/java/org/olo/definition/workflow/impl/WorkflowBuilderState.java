@@ -17,7 +17,6 @@ import org.olo.definition.parameter.WorkflowParameterDefinition;
 import org.olo.definition.planner.AgentReferenceDefinition;
 import org.olo.definition.runtime.WorkflowRuntimeDefinition;
 import org.olo.definition.state.StateFieldDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.variable.VariableDefinition;
 import org.olo.definition.workflow.ChildWorkflowDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
@@ -43,7 +42,6 @@ public final class WorkflowBuilderState {
     final List<ModelProviderDefinition> modelProviders = new ArrayList<>();
     final List<ModelRoutingDefinition> modelRouting = new ArrayList<>();
     final List<ExtensionDefinition> extensions = new ArrayList<>();
-    final List<ToolDefinition> tools = new ArrayList<>();
     final List<AgentDefinition> agents = new ArrayList<>();
     final List<HookDefinition> hooks = new ArrayList<>();
     final List<ChildWorkflowDefinition> childWorkflows = new ArrayList<>();
@@ -85,7 +83,6 @@ public final class WorkflowBuilderState {
         modelProviders.addAll(existing.getModelProviders());
         modelRouting.addAll(existing.getModelRouting());
         extensions.addAll(existing.getExtensions());
-        tools.addAll(existing.getTools());
         agents.addAll(existing.getAgents());
         hooks.addAll(existing.getHooks());
         metadata.putAll(existing.getMetadata());
@@ -122,7 +119,6 @@ public final class WorkflowBuilderState {
         delegate.modelProviders(List.copyOf(modelProviders));
         delegate.modelRouting(List.copyOf(modelRouting));
         delegate.extensions(List.copyOf(extensions));
-        delegate.tools(List.copyOf(tools));
         delegate.agents(List.copyOf(agents));
         delegate.hooks(List.copyOf(hooks));
         delegate.childWorkflows(List.copyOf(childWorkflows));

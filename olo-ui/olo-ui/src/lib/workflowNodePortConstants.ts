@@ -37,7 +37,7 @@ export const AGENT_HOST_PORTS: WorkflowPort[] = [
   },
   {
     id: CAPABILITIES_PORT_ID,
-    label: 'available tools',
+    label: 'hooks',
     schema: CAPABILITIES_WIRE,
     type: CAPABILITIES_WIRE,
     acceptType: CAPABILITIES_WIRE,
@@ -103,7 +103,7 @@ export const PLANNER_ROUTED_MESSAGE_PORTS: WorkflowPort[] = [
 export const CAPABILITY_PLUGIN_PORTS: WorkflowPort[] = [
   {
     id: CAPABILITIES_PORT_ID,
-    label: 'available tools',
+    label: 'hooks',
     schema: CAPABILITIES_WIRE,
     type: CAPABILITIES_WIRE,
     direction: 'OUTPUT',

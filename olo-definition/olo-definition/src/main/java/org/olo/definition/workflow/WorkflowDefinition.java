@@ -25,7 +25,6 @@ import org.olo.definition.planner.AgentReferenceDefinition;
 import org.olo.definition.runtime.RuntimeBindingDefinition;
 import org.olo.definition.runtime.WorkflowRuntimeDefinition;
 import org.olo.definition.state.StateFieldDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.variable.VariableDefinition;
 
 import java.util.List;
@@ -43,7 +42,7 @@ import java.util.Objects;
     "id", "enabled", "isDefault", "label", "role", "shortDescription", "emoji", "designer", "queue",
     "workflowType", "runAgain", "longDescription", "isExternalWorkflow", "isChildWorkflow",
     "childWorkflows", "availableAgents", "version", "capability", "runtime", "runtimeBinding",
-    "inputs", "state", "parameters", "nodes", "edges", "variables", "tools", "agents", "hooks",
+    "inputs", "state", "parameters", "nodes", "edges", "variables", "agents", "hooks",
     "modelProviders", "modelRouting", "extensions", "metadata"
 })
 public final class WorkflowDefinition {
@@ -91,7 +90,6 @@ public final class WorkflowDefinition {
     public CapabilityDefinition getCapability() { return fields.capability(); }
     public WorkflowRuntimeDefinition getRuntime() { return fields.runtime(); }
     public RuntimeBindingDefinition getRuntimeBinding() { return fields.runtimeBinding(); }
-    public List<ToolDefinition> getTools() { return fields.tools(); }
     public List<AgentDefinition> getAgents() { return fields.agents(); }
     public List<HookDefinition> getHooks() { return fields.hooks(); }
 

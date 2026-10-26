@@ -7,7 +7,6 @@ package org.olo.definition.planner;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.olo.definition.agent.AgentDefinition;
 import org.olo.definition.capability.CapabilityDefinition;
-import org.olo.definition.tool.ToolDefinition;
 import org.olo.definition.workflow.WorkflowDefinition;
 
 import java.util.ArrayList;
@@ -27,17 +26,14 @@ public final class PlannerCatalog {
 
     private final List<PlannerCapability> workflows;
     private final List<PlannerCapability> agents;
-    private final List<PlannerCapability> tools;
     private final List<PlannerCapability> nodes;
 
     private PlannerCatalog(
             List<PlannerCapability> workflows,
             List<PlannerCapability> agents,
-            List<PlannerCapability> tools,
             List<PlannerCapability> nodes) {
         this.workflows = workflows == null ? List.of() : List.copyOf(workflows);
         this.agents = agents == null ? List.of() : List.copyOf(agents);
-        this.tools = tools == null ? List.of() : List.copyOf(tools);
         this.nodes = nodes == null ? List.of() : List.copyOf(nodes);
     }
 
@@ -57,14 +53,7 @@ public final class PlannerCatalog {
             }
         }
 
-        List<PlannerCapability> toolEntries = new ArrayList<>();
-        for (ToolDefinition tool : workflow.getTools()) {
-            if (tool != null && tool.getCapability() != null) {
-                toolEntries.add(new PlannerCapability(tool.getId(), CatalogKind.TOOL, tool.getCapability()));
-            }
-        }
-
-        return new PlannerCatalog(workflowEntries, agentEntries, toolEntries, List.of());
+        return new PlannerCatalog(workflowEntries, agentEntries, List.of());
     }
 
     public List<PlannerCapability> getWorkflows() {
@@ -73,10 +62,6 @@ public final class PlannerCatalog {
 
     public List<PlannerCapability> getAgents() {
         return agents;
-    }
-
-    public List<PlannerCapability> getTools() {
-        return tools;
     }
 
     /**
@@ -91,7 +76,6 @@ public final class PlannerCatalog {
         List<PlannerCapability> all = new ArrayList<>();
         all.addAll(workflows);
         all.addAll(agents);
-        all.addAll(tools);
         return Collections.unmodifiableList(all);
     }
 
@@ -113,12 +97,11 @@ public final class PlannerCatalog {
         }
         return Objects.equals(workflows, that.workflows)
                 && Objects.equals(agents, that.agents)
-                && Objects.equals(tools, that.tools)
                 && Objects.equals(nodes, that.nodes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(workflows, agents, tools, nodes);
+        return Objects.hash(workflows, agents, nodes);
     }
 }

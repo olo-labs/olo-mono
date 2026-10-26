@@ -53,7 +53,7 @@ public final class WorkerToolGateSetup {
         Path caCertificate = WorkerSettings.resolveAgainst(config.getCaCertificate(), configurationBaseDirectory);
         Path credentialsDir = WorkerSettings.resolveAgainst(config.getCredentialsDir(), configurationBaseDirectory);
         org.olo.toolgate.client.ToolGateSettings clientSettings = new org.olo.toolgate.client.ToolGateSettings(
-                URI.create(config.getMcpUrl()),
+                URI.create(endpoint(config.getMcpUrl())),
                 caCertificate,
                 credentialsDir,
                 Duration.ofMillis(config.resolveTimeoutMs()));
@@ -92,8 +92,18 @@ public final class WorkerToolGateSetup {
                 .orElseThrow(() -> new IllegalStateException("toolgate.userCredentialsUrl needs "
                         + org.olo.kernel.context.callback.CallbackSigner.ENV_KEY_ID + " and "
                         + org.olo.kernel.context.callback.CallbackSigner.ENV_KEY + " to sign credential requests"));
-        return new org.olo.toolgate.client.impl.BackendUserCredentialProvider(URI.create(config.getUserCredentialsUrl()),
+        return new org.olo.toolgate.client.impl.BackendUserCredentialProvider(URI.create(endpoint(config.getUserCredentialsUrl())),
                 signer::sign, Duration.ofMillis(config.resolveTimeoutMs()));
+    }
+
+    static String endpoint(String configured) {
+        if (configured != null && configured.matches("\\$\\{[A-Z][A-Z0-9_]*}")) {
+            String name = configured.substring(2, configured.length() - 1);
+            String value = System.getenv(name);
+            if (value == null || value.isBlank()) throw new IllegalStateException("Required endpoint environment variable: " + name);
+            return value.trim();
+        }
+        return configured;
     }
 
     /** Operator-controlled (tenant, workflow) → agents mappings. Workflow definitions can't change them. */

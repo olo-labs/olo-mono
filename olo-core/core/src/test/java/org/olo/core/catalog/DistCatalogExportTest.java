@@ -58,25 +58,10 @@ class DistCatalogExportTest {
     }
 
     @Test
-    void distCatalogIncludesHttpBodyVisibleWhen() throws Exception {
+    void distCatalogExcludesLocalTools() throws Exception {
         JsonNode catalog = MAPPER.readTree(resolveDistCatalogRoot().resolve("catalog.json").toFile());
-        JsonNode http =
-                catalog.get("tools").iterator().next();
-        for (JsonNode tool : catalog.get("tools")) {
-            if ("olo-core:http-tool".equals(tool.path("id").asText(null))) {
-                http = tool;
-                break;
-            }
-        }
-        JsonNode body = null;
-        for (JsonNode argument : http.get("parameters")) {
-            if ("body".equals(argument.path("id").asText(null))) {
-                body = argument;
-                break;
-            }
-        }
-        assertThat(body).isNotNull();
-        assertThat(body.get("visibleWhen").get("method").asText()).isEqualTo("POST");
+        assertThat(catalog.has("tools")).isFalse();
+        assertThat(resolveDistCatalogRoot().resolve("tools.json")).doesNotExist();
     }
 
     @Test

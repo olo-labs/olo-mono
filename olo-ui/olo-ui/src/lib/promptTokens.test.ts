@@ -1,27 +1,15 @@
-/*
- * Copyright (c) 2026 Olo Labs
- * SPDX-License-Identifier: Apache-2.0
- */
+/* Copyright 2026 Olo Labs; SPDX-License-Identifier: Apache-2.0 */
 import { describe, expect, it } from 'vitest'
-import {
-  buildPromptInsertOptions,
-  normalizePromptMacroAliases,
-  PROMPT_TOKEN_AGENTS,
-  PROMPT_TOKEN_TOOLS,
-} from './promptTokens'
+import { buildPromptInsertOptions, insertTextAtCursor } from './promptTokens'
 describe('promptTokens', () => {
-  it('builds variable and runtime insert options', () => {
+  it('offers declared variables and canonical runtime tokens', () => {
     const options = buildPromptInsertOptions(['message', 'topic'])
-    expect(options.filter((option) => option.group === 'Variables').map((option) => option.label)).toEqual([
-      'message',
-      'topic',
-    ])
-    expect(options.some((option) => option.value === '{tools}')).toBe(true)
-    expect(options.some((option) => option.value === '{agents}')).toBe(true)
+    expect(options.filter(option => option.group === 'Variables').map(option => option.label)).toEqual(['message', 'topic'])
+    expect(options.filter(option => option.group === 'Runtime').map(option => option.value)).toEqual(['{message}', '{availableAgentsJson}'])
   })
-
-  it('normalizes friendly macro aliases', () => {
-    const template = `Use {${PROMPT_TOKEN_TOOLS}} and {${PROMPT_TOKEN_AGENTS}}`
-    expect(normalizePromptMacroAliases(template)).toBe('Use {CAPABILITIES} and {AGENTS}')
+  it('appends a token when no editor is focused', () => {
+    let value = ''
+    insertTextAtCursor(null, 'Delegate to ', '{availableAgentsJson}', next => { value = next })
+    expect(value).toBe('Delegate to {availableAgentsJson}')
   })
 })

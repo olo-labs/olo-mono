@@ -8,7 +8,7 @@ import type { CatalogComponentBase, StudioCatalog } from '../types/catalog'
 
 export interface CatalogComponentGroup {
 
-  id: 'nodes' | 'tools' | 'hooks'
+  id: 'nodes' | 'hooks'
 
   label: string
 
@@ -34,11 +34,7 @@ export function catalogComponentGroups(catalog: StudioCatalog | null): CatalogCo
 
   }
 
-  if (catalog.tools?.length) {
 
-    groups.push({ id: 'tools', label: 'Tools', items: catalog.tools })
-
-  }
 
   if (catalog.hooks?.length) {
 
@@ -51,5 +47,3 @@ export function catalogComponentGroups(catalog: StudioCatalog | null): CatalogCo
   return groups
 
 }
-
-

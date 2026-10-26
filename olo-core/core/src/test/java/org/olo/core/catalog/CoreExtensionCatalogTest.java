@@ -14,7 +14,6 @@ class CoreExtensionCatalogTest {
     void loadsMergedCoreExtensions() {
         var catalog = CoreExtensionCatalog.loadMerged();
         assertThat(catalog.nodes()).hasSizeGreaterThanOrEqualTo(6);
-        assertThat(catalog.tools()).hasSizeGreaterThanOrEqualTo(3);
         assertThat(catalog.hooks()).hasSizeGreaterThanOrEqualTo(3);
         assertThat(catalog.nodes().stream().map(n -> n.id).toList())
                 .contains("olo-core:PROMPT", "olo-core:AGENT");
@@ -24,12 +23,6 @@ class CoreExtensionCatalogTest {
             assertThat(n.version).as("node %s version", n.id).isEqualTo("1.0.0");
             assertThat(n.provider).as("node %s provider", n.id).isEqualTo("olo-core");
             assertThat(n.stability).as("node %s stability", n.id).isNotBlank();
-        });
-        catalog.tools().forEach(t -> {
-            assertThat(t.emoji).as("tool %s emoji", t.id).isNotBlank();
-            assertThat(t.version).as("tool %s version", t.id).isEqualTo("1.0.0");
-            assertThat(t.provider).as("tool %s provider", t.id).isEqualTo("olo-core");
-            assertThat(t.stability).as("tool %s stability", t.id).isNotBlank();
         });
         catalog.hooks().forEach(h -> {
             assertThat(h.emoji).as("hook %s emoji", h.id).isNotBlank();
@@ -44,8 +37,9 @@ class CoreExtensionCatalogTest {
                         .stability)
                 .isEqualTo("experimental");
         var runtime = CoreExtensionCatalog.loadRuntimeRegistry();
-        assertThat(runtime.bindings()).hasSizeGreaterThanOrEqualTo(12);
+        assertThat(runtime.bindings()).hasSizeGreaterThanOrEqualTo(9);
         assertThat(runtime.bindings().stream().map(b -> b.id).toList())
-                .contains("olo-core:http-tool", "olo-core:PROMPT");
+                .contains("olo-core:PROMPT")
+                .doesNotContain("olo-core:http-tool");
     }
 }

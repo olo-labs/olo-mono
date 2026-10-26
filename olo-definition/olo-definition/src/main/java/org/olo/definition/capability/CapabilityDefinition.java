@@ -40,7 +40,6 @@ public final class CapabilityDefinition {
     private final Double cost;
     private final Double latency;
     private final Double confidence;
-    private final List<String> toolRequirements;
     private final List<String> requiredContext;
 
     CapabilityDefinition(CapabilityDefinitionBuilder builder) {
@@ -54,8 +53,6 @@ public final class CapabilityDefinition {
         this.cost = builder.cost;
         this.latency = builder.latency;
         this.confidence = builder.confidence;
-        this.toolRequirements =
-                builder.toolRequirements == null ? List.of() : List.copyOf(builder.toolRequirements);
         this.requiredContext =
                 builder.requiredContext == null ? List.of() : List.copyOf(builder.requiredContext);
     }
@@ -122,11 +119,6 @@ public final class CapabilityDefinition {
         return confidence;
     }
 
-    @JsonProperty("tool_requirements")
-    public List<String> getToolRequirements() {
-        return toolRequirements;
-    }
-
     @JsonProperty("required_context")
     public List<String> getRequiredContext() {
         return requiredContext;
@@ -150,7 +142,6 @@ public final class CapabilityDefinition {
                 && Objects.equals(cost, that.cost)
                 && Objects.equals(latency, that.latency)
                 && Objects.equals(confidence, that.confidence)
-                && Objects.equals(toolRequirements, that.toolRequirements)
                 && Objects.equals(requiredContext, that.requiredContext);
     }
 
@@ -167,7 +158,6 @@ public final class CapabilityDefinition {
                 cost,
                 latency,
                 confidence,
-                toolRequirements,
                 requiredContext);
     }
 }

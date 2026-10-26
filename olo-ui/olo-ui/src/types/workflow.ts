@@ -20,7 +20,6 @@ export type {
   WorkflowParameter,
   VariableScope,
   WorkflowVariable,
-  WorkflowTool,
   WorkflowHook,
   ChildWorkflowRef,
   AgentReference,

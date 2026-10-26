@@ -30,7 +30,7 @@ public final class YamlWorkflowSerializer implements WorkflowSerializer {
     }
 
     public YamlWorkflowSerializer(ObjectMapper mapper, Charset charset) {
-        this.mapper = mapper;
+        this.mapper = JacksonWorkflowMapper.configure(mapper.copy());
         this.charset = charset;
     }
 

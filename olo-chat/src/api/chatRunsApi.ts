@@ -8,7 +8,7 @@ import type { HumanInputRequestDto, RunResponseDto, RunStatusDto } from './chatT
 
 export async function getRun(runId: string): Promise<RunStatusDto | null> {
   try {
-    const res = await fetch(`${CHAT_API}/runs/${encodeURIComponent(runId)}`, { headers: withAuth() })
+    const res = await fetch(`${CHAT_API}/v1/runs/${encodeURIComponent(runId)}`, { headers: withAuth() })
     if (!res.ok) return null
     const data = await res.json()
     return { runId: data.runId ?? runId, status: data.status ?? 'running' }
@@ -19,7 +19,7 @@ export async function getRun(runId: string): Promise<RunStatusDto | null> {
 
 export async function getRunResponse(runId: string): Promise<RunResponseDto | null> {
   try {
-    const res = await fetch(`${CHAT_API}/runs/${encodeURIComponent(runId)}/response`, { headers: withAuth() })
+    const res = await fetch(`${CHAT_API}/v1/runs/${encodeURIComponent(runId)}/response`, { headers: withAuth() })
     if (!res.ok) return null
     const data = await res.json()
     return { runId: data.runId ?? runId, response: data.response ?? '' }
@@ -29,7 +29,7 @@ export async function getRunResponse(runId: string): Promise<RunResponseDto | nu
 }
 
 export async function submitHumanInput(runId: string, body: HumanInputRequestDto): Promise<void> {
-  const res = await fetch(`${CHAT_API}/runs/${encodeURIComponent(runId)}/human-input`, {
+  const res = await fetch(`${CHAT_API}/v1/runs/${encodeURIComponent(runId)}/human-input`, {
     method: 'POST',
     headers: withAuth({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
@@ -44,9 +44,9 @@ export async function submitHumanInput(runId: string, body: HumanInputRequestDto
 }
 
 export async function cancelRun(runId: string): Promise<void> {
-  const res = await fetch(`${CHAT_API}/runs/${encodeURIComponent(runId)}/cancel`, {
+  const res = await fetch(`${CHAT_API}/v1/runs/${encodeURIComponent(runId)}/cancel`, {
     method: 'POST',
-    headers: withAuth(),
+    headers: withAuth({'Idempotency-Key': crypto.randomUUID()}),
   })
   if (res.status === 404) throw new Error('Run not found')
   if (res.status === 409) throw new Error('Run is no longer in progress')

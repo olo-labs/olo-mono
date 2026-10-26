@@ -1,0 +1,147 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: olo-knowledge
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: toolgate-only-services
+  namespace: olo-knowledge
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: olo-knowledge
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: toolgate
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: tool-host
+      ports: [{protocol: TCP, port: 8443}]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: toolgate
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: control-plane
+      ports: [{protocol: TCP, port: 8443}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: memory-storage-only
+  namespace: olo-knowledge
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: olo-memory}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: memory-postgres}
+      ports: [{protocol: TCP, port: 5432}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rag-storage-only
+  namespace: olo-knowledge
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: olo-rag}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: rag-postgres}
+      ports: [{protocol: TCP, port: 5432}]
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: qdrant}
+      ports: [{protocol: TCP, port: 6333}]
+    - to:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: embeddings}
+      ports: [{protocol: TCP, port: 11434}]
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: memory-postgres-owner-only
+  namespace: olo-knowledge
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: memory-postgres}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: olo-memory}
+      ports: [{protocol: TCP, port: 5432}]
+  egress: []
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rag-postgres-owner-only
+  namespace: olo-knowledge
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: rag-postgres}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: olo-rag}
+      ports: [{protocol: TCP, port: 5432}]
+  egress: []
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: qdrant-owner-only
+  namespace: olo-knowledge
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: qdrant}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: olo-rag}
+      ports: [{protocol: TCP, port: 6333}]
+  egress: []
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: embeddings-owner-only
+  namespace: olo-knowledge
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/name: embeddings}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/name: olo-rag}
+      ports: [{protocol: TCP, port: 11434}]
+  egress: []

@@ -33,6 +33,7 @@ class ParameterWidgetTest {
                         "NUMBER",
                         "SLIDER",
                         "BOOLEAN",
+                        "APPROVAL_TOGGLE",
                         "SELECT",
                         "MULTI_SELECT",
                         "JSON",

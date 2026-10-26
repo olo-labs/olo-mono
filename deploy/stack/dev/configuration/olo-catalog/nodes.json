@@ -2,16 +2,16 @@
   "schemaVersion" : "1.0",
   "generatedBy" : "olo-annotation-processor",
   "generatedByVersion" : "1.0.0",
-  "generatedAt" : "2026-07-29T00:22:50.219946400Z",
+  "generatedAt" : "2026-10-26T16:37:24.893598800Z",
   "defaults" : {
     "runtime" : {
       "capabilities" : [ "DEBUG", "REPLAY" ]
     },
     "connectionRules" : {
       "primitives" : [ "string", "number", "integer", "boolean", "object", "array" ],
-      "strategy" : "schema_match",
-      "wildcards" : [ "any", "*" ],
       "version" : "1.0",
+      "wildcards" : [ "any", "*" ],
+      "strategy" : "schema_match",
       "wireTypes" : [ "any", "message", "capabilities", "agent-plug" ]
     },
     "connectionPolicy" : {
@@ -20,8 +20,8 @@
     },
     "designer" : {
       "nodeSize" : {
-        "height" : 80,
-        "width" : 200
+        "width" : 200,
+        "height" : 80
       },
       "resizable" : true,
       "draggable" : true
@@ -46,7 +46,7 @@
     "provider" : "olo-core",
     "stability" : "experimental",
     "name" : "Agent",
-    "description" : "Autonomous agent node — dispatches to a child workflow (provider runtime pending)",
+    "description" : "Agent model turn or delegated child workflow with ToolGate-governed business tools",
     "category" : "agent",
     "emoji" : "\uD83E\uDD16",
     "tags" : [ "agent", "core" ],
@@ -73,13 +73,13 @@
       }
     }, {
       "id" : "capabilities",
-      "name" : "available tools",
-      "label" : "available tools",
+      "name" : "hooks",
+      "label" : "hooks",
       "schema" : "capabilities",
       "type" : "capabilities",
       "acceptType" : "capabilities",
       "minConnections" : 0,
-      "description" : "Tools and hooks registered for runtime prompt assembly (0 or more)",
+      "description" : "Hooks registered for the workflow (0 or more)",
       "ui" : {
         "position" : "BOTTOM",
         "color" : "#22c55e"
@@ -123,6 +123,33 @@
         "help" : "Optional instructions that shape agent behavior.",
         "placeholder" : "You are a helpful assistant…",
         "order" : 0
+      }
+    }, {
+      "id" : "agentName",
+      "label" : "Delegated actor",
+      "type" : "string",
+      "required" : false,
+      "ui" : {
+        "widget" : "STRING",
+        "group" : "Security",
+        "help" : "Business-tool actor name. The server must explicitly map it for this tenant and workflow. It never authorizes memory or RAG.",
+        "order" : 1
+      }
+    }, {
+      "id" : "maxToolRounds",
+      "label" : "Maximum business tool rounds",
+      "type" : "number",
+      "required" : false,
+      "validation" : {
+        "minimum" : 0.0,
+        "maximum" : 32.0
+      },
+      "defaultValue" : 0,
+      "ui" : {
+        "widget" : "NUMBER",
+        "group" : "Security",
+        "help" : "Use zero for platform chat. Business tools require user authorization and a mapped delegated actor.",
+        "order" : 2
       }
     } ],
     "contract" : {

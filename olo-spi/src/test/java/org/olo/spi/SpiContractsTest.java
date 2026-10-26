@@ -11,9 +11,6 @@ import org.olo.spi.hook.HookResult;
 import org.olo.spi.node.NodeRequest;
 import org.olo.spi.node.NodeResult;
 import org.olo.spi.node.NodeStatus;
-import org.olo.spi.tool.ToolRequest;
-import org.olo.spi.tool.ToolResult;
-import org.olo.spi.tool.ToolStatus;
 
 import java.util.Map;
 
@@ -27,13 +24,6 @@ class SpiContractsTest {
         assertThat(result.status()).isEqualTo(NodeStatus.COMPLETED);
         assertThat(result.message()).isEqualTo("done");
         assertThat(result.output()).containsEntry("key", "value");
-    }
-
-    @Test
-    void toolResultFactories() {
-        ToolResult result = ToolResult.success(Map.of("answer", 42));
-        assertThat(result.status()).isEqualTo(ToolStatus.SUCCESS);
-        assertThat(result.output()).containsEntry("answer", 42);
     }
 
     @Test
@@ -55,10 +45,7 @@ class SpiContractsTest {
     @Test
     void requestModelsDefensiveCopy() {
         NodeRequest request = new NodeRequest("n1", "MODEL", Map.of("in", 1), Map.of());
-        ToolRequest toolRequest = new ToolRequest("stock-screener", null, Map.of(), Map.of());
 
         assertThat(request.nodeId()).isEqualTo("n1");
-        assertThat(toolRequest.toolId()).isEqualTo("stock-screener");
-        assertThat(toolRequest.invocationId()).isEqualTo("stock-screener");
     }
 }

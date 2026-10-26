@@ -85,8 +85,6 @@ export function handleWorkflowCanvasDrop(
     catalogItem =
       catalog?.nodes?.find((n) => n.id === payload.catalogId)
       ?? paletteNodes.find((n) => n.id === payload.catalogId)
-  } else if (payload.kind === 'TOOL') {
-    catalogItem = catalog?.tools?.find((tool) => tool.id === payload.catalogId)
   } else if (payload.kind === 'HOOK') {
     catalogItem = catalog?.hooks?.find((hook) => hook.id === payload.catalogId)
   } else if (payload.kind === 'AGENT') {

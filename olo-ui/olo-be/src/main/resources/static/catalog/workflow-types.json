@@ -2,7 +2,7 @@
   "schemaVersion" : "1.0",
   "generatedBy" : "olo-annotation-processor",
   "generatedByVersion" : "1.0.0",
-  "generatedAt" : "2026-06-18T17:34:58.171624500Z",
+  "generatedAt" : "2026-10-26T16:37:24.893598800Z",
   "catalogType" : "workflow-types",
   "moduleId" : "olo-kernel",
   "workflowTypes" : [ {

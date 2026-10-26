@@ -5,7 +5,6 @@
 package org.olo.definition.planner;
 
 import org.olo.definition.OloProductTerminology;
-import org.olo.definition.preset.WorkflowConversationPluginSupport;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -75,7 +74,7 @@ public final class WorkflowPlannerPromptDefinition {
     }
 
     private static String promptTemplate(String presetId) {
-        return appendConversationContext(switch (presetId) {
+        return switch (presetId) {
             case "agent" ->
                     "You are an autonomous "
                             + OloProductTerminology.PRODUCT
@@ -172,11 +171,7 @@ public final class WorkflowPlannerPromptDefinition {
 
                     Request:
                     {message}""";
-        });
-    }
-
-    private static String appendConversationContext(String template) {
-        return template + WorkflowConversationPluginSupport.conversationContextPromptBlock();
+        };
     }
 
     public String getId() {

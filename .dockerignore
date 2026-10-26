@@ -6,3 +6,15 @@
 **/dist
 **/storybook-static
 .idea
+
+# Runtime state and local credentials never enter a source build context.
+olo-definition/olo-configuration/log
+olo-ui/olo-be/docker/runtime-configuration/log
+deploy/stack/dev/configuration/olo-worker/logs
+**/*.log
+**/.dev
+**/.env
+**/.env.*
+*/bin
+**/conversations
+**/resource-uploads

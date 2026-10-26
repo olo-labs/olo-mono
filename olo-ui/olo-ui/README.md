@@ -10,6 +10,15 @@ Frontend contributors should read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), 
 
 REST-oriented frontend for Olo. Built with React, TypeScript, and Vite. Proxies `/api` to the backend (olo-be). **Build is Gradle-based** (Gradle runs Node/npm via the Node plugin).
 
+## Fresh workflow contract
+
+Imports, configuration API reads and saves reject legacy local-tool workflow fields, including `tools`,
+`toolCalls`, `tool_requirements`, `toolCallPlanner`, `TOOL` nodes and `{availableToolsJson}`.
+Use newly created workflows with agent delegation through `agentCalls` and `agentCallPlanner`.
+Business-tool identities remain server-mapped; memory and RAG use the signed-in user's governed platform flow.
+The backend and runtime enforce validation and ToolGate authorization. Roll this boundary out with the
+M9 runtime/catalog changes; existing workflow conversion is outside the installation contract.
+
 ## Requirements
 
 - **Gradle 8.5+** (or use the wrapper: `./gradlew` / `gradlew.bat`). If the wrapper jar is missing, run `gradle wrapper` once (requires Gradle on PATH).

@@ -1,0 +1,2 @@
+rootProject.name = 'olo-knowledge'
+include 'service-core', 'olo-memory', 'olo-rag'

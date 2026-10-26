@@ -9,7 +9,7 @@ import org.olo.definition.runtime.RuntimeDelegationDefinition;
 import org.olo.definition.runtime.WorkflowRuntimeDefinition;
 
 /**
- * Applies default runtime execution model and migrates legacy orchestration blocks before build.
+ * Applies the default runtime execution model before build.
  */
 final class WorkflowDefinitionBuilderRuntime {
 
@@ -18,7 +18,6 @@ final class WorkflowDefinitionBuilderRuntime {
 
     static void normalize(WorkflowDefinitionBuilderBase builder) {
         ensureRuntime(builder);
-        mergeLegacyOrchestrationIntoRuntime(builder);
     }
 
     private static void ensureRuntime(WorkflowDefinitionBuilderBase builder) {
@@ -39,24 +38,4 @@ final class WorkflowDefinitionBuilderRuntime {
         }
     }
 
-    private static void mergeLegacyOrchestrationIntoRuntime(WorkflowDefinitionBuilderBase builder) {
-        if (builder.legacyOrchestration == null) {
-            return;
-        }
-        RuntimeDelegationDefinition delegation =
-                RuntimeDelegationDefinition.fromLegacy(builder.legacyOrchestration);
-        if (builder.runtime == null) {
-            builder.runtime = WorkflowRuntimeDefinition.builder().delegation(delegation).build();
-            return;
-        }
-        if (builder.runtime.getDelegation() == null) {
-            builder.runtime = WorkflowRuntimeDefinition.builder()
-                    .contractVersion(builder.runtime.getContractVersion())
-                    .executionModel(builder.runtime.getExecutionModel())
-                    .capabilities(builder.runtime.getCapabilities())
-                    .defaultTimeout(builder.runtime.getDefaultTimeout())
-                    .delegation(delegation)
-                    .build();
-        }
-    }
 }

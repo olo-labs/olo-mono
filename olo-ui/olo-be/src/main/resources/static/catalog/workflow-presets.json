@@ -2,7 +2,7 @@
   "schemaVersion" : "1.0",
   "generatedBy" : "olo-annotation-processor",
   "generatedByVersion" : "1.0.0",
-  "generatedAt" : "2026-06-18T17:34:58.171624500Z",
+  "generatedAt" : "2026-10-26T16:37:24.893598800Z",
   "catalogType" : "workflow-presets",
   "moduleId" : "olo-core",
   "presets" : [ {
@@ -15,17 +15,57 @@
         "height" : 120
       }
     },
+    "inputs" : [ {
+      "id" : "in",
+      "name" : "in",
+      "label" : "message in",
+      "schema" : "message",
+      "type" : "message",
+      "acceptType" : "message",
+      "minConnections" : 0,
+      "description" : "Incoming message (routed by planner/agent at runtime)",
+      "ui" : {
+        "position" : "LEFT",
+        "color" : "#71717a"
+      }
+    } ],
+    "outputs" : [ {
+      "id" : "out",
+      "name" : "out",
+      "label" : "message out",
+      "schema" : "message",
+      "type" : "message",
+      "minConnections" : 0,
+      "description" : "Outgoing message (routed by planner/agent at runtime)",
+      "ui" : {
+        "position" : "RIGHT",
+        "color" : "#71717a"
+      }
+    }, {
+      "id" : "agentPlug",
+      "name" : "agentPlug",
+      "label" : "agent plug",
+      "schema" : "agent-plug",
+      "type" : "agent-plug",
+      "minConnections" : 0,
+      "description" : "Child workflow indicator for runtime prompt assembly on a connected agent",
+      "ui" : {
+        "position" : "TOP",
+        "color" : "#a855f7"
+      }
+    } ],
     "parameters" : [ {
       "id" : "systemPrompt",
       "label" : "System Prompt",
       "type" : "string",
       "description" : "System prompt for the agent",
       "required" : false,
+      "defaultValue" : "{message}",
       "ui" : {
         "widget" : "TEXTAREA",
         "group" : "Model Settings",
-        "help" : "Optional instructions that shape agent behavior.",
-        "placeholder" : "You are a helpful assistant…",
+        "help" : "Include {message} to inject the workflow input into the system prompt.",
+        "placeholder" : "You are a helpful assistant…\n\n{message}",
         "order" : 0
       }
     }, {
@@ -50,15 +90,12 @@
       "id" : "model",
       "label" : "Model",
       "type" : "string",
-      "description" : "Model identifier",
-      "required" : true,
-      "validation" : {
-        "minLength" : 1
-      },
+      "description" : "Default model identifier",
+      "required" : false,
       "ui" : {
         "widget" : "MODEL_SELECTOR",
         "group" : "Model Settings",
-        "help" : "LLM used for agent reasoning.",
+        "help" : "Optional workflow default. Prefer the Model control on each Agent node.",
         "order" : 2
       }
     }, {

@@ -323,6 +323,8 @@ export function findPendingHumanEvent(
   const scoped = runEvents.filter((e) => (e.runId ?? '').trim() === runId)
   if (scoped.length === 0) return null
 
+  if (isWorkflowCancelled(scoped)) return null
+
   const latestHumanWaiting = [...scoped].reverse().find(isHumanWaitingEvent)
   const hasHumanCompletedAfterWait = latestHumanWaiting
     ? scoped.some(
