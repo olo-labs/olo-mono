@@ -77,7 +77,10 @@ public final class PlatformKnowledge {
     }
 
     public JsonNode read(String conversation, Map<String, Object> request) {
-        var result = call(UUID.randomUUID().toString(), "memory.read", conversation, request);
+        // A fresh credential is obtained on each attempt; the durable operation stays the same.
+        String operationId = UUID.randomUUID().toString();
+        var result = GovernedReadRecovery.read(
+                () -> call(operationId, "memory.read", conversation, request));
         // Historical/derived responses are not released just because the conversation is still
         // visible.
         validate(result);

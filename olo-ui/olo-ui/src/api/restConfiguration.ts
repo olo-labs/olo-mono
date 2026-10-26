@@ -6,6 +6,7 @@ import type { GraphLogSummary } from '../types/graphLog'
 import type { StudioCatalog } from '../types/catalog'
 import type { ModelProvider, WorkflowDocument, WorkflowSummary } from '../types/workflow'
 import { API_BASE, encodeWorkflowPath } from './restClient'
+import { assertFreshWorkflow } from '../lib/freshWorkflowContract'
 
 export interface ModelProviderTestResult {
   ok: boolean
@@ -29,13 +30,16 @@ export async function listWorkflowConfigurations(): Promise<WorkflowSummary[]> {
 export async function getWorkflowConfiguration(fileName: string): Promise<WorkflowDocument> {
   const res = await fetch(`${API_BASE}/configuration/workflows/${encodeWorkflowPath(fileName)}`)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.json()
+  const document: WorkflowDocument = await res.json()
+  assertFreshWorkflow(document)
+  return document
 }
 
 export async function saveWorkflowConfiguration(
   fileName: string,
   document: WorkflowDocument,
 ): Promise<WorkflowSummary> {
+  assertFreshWorkflow(document)
   const res = await fetch(`${API_BASE}/configuration/workflows/${encodeWorkflowPath(fileName)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
