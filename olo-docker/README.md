@@ -202,6 +202,37 @@ Core services are always deployed in dev:
 
 ---
 
+### Windows model selection
+
+`install.bat dev` installs one default model for each selected category:
+
+| Category | Default model | Runtime |
+|---|---|---|
+| Text (always enabled) | Llama 3.2 1B | Ollama |
+| Audio (optional) | Whisper tiny, speech to text | Dedicated LocalAI audio service |
+| Image (optional) | SD Turbo, approximately 5.2 GB | ComfyUI |
+| Video (optional) | Stable Video Diffusion, 14 frames, approximately 9.6 GB | Dedicated ComfyUI video service |
+
+For each enabled category, the installer asks `Do you need more than 1 <category> model? [y/N]`. Enter skips extras. Answer `y` to see every additional model in the installer's catalog, then answer `y` only for the models you want. Each model prompt also defaults to No. Disabled categories have no model prompts or downloads. Existing model files are retained on reruns.
+
+The Windows installer uses ComfyUI for image and video models; it does not automatically start the alternative Stable Diffusion WebUI and InvokeAI services. Text uses Ollama; the LocalAI-compatible text server remains available without downloading a second text model. Audio's default is transcription; it does not include a text-to-speech voice. GPU requirements from the Compose files still apply. Video's default is the lighter 14-frame option in this catalog, but still needs substantial disk space and GPU memory.
+
+Downloads fail the installation on error. Image/video checkpoints are placed in ComfyUI's checkpoint directory; select the checkpoint in an appropriate workflow. See the [SD Turbo model card](https://huggingface.co/stabilityai/sd-turbo), [SVD model card](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid), and [ComfyUI video workflow examples](https://comfyanonymous.github.io/ComfyUI_examples/video/) for usage.
+
+Preview the selection flow without downloads:
+
+```powershell
+powershell -NoProfile -File .\dev\scripts\install-selected-models.ps1 -Audio 1 -Image 1 -Video 1 -PlanOnly
+```
+
+Run selection and mocked installation checks:
+
+```powershell
+powershell -NoProfile -File .\dev\scripts\test-model-selection.ps1
+```
+
+This model-selection flow applies to the Windows installer. The standalone legacy model helper scripts and Unix installer retain their existing behavior.
+
 ## Production Setup (.env)
 
 The **prod** stack reads database credentials from environment variables. The install scripts expect a `.env` file in the `prod` folder.
