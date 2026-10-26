@@ -24,7 +24,7 @@ def main():
         for path in (ROOT / folder).rglob("*.json"):
             validate(json.loads(path.read_text(encoding="utf-8")), path.relative_to(ROOT))
             count += 1
-    retired_api = re.compile(r"org\.olo\.spi\.tool|@OloTool\b|class ToolDescriptor\b|NodeType\.TOOL\b|\bToolNodeTypeHandler\b|\bToolCallPlannerSupport\b|\bAvailableToolsJsonResolver\b")
+    retired_api = re.compile(r"org\.olo\.spi\.tool|@OloTool\b|class ToolDescriptor\b|NodeType\.TOOL\b|\bToolNodeTypeHandler\b|\bToolCallPlannerSupport\b|\bAvailableToolsJsonResolver\b|\bToolRegistry\b|\bToolDefinition\b|\bToolChainMerger\b|\bParsedToolCall\b|\bToolSynthesisSupport\b|\bWorkflowOrchestrationDefinition\b")
     for module in ROOT.glob("olo*"):
         if not module.is_dir():
             continue
