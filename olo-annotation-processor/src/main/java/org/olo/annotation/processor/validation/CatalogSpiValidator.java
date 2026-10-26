@@ -13,12 +13,11 @@ import java.util.Map;
 
 /**
  * Validates that catalog annotation identifiers match their corresponding SPI annotations
- * ({@code @NodeType}, {@code @ToolId}, {@code @ImplementationId}).
+ * ({@code @NodeType}, {@code @ImplementationId}).
  */
 final class CatalogSpiValidator {
 
     private static final String NODE_TYPE_ANNOTATION = "org.olo.spi.annotation.NodeType";
-    private static final String TOOL_ID_ANNOTATION = "org.olo.spi.annotation.ToolId";
     private static final String IMPLEMENTATION_ID_ANNOTATION = "org.olo.spi.annotation.ImplementationId";
 
     private final CatalogValidationContext context;
@@ -32,10 +31,7 @@ final class CatalogSpiValidator {
                 typeElement, "OLO-AP-001", "@OloNode.type", globalId, "@NodeType", NODE_TYPE_ANNOTATION);
     }
 
-    boolean validateToolSpi(TypeElement typeElement, String globalId) {
-        return requireSpiMatch(
-                typeElement, "OLO-AP-002", "@OloTool.id", globalId, "@ToolId", TOOL_ID_ANNOTATION);
-    }
+
 
     boolean validateHookSpi(TypeElement typeElement, String globalId) {
         return requireSpiMatch(

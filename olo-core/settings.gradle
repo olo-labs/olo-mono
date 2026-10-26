@@ -10,7 +10,6 @@ plugins {
 rootProject.name = 'olo-core-build'
 
 include 'nodes'
-include 'tools'
 include 'hooks'
 include 'runtime'
 include 'core'

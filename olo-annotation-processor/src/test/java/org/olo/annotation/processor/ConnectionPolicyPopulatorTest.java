@@ -17,7 +17,8 @@ class ConnectionPolicyPopulatorTest {
 
     @Test
     void emitsCardinalityWhenNonDefault() throws Exception {
-        OloConnectionPolicy policy = SwitchPolicy.class.getAnnotation(OloConnectionPolicy.class);
+        OloConnectionPolicy policy = AnnotationTestValues.of(OloConnectionPolicy.class,
+                java.util.Map.of("maxInputs", 1, "maxOutputs", -1));
         ConnectionPolicyDescriptor descriptor = ConnectionPolicyPopulator.from(policy);
         assertThat(descriptor.maxInputs).isEqualTo(1);
         assertThat(descriptor.maxOutputs).isEqualTo(-1);

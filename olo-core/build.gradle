@@ -57,7 +57,7 @@ subprojects {
     }
 }
 
-configure(subprojects.findAll { it.name in ['nodes', 'tools', 'hooks'] }) {
+configure(subprojects.findAll { it.name in ['nodes', 'hooks'] }) {
     dependencies {
         compileOnly 'org.olo:olo-annotation:0.1.0-SNAPSHOT'
         annotationProcessor 'org.olo:olo-annotation-processor:0.1.0-SNAPSHOT'
@@ -78,12 +78,11 @@ def distDir = layout.projectDirectory.dir('dist')
 tasks.register('distLib', Copy) {
     group = 'distribution'
     description = 'Copy olo-core runtime JARs into dist/lib for kernel/worker classpath'
-    dependsOn ':core:jar', ':runtime:jar', ':nodes:jar', ':tools:jar', ':hooks:jar'
+    dependsOn ':core:jar', ':runtime:jar', ':nodes:jar', ':hooks:jar'
     into distDir.dir('lib')
     from(project(':core').tasks.named('jar'))
     from(project(':runtime').tasks.named('jar'))
     from(project(':nodes').tasks.named('jar'))
-    from(project(':tools').tasks.named('jar'))
     from(project(':hooks').tasks.named('jar'))
 }
 
@@ -103,7 +102,7 @@ tasks.register('buildKernelForCatalog', Exec) {
 tasks.register('exportStudioCatalog', JavaExec) {
     group = 'distribution'
     description = 'Export editor + runtime catalog JSON into dist/catalog/'
-    dependsOn 'buildKernelForCatalog', ':core:classes', ':nodes:jar', ':tools:jar', ':hooks:jar', ':runtime:jar'
+    dependsOn 'buildKernelForCatalog', ':core:classes', ':nodes:jar', ':hooks:jar', ':runtime:jar'
     doFirst {
         if (!kernelJar.isFile()) {
             throw new GradleException("Missing olo-kernel JAR at ${kernelJar.absolutePath}")

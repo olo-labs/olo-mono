@@ -22,7 +22,6 @@ final class CatalogValidationContext {
     private final String catalogProvider;
     private final String catalogModule;
     private final Map<String, String> nodeIds = new LinkedHashMap<>();
-    private final Map<String, String> toolIds = new LinkedHashMap<>();
     private final Map<String, String> hookIds = new LinkedHashMap<>();
     private boolean errors;
 
@@ -38,10 +37,6 @@ final class CatalogValidationContext {
 
     Map<String, String> nodeIds() {
         return nodeIds;
-    }
-
-    Map<String, String> toolIds() {
-        return toolIds;
     }
 
     Map<String, String> hookIds() {

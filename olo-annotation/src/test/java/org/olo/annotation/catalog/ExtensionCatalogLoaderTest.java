@@ -22,7 +22,6 @@ class ExtensionCatalogLoaderTest {
         assertThat(OloCatalogLocations.AUTHORITATIVE_CATALOGS)
                 .containsExactly(
                         OloCatalogLocations.NODES_CATALOG,
-                        OloCatalogLocations.TOOLS_CATALOG,
                         OloCatalogLocations.HOOKS_CATALOG)
                 .doesNotContain(OloCatalogLocations.MERGED_CATALOG);
     }
@@ -32,29 +31,29 @@ class ExtensionCatalogLoaderTest {
         ExtensionCatalog catalog = ExtensionCatalogLoader.loadMerged(getClass().getClassLoader());
 
         assertThat(catalog.schemaVersion()).isEqualTo("1.0");
-        assertThat(catalog.tools()).hasSize(1);
-        assertThat(catalog.tools().getFirst().id).isEqualTo("olo-core:http-tool");
-        assertThat(catalog.tools().getFirst().name).isEqualTo("HTTP");
+        assertThat(catalog.nodes()).hasSize(1);
+        assertThat(catalog.nodes().getFirst().id).isEqualTo("olo-core:prompt");
+        assertThat(catalog.nodes().getFirst().name).isEqualTo("Prompt");
     }
 
     @Test
     void neverLoadsCatalogJson() {
         ExtensionCatalog catalog = ExtensionCatalogLoader.loadMerged(getClass().getClassLoader());
 
-        assertThat(catalog.tools().stream().map(t -> t.id)).doesNotContain("CATALOG_ONLY_TOOL");
+        assertThat(catalog.nodes().stream().map(t -> t.id)).doesNotContain("CATALOG_ONLY_NODE");
     }
 
     @Test
     void duplicateIdKeepsFirstOccurrence() throws IOException {
         ClassLoader base = getClass().getClassLoader();
-        URL primary = base.getResource(OloCatalogLocations.TOOLS_CATALOG);
-        URL duplicate = base.getResource("META-INF/olo/catalog/tools-duplicate-fixture.json");
+        URL primary = base.getResource(OloCatalogLocations.NODES_CATALOG);
+        URL duplicate = base.getResource("META-INF/olo/catalog/nodes-duplicate-fixture.json");
 
         ClassLoader loader =
                 new ClassLoader(base) {
                     @Override
                     public Enumeration<URL> getResources(String name) throws IOException {
-                        if (OloCatalogLocations.TOOLS_CATALOG.equals(name)) {
+                        if (OloCatalogLocations.NODES_CATALOG.equals(name)) {
                             return Collections.enumeration(List.of(primary, duplicate));
                         }
                         return base.getResources(name);
@@ -63,7 +62,7 @@ class ExtensionCatalogLoaderTest {
 
         ExtensionCatalog catalog = ExtensionCatalogLoader.loadMerged(loader);
 
-        assertThat(catalog.tools().stream().map(t -> t.id).filter("olo-core:http-tool"::equals)).hasSize(1);
+        assertThat(catalog.nodes().stream().map(t -> t.id).filter("olo-core:prompt"::equals)).hasSize(1);
     }
 
 }
