@@ -38,6 +38,12 @@ $Kubeconfig=Join-Path $Runtime 'kubeconfig'
 $Kind=Join-Path $Root 'build/tooling/kind.exe'
 $Cluster='olo-qualification'
 $NodeImage='kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5'
+function Get-OfficialChecksum([object]$Content) {
+    $checksumText=if($Content -is [byte[]]){[Text.Encoding]::UTF8.GetString($Content)}else{[string]$Content}
+    $checksum=($checksumText.Trim() -split '\s+')[0]
+    if($checksum -notmatch '^[0-9a-fA-F]{64}$'){throw 'Official checksum response is malformed'}
+    return $checksum
+}
 function Invoke-Checked([string]$Executable,[string[]]$Arguments) {
     & $Executable @Arguments
     if($LASTEXITCODE -ne 0){throw "$Executable exited with code $LASTEXITCODE"}
@@ -159,7 +165,7 @@ New-Item -ItemType Directory -Force -Path $Runtime,(Split-Path $Kind) | Out-Null
 $downloadedKind=!(Test-Path -LiteralPath $Kind)
 if($downloadedKind) {
     $url='https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-windows-amd64'
-    $expected=((Invoke-WebRequest ($url+'.sha256sum')).Content.Trim() -split '\s+')[0]
+    $expected=Get-OfficialChecksum (Invoke-WebRequest ($url+'.sha256sum')).Content
     Invoke-WebRequest $url -OutFile $Kind
     if((Get-FileHash -LiteralPath $Kind -Algorithm SHA256).Hash -ne $expected){Remove-Item -LiteralPath $Kind;throw 'Official kind checksum mismatch'}
 }
