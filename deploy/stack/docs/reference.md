@@ -69,6 +69,28 @@ Compose uses **multiple `-f` files** merged into one project (`olo`). Order matt
 
 **GPU:** AI compose files use `deploy.resources.reservations.devices` for NVIDIA; host needs [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
 
+The development Ollama service exposes all NVIDIA cards and enables
+`OLLAMA_SCHED_SPREAD=true`, so a model can use multiple cards even when it would fit
+on one. `OLLAMA_CUDA_VISIBLE_DEVICES` optionally selects GPU UUIDs; an empty value
+uses all Docker-exposed cards. Recreate Ollama after changing these settings:
+
+```powershell
+cd deploy/stack/dev
+docker compose -p olo -f docker-compose-ai-text.yml up -d --no-deps ollama
+.\scripts\verify-ollama-gpu.ps1 -ExpectedGpuCount 4 -Warmup -Model qwen2.5:7b
+```
+
+Visibility is not proof of GPU inference. The verification script checks host and
+container devices, driver compatibility, multi-GPU configuration, and actual model
+GPU memory after a small readiness request. It rejects CPU fallback.
+
+For Quadro P4000 (Pascal, compute 6.1), current Ollama requires NVIDIA driver 570 or
+newer. Driver 556.39 exposes the GPUs to Docker but is rejected by Ollama. Use a
+supported R580 Enterprise driver for these cards; do not assume a newer driver
+branch still supports Pascal. See [Ollama hardware requirements](https://docs.ollama.com/gpu)
+and [NVIDIA's Quadro support plan](https://nvidia.custhelp.com/app/answers/detail/a_id/5706).
+Driver installation and any required Windows restart are separate host maintenance.
+
 ---
 
 ## Scripts (`dev/scripts/`)

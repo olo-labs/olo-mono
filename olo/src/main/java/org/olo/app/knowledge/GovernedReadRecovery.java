@@ -16,7 +16,7 @@ final class GovernedReadRecovery {
                 if (attempt >= 2 || (failure.kind() != ToolGateException.Kind.UNAVAILABLE
                         && failure.kind() != ToolGateException.Kind.TIMEOUT)) throw failure;
                 try {
-                    Thread.sleep((attempt + 1) * 100L
+                    Thread.sleep((attempt + 1) * 1000L
                             + java.util.concurrent.ThreadLocalRandom.current().nextLong(100));
                 } catch (InterruptedException interrupted) {
                     Thread.currentThread().interrupt();

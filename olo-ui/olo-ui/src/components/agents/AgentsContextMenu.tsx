@@ -2,6 +2,7 @@
  * Copyright (c) 2026 Olo Labs
  * SPDX-License-Identifier: Apache-2.0
  */
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { ConfigFileNodeData, ConfigFolderNodeData } from '../../lib/configurationTree'
 import { CONFIG_FILE_NODE, CONFIG_FOLDER_NODE } from '../../lib/configurationTree'
 
@@ -72,6 +73,21 @@ export function AgentsContextMenu({
   canvasActions,
   onClose,
 }: AgentsContextMenuProps) {
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState({ left: menu.x, top: menu.y })
+  useLayoutEffect(() => {
+    const fit = () => {
+      const bounds = menuRef.current?.getBoundingClientRect()
+      if (!bounds) return
+      setPosition({
+        left: Math.max(8, Math.min(menu.x, window.innerWidth - bounds.width - 8)),
+        top: Math.max(8, Math.min(menu.y, window.innerHeight - bounds.height - 8)),
+      })
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+  }, [menu])
   const closeAnd = (action?: () => void | Promise<void>) => {
     onClose()
     if (action) void action()
@@ -88,8 +104,9 @@ export function AgentsContextMenu({
         aria-hidden
       />
       <div
+        ref={menuRef}
         className="canvas-context-menu"
-        style={{ left: menu.x, top: menu.y }}
+        style={{ ...position, maxWidth: 'calc(100vw - 16px)', maxHeight: 'calc(100vh - 16px)', overflowY: 'auto' }}
         role="menu"
       >
         {target.kind === 'file' ? (

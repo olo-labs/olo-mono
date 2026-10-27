@@ -1,0 +1,21 @@
+{
+  "integrityPassed": true,
+  "blankImageCheckPassed": true,
+  "coverageComplete": false,
+  "freshCaptureEntries": 35,
+  "requiredRoutes": 18,
+  "missingRoutes": [
+    "/workflows/log"
+  ],
+  "missingStates": [
+    "screenshots/chat-ollama-recovery.jpg",
+    "screenshots/studio-execution-log.jpg",
+    "screenshots/temporal-relationships.jpg"
+  ],
+  "blockedReason": "Capture session ended before the remaining views; reload the tour to collect them",
+  "renderPauseSeconds": 2,
+  "deferredIssues": [
+    "https://github.com/olo-labs/olo-mono/issues/25",
+    "https://github.com/olo-labs/olo-mono/issues/26"
+  ]
+}

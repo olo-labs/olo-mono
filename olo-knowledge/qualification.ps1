@@ -77,7 +77,16 @@ function Stop-FixtureProcess {
         if($record.workspace -ne $Root -or $record.session -notmatch '^olo-qualification-[0-9a-f]{12}$'){throw 'Fixture process ownership mismatch'}
         $process=Get-CimInstance Win32_Process -Filter "ProcessId = $($record.pid)"
         if($process) {
-            if($process.Name -notmatch '^python(3)?(.exe)?$' -or ($record.script -notin @('qualification_stack.py','qualification_pipeline.py','qualification_delegation.py','qualification_incident.py','qualification_operations.py','qualification_debug.py','qualification_latency.py','test_services.py') -or $process.CommandLine -notlike "*$($record.script)*")){throw 'Refusing to terminate an unrelated process'}
+            if($process.Name -notmatch '^python(3)?(.exe)?$' -or ($record.script -notin @('qualification_stack.py','qualification_pipeline.py','qualification_delegation.py','qualification_incident.py','qualification_operations.py','qualification_debug.py','qualification_gallery.py','qualification_latency.py','test_services.py') -or $process.CommandLine -notlike "*$($record.script)*")){throw 'Refusing to terminate an unrelated process'}
+            if($record.script -eq 'qualification_gallery.py'){
+                $studioLibraries=[IO.Path]::GetFullPath((Join-Path $Root '../olo-ui/olo-be/build/libs'))
+                foreach($child in @(Get-CimInstance Win32_Process -Filter "ParentProcessId = $($record.pid)")){
+                    if($child.Name -match '^java(.exe)?$' -and $child.CommandLine -like "*$studioLibraries*olo-be-*.jar*"){
+                        Stop-Process -Id $child.ProcessId -Force
+                        Wait-Process -Id $child.ProcessId -ErrorAction SilentlyContinue
+                    }
+                }
+            }
             Stop-Process -Id $record.pid -Force
             Wait-Process -Id $record.pid -ErrorAction SilentlyContinue
         }

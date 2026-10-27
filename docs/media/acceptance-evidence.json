@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "runId": "olo-qualification-c96f40325528",
+  "turnId": "94cf1609-3aaf-3b2d-83aa-9c3ef10c40f2",
+  "originalInvocationResumed": true,
+  "completionAuditVerified": true,
+  "packageSha256": "e59c5dc5593e475d174f5ba2b93d39e7218444a8e2b88e94ef74e6f5aa4670fa",
+  "commanderGeneratedDelegation": true,
+  "temporalChildWorkflows": 3,
+  "workerCrashDuringChildApproval": true,
+  "approvalTerminals": {
+    "denial": {
+      "invocationId": "inv-9ce3c17fde0cc23a5d56d56a945fa6bb840cfa2772292670",
+      "state": "FAILED"
+    },
+    "cancellation": {
+      "invocationId": "inv-a2a549c0f101fd1834035204bd8dc99b4b90688db94a0d68",
+      "state": "CANCELLED",
+      "replayStatus": 409,
+      "dispatched": false
+    },
+    "revokedUser": {
+      "invocationId": "inv-cc33736c26788b1c1977feacc0bc1b8b1f34ad477f7db1eb",
+      "approvalDenied": true,
+      "dispatched": false
+    },
+    "expiredAuthority": {
+      "invocationId": "inv-e416a0271d60241ff881bb74a73895666dcfc247975cf05a",
+      "approvalDenied": true,
+      "dispatched": false
+    }
+  },
+  "images": {
+    "olo-backend:olo-qualification": {
+      "imageId": "sha256:a3b04ec5a3cc64b5e5f7b4759b92393b3e5c35e1f011208b4d214f80d3fce66f",
+      "sourceRevision": "05e8552555afd37416c4254d6908743449235c10"
+    },
+    "olo-worker:olo-qualification": {
+      "imageId": "sha256:a346e4e4b4de2c79e4662b89631a6c2799c1e188cc48cccf8e3c5af3af3e8655",
+      "sourceRevision": "05e8552555afd37416c4254d6908743449235c10"
+    },
+    "olo-toolgate-quickstart:olo-m8": {
+      "imageId": "sha256:edb7b82e9c6796b35374aed60b2460bb8746618a1b2e4b901c0b56e219954843",
+      "sourceRevision": "29be2558df586f8db8ed83fc11a95fc2aae24c2a"
+    }
+  },
+  "scope": "Real backend/worker/Temporal/Gateway/Control/Tool Host and official fictional incident package; scripted model, development transport. Not complete M8/M10.",
+  "sourceRevision": "05e8552555afd37416c4254d6908743449235c10",
+  "modelScope": "Deterministic acceptance uses a scripted model; interactive Ollama behavior is separate and not qualified by this pass."
+}
