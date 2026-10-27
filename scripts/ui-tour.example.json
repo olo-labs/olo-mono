@@ -1,0 +1,6 @@
+{
+  "ToolGateSource": "../olo-toolgate",
+  "Python": "python",
+  "OllamaUrl": "http://host.docker.internal:11435",
+  "OllamaModel": "qwen2.5:7b"
+}

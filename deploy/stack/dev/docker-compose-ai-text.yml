@@ -30,6 +30,13 @@ services:
     restart: unless-stopped
     ports:
       - "11435:11434"
+    environment:
+      # Select GPUs at the container boundary. Never pass CUDA_VISIBLE_DEVICES="":
+      # CUDA interprets an empty value as no visible devices, causing CPU fallback.
+      NVIDIA_VISIBLE_DEVICES: "${OLLAMA_CUDA_VISIBLE_DEVICES:-all}"
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      # Also spread models which would otherwise fit on a single GPU.
+      OLLAMA_SCHED_SPREAD: "${OLLAMA_SCHED_SPREAD:-true}"
     volumes:
       - olo-dev-ollama-data:/root/.ollama
     deploy:

@@ -8,6 +8,38 @@ Monorepo for **OLO (Open LLM Orchestrator)** — declarative LLM workflow orches
 
 **Architecture docs:** [docs/README.md](docs/README.md) — [system architecture](docs/ARCHITECTURE.md), [module reference](docs/MODULES.md).
 
+## OLO Chat and OLO UI tours
+
+### OLO Chat · governed conversation, knowledge and incident recovery
+
+<p align="center">
+  <img src="docs/media/olo-chat-tour.gif" width="100%" alt="OLO Chat tour: test sign-in gateway, conversation, ToolGate approval and audit, Temporal progress, and governed knowledge">
+</p>
+
+**Model used:** Qwen2.5 7B (`qwen2.5:7b`) through Ollama, using four NVIDIA
+Quadro P4000 GPUs. The RAG walkthrough uses one short fictional incident runbook.
+Separate deterministic acceptance captures use a labelled scripted model.
+
+### OLO UI · workflow design and administration
+
+<p align="center">
+  <img src="docs/media/olo-ui-tour.gif" width="100%" alt="OLO UI tour: workflow files, visual builder, node properties, variables, model providers, tenants and scenarios">
+</p>
+
+**Workflow model:** Qwen2.5 7B (`qwen2.5:7b`) through Ollama on four NVIDIA
+Quadro P4000 GPUs; Studio shows this provider and the incident-agent pipeline.
+
+[Browse every captured screen and the coverage notes](docs/media/README.md).
+[Start/resume the snapshot stack](scripts/ui-tour.bat) ·
+[Reload a fresh stack with one click](scripts/ui-tour-reload.bat) ·
+[Stop and clean up](scripts/ui-tour-stop.bat) ·
+[First-run setup](docs/media/README.md#one-click-reload-on-windows).
+These tours use a disposable local test environment with fictional data. Interactive
+incident responses use GPU-backed Ollama with Qwen2.5 7B; the separate acceptance
+checks use a scripted model.
+Authentication is through a clearly labelled **test sign-in gateway**, not a native Chat login page.
+Screens marked **Scheduled** show the current placeholder UI; they are not implemented features.
+
 ## What this repo contains
 
 OLO treats a workflow as a **portable artifact** (JSON/YAML graph definition), separate from:
@@ -58,10 +90,10 @@ flowchart TB
 | [`olo-kernel-context/`](olo-kernel-context/) | Gradle project | Builds `KernelRuntimeContext` — deserialized input + isolated graph copy + UI callback |
 | [`olo-kernel/`](olo-kernel/) | Gradle project | Temporal queue entry point (`OloKernelWorkflow`, `workflowType=olo`) |
 | [`olo-worker/`](olo-worker/) | Gradle application | Main Temporal worker process; wires configuration, bootstrap, and kernel |
-| [`olo-spi/`](olo-spi/) | Gradle library | Runtime SPI — `Node`, `Tool`, `Hook`, `ExecutionContext` (contracts only) |
-| [`olo-annotation/`](olo-annotation/) | Gradle library | `@OloNode` / `@OloTool` / `@OloHook` metadata + `ExtensionCatalogLoader` |
+| [`olo-spi/`](olo-spi/) | Gradle library | Runtime SPI — `Node`, `Hook`, `ExecutionContext` (contracts only) |
+| [`olo-annotation/`](olo-annotation/) | Gradle library | `@OloNode` / `@OloHook` metadata + `ExtensionCatalogLoader` |
 | [`olo-annotation-processor/`](olo-annotation-processor/) | Gradle library | Generates `META-INF/olo/catalog/*.json` for workflow editor UIs |
-| [`olo-core/`](olo-core/) | Gradle multi-module | Default node/tool/hook implementations + `ExecutionEngine` (`org.olo:olo-core`) |
+| [`olo-core/`](olo-core/) | Gradle multi-module | Default node/hook implementations + `ExecutionEngine` (`org.olo:olo-core`); business tools run through ToolGate |
 
 Each Gradle module is **standalone** (own `settings.gradle`, wrapper, `publishToMavenLocal`). There is no single root Gradle build yet.
 

@@ -1,0 +1,368 @@
+{
+  "capturedDate": "2026-10-27",
+  "scope": "Disposable test sign-in gateway and scripted IdP; real ToolGate, services and Temporal. Fictional data. Interactive responses use Ollama; acceptance uses a separately labelled deterministic model.",
+  "screens": [
+    {
+      "file": "screenshots/chat-sign-in.jpg",
+      "title": "Clearly labelled test gateway; interactive responses use Ollama",
+      "group": "chat",
+      "url": "http://localhost:58000/tour/login",
+      "sha256": "a754dd4cb5185f290a43a35df387ce9da45150736766771bf6472daee5429c9e",
+      "capturedAt": "2026-10-27T14:36:18.314Z"
+    },
+    {
+      "file": "screenshots/chat-running.jpg",
+      "title": "Live Ollama diagnosis running with the selected small runbook",
+      "group": "chat",
+      "url": "http://localhost:58000/chat/conversation?menu=1&tools=0&props=0",
+      "sha256": "a03dfa82f3d710b8717d24e006b9f67acf95f934208679a01213b6f1853ddbab",
+      "capturedAt": "2026-10-27T14:38:21.157Z"
+    },
+    {
+      "file": "screenshots/console-sign-in.jpg",
+      "title": "ToolGate tenant console sign-in",
+      "group": "chat",
+      "url": "http://127.0.0.1:56289/console/",
+      "sha256": "d44376b12c7d188c9574ea4f928ad1a4727d1d2d097351ccf1eed973c466a670",
+      "capturedAt": "2026-10-27T14:38:39.977Z"
+    },
+    {
+      "file": "screenshots/console-overview.jpg",
+      "title": "Loaded tenant overview and scoped demo directories",
+      "group": "chat",
+      "url": "http://127.0.0.1:56289/console/#overview",
+      "sha256": "f89840de728d9e51232e15f003ee5c89dcd2d3441f6d05eb4280dd8fde292a4d",
+      "capturedAt": "2026-10-27T14:39:25.326Z"
+    },
+    {
+      "file": "screenshots/console-approvals-pending.jpg",
+      "title": "Live Ollama remediation waiting for independent approval",
+      "group": "chat",
+      "url": "http://127.0.0.1:56289/console/#approvals",
+      "sha256": "878851c07080d9b09d04ad2da275148f8f6b63af170f87317e687ece0a51c606",
+      "capturedAt": "2026-10-27T14:57:15.751Z"
+    },
+    {
+      "file": "screenshots/console-approval-review.jpg",
+      "title": "Independent reviewer checks the exact delegated remediation invocation",
+      "group": "chat",
+      "url": "http://127.0.0.1:56289/console/#approvals",
+      "sha256": "f16cfad03e2049bf1599c62bc1c98491ef7a6532cb70044c3972b57599c0901b",
+      "capturedAt": "2026-10-27T14:57:36.770Z"
+    },
+    {
+      "file": "screenshots/temporal-running.jpg",
+      "title": "Live Ollama diagnosis running in Temporal",
+      "group": "chat",
+      "url": "http://localhost:49996/namespaces/default/workflows",
+      "sha256": "acfc5078c3b6bb6e68d8b44b83f988617d4216de7db6e01301c20f0eae1021c4",
+      "capturedAt": "2026-10-27T14:38:49.648Z"
+    },
+    {
+      "file": "screenshots/console-approval-approved.jpg",
+      "title": "Independent approval recorded; original invocation resumes through ToolGate",
+      "group": "chat",
+      "url": "http://127.0.0.1:56289/console/#approvals",
+      "sha256": "bc443b9547024c675c3ee4cb82e3b6614feae95f01dd6458ac9d26af1906fda6",
+      "capturedAt": "2026-10-27T14:58:09.492Z"
+    },
+    {
+      "file": "screenshots/studio-builder.jpg",
+      "title": "Complete incident pipeline and delegated-agent connections",
+      "group": "studio",
+      "url": "http://localhost:58001/workflows/builder?menu=0&tools=1&props=0",
+      "sha256": "8009bd2f3961f39bb024cd886eeaafffa2cb3aa7dc08aa5c6ce6b28f00a68d4a",
+      "capturedAt": "2026-10-27T14:56:27.796Z"
+    },
+    {
+      "file": "screenshots/studio-overview.jpg",
+      "title": "Overview \u00b7 current scheduled placeholder",
+      "group": "studio",
+      "url": "http://localhost:58001/overview?menu=1&tools=0&props=0",
+      "sha256": "bcfb4ab6d8db35807b508e719f902f2e887bf005ab32474477bd306bed96bf53",
+      "capturedAt": "2026-10-27T14:52:07.153Z"
+    },
+    {
+      "file": "screenshots/studio-debugger.jpg",
+      "title": "Debugger \u00b7 current scheduled placeholder",
+      "group": "studio",
+      "url": "http://localhost:58001/workflows/debugger?menu=1&tools=0&props=0",
+      "sha256": "c339e5599cf59a1133bf47fb963b04f99c3e10a68c8c640aa2069e9160f3a3aa",
+      "capturedAt": "2026-10-27T14:52:09.375Z"
+    },
+    {
+      "file": "screenshots/studio-templates.jpg",
+      "title": "Templates \u00b7 current scheduled placeholder",
+      "group": "studio",
+      "url": "http://localhost:58001/workflows/templates?menu=1&tools=0&props=0",
+      "sha256": "bc58fab176b25c8664f06b1e80f8ce9c0d0cec38879737a61a39b6b92725bd59",
+      "capturedAt": "2026-10-27T14:52:11.589Z"
+    },
+    {
+      "file": "screenshots/studio-versions.jpg",
+      "title": "Versions \u00b7 current scheduled placeholder",
+      "group": "studio",
+      "url": "http://localhost:58001/workflows/versions?menu=1&tools=0&props=0",
+      "sha256": "57fe40e5c45c229a0153d13a455d193b38cb7cab96e8ef47baa81f0a716574f4",
+      "capturedAt": "2026-10-27T14:52:13.807Z"
+    },
+    {
+      "file": "screenshots/studio-executions.jpg",
+      "title": "Executions \u00b7 current scheduled placeholder",
+      "group": "studio",
+      "url": "http://localhost:58001/executions?menu=1&tools=0&props=0",
+      "sha256": "041728f46434af35a4aaeabfed5eec8d05d9c8e0fec4ac2b497511ef6ae17405",
+      "capturedAt": "2026-10-27T14:52:16.029Z"
+    },
+    {
+      "file": "screenshots/studio-observability.jpg",
+      "title": "Observability \u00b7 current scheduled placeholder",
+      "group": "studio",
+      "url": "http://localhost:58001/observability?menu=1&tools=0&props=0",
+      "sha256": "17cf0131301c0524c5eb37e5f1fadf70cd8470bce620489c94b47186ecce9bb1",
+      "capturedAt": "2026-10-27T14:52:18.254Z"
+    },
+    {
+      "file": "screenshots/studio-extensions.jpg",
+      "title": "Extensions \u00b7 current scheduled placeholder",
+      "group": "studio",
+      "url": "http://localhost:58001/extensions?menu=1&tools=0&props=0",
+      "sha256": "e56b5940ee7cece91b3a1e29dc947b0aa78179c472be0d22f226b356782b5e78",
+      "capturedAt": "2026-10-27T14:52:20.502Z"
+    },
+    {
+      "file": "screenshots/studio-tenants.jpg",
+      "title": "Current tenant administration",
+      "group": "studio",
+      "url": "http://localhost:58001/administration/tenants?menu=1&tools=0&props=0",
+      "sha256": "818ebb2ca4cbfc2e664bc92b4b622ecc54672637f3e559c28a1bb87c32cb7ed0",
+      "capturedAt": "2026-10-27T14:53:08.732Z"
+    },
+    {
+      "file": "screenshots/studio-tenant-create.jpg",
+      "title": "Tenant creation form \u00b7 inspection only",
+      "group": "studio",
+      "url": "http://localhost:58001/administration/tenants?menu=1&tools=0&props=1",
+      "sha256": "494fec44f9690186cff81ca99b90af6908d9bdb745f37d6e9d4d99a6595129a1",
+      "capturedAt": "2026-10-27T14:53:10.937Z"
+    },
+    {
+      "file": "screenshots/studio-scenarios.jpg",
+      "title": "Current scenario administration",
+      "group": "studio",
+      "url": "http://localhost:58001/administration/scenarios?menu=1&tools=0&props=0",
+      "sha256": "8cf3049265139e1037eb7628c771a55628d3caf8cf05a409fbd27b31f9afd9b1",
+      "capturedAt": "2026-10-27T14:54:09.276Z"
+    },
+    {
+      "file": "screenshots/studio-agents.jpg",
+      "title": "Four incident workflows in the current active catalog",
+      "group": "studio",
+      "url": "http://localhost:58001/workflows/agents?menu=1&tools=0&props=0",
+      "sha256": "40a90d6684335ee8b5b844c010ffe9357800c6cf76f88681af760592dbf092d6",
+      "capturedAt": "2026-10-27T14:54:21.673Z"
+    },
+    {
+      "file": "screenshots/studio-agent-context-menu.jpg",
+      "title": "Fitted agent canvas with the full context menu inside the viewport",
+      "group": "studio",
+      "url": "http://localhost:58001/workflows/agents?menu=1&tools=0&props=1",
+      "sha256": "cc6d524d287eec061e478d9507d0b4211b29340b267c922bfb224208962ef099",
+      "capturedAt": "2026-10-27T14:54:52.136Z"
+    },
+    {
+      "file": "screenshots/studio-builder-components.jpg",
+      "title": "Components palette after dragging the complete incident canvas into focus",
+      "group": "studio",
+      "url": "http://localhost:58001/workflows/builder?menu=0&tools=1&props=0",
+      "sha256": "8009bd2f3961f39bb024cd886eeaafffa2cb3aa7dc08aa5c6ce6b28f00a68d4a",
+      "capturedAt": "2026-10-27T14:56:25.677Z"
+    },
+    {
+      "file": "screenshots/chat-rag-document.jpg",
+      "title": "One short fictional runbook; user-scoped knowledge ingestion",
+      "group": "chat",
+      "url": "http://localhost:58000/knowledge/sources?menu=1&tools=0&props=0",
+      "sha256": "250b5ecc9e3f0c2bf8d53b24af302b11383d41f6c76625971b066e33b8b203f6",
+      "capturedAt": "2026-10-27T14:36:38.246Z"
+    },
+    {
+      "file": "screenshots/chat-rag-ingested.jpg",
+      "title": "Short runbook saved as document version 1",
+      "group": "chat",
+      "url": "http://localhost:58000/knowledge/sources?menu=1&tools=0&props=0",
+      "sha256": "96c367705fcf0c231972369bbd1157919b85d9bd2a234bc9b68cd120407bb2a3",
+      "capturedAt": "2026-10-27T14:36:54.871Z"
+    },
+    {
+      "file": "screenshots/chat-rag-retrieval.jpg",
+      "title": "One short retrieved passage, document version and complete source citation",
+      "group": "chat",
+      "url": "http://localhost:58000/knowledge/sources?menu=1&tools=0&props=0",
+      "sha256": "33cbf53f9e690ae95e66e916c9cb1a85cadf4869bfc83b7fe178441b03f90ab7",
+      "capturedAt": "2026-10-27T14:37:40.613Z"
+    },
+    {
+      "file": "screenshots/chat-rag-selected.jpg",
+      "title": "Short governed runbook selected for GPU-backed incident diagnosis",
+      "group": "chat",
+      "url": "http://localhost:58000/chat/conversation?menu=1&tools=0&props=0",
+      "sha256": "781b4ec1c77f042da02fb51fb51b1ddb7a282945a82f2a90e543c1c04dc2160c",
+      "capturedAt": "2026-10-27T14:38:13.106Z"
+    },
+    {
+      "file": "screenshots/studio-ollama-provider.jpg",
+      "title": "Ollama provider: Qwen2.5 7B and the complete incident-agent graph",
+      "group": "studio",
+      "url": "http://localhost:58001/workflows/builder?menu=0&tools=1&props=0",
+      "sha256": "f328efcef2885696a9d13eb8c7d0b75c61324fdb3657bd0cf83bb12f8efb7e34",
+      "capturedAt": "2026-10-27T14:56:22.758Z"
+    },
+    {
+      "file": "screenshots/console-analytics.jpg",
+      "title": "Tenant Analytics \u00b7 actual memory, RAG and incident tool calls",
+      "group": "chat",
+      "url": "http://127.0.0.1:56289/console/#analytics",
+      "sha256": "2bcfc49c16a122bbaa0be0e8d4727d7b5a46de2663c51a1962bc2cf918c2a983",
+      "capturedAt": "2026-10-27T14:56:59.589Z"
+    },
+    {
+      "file": "screenshots/console-analytics-tool.jpg",
+      "title": "Remediation tool drilldown \u00b7 actual calls and outcomes",
+      "group": "chat",
+      "url": "http://127.0.0.1:56289/console/#analytics?tool=examples.incidents%2Fremediate",
+      "sha256": "6756e03c85847bd3a8aac271f3e4b69a70c66957d78e3aed5a9fe49ac47275e1",
+      "capturedAt": "2026-10-27T14:57:07.185Z"
+    },
+    {
+      "file": "screenshots/chat-knowledge-create.jpg",
+      "title": "Knowledge creation route with the current governed collection",
+      "group": "chat",
+      "url": "http://localhost:58000/knowledge/create?menu=1&tools=0&props=0",
+      "sha256": "4d4566898a60e4b7c78d78f56bd3ba14a5e2512aa1f5b4cbf813b78396f32eb3",
+      "capturedAt": "2026-10-27T14:37:42.816Z"
+    },
+    {
+      "file": "screenshots/chat-knowledge-status.jpg",
+      "title": "Knowledge status route and verified source version",
+      "group": "chat",
+      "url": "http://localhost:58000/knowledge/status?menu=1&tools=0&props=0",
+      "sha256": "967a801d4d5995a320ba8bbcb3a58611f0bb395351f8692520a63f5a4ea72edc",
+      "capturedAt": "2026-10-27T14:37:45.008Z"
+    },
+    {
+      "file": "screenshots/chat-documents.jpg",
+      "title": "Documents route uses the governed knowledge document interface",
+      "group": "chat",
+      "url": "http://localhost:58000/documents/upload?menu=1&tools=0&props=0",
+      "sha256": "d88c15a51d3be6544863bcbc9a3a30934563030160b578150d703f5c5ed57e7e",
+      "capturedAt": "2026-10-27T14:37:55.372Z"
+    },
+    {
+      "file": "screenshots/temporal-diagnosis-child.jpg",
+      "title": "Live diagnosis delegates only the triage child agent",
+      "group": "chat",
+      "url": "http://localhost:49996/namespaces/default/workflows/run-517f44bb-3fd2-4dca-bb88-ddd23e4a1ed3~e8d0aa99-d5e4-3fae-85e7-e4edf5fa3f29/01a17dcc-2f00-7ef7-921e-7f350d53632e/relationships",
+      "sha256": "99e928ff437945e55ce7691d68c28a61de33501a340b989c09ec60bfc8e2bee8",
+      "capturedAt": "2026-10-27T14:39:37.344Z"
+    },
+    {
+      "file": "screenshots/chat-incident-identification.jpg",
+      "title": "Actual Ollama-generated incident diagnosis after governed-history reload; model claims require review",
+      "group": "chat",
+      "url": "http://localhost:58000/chat/conversation?menu=1&tools=0&props=0",
+      "sha256": "14898a8d0a3e8adea9322cc888e70ed192ede80d527db5ec46c29d0132b8bd24",
+      "capturedAt": "2026-10-27T14:48:04.261Z"
+    },
+    {
+      "file": "screenshots/console-analytics-tools.jpg",
+      "title": "Actual tool-call counts for memory, RAG and the incident agents",
+      "group": "chat",
+      "url": "http://127.0.0.1:56289/console/#analytics",
+      "sha256": "941f00f64773ffb9a0ba4c97114dbee1cc712c29f4539c3866901b475bf6175d",
+      "capturedAt": "2026-10-27T14:57:04.260Z"
+    }
+  ],
+  "expectedRoutes": [
+    "/tour/login",
+    "/chat/conversation",
+    "/knowledge/sources",
+    "/knowledge/create",
+    "/knowledge/status",
+    "/documents/upload",
+    "/overview",
+    "/workflows/agents",
+    "/workflows/log",
+    "/workflows/builder",
+    "/workflows/debugger",
+    "/workflows/templates",
+    "/workflows/versions",
+    "/executions",
+    "/observability",
+    "/extensions",
+    "/administration/tenants",
+    "/administration/scenarios"
+  ],
+  "requiredScreens": [
+    "screenshots/chat-rag-retrieval.jpg",
+    "screenshots/chat-incident-identification.jpg",
+    "screenshots/chat-ollama-recovery.jpg",
+    "screenshots/studio-builder-components.jpg",
+    "screenshots/studio-execution-log.jpg",
+    "screenshots/temporal-relationships.jpg"
+  ],
+  "pendingRetakes": [
+    {
+      "file": "screenshots/chat-conversation.jpg",
+      "reason": "Retake in the current GPU-backed walkthrough; previous capture excluded"
+    },
+    {
+      "file": "screenshots/temporal-parent-timeline.jpg",
+      "reason": "Retake in the current GPU-backed walkthrough; previous capture excluded"
+    },
+    {
+      "file": "screenshots/temporal-event-history.jpg",
+      "reason": "Retake in the current GPU-backed walkthrough; previous capture excluded"
+    },
+    {
+      "file": "screenshots/temporal-relationships.jpg",
+      "reason": "Retake in the current GPU-backed walkthrough; previous capture excluded"
+    },
+    {
+      "file": "screenshots/chat-completed.jpg",
+      "reason": "Retake in the current GPU-backed walkthrough; previous capture excluded"
+    },
+    {
+      "file": "screenshots/temporal-workers.jpg",
+      "reason": "Retake in the current GPU-backed walkthrough; previous capture excluded"
+    },
+    {
+      "file": "screenshots/studio-execution-log.jpg",
+      "reason": "Retake in the current GPU-backed walkthrough; previous capture excluded"
+    },
+    {
+      "file": "screenshots/studio-pipeline-variable.jpg",
+      "reason": "Retake in the current GPU-backed walkthrough; previous capture excluded"
+    },
+    {
+      "file": "screenshots/console-tool-picker.jpg",
+      "reason": "Retake in the current GPU-backed walkthrough; previous capture excluded"
+    },
+    {
+      "file": "screenshots/console-triage-tool-scope.jpg",
+      "reason": "Retake in the current GPU-backed walkthrough; previous capture excluded"
+    }
+  ],
+  "captureStatus": "Partial current-run captures; remaining views explicitly listed for a later capture session",
+  "renderPauseSeconds": 2,
+  "model": {
+    "provider": "Ollama",
+    "model": "qwen2.5:7b",
+    "gpus": "4 x NVIDIA Quadro P4000",
+    "ragInput": "One short fictional runbook, one retrieved passage"
+  },
+  "deferredIssues": [
+    "https://github.com/olo-labs/olo-mono/issues/25",
+    "https://github.com/olo-labs/olo-mono/issues/26"
+  ]
+}

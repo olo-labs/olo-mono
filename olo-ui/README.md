@@ -14,7 +14,10 @@ Build enterprise AI systems using durable workflows, distributed workers, visual
 
 # 🎥 See OLO in Action
 
-> **(PLACEHOLDER - Hero Video / GIF)**
+![OLO UI: workflow builder, properties, variables, model providers and administration](../docs/media/olo-ui-tour.gif)
+
+[Every captured page and coverage notes](../docs/media/README.md). Scheduled pages show their
+current placeholder state. The working incident flow is executed through OLO Chat and ToolGate.
 
 ---
 

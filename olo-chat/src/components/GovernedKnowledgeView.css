@@ -1,0 +1,29 @@
+/* Copyright 2026 Olo Labs; SPDX-License-Identifier: Apache-2.0 */
+.governed-knowledge { padding: 24px; display: grid; gap: 18px; max-width: 1100px; margin: 0 auto; }
+.governed-knowledge h2, .governed-knowledge h3, .governed-knowledge h4, .governed-knowledge p { margin: 0; }
+.governed-knowledge p { line-height: 1.65; }
+.governed-knowledge label { display: grid; gap: 8px; min-width: 0; font-size: 0.875rem; }
+.governed-knowledge input, .governed-knowledge textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border, #555); border-radius: 7px; background: var(--panel-bg, #202024); color: inherit; font: inherit; }
+.governed-knowledge textarea { resize: vertical; line-height: 1.6; }
+.governed-knowledge button { padding: 10px 18px; border: 1px solid var(--border, #555); border-radius: 7px; background: var(--panel-bg, #202024); color: inherit; cursor: pointer; }
+.governed-knowledge button:disabled { opacity: .5; cursor: default; }
+.knowledge-reference-grid { display: grid; grid-template-columns: 1fr 1fr 140px; gap: 16px; }
+.governed-knowledge summary { cursor: pointer; font-weight: 600; padding: 10px 0; }
+.knowledge-document-editor[open], .knowledge-sharing[open] { display: grid; gap: 12px; }
+.knowledge-search { display: flex; align-items: end; gap: 12px; }
+.knowledge-search label { flex: 1; }
+.knowledge-search button { background: #225c80; border-color: #4596bd; color: #fff; }
+.knowledge-result { display: grid; gap: 14px; }
+.knowledge-result:empty { display: none; }
+.knowledge-hint, .knowledge-citation { font-size: .8rem; opacity: .8; }
+.knowledge-passage { border: 1px solid var(--border, #4a4a50); border-left: 3px solid #5db6cf; border-radius: 8px; padding: 18px; display: grid; gap: 12px; }
+.knowledge-passage dl { display: grid; grid-template-columns: 75px 1fr; gap: 5px 12px; margin: 0; font-size: .8rem; }
+.knowledge-passage dd { margin: 0; overflow-wrap: anywhere; }
+.knowledge-citation { overflow-wrap: anywhere; }
+.knowledge-response-details pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .75rem; }
+[data-theme="light"] .governed-knowledge input,
+[data-theme="light"] .governed-knowledge textarea,
+[data-theme="light"] .governed-knowledge button { background: #fff; border-color: #cbd5e1; color: #18181b; }
+[data-theme="light"] .knowledge-search button { background: #225c80; color: #fff; }
+[data-theme="light"] .knowledge-passage { background: #fff; border-color: #cbd5e1; border-left-color: #28758e; }
+@media (max-width: 1000px) { .knowledge-reference-grid { grid-template-columns: 1fr; } }

@@ -13,7 +13,10 @@ OLO Chat is more than a chatbot. It is the primary interface for interacting wit
 
 # 🎥 See OLO Chat in Action
 
-> **(PLACEHOLDER - Hero GIF / Demo Video)**
+![OLO Chat: authentication, governed conversation, ToolGate approval and Temporal progress](../docs/media/olo-chat-tour.gif)
+
+[Every captured page and coverage notes](../docs/media/README.md). Captured in a disposable local
+environment with a labelled test sign-in gateway, scripted model and fictional data.
 
 ---
 

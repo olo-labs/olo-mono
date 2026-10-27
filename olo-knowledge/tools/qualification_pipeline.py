@@ -230,6 +230,7 @@ class Pipeline(Stack):
     def turn_history(self,root,turn):
         def completed():
             status,history=self.api_call(root+'/turns/'+turn)
+            if status in (429,502,503):return None
             self.require(status==200,'Governed turn read failed HTTP '+str(status))
             messages=history.get('messages',[])
             self.require(not any(v['role'] in ('failure','cancellation') for v in messages),

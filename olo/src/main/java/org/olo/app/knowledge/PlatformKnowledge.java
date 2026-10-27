@@ -49,12 +49,24 @@ public final class PlatformKnowledge {
                                                     binding.issuer(),
                                                     binding.sessionId(),
                                                     binding.sessionEpoch()));
-                            if (!response.getStatusCode().is2xxSuccessful()
-                                    || response.getBody() == null)
-                                throw new SecurityException("User authority unavailable");
-                            return (String) response.getBody().get("accessToken");
+                            return credential(response);
                         });
         calls = new GovernedCalls(client);
+    }
+
+    static String credential(org.springframework.http.ResponseEntity<Map<String, Object>> response) {
+        int status = response.getStatusCode().value();
+        if (status == 429 || status >= 500)
+            throw new ToolGateException(ToolGateException.Kind.UNAVAILABLE,
+                    "User credential service temporarily unavailable");
+        if (!response.getStatusCode().is2xxSuccessful())
+            throw new SecurityException("User authority unavailable");
+        if (response.getBody() == null
+                || !(response.getBody().get("accessToken") instanceof String token)
+                || token.isBlank())
+            throw new ToolGateException(ToolGateException.Kind.PROTOCOL,
+                    "User credential service returned no credential");
+        return token;
     }
 
     public JsonNode call(

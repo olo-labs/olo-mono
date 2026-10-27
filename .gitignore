@@ -13,6 +13,10 @@ node_modules/
 **/storybook-static/
 *.tsbuildinfo
 
+# Machine-specific UI-tour paths; runtime credentials remain under ignored build/.
+/scripts/ui-tour.local.json
+__pycache__/
+
 # Frontend source helpers are source code, not generated Java libraries.
 !**/src/lib/
 !**/src/lib/**

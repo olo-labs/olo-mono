@@ -78,6 +78,8 @@ class Stack:
         self.process_file.unlink(missing_ok=True)
     def exec(self,*args):return docker('exec',self.control,*args)
     def script(self,source,*args):return self.exec('/opt/quickstart-python/bin/python','-c',source,*args)
+    def control_environment(self):return {}
+    def control_run_options(self):return []
     def start(self):
         docker('network','create','--label','io.olo.qualification.owner=olo-knowledge',self.network);docker('volume','create','--label','io.olo.qualification.owner=olo-knowledge',self.volume);docker('volume','create','--label','io.olo.qualification.owner=olo-knowledge',self.trust_volume)
         trust=self.path/'trust';trust.mkdir()
@@ -92,6 +94,7 @@ class Stack:
             'TOOLGATE_CONTROL_USER_CREDENTIAL_BINDING_ID':self.binding,'TOOLGATE_CONTROL_USER_CREDENTIAL_SUBJECT_ISSUER':'https://quickstart.local',
             'TOOLGATE_CONTROL_USER_CREDENTIAL_SUBJECT_AUDIENCE':'toolgate-user-exchange','TOOLGATE_CONTROL_USER_CREDENTIAL_SUBJECT_KEY_ID':'qualification-backend',
             'TOOLGATE_CONTROL_USER_CREDENTIAL_SUBJECT_PUBLIC_KEY_PATH':'/trust/assertion-public.pem'}
+        config.update(self.control_environment())
         environment=self.path/'control.env';environment.write_text('\n'.join(k+'='+v for k,v in config.items())+'\n',encoding='utf-8')
         now=datetime.datetime.now(datetime.timezone.utc)
         self.ca_key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
@@ -110,7 +113,7 @@ class Stack:
             "import os,shutil,pathlib;p=pathlib.Path('/trust');shutil.copytree('/seed',p,dirs_exist_ok=True);os.chown(p,65532,65532);p.chmod(0o700);[(os.chown(f,65532,65532),f.chmod(0o600)) for f in p.iterdir()]")
         self.control=docker('run','--label','io.olo.qualification.owner=olo-knowledge','-d','--name',self.name,'--network',self.network,'--network-alias','control',
             '-p','127.0.0.1::8080','-p','127.0.0.1::8443','-p','127.0.0.1::8084','-p','127.0.0.1::8085',
-            '-e','TOOLGATE_ALLOW_LOOPBACK_MCP_HTTP=true','--env-file',environment,'-v',self.volume+':/data',
+            *self.control_run_options(),'-e','TOOLGATE_ALLOW_LOOPBACK_MCP_HTTP=true','--env-file',environment,'-v',self.volume+':/data',
             '-v',self.trust_volume+':/trust',self.image)
         self.containers.append(self.control)
         info=json.loads(docker('inspect',self.control))[0]
