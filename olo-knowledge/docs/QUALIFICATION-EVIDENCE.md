@@ -197,3 +197,23 @@ commander summary. This does not prove commander-generated child-agent delegatio
 M9 removal, strict rejection of legacy workflow fields, the post-removal M8 rerun and final
 local M10 acceptance remain required. Performance (#204), local PHP validation (#205) and
 production-environment qualification (olo-mono #19) retain their user-approved deferrals.
+
+
+## Fenced actual-stack settlement (2026-11-01)
+
+The owned actual Control/Gateway development fixture passed all functional gates
+and independently joined memory and RAG committed claims/outcomes to actual Control
+generation records. Runtime source: 1ad12d83c1d285614669c17e3ee2dd67933ff293;
+image: sha256:cfd5fa9a28156bfd57d9d9ebfae60d9fc3fb5d0b3c1299d069f5c45c62aa8f11.
+Component source SHA-256:
+9552f0a7fecaf65c420540126beeb7e127efaea53c53c45662c676ba8ffc094c.
+All 32 component tests passed without skips; nine qualification harness tests
+passed. Missing/contradictory Control records, wrong generations, premature local
+acknowledgements, changed source or installed JARs cannot reuse successful evidence.
+The report records actual running image IDs and before/after source/JAR pins.
+
+This supplements scripted-Control crash tests with actual normal-path settlement.
+It does not establish production CNI, production revocation SLOs or complete
+Control/Gateway partition/crash acceptance. Use the ToolGate qualification runner
+with --full-stack; --verify-only --full-stack validates retained source-bound
+evidence without repeating the fixture.

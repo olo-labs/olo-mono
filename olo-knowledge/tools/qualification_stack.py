@@ -34,11 +34,64 @@ def http(url, token=None, body=None, method='GET', headers=None, context=None):
     except urllib.error.HTTPError as response:
         raw=response.read(); return response.code,json.loads(raw) if raw else None
 
+
+def source_digest(root):
+    root=pathlib.Path(root).resolve();paths=[]
+    for base,directories,names in os.walk(root):
+        directories[:]=[name for name in directories if name not in {'build','.gradle','.git','node_modules'}]
+        if any((pathlib.Path(base)/name).is_symlink() for name in directories):
+            raise ValueError('Qualification source directory links are unsupported')
+        paths.extend(pathlib.Path(base)/name for name in names if pathlib.Path(name).suffix in {'.java','.sql','.gradle','.kts','.py','.json'})
+    digest=hashlib.sha256()
+    for path in sorted(paths,key=lambda value:value.relative_to(root).as_posix()):
+        if not path.resolve().is_relative_to(root):raise ValueError('Qualification source escapes its component')
+        digest.update(path.relative_to(root).as_posix().encode()+b'\0'+path.read_bytes())
+    return digest.hexdigest()
+
+def installed_artifacts():
+    result={}
+    for name in ['memory','rag']:
+        folder=ROOT/f'olo-{name}/build/install/olo-{name}/lib'
+        artifacts={path.name:hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(folder.glob('*.jar'))}
+        if not artifacts or not any(key.startswith('toolgate-service-authorization-') for key in artifacts):
+            raise ValueError('Current installed service distributions are required')
+        result[name]=artifacts
+    return result
+
+def fenced_outcomes(targets,control):
+    """Only committed target writes can establish this gate; pending/other states remain explicit."""
+    if set(targets)!={'memory','rag'}:raise AssertionError('Both target services are required')
+    grants={row['auth_nonce']:row for row in control}
+    if len(grants)!=len(control):raise AssertionError('Duplicate Control authorization nonce')
+    ready=True;summary={}
+    for name,rows in targets.items():
+        completed=0;pending=0
+        for row in rows:
+            if row['state']!='DONE':continue
+            completed+=1;grant=grants.get(row['auth_nonce'])
+            if grant is None:raise AssertionError('Target committed without a recorded Control effect')
+            if (grant['effect_id']!=row['effect_id'] or grant['generation']!=row['authorization_generation']
+                    or grant['consumer']!='olo_'+name):
+                raise AssertionError('Target and Control effect bindings disagree')
+            if row.get('outcome')!='COMPLETED' or not re.fullmatch(r'sha256:[a-f0-9]{64}',row.get('result_digest') or ''):
+                raise AssertionError('Committed target outcome intent is missing')
+            if grant['state'] in ('FAILED','CONFLICT'):raise AssertionError('Target success contradicts Control evidence')
+            settled=grant['state']=='COMPLETED'
+            if row.get('delivered')==1 and not settled:raise AssertionError('Target acknowledged unsettled Control evidence')
+            if not settled or row.get('delivered')!=1:ready=False;pending+=1
+        if not completed:ready=False
+        summary[name]={'completed':completed,'pendingDelivery':pending,'otherStates':len(rows)-completed}
+    return ready,summary
+
 class Stack:
     def __init__(self, image):
+        self.source_before=source_digest(ROOT);self.artifacts_before={}
         self.image=image;self.name='olo-qualification-'+secrets.token_hex(6)
         self.containers=[];self.model_volumes=[];self.backpressure_events=[];self.volume=self.name+'-control';self.network=self.name+'-network';self.trust_volume=self.name+'-trust'
-        runtime=ROOT/'build/qualification/runtime';runtime.mkdir(parents=True,exist_ok=True)
+        runtime=ROOT/'build/qualification/runtime'
+        if runtime.is_symlink() or not runtime.resolve().is_relative_to(ROOT.resolve()):
+            raise ValueError('Qualification runtime must stay inside the component')
+        runtime.mkdir(parents=True,exist_ok=True)
         self.directory=tempfile.TemporaryDirectory(prefix=self.name+'-',dir=runtime)
         self.path=pathlib.Path(self.directory.name);self.tokens={};self.password=secrets.token_urlsafe(32)
         self.process_file=runtime/('fixture-process-'+str(os.getpid())+'.json')
@@ -117,6 +170,7 @@ class Stack:
             '-v',self.trust_volume+':/trust',self.image)
         self.containers.append(self.control)
         info=json.loads(docker('inspect',self.control))[0]
+        self.image_id=info['Image']
         self.origin='http://127.0.0.1:'+info['NetworkSettings']['Ports']['8080/tcp'][0]['HostPort']
         self.control_origin='https://127.0.0.1:'+info['NetworkSettings']['Ports']['8443/tcp'][0]['HostPort']
         self.control_ssl=ssl.create_default_context(cafile=str(self.path/'trust/device-ca.crt'))
@@ -220,12 +274,13 @@ Path('/data/run/qualification-gateway.json').write_text(json.dumps(v))
         if actor:headers['X-ToolGate-Actor-Credential']=actor
         return http((gateway or self.gateway)+'/mcp',token or self.credential(user),body,'POST',headers)
     def start_services(self):
+        self.artifacts_before=installed_artifacts()
         # Separate application databases and roles. Bootstrap SQL is sent on stdin, never in argv/logs.
         env=dict(os.environ,POSTGRES_PASSWORD=self.password)
         postgres=run(['docker','run','--label','io.olo.qualification.owner=olo-knowledge','--rm','-d','--network',self.network,'--network-alias','postgres','-e','POSTGRES_PASSWORD','postgres:16'],env=env,text=True).stdout.strip()
         self.postgres=postgres
         self.containers.append(postgres)
-        self.wait(lambda:subprocess.run(['docker','exec',postgres,'pg_isready','-U','postgres'],capture_output=True).returncode==0,'Service PostgreSQL readiness')
+        self.wait(lambda:subprocess.run(['docker','exec',postgres,'pg_isready','-h','127.0.0.1','-U','postgres'],capture_output=True).returncode==0,'Service PostgreSQL readiness')
         sql="CREATE ROLE memory_app LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD '"+self.password+"'; CREATE ROLE rag_app LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD '"+self.password+"'; CREATE DATABASE memory; CREATE DATABASE rag;"
         run(['docker','exec','-i',postgres,'psql','-U','postgres','-v','ON_ERROR_STOP=1'],input=sql,text=True)
         publication=json.loads(self.exec('cat','/data/tenant-identity/publication.json'))
@@ -387,6 +442,34 @@ print(tag['digest'])
                         if 'json' in decoded:return 200,json.loads(decoded['json'])
             return status,response
         raise TimeoutError('Governed operation did not settle')
+    def qualify_fenced_outcomes(self):
+        deadline=time.monotonic()+60
+        while time.monotonic()<deadline:
+            targets={}
+            sql="""SELECT coalesce(json_agg(row_to_json(item)),'[]'::json) FROM (
+                SELECT c.effect_id,c.auth_nonce,c.authorization_generation,c.state,o.outcome,o.result_digest,o.delivered
+                FROM toolgate_target_claims c LEFT JOIN toolgate_target_outcomes o
+                  ON o.tenant_id=c.tenant_id AND o.effect_id=c.effect_id
+                WHERE c.tenant_id=:'tenant' ORDER BY c.effect_id
+            ) item;"""
+            for name in ['memory','rag']:
+                result=run(['docker','exec','-i',self.postgres,'psql','-U','postgres','-d',name,
+                    '-v','ON_ERROR_STOP=1','-v','tenant='+self.tenant,'-tA'],input=sql,text=True)
+                targets[name]=json.loads(result.stdout.strip())
+            script="""import sqlite3,json,sys
+with sqlite3.connect('file:/data/state/control.sqlite?mode=ro',uri=True,timeout=5) as db:
+ db.row_factory=sqlite3.Row
+ rows=db.execute('SELECT effect_id,auth_nonce,generation,state,consumer FROM control_effect_generations WHERE tenant_id=? ORDER BY effect_id,generation',(sys.argv[1],)).fetchall()
+ print(json.dumps([dict(row) for row in rows]))
+"""
+            control=json.loads(self.script(script,self.tenant))
+            ready,summary=fenced_outcomes(targets,control)
+            report={'passed':ready,'targets':targets,'control':control,'summary':summary,
+                'scope':'Committed target writes agree with actual Control consumption/outcome records; no generalized route or production SLO claim'}
+            self.artifact('fenced-effects.json',json.dumps(report,indent=2)+'\n')
+            if ready:return report
+            time.sleep(.5)
+        raise TimeoutError('Fenced target outcomes did not settle at actual Control')
     def qualify(self):
         gates=[];timings={}
         def mark(name):gates.append(name);print('PASS '+name,flush=True)
@@ -478,8 +561,15 @@ print(tag['digest'])
         timings['grantRevocationSeconds']=time.monotonic()-began
         self.require(timings['grantRevocationSeconds']<=30,'Grant revocation exceeds 30 seconds')
         mark('live Control grant revocation blocks result retrieval within 30 seconds')
-        tested_image=json.loads(docker('image','inspect',self.image))[0]
+        fencing=self.qualify_fenced_outcomes()
+        mark('actual Control and committed target claims/outcomes agree')
+        self.require(source_digest(ROOT)==self.source_before,'Knowledge source changed during full-stack qualification')
+        self.require(installed_artifacts()==self.artifacts_before,'Installed application artifacts changed during qualification')
+        tested_image=json.loads(docker('image','inspect',self.image_id))[0]
         report={'passed':True,'gates':gates,'timings':timings,'perUserQuotas':user_quotas,
+            'fencedEffects':fencing,'knowledgeSourceSha256':self.source_before,'installedArtifacts':self.artifacts_before,
+            'serviceImageIds':{name:json.loads(docker('inspect',identifier))[0]['Image'] for name,identifier in self.services.items()},
+            'embeddingDigest':self.vectors['EMBEDDING_DIGEST'],
             'imageId':tested_image['Id'],
             'toolgateRevision':(tested_image['Config'].get('Labels') or {}).get('org.opencontainers.image.revision'),
             'knowledgeRevision':run(['git','rev-parse','HEAD'],cwd=ROOT,text=True).stdout.strip(),
@@ -501,8 +591,13 @@ def fresh_stack(image='olo-toolgate-quickstart:olo-m8'):
     finally:stack.close()
 
 if __name__=='__main__':
-    with fresh_stack() as stack:
-        if '--readiness-only' in sys.argv:
+    import argparse
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--image',default='olo-toolgate-quickstart:olo-m8')
+    parser.add_argument('--readiness-only',action='store_true')
+    args=parser.parse_args()
+    with fresh_stack(args.image) as stack:
+        if args.readiness_only:
             print(json.dumps({'gate':'fresh Control/Gateway/Tool Host readiness','passed':True,'tenant':stack.tenant}))
         else:
             stack.start_services();stack.qualify()
