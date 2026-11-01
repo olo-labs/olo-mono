@@ -391,6 +391,8 @@ class RagHttpsTest {
     }
     private String permit(String subject,String operation,byte[] body,String tid,long issued,boolean bound)
             throws Exception {
+        String authNonce=UUID.randomUUID().toString();
+        boolean effect=bound&&!operation.equals("memory.read")&&!operation.equals("rag.query");
         var claims =
                 new ServicePermitClaims(
                         "fixture-control",
@@ -407,12 +409,13 @@ class RagHttpsTest {
                         HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(body)),
                         executorKey,
                         "inv-fixture",
-                        UUID.randomUUID().toString(),
+                        authNonce,
                         1L,
                         issued,
                         issued + 15000,
                         "execution-fixture",
-                        bound?fingerprint(operation,body):null);
+                        bound?fingerprint(operation,body):null,
+                        effect?"effect-"+authNonce:null,effect?1L:null);
         String message =
                 B64.encodeToString(
                                 Json.MAPPER.writeValueAsBytes(

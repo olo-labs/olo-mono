@@ -1,5 +1,36 @@
 # Local qualification evidence
 
+## Signed effect metadata compatibility — 2026-11-01
+
+The compatibility fixtures now include signed effect identity/generation for
+bound writes. Gradle records the actual SDK/contracts runtime artifacts for each
+module, and qualification compares those hashes with the selected publications.
+The actual target adapter continues to use one-shot consumption; shared claim
+orchestration and target outcome integration remain outstanding.
+
+Executed tools/test_services.py --with-vectors --with-tls --evaluation:
+**28 passed, zero skips** (service-core 2, memory 10, RAG 16). Dependencies are
+real PostgreSQL/TLS/Qdrant/Ollama; component Control is scripted. The retrieval
+evaluation again used 200 documents and 150 queries, with recall@5 1.0,
+precision@5 0.7333, no unauthorized chunks and no incorrect citations.
+
+Known component parent: 54d08504bdeec0fd5e62913b963c312e737a17bd.
+Tested component source SHA-256:
+a00ccb2722d9cf179235bd65bdc43338cb81d79b8970d87399cb65d0e437e260.
+Digest selection follows the source recipe in the preceding delivery.
+ToolGate known parent: afce2106b326f2296433507a56dd15c74dac47fe.
+Verifier source SHA-256:
+9b17d00509b4df64515c029fc0790c0400d43e0e2b873c885ccc53bc175754ac.
+SDK JAR SHA-256:
+8a574e87a9b75caf81d761d89a7fe15f0de6614b6a3dd900d9cd55c26b23939b.
+Contracts JAR SHA-256:
+1daad128498a9dccd8a9bcf1969962213ff7d341a1716f8e52d732ea6fe28cc7.
+All three modules resolved those exact two runtime artifacts. ToolGate's
+qualification wrapper verified the report and rejected changed contracts,
+changed resolved-classpath and skipped-test evidence using temporary copies.
+This component checkpoint does not rerun the full Control/Gateway stack or
+production SLO qualification, and establishes no shared-claim integration.
+
 ## Bound HTTP target integration — 2026-10-31
 
 The coordinated feature/zero-trust-execution-plan branch adds trusted transport

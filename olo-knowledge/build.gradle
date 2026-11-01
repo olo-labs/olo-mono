@@ -18,3 +18,31 @@ subprojects {
     }
     tasks.withType(Test).configureEach { useJUnitPlatform() }
 }
+
+/* Record the actual published ToolGate JARs used by the application JVM fixtures. */
+subprojects {
+    tasks.register('toolgateArtifactEvidence') {
+        inputs.files(configurations.runtimeClasspath)
+        def evidence = layout.buildDirectory.file('qualification/toolgate-artifacts.json')
+        outputs.file(evidence)
+        doLast {
+            def hashes = [:]
+            configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+                def id = artifact.moduleVersion.id
+                if (id.group == 'io.github.olo-labs' &&
+                    id.name in ['toolgate-service-authorization', 'toolgate-contracts']) {
+                    if (id.version != rootProject.ext.toolgateVersion) {
+                        throw new GradleException('Unexpected ToolGate runtime artifact version')
+                    }
+                    hashes[id.name] = java.security.MessageDigest.getInstance('SHA-256')
+                        .digest(artifact.file.bytes).encodeHex().toString()
+                }
+            }
+            if (hashes.size() != 2) throw new GradleException('Both ToolGate runtime artifacts are required')
+            def target = evidence.get().asFile
+            target.parentFile.mkdirs()
+            target.text = groovy.json.JsonOutput.toJson(hashes)
+        }
+    }
+    tasks.named('test').configure { dependsOn tasks.named('toolgateArtifactEvidence') }
+}

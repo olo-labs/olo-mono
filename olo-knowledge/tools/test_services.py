@@ -128,6 +128,13 @@ try:
                     raise RuntimeError('Target verifier source changed during qualification')
                 artifact=pathlib.Path(source)/f'build/sdk-repo/io/github/olo-labs/toolgate-service-authorization/{version}/toolgate-service-authorization-{version}.jar'
                 report['toolgateSdkSha256']=hashlib.sha256(artifact.read_bytes()).hexdigest()
+                contracts=pathlib.Path(source)/f'.dev/maven/io/github/olo-labs/toolgate-contracts/{version}/toolgate-contracts-{version}.jar'
+                report['toolgateContractsSha256']=hashlib.sha256(contracts.read_bytes()).hexdigest()
+                expected={'toolgate-service-authorization':report['toolgateSdkSha256'],'toolgate-contracts':report['toolgateContractsSha256']}
+                resolved={module:json.loads((root/module/'build/qualification/toolgate-artifacts.json').read_text()) for module in modules}
+                if any(value!=expected for value in resolved.values()):
+                    raise RuntimeError('Resolved application ToolGate artifacts differ from the qualified publications')
+                report['resolvedToolgateArtifacts']=resolved
             report.update(passed=True,status='PASSED')
         except BaseException as failure:
             report.update(status='FAILED',failureType=type(failure).__name__)

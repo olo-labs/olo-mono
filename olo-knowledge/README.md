@@ -330,3 +330,14 @@ retains executed/skipped counts, dependency image IDs, model digest, SDK artifac
 hash and source revision/digest. It rejects source changes during testing and
 clears prior passing evidence before provisioning. PostgreSQL readiness uses the
 final TCP listener, avoiding the temporary initialization-server race.
+
+Bound ToolGate write grants now carry signed effect ID/generation metadata.
+Upgrade the contracts and service library together before Control starts emitting
+these fields. The component fixtures exercise those signed fields. This adapter
+still uses one-shot online consumption; the new shared-claim Control APIs are not
+yet integrated into its business transactions.
+
+Qualification records SHA-256 for both the SDK and contracts JARs actually
+resolved on each application's runtime classpath and compares them with the
+selected ToolGate publications. A same-version artifact mismatch refuses
+qualification. This evidence adds no target deduplication guarantee by itself.
