@@ -1,5 +1,46 @@
 # Local qualification evidence
 
+## Bound HTTP target integration — 2026-10-31
+
+The coordinated feature/zero-trust-execution-plan branch adds trusted transport
+bindings to the shared memory/RAG HTTPS listener and upgrades the service library
+and package plugin to ToolGate 1.0.0-dev.1. The verifier refuses unbound downgrade
+before consumption. Queries remain prohibited by the endpoint; changed Accept
+facts are independently fingerprint-checked. The accepted write then commits once.
+
+Executed evidence:
+- ToolGate base: 17b199e17005cb1b66878262fecea9714d028636 plus verifier source SHA-256
+  866a71f71a09895c2c10e1f568b1e56c073fba592c952ded3ddf6f4f7b55b24d.
+- SDK artifact SHA-256: 1007fb1878d376910d8578ff889d7287ec3d612d13eba8f556229d3c8081a35b.
+- Knowledge base: 59c53d78ce8b1523c0f957d3bcf2594f51a3bc8d; tested component source SHA-256:
+  dc45fad71d596a8db51f6b906e5c819611479dca711cc12324b41a03b513f160. Selection is sorted relative path, NUL, bytes for
+  .java/.sql/.gradle/.kts/.py/.json files, excluding build/cache directories.
+- tools/test_services.py --with-vectors --with-tls --evaluation passed:
+  service-core **2**, memory **10**, RAG **16** tests; **28 passed, zero skips**.
+- Real PostgreSQL/TLS/Qdrant/Ollama dependencies were used; Control is explicitly
+  scripted in the component listener tests. Separate service JVMs verify actual
+  accepted HTTP facts, ACLs, single-use consumption, receipts and revocation.
+- Retrieval corpus: **200 documents, 150 queries**;
+  recall@5 **1.0**, precision@5 **0.7333**,
+  **0 unauthorized chunks**, **750 citations**,
+  **0 citation errors**. Component-only query p50/p95:
+  **57.56/67.32 ms**;
+  these exclude Gateway and mTLS and are not whole-stack latency evidence.
+- The memory/RAG SDK packages built and packed with Gradle 9.7.1 and the current
+  ToolGate CLI. The service build/tests used Gradle 8.12 and Java 21.
+- ToolGate's knowledge qualification entry point executed the complete run and
+  verified source/SDK matches. Negative controls refused skipped or changed-source
+  evidence. Reports remain ignored artifacts under build/qualification and
+  ToolGate build/security/knowledge.
+
+The test fixture now refreshes working SDK publications, records actual dependency
+image/model digests and source pins, clears prior passing evidence before
+provisioning and waits for final PostgreSQL TCP readiness. The deployment fixture
+provisions trusted bindings before listener startup. That fixture's complete
+Control/Gateway run and production SLO qualification have not been rerun by this
+component checkpoint. No whole roadmap phase is marked complete.
+
+
 ## Consolidated monorepo runs — 2026-10-26
 
 All OLO source and qualification scripts now live in `olo-mono`, including this directory.

@@ -144,3 +144,16 @@ Knowledge accepts only bounded text/plain or text/markdown through `/api/v1/know
 ToolGate reserves invocation budgets durably and atomically at admission. Its `scope.conditions.maxInvocationsPerMinute` budget belongs to a grant. For an independent user budget, provision one enabled Team with exactly that user (no role-based membership), then an exact-resource HUMAN grant whose source is that Team. Give different users different grant IDs. Do not leave another unbounded Team grant or alternative grant covering the same operations/resources: an alternative ALLOW path would bypass that budget. The services still enforce owner/member/document ACLs; these grants do not bypass storage authorization. Agents never select or authorize platform operations.
 
 The local fixture uses 600 platform invocations/minute per user while testing isolation, publication, deletion and revocation. It tightens one user's limit to prove an explicit Control denial, verifies another user can still query the same shared KB, then restores the configured limit and verifies fresh authorized reads. This uses ToolGate's existing quota authority; OLO does not add a competing in-process counter. Production limits must be selected with the separate performance qualification in #204.
+
+## HTTP transport bindings
+
+Set TOOLGATE_TRANSPORT_BINDINGS_FILE to the read-only operator configuration
+described in the README. Provision approved packages and record their profile
+digests before starting memory/RAG listeners. Use the public destination origin
+from the approved profile, including port, even behind a load balancer. Host and
+forwarding headers never supply that origin. Update configuration with profile
+deployment and restart services; mismatch fails closed before consumption.
+
+This integration requires the coordinated 1.0.0-dev.1 ToolGate library and package
+plugin. Storage ACL, receipt, deadline and reconciliation checks remain mandatory.
+A transport-aware listener never accepts a legacy unbound permit.

@@ -30,6 +30,7 @@ class RagHttpsTest {
     private final String tenant = UUID.randomUUID().toString(),
             conversation = UUID.randomUUID().toString();
     private KeyPair signing;
+    private int servicePort;
     private String executorKey;
     private long epoch = 1;
     private final Set<String> consumed = java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -109,6 +110,7 @@ class RagHttpsTest {
                                     Map.of(
                                             "authorized",
                                             claims.path("authorizationEpoch").asLong() == epoch
+                                                    && request.path("httpRequestDigest").asText().equals(claims.path("httpRequestDigest").asText())
                                                     && consumed.add(claims.path("nonce").asText()));
                         }
                         byte[] bytes = Json.MAPPER.writeValueAsBytes(response);
@@ -123,6 +125,12 @@ class RagHttpsTest {
         try (var socket = new java.net.ServerSocket(0)) {
             port = socket.getLocalPort();
         }
+        servicePort=port;
+        Path transportFile=folder.resolve("transport-rag.json");
+        Files.writeString(transportFile,Json.encode(Map.of(
+            "schemaVersion",1,"audience","olo-rag","origin","https://localhost:"+port,
+            "profileId","sp-fixture-rag","profileDigest","sha256:"+"a".repeat(64),
+            "routes",Map.of("rag.query","query","rag.ingest","ingest","rag.update","update","rag.delete","delete","rag.share","share"))));
         Path credential = folder.resolve("service.token");
         Files.writeString(credential, "fixture-service");
         var builder =
@@ -132,6 +140,7 @@ class RagHttpsTest {
                         System.getProperty("knowledge.rag.classpath"),
                         RagMain.class.getName());
         var env = builder.environment();
+        env.put("TOOLGATE_TRANSPORT_BINDINGS_FILE",transportFile.toString());
         env.putAll(
                 Map.of(
                         "TENANT_ID",
@@ -238,6 +247,17 @@ class RagHttpsTest {
                                     0));
             String write =
                     permit("alice", "rag.ingest", append, tenant, System.currentTimeMillis());
+            assertEquals(405,send(http,endpoint,"rag.ingest?recipient=changed",append,write).statusCode());
+            assertEquals(0,consumed.size(),"Changed HTTP transport must not consume a write capability");
+            var changedAccept=HttpRequest.newBuilder(endpoint.resolve("rag.ingest")).timeout(Duration.ofSeconds(8))
+                .header("Content-Type","application/json").header("Accept","application/problem+json")
+                .header("Toolgate-Service-Permit",write).POST(HttpRequest.BodyPublishers.ofByteArray(append)).build();
+            assertEquals(403,http.send(changedAccept,HttpResponse.BodyHandlers.ofString()).statusCode());
+            assertEquals(0,consumed.size(),"Changed semantic header must not consume a write capability");
+
+            String legacy=permit("alice","rag.ingest",append,tenant,System.currentTimeMillis(),false);
+            assertEquals(403,send(http,endpoint,"rag.ingest",append,legacy).statusCode());
+            assertEquals(0,consumed.size(),"Unbound downgrade must not consume a write capability");
             assertEquals(200, send(http, endpoint, "rag.ingest", append, write).statusCode());
             assertEquals(1, consumed.size());
             byte[] receipt = body(Map.of("type", "receipt", "invocationId", "inv-fixture"));
@@ -359,12 +379,17 @@ class RagHttpsTest {
                 HttpRequest.newBuilder(base.resolve(operation))
                         .timeout(Duration.ofSeconds(8))
                         .header("Content-Type", "application/json")
+                        .header("Accept", "*/*")
                         .POST(HttpRequest.BodyPublishers.ofByteArray(body));
         if (permit != null) request.header("Toolgate-Service-Permit", permit);
         return client.send(request.build(), HttpResponse.BodyHandlers.ofString());
     }
 
     private String permit(String subject, String operation, byte[] body, String tid, long issued)
+            throws Exception {
+        return permit(subject,operation,body,tid,issued,true);
+    }
+    private String permit(String subject,String operation,byte[] body,String tid,long issued,boolean bound)
             throws Exception {
         var claims =
                 new ServicePermitClaims(
@@ -386,7 +411,8 @@ class RagHttpsTest {
                         1L,
                         issued,
                         issued + 15000,
-                        "execution-fixture");
+                        "execution-fixture",
+                        bound?fingerprint(operation,body):null);
         String message =
                 B64.encodeToString(
                                 Json.MAPPER.writeValueAsBytes(
@@ -403,6 +429,15 @@ class RagHttpsTest {
         signature.initSign(signing.getPrivate());
         signature.update(message.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         return message + "." + B64.encodeToString(signature.sign());
+    }
+
+    private String fingerprint(String operation,byte[] body){
+        var profile=new io.ololabs.toolgate.service.HttpRequestFingerprint.Profile(
+            "sp-fixture-rag","sha256:"+"a".repeat(64),operation.substring(operation.indexOf('.')+1),
+            "toolgate-service-permit:olo-rag",List.of("toolgate-service-permit"));
+        return io.ololabs.toolgate.service.HttpRequestFingerprint.digest(profile,
+            URI.create("https://localhost:"+servicePort+"/v1/"+operation),"POST",
+            Map.of("content-type",List.of("application/json"),"accept",List.of("*/*")),body);
     }
 
     private static String unsigned(java.math.BigInteger value) {

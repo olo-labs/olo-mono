@@ -8,7 +8,9 @@ There is no import, migration, legacy reader, anonymous mode or long-term user-m
 
 This directory is part of `olo-mono`. Set `TOOLGATE_SOURCE` to the separately versioned ToolGate checkout.
 Build/publish that ToolGate SDK with `publishJavaSdkLocally` and its contracts with
-`:contracts-java:publishMavenJavaPublicationToContractProofRepository -PcontractsPublicationVersion=0.10.0-dev`.
+`:contracts-java:publishMavenJavaPublicationToContractProofRepository -PcontractsPublicationVersion=1.0.0-dev.1`.
+The service library and package plugin default to 1.0.0-dev.1. TOOLGATE_VERSION
+selects the service dependency for a coordinated development build.
 Then run Gradle 8.12 `:olo-memory:installDist :olo-rag:installDist` here. Build the two Java SDK packages in
 `packages/` with Gradle 9.7.1 `build toolgatePackage`. Each declares the exact permission and root resource;
 the executor broker adds the permit and client certificate. Packages never see database credentials or signing keys.
@@ -34,7 +36,7 @@ Control service credential are required per tenant; a caller cannot select anoth
 
 Both processes require `TENANT_ID`, `DATABASE_URL` (production: PostgreSQL TLS verify-full), `DATABASE_USER`,
 `DATABASE_PASSWORD`, `TLS_KEYSTORE`, `TLS_TRUSTSTORE`, `TLS_STORE_PASSWORD`, `CONTROL_ORIGIN` (HTTPS),
-`CONTROL_ISSUER`, `CONTROL_CREDENTIAL_FILE`. TLS stores are PKCS12. Port defaults to 8443.
+`CONTROL_ISSUER`, `CONTROL_CREDENTIAL_FILE`, `TOOLGATE_TRANSPORT_BINDINGS_FILE`. TLS stores are PKCS12. Port defaults to 8443.
 The service truststore trusts only the executor client CA and Control server CA. Client certificates are mandatory;
 no forwarded identity header is trusted. Mount credentials and stores read-only; rotate the Control JWT file atomically.
 
@@ -278,3 +280,53 @@ docker build --build-context toolgate-sdk="$env:TOOLGATE_SOURCE/build/sdk-repo" 
 ```
 
 Run these from the monorepo root. The named context supplies only published SDK/contracts to the build stage. Runtime images contain service distributions, with no OLO worker, database credentials, local tool plugins or private qualification state.
+
+
+## Bound HTTP request deployment
+
+Updated listeners require a read-only trusted transport-bindings file. They pass
+the accepted raw URI, method, repeated headers and exact body to the target
+verifier. Public origin, profile digest and route map never come from an incoming
+Host/digest header or unverified permit payload. Transport-aware targets refuse
+unbound legacy permits before consuming a nonce.
+
+For memory, provide a JSON document with exactly these fields:
+
+~~~json
+{
+  "schemaVersion": 1,
+  "audience": "olo-memory",
+  "origin": "https://olo-memory:8443",
+  "profileId": "sp-olo.memory",
+  "profileDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "routes": {
+    "memory.read": "read",
+    "memory.append": "append",
+    "memory.delete": "delete",
+    "memory.share": "share",
+    "memory.export": "export"
+  }
+}
+~~~
+
+Replace the example digest with the actual deployment's serviceProfileDigest.
+For RAG use audience olo-rag, profile sp-olo.rag, the approved public RAG origin,
+its digest and the rag.query/ingest/update/delete/share mapping. Mount the file
+read-only and set TOOLGATE_TRANSPORT_BINDINGS_FILE before starting the process.
+Missing, malformed, wrong-audience or unknown-field configuration fails startup.
+Profile rotation requires updating this trusted file and restarting the service;
+an old binding safely refuses new grants.
+
+The full-stack fixture provisions packages and captures trusted bindings before
+starting listeners. Component TLS tests use signed fixture bindings and a
+scripted Control, with real PostgreSQL, TLS sockets and separate service JVMs.
+They reject changed Accept/query facts and unbound downgrade without consuming
+a write capability, then commit the authorized write once. They do not replace
+qualification of the actual Control/Gateway stack.
+
+Run tools/test_services.py --with-vectors --with-tls --evaluation to include the
+retrieval corpus. The report at build/qualification/service-components.json
+retains executed/skipped counts, dependency image IDs, model digest, SDK artifact
+hash and source revision/digest. It rejects source changes during testing and
+clears prior passing evidence before provisioning. PostgreSQL readiness uses the
+final TCP listener, avoiding the temporary initialization-server race.

@@ -1,9 +1,11 @@
 """Run real PostgreSQL storage tests in an owned disposable container. Never print generated credentials."""
-import os, pathlib, secrets, subprocess, sys, time, urllib.request, json, tempfile, math
+import os, pathlib, secrets, subprocess, sys, time, urllib.request, json, tempfile, math, hashlib
+import xml.etree.ElementTree as ET
 from test_pki import prepare
 root = pathlib.Path(__file__).resolve().parents[1]
 password = secrets.token_hex(24)
 runtime=root/'build/qualification/runtime';runtime.mkdir(parents=True,exist_ok=True)
+(root/'build/qualification/service-components.json').write_text(json.dumps({'passed':False,'status':'PROVISIONING'}),encoding='utf-8')
 process_file=runtime/('fixture-process-'+str(os.getpid())+'.json')
 process_file.write_text(json.dumps({'workspace':str(root),'pid':os.getpid(),'session':'olo-qualification-'+secrets.token_hex(6),'script':'test_services.py'}),encoding='utf-8')
 container = None
@@ -12,11 +14,21 @@ volumes=[]
 pki=None
 def run(args, **kwargs):
     return subprocess.run(args, check=True, **kwargs)
+def source_digest(folder=root):
+    digest=hashlib.sha256()
+    files=[]
+    for base,dirs,names in os.walk(folder):
+        dirs[:]=[name for name in dirs if name not in {'build','.gradle','.git','node_modules'}]
+        files.extend(pathlib.Path(base)/name for name in names if pathlib.Path(name).suffix in {'.java','.sql','.gradle','.kts','.py','.json'})
+    for file in sorted(files,key=lambda path:path.relative_to(folder).as_posix()):
+        digest.update(file.relative_to(folder).as_posix().encode()+b'\0'+file.read_bytes())
+    return digest.hexdigest()
+
 try:
     container = subprocess.check_output(['docker','run','--label','io.olo.qualification.owner=olo-knowledge','--rm','-d','-e','POSTGRES_PASSWORD',
         '-p','127.0.0.1::5432','postgres:16'], env=dict(os.environ,POSTGRES_PASSWORD=password),text=True).strip()
     for _ in range(60):
-        if subprocess.run(['docker','exec',container,'pg_isready','-U','postgres'],capture_output=True).returncode == 0: break
+        if subprocess.run(['docker','exec',container,'pg_isready','-h','127.0.0.1','-U','postgres'],capture_output=True).returncode == 0: break
         time.sleep(0.5)
     else: raise RuntimeError('Test database did not become ready')
     run(['docker','exec','-i',container,'psql','-U','postgres','-v','ON_ERROR_STOP=1'],
@@ -89,7 +101,39 @@ try:
             print('Embedding dependency p50/p95 ms:',report['clientP50Ms'],report['clientP95Ms'],flush=True)
     gradle=os.environ.get('GRADLE',str(pathlib.Path.home()/'.gradle/wrapper/dists/gradle-8.12-bin/cetblhg4pflnnks72fxwobvgv/gradle-8.12/bin/gradle.bat'))
     if '--profile-embeddings' not in sys.argv:
-        run([gradle,'test','--rerun-tasks','--console=plain'],cwd=root,env=env)
+        report_file=root/'build/qualification/service-components.json'
+        report={'passed':False,'status':'RUNNING','revision':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),
+            'sourceSha256':source_digest(),'scope':'memory/RAG component PostgreSQL/TLS/vector qualification; scripted Control, not full-stack SLO acceptance',
+            'withTls':'--with-tls' in sys.argv,'withVectors':'--with-vectors' in sys.argv,'withEvaluation':'--evaluation' in sys.argv,
+            'modelDigest':env.get('KNOWLEDGE_MODEL_DIGEST')}
+        source=os.environ.get('TOOLGATE_SOURCE')
+        if source:report['toolgateVerifierSourceSha256']=source_digest(pathlib.Path(source)/'backend-libs/service-authorization')
+        report_file.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+        try:
+            # Working development publications may be rebuilt under the same version.
+            run([gradle,'test','--refresh-dependencies','--rerun-tasks','--console=plain'],cwd=root,env=env)
+            if source_digest()!=report['sourceSha256']:raise RuntimeError('Knowledge source changed during qualification')
+            modules={}
+            for module in ['service-core','olo-memory','olo-rag']:
+                suites=[ET.parse(path).getroot() for path in (root/module/'build/test-results/test').glob('TEST-*.xml')]
+                modules[module]={key:sum(int(suite.get(key,'0')) for suite in suites) for key in ['tests','failures','errors','skipped']}
+            if any(value['tests']==0 or value['failures'] or value['errors'] for value in modules.values()):
+                raise RuntimeError('Incomplete service test evidence')
+            report['modules']=modules
+            report['images']=[subprocess.check_output(['docker','inspect','--format','{{.Image}}',identifier],text=True).strip() for identifier in [container,*dependencies]]
+            source=os.environ.get('TOOLGATE_SOURCE')
+            version=os.environ.get('TOOLGATE_VERSION','1.0.0-dev.1')
+            if source:
+                if source_digest(pathlib.Path(source)/'backend-libs/service-authorization')!=report['toolgateVerifierSourceSha256']:
+                    raise RuntimeError('Target verifier source changed during qualification')
+                artifact=pathlib.Path(source)/f'build/sdk-repo/io/github/olo-labs/toolgate-service-authorization/{version}/toolgate-service-authorization-{version}.jar'
+                report['toolgateSdkSha256']=hashlib.sha256(artifact.read_bytes()).hexdigest()
+            report.update(passed=True,status='PASSED')
+        except BaseException as failure:
+            report.update(status='FAILED',failureType=type(failure).__name__)
+            raise
+        finally:
+            report_file.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
 finally:
     for dependency in dependencies:subprocess.run(['docker','stop',dependency],capture_output=True)
     for volume in volumes:subprocess.run(['docker','volume','rm',volume],capture_output=True)

@@ -230,7 +230,8 @@ Path('/data/run/qualification-gateway.json').write_text(json.dumps(v))
         run(['docker','exec','-i',postgres,'psql','-U','postgres','-v','ON_ERROR_STOP=1'],input=sql,text=True)
         publication=json.loads(self.exec('cat','/data/tenant-identity/publication.json'))
         client_ca=next(v['certificatePem'] for v in publication['publications'][0]['keys'] if v['purpose']=='DEVICE_CA')
-        self.install_paths={};self.services={}
+        self.install_paths={};self.services={};self.transport_bindings={}
+        self.provision_packages()
         for name in ['memory','rag']:
             ddl=(ROOT/'deploy/common.sql').read_text(encoding='utf-8')+(ROOT/f'deploy/{name}.sql').read_text(encoding='utf-8')
             ddl+='\nGRANT USAGE ON SCHEMA public TO '+name+'_app; GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO '+name+'_app;'
@@ -257,7 +258,8 @@ Path('/data/run/qualification-gateway.json').write_text(json.dumps(v))
                 self.require(internal=='200','Internal '+name+' Control '+endpoint+' preflight refused HTTP '+internal)
             print('PASS authenticated '+name+' Control authorization dependencies',flush=True)
             settings=dict(TENANT_ID=self.tenant,DATABASE_URL='jdbc:postgresql://postgres:5432/'+name+'?sslmode=disable',DATABASE_USER=name+'_app',DATABASE_PASSWORD=self.password,
-                TLS_KEYSTORE='/run/knowledge/server.p12',TLS_TRUSTSTORE='/run/knowledge/trust.p12',TLS_STORE_PASSWORD=self.password,CONTROL_ORIGIN='https://control:8443',CONTROL_ISSUER='control',CONTROL_CREDENTIAL_FILE='/run/knowledge/control-token')
+                TLS_KEYSTORE='/run/knowledge/server.p12',TLS_TRUSTSTORE='/run/knowledge/trust.p12',TLS_STORE_PASSWORD=self.password,CONTROL_ORIGIN='https://control:8443',CONTROL_ISSUER='control',CONTROL_CREDENTIAL_FILE='/run/knowledge/control-token',TOOLGATE_TRANSPORT_BINDINGS_FILE='/run/knowledge/transport-bindings.json')
+            (directory/'transport-bindings.json').write_text(json.dumps(self.transport_bindings[name]),encoding='utf-8')
             if name=='rag':settings.update(self.vector_settings())
             env_file=directory/'service.env';env_file.write_text('\n'.join(k+'='+v for k,v in settings.items())+'\n',encoding='utf-8')
             install=(ROOT/f'olo-{name}/build/install/olo-{name}').resolve();self.install_paths[name]=install
@@ -267,7 +269,6 @@ Path('/data/run/qualification-gateway.json').write_text(json.dumps(v))
                 '-v',str(install)+':/app:ro','eclipse-temurin:21-jre','/app/bin/olo-'+name)
             self.containers.append(container)
             self.services[name]=container
-        self.provision_packages()
     def vector_settings(self):
         if hasattr(self,'vectors'):return self.vectors
         qdrant=docker('run','--label','io.olo.qualification.owner=olo-knowledge','--rm','-d','--network',self.network,'--network-alias','qdrant','qdrant/qdrant:latest');self.containers.append(qdrant)
@@ -305,6 +306,9 @@ print(tag['digest'])
             deployment=self.api('/packages/deployments',{'packageDigest':digest,'globals':{'ServiceHost':'olo-'+name},'hostIds':['tool-host-local'],
                 'privateRanges':[{'host':'olo-'+name,'cidr':network,'ports':[8443]}],
                 'destinationTls':{'olo-'+name:{'caBundle':self.ca_pem.decode(),'spkiPins':[]}}},'POST')
+            operations=['read','append','delete','share','export'] if name=='memory' else ['query','ingest','update','delete','share']
+            self.transport_bindings[name]=dict(schemaVersion=1,audience='olo-'+name,origin='https://olo-'+name+':8443',
+                profileId='sp-olo.'+name,profileDigest=deployment['serviceProfileDigest'],routes={name+'.'+op:op for op in operations})
             for tool in deployment['toolIds']:
                 entry=self.api('/tools/'+tool);self.api('/tools/'+tool,{**entry,'enabled':True},'PUT',revision=entry['revision'])
         original=self.api('/bindings/binding-default')

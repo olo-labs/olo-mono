@@ -1,4 +1,5 @@
 plugins { id 'base' }
+ext.toolgateVersion = System.getenv('TOOLGATE_VERSION') ?: '1.0.0-dev.1'
 subprojects {
     apply plugin: 'java-library'
     group = 'org.olo.knowledge'

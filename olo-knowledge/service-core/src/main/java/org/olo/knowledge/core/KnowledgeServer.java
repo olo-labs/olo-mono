@@ -43,6 +43,7 @@ public final class KnowledgeServer {
         String tenant = env("TENANT_ID");
         if (!tenant.matches("[A-Za-z0-9_-]{1,128}"))
             throw new IllegalArgumentException("Invalid tenant binding");
+        var bindings=TransportBindings.load(Path.of(env("TOOLGATE_TRANSPORT_BINDINGS_FILE")),audience);
         var tls = tls();
         var http =
                 HttpClient.newBuilder()
@@ -137,7 +138,8 @@ public final class KnowledgeServer {
                                         control,
                                         new ServicePermit(token),
                                         new ServicePermitVerifier.Request(
-                                                tenant, op, resources, bytes),
+                                                tenant, op, resources, bytes,
+                                                bindings.facts(op,exchange.getRequestURI(),exchange.getRequestMethod(),exchange.getRequestHeaders())),
                                         ((HttpsExchange) exchange).getSSLSession());
                         reply(exchange, 200, handler.handle(request, body));
                     } catch (Database.CommitUncertain uncertain) {
