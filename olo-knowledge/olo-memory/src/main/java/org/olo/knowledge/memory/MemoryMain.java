@@ -8,6 +8,7 @@ import org.olo.knowledge.core.KnowledgeServer;
 public final class MemoryMain {
     public static void main(String[] args) throws Exception {
         var db = KnowledgeServer.database();
+        KnowledgeServer.start(ServiceAudience.olo_memory, new MemoryService(db)::handle);
         var retention = new WorkingStateRetention(db);
         var executor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
         executor.scheduleWithFixedDelay(
@@ -22,6 +23,5 @@ public final class MemoryMain {
                 60,
                 java.util.concurrent.TimeUnit.SECONDS);
         Runtime.getRuntime().addShutdownHook(new Thread(executor::shutdown));
-        KnowledgeServer.start(ServiceAudience.olo_memory, new MemoryService(db)::handle);
     }
 }

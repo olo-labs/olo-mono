@@ -33,6 +33,7 @@ public final class PostgresFixture {
             s.execute("CREATE SCHEMA " + schema);
             s.execute("SET search_path=" + schema);
             s.execute(Files.readString(Path.of("../deploy/common.sql")));
+            s.execute(Files.readString(Path.of("../deploy/target-claims.sql")));
             s.execute(
                     Files.readString(Path.of(rag ? "../deploy/rag.sql" : "../deploy/memory.sql")));
             s.execute("GRANT USAGE ON SCHEMA " + schema + " TO knowledge_test");
@@ -40,6 +41,9 @@ public final class PostgresFixture {
                     "GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA "
                             + schema
                             + " TO knowledge_test");
+            s.execute("REVOKE UPDATE,DELETE ON "+schema+".toolgate_target_claims,"+schema+".toolgate_target_outcomes FROM knowledge_test");
+            s.execute("GRANT UPDATE(state,result_digest,ownership_generation) ON "+schema+".toolgate_target_claims TO knowledge_test");
+            s.execute("GRANT UPDATE(delivered) ON "+schema+".toolgate_target_outcomes TO knowledge_test");
         }
         var db = new Database(base + "&currentSchema=" + schema, "knowledge_test", password);
         URLS.put(db, base + "&currentSchema=" + schema);

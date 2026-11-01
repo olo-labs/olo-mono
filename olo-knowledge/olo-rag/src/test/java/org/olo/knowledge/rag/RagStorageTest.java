@@ -390,4 +390,27 @@ class RagStorageTest {
         assertEquals(1, points.size());
         assertNotEquals(orphan, points.getFirst().id());
     }
+    @Test void expiryAfterEmbeddingPreventsExternalVectorMutation()throws Exception{
+        var expired=new java.util.concurrent.atomic.AtomicBoolean();var calls=new java.util.concurrent.atomic.AtomicInteger();
+        EmbeddingModel original=model;
+        var delayed=new EmbeddingModel(){
+            public String version(){return original.version();}
+            public List<List<Double>> embed(List<String> texts)throws Exception{
+                calls.incrementAndGet();var result=original.embed(texts);expired.set(true);return result;
+            }
+        };
+        var guarded=new RagService(db,delayed,index);
+        try(var c=db.open(TENANT)){
+            assertThrows(SecurityException.class,()->guarded.execute(c,new Scope(TENANT,"alice","rag.ingest"),
+                json(document("deadline-bound content",0)),()->{if(expired.get())throw new SecurityException("Expired");}));
+            c.rollback();
+        }
+        assertEquals(1,calls.get());assertTrue(points.isEmpty(),"Expired work must not call the external vector write");
+        try(var c=db.open(TENANT)){
+            assertTrue(Database.rows(c,"SELECT doc_id FROM rag_document WHERE tenant=? AND kb_id=?::uuid AND doc_id=?::uuid",TENANT,kb,doc).isEmpty());
+            c.commit();
+        }
+    }
+
+
 }

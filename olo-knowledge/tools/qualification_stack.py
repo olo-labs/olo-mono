@@ -233,8 +233,11 @@ Path('/data/run/qualification-gateway.json').write_text(json.dumps(v))
         self.install_paths={};self.services={};self.transport_bindings={}
         self.provision_packages()
         for name in ['memory','rag']:
-            ddl=(ROOT/'deploy/common.sql').read_text(encoding='utf-8')+(ROOT/f'deploy/{name}.sql').read_text(encoding='utf-8')
+            ddl=(ROOT/'deploy/common.sql').read_text(encoding='utf-8')+(ROOT/'deploy/target-claims.sql').read_text(encoding='utf-8')+(ROOT/f'deploy/{name}.sql').read_text(encoding='utf-8')
             ddl+='\nGRANT USAGE ON SCHEMA public TO '+name+'_app; GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA public TO '+name+'_app;'
+            ddl+='REVOKE UPDATE,DELETE ON toolgate_target_claims,toolgate_target_outcomes FROM '+name+'_app;'
+            ddl+='GRANT UPDATE(state,result_digest,ownership_generation) ON toolgate_target_claims TO '+name+'_app;'
+            ddl+='GRANT UPDATE(delivered) ON toolgate_target_outcomes TO '+name+'_app;'
             run(['docker','exec','-i',postgres,'psql','-U','postgres','-d',name,'-v','ON_ERROR_STOP=1'],input=ddl,text=True)
             directory=self.path/name;directory.mkdir()
             (directory/'tls-root.crt').write_bytes(self.ca_pem)

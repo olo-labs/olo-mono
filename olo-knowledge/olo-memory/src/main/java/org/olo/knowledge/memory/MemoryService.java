@@ -27,9 +27,11 @@ public final class MemoryService {
                     .set("conversationId", body.get("conversationId"));
             body = flat;
         }
+        var write=request.read()?null:request.fencing().begin(request);
         try (var c = db.open(request.evidence().tenant())) {
-            var authorization = request.authorize();
+            var authorization = write==null?request.authorize():write.authorization();
             var scope = request.scope(authorization);
+            authorization.checkCommitDeadline();
             Object result = execute(c, scope, body);
             if (!request.read())
                 Receipts.record(
@@ -41,7 +43,9 @@ public final class MemoryService {
                         .put("authorizedAt", System.currentTimeMillis());
                 result = released;
             }
+            if(write!=null)write.finish(c,result);
             Database.commit(c, authorization);
+            if(write!=null)write.committed();
             return result;
         }
     }

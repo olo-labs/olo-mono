@@ -32,10 +32,12 @@ public final class RagService {
             ((com.fasterxml.jackson.databind.node.ObjectNode) flat).set("kbId", body.get("kbId"));
             body = flat;
         }
+        var write=request.read()?null:request.fencing().begin(request);
         try (var c = db.open(request.evidence().tenant())) {
-            var auth = request.authorize();
+            var auth = write==null?request.authorize():write.authorization();
             var scope = request.scope(auth);
-            Object result = execute(c, scope, body);
+            auth.checkCommitDeadline();
+            Object result = execute(c, scope, body,auth::checkCommitDeadline);
             if (!request.read())
                 Receipts.record(c, scope, Json.id(body, "kbId"), auth.claims(), result);
             if (request.read()) {
@@ -45,12 +47,17 @@ public final class RagService {
                         .put("authorizedAt", System.currentTimeMillis());
                 result = released;
             }
+            if(write!=null)write.finish(c,result);
             Database.commit(c, auth);
+            if(write!=null)write.committed();
             return result;
         }
     }
 
     Object execute(Connection c, Scope s, JsonNode b) throws Exception {
+        return execute(c,s,b,()->{});
+    }
+    Object execute(Connection c,Scope s,JsonNode b,Runnable deadline)throws Exception {
         String kb = Json.id(b, "kbId"), op = s.operation();
         if (op.equals("rag.query") && b.path("type").asText().equals("receipt"))
             return Receipts.lookup(c, s, kb, Json.text(b, "invocationId", 128));
@@ -60,7 +67,7 @@ public final class RagService {
             queryRoot(c, s, kb);
         else s.require(c, kb, true, op.equals("rag.share") && !b.has("docId"));
         return switch (op) {
-            case "rag.ingest", "rag.update" -> ingest(c, s, kb, b);
+            case "rag.ingest", "rag.update" -> ingest(c, s, kb, b,deadline);
             case "rag.query" -> query(c, s, kb, b);
             case "rag.delete" -> delete(c, s, kb, Json.id(b, "docId"));
             case "rag.share" -> {
@@ -126,7 +133,7 @@ public final class RagService {
         };
     }
 
-    private Object ingest(Connection c, Scope s, String kb, JsonNode b) throws Exception {
+    private Object ingest(Connection c, Scope s, String kb, JsonNode b,Runnable deadline) throws Exception {
         if (b.path("type").asText().equals("reindex")) {
             if (!s.operation().equals("rag.update"))
                 throw new IllegalArgumentException("Reindex requires rag.update");
@@ -197,6 +204,7 @@ public final class RagService {
         if (current != expected) throw new IllegalArgumentException("Document version conflict");
         long version = current + 1;
         var chunks = chunk(content);
+        deadline.run();
         var vectors = embeddings.embed(chunks);
         var points = new ArrayList<VectorIndex.Point>();
         for (int i = 0; i < chunks.size(); i++) {
@@ -229,6 +237,7 @@ public final class RagService {
         // transaction as publication.
         // Failed transactions may leave opaque orphan vectors; the periodic SQL-authoritative sweep
         // removes them.
+        deadline.run();
         index.put(points);
         if (current > 0)
             update(

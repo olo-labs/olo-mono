@@ -22,6 +22,7 @@ public final class RagMain {
                         KnowledgeServer.env("QDRANT_API_KEY"),
                         KnowledgeServer.env("QDRANT_COLLECTION"));
         var service = new RagService(KnowledgeServer.database(), model, index);
+        KnowledgeServer.start(ServiceAudience.olo_rag, service::handle);
         var cleanup = Executors.newSingleThreadScheduledExecutor();
         cleanup.scheduleWithFixedDelay(
                 () -> {
@@ -35,6 +36,5 @@ public final class RagMain {
                 5,
                 TimeUnit.SECONDS);
         Runtime.getRuntime().addShutdownHook(new Thread(cleanup::shutdown));
-        KnowledgeServer.start(ServiceAudience.olo_rag, service::handle);
     }
 }

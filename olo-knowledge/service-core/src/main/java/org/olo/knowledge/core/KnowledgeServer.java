@@ -67,6 +67,7 @@ public final class KnowledgeServer {
                             }
                         },
                         Clock.systemUTC());
+        var fencing=new FencedEffects(database(),control,tenant);
         var server =
                 HttpsServer.create(
                         new InetSocketAddress(
@@ -140,8 +141,10 @@ public final class KnowledgeServer {
                                         new ServicePermitVerifier.Request(
                                                 tenant, op, resources, bytes,
                                                 bindings.facts(op,exchange.getRequestURI(),exchange.getRequestMethod(),exchange.getRequestHeaders())),
-                                        ((HttpsExchange) exchange).getSSLSession());
+                                        ((HttpsExchange) exchange).getSSLSession(),fencing);
                         reply(exchange, 200, handler.handle(request, body));
+                    } catch (FencedEffects.Existing existing) {
+                        reply(exchange,409,existing.status());
                     } catch (Database.CommitUncertain uncertain) {
                         safeReply(exchange, 503, "OUTCOME_UNKNOWN: reconcile the storage receipt");
                     } catch (SecurityException denied) {
@@ -171,8 +174,9 @@ public final class KnowledgeServer {
                         exchange.close();
                     }
                 });
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stop(5)));
-        server.start();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {server.stop(5);fencing.close();}));
+        try{server.start();fencing.start();}
+        catch(RuntimeException failed){server.stop(0);fencing.close();throw failed;}
     }
 
     private static void safeReply(HttpExchange e, int code, String message) {

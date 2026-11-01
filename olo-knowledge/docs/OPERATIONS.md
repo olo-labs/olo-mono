@@ -53,6 +53,43 @@ private keys and credentials. Shared dependency/model caches and sanitized repor
 an unowned environment. An incomplete cleanup retains ownership records for a retry. Do not prune unrelated
 Docker resources. Save sanitized evidence outside generated `build/` before removing a workstation.
 
+## Shared effect claims upgrade
+
+Apply deploy/target-claims.sql as the schema owner after common.sql for fresh
+installations, and additively for existing service schemas. Deploy it before the
+new service SDK/application. Old claims receive expiry 0, which is unknown and
+never an automatic recovery deadline. Do not fabricate historical claim rows.
+Retain and reconcile old one-shot writes through their original protected receipts.
+
+After ordinary service grants, restrict the target tables for the actual service
+role (memory_app or rag_app in the qualification deployment):
+
+~~~sql
+REVOKE UPDATE, DELETE ON toolgate_target_claims, toolgate_target_outcomes FROM memory_app;
+GRANT UPDATE(state, result_digest, ownership_generation) ON toolgate_target_claims TO memory_app;
+GRANT UPDATE(delivered) ON toolgate_target_outcomes TO memory_app;
+~~~
+
+Use the corresponding role for each separate service database. SELECT and INSERT
+remain required. Never run the application as schema owner or superuser. The
+migration forces tenant RLS and guards immutable bindings and state transitions.
+Startup verifies schema/RLS and runtime permissions before listening; unsafe or
+missing configuration has no legacy write fallback.
+
+Every replica must share claims, outcome records and business state. The target
+first verifies accepted TLS/HTTP facts, commits its unique local claim, consumes
+at Control, then commits APPLYING before business work. RAG checks the original
+deadline before embedding/vector writes. Completion and its outcome outbox
+commit with business SQL; only after commit may reporting occur.
+
+HTTP 409 returns durable effect status without a new mutation. A crash or lost
+outcome reply is recovered by reporting the existing outbox record. Bounded
+coalesced passes use keyset rotation; failed delivery cannot trigger business
+resubmission. Expired CLAIMED ownership may be abandoned by CAS before reporting
+not-started. APPLYING cannot be declared not-started without conclusive evidence.
+If Control never recorded a claim, its refused outcome remains queued for
+reconciliation. No automatic replacement or tombstone deletion is provided.
+
 ## Unknown outcomes and reconciliation
 
 1. Stop the affected logical operation. Preserve its tenant, user, resource, logical operation ID, ToolGate

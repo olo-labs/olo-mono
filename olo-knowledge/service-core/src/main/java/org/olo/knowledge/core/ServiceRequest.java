@@ -14,7 +14,8 @@ public record ServiceRequest(
         ControlServiceAuthorization control,
         ServicePermit permit,
         ServicePermitVerifier.Request evidence,
-        SSLSession peer) {
+        SSLSession peer,
+        FencedEffects fencing) {
     public ServicePermitVerifier.Authorization authorize() {
         return control.authorize(permit, evidence, peer);
     }

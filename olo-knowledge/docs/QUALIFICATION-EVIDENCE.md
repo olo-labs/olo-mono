@@ -1,5 +1,46 @@
 # Local qualification evidence
 
+## Shared claim and outcome integration — 2026-11-01
+
+The target adapter now commits a shared local claim and APPLYING before work,
+then completes business SQL with a durable outcome record. The migration forces
+tenant RLS, restricts binding/deletion privileges and guards state transitions.
+The listener refuses unsafe/missing schema instead of falling back.
+
+Qualification now exercises paused-owner recovery, two actual service JVMs with
+one business mutation, writer termination, lost outcome acknowledgement,
+Control refusal/mismatched response metadata, deadline expiry before vector
+mutation and guarded SQL records. Component Control remains scripted; complete
+Control/Gateway/deployment acceptance is separate.
+
+Executed tools/test_services.py --with-vectors --with-tls --evaluation:
+**32 passed, zero skips** (service-core 5, memory 10, RAG 17). Each real TLS
+fixture runs two separate application JVMs sharing one service identity/database,
+fences a paused claim owner, checks unavailable/other-claim/wrong-generation
+Control replies, races one mutation, kills the writer, drops an outcome
+acknowledgement and verifies recovery by the survivor. SQL tests exercise forced
+tenant RLS, immutable bindings/tombstones and terminal-state guards. The RAG
+deadline test allows embedding to finish but prevents the external vector write.
+
+Both application distributions built; their installed SDK/contracts JAR hashes
+match the qualified runtime artifacts. The full-stack provisioning script passes
+syntax validation but its complete runtime qualification has not yet executed.
+The retrieval evaluation again executes 200 documents/150 queries, recall@5 1.0,
+precision@5 0.7333, zero unauthorized chunks and zero incorrect citations.
+
+Known component parent: f885c89. Tested component SHA-256:
+8d661624055f36d4ebb0b6da67c9a20f4679c6b0b4d96b7673b625fc0cd37c6a.
+ToolGate known parent: 3665e52d7b8c622d4d776361eff0a564ad961c32.
+Verifier source SHA-256:
+3287fa65030eea04ccc0471f89939cc63312e700e67c487323b23858193453e1.
+SDK JAR SHA-256:
+16e961a02fc5b032578b8aecb1bf41daad0de157a2905c6552c7ce88307d35fe.
+Contracts JAR SHA-256:
+1daad128498a9dccd8a9bcf1969962213ff7d341a1716f8e52d732ea6fe28cc7.
+All three module classpaths match those publications. ToolGate verify-only and
+changed-contract/classpath/skipped-evidence negative controls pass.
+Source selection follows the source recipe in the prior delivery.
+
 ## Signed effect metadata compatibility — 2026-11-01
 
 The compatibility fixtures now include signed effect identity/generation for

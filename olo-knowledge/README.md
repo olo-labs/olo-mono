@@ -333,11 +333,25 @@ final TCP listener, avoiding the temporary initialization-server race.
 
 Bound ToolGate write grants now carry signed effect ID/generation metadata.
 Upgrade the contracts and service library together before Control starts emitting
-these fields. The component fixtures exercise those signed fields. This adapter
-still uses one-shot online consumption; the new shared-claim Control APIs are not
-yet integrated into its business transactions.
+these fields. The component fixtures exercise those signed fields. Writes now commit a shared
+local claim, consume with its token, persist APPLYING before business actions,
+and journal completion/outcome delivery with SQL publication. Duplicates return
+HTTP 409 status and never run the business mutation again.
 
 Qualification records SHA-256 for both the SDK and contracts JARs actually
 resolved on each application's runtime classpath and compares them with the
 selected ToolGate publications. A same-version artifact mismatch refuses
 qualification. This evidence adds no target deduplication guarantee by itself.
+
+
+Before upgrading the service, apply deploy/target-claims.sql as the schema owner
+and install the restricted runtime grants in docs/OPERATIONS.md. All replicas
+must share these claims and outcome records with their business database.
+Startup refuses missing schema, missing forced RLS, unsafe binding/deletion
+permissions or absent transition permissions. There is no one-shot write fallback.
+
+The reporter recovers expired CLAIMED ownership by CAS and delivers durable
+outcomes after crashes or lost replies. APPLYING remains uncertain without
+conclusive evidence. Neither an HTTP 409 status nor a queued/acknowledged outcome
+permits retrying a business action. Legacy claims with unknown expiry are not
+automatically abandoned. See the qualification evidence for the tested scope.
