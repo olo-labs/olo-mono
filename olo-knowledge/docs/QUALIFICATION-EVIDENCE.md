@@ -217,3 +217,30 @@ It does not establish production CNI, production revocation SLOs or complete
 Control/Gateway partition/crash acceptance. Use the ToolGate qualification runner
 with --full-stack; --verify-only --full-stack validates retained source-bound
 evidence without repeating the fixture.
+
+
+## Independent native-attempt scope review for ToolGate S18 (2026-11-03)
+
+The current owned stack rerun passes 13 gates and joins three completed memory
+writes and four RAG writes to actual Control generations, with no pending target
+outcome delivery. All 32 PostgreSQL/TLS/vector/evaluation component cases and
+30 tooling unit cases pass. Known source parent:
+8e3f7a7141119b800cf10248ab2e2298bc8587dc; tested component code digest:
+97258664c4b9426eb2fbf9f3a3c3581cb5042dd10cc22327a27fc839da2680be.
+
+This fixture uses native Java forwarding packages, whose complete effect scope
+is not automatically qualified as broker-only. It now records actual Control
+revision-bound proposals and decisions from two independent fixture reviewers.
+Only a sealed, successful consumed attempt with a complete journal, resolved
+effects and no existing settlement is eligible. The successful run records 17
+REVIEWER_CONFIRMED reviews. The fixture then re-reads the original logical
+operation; ambiguous writes never acquire another execution ID or unsafe retry.
+
+The existing target outcome checks remain independent: committed target claims,
+authorization generations, result receipts and delivered outcomes must agree
+with actual Control records. Neither a broker reply nor a reviewer attestation
+can stand in for missing target completion evidence. Current ToolGate image
+source binding and final refreshed image evidence are recorded in ToolGate's
+authoritative issue-230 status document. These are owned development-fixture
+observations; production native containment, CNI and full phase acceptance remain
+outside this qualification.

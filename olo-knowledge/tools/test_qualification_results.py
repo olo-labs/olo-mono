@@ -2,7 +2,7 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from qualification_stack import Stack, policy_denied, fenced_outcomes, source_digest
+from qualification_stack import Stack, policy_denied, fenced_outcomes, source_digest, scope_review_candidate
 
 
 class QualificationResultsTest(unittest.TestCase):
@@ -35,6 +35,43 @@ class QualificationResultsTest(unittest.TestCase):
         self.assertEqual(unknown,stack.result('user','memory.append','root',{},'original-id'))
         stack.call.assert_called_once()
         self.assertEqual([],stack.backpressure_events)
+
+    def test_unknown_mcp_result_is_not_retried_without_authoritative_scope_review(self):
+        stack=Stack.__new__(Stack);stack.backpressure_events=[]
+        result=(200,{'result':{'isError':True,'_meta':{
+            'io.ololabs.toolgate/operationOutcome':{'state':'OUTCOME_UNKNOWN'},
+            'io.ololabs.toolgate/invocationId':'original-invocation'}}})
+        stack.call=Mock(return_value=result);stack.review_owned_attempt=Mock(return_value=False)
+        self.assertEqual(result,stack.result('user','memory.append','root',{},'original-id'))
+        stack.call.assert_called_once()
+
+    def test_successful_scope_review_only_rereads_the_original_operation(self):
+        stack=Stack.__new__(Stack);stack.backpressure_events=[]
+        unknown=(200,{'result':{'isError':True,'_meta':{
+            'io.ololabs.toolgate/operationOutcome':{'state':'OUTCOME_UNKNOWN'},
+            'io.ololabs.toolgate/invocationId':'original-invocation'}}})
+        stack.call=Mock(side_effect=[unknown,(200,{'result':{'structuredContent':{'json':'{"done":true}'}}})])
+        stack.review_owned_attempt=Mock(return_value=True)
+        self.assertEqual((200,{'done':True}),stack.result('user','memory.append','root',{},'original-id'))
+        self.assertEqual(stack.call.call_args_list[0],stack.call.call_args_list[1])
+
+    def test_scope_review_never_adopts_missing_unresolved_failed_active_or_unsealed_evidence(self):
+        import copy
+        history=dict(operation=dict(state='OUTCOME_UNKNOWN',journalComplete=True,
+            unresolvedEffectCount=0,unsettledAttemptCount=1),attempts=[dict(state='SUCCEEDED',
+            consumed=True,scope='LEGACY_UNKNOWN',manifestSealed=True,settled=False)],truncated=False)
+        self.assertTrue(scope_review_candidate(history))
+        for field,value in [('state','RUNNING'),('unresolvedEffectCount',1),
+                            ('unsettledAttemptCount',2),('journalComplete',False)]:
+            changed=copy.deepcopy(history);changed['operation'][field]=value
+            self.assertFalse(scope_review_candidate(changed))
+        for field,value in [('state','OUTCOME_UNKNOWN'),('state','FAILED'),('manifestSealed',False),
+                            ('consumed',False),('settled',True)]:
+            changed=copy.deepcopy(history);changed['attempts'][0][field]=value
+            self.assertFalse(scope_review_candidate(changed))
+        self.assertFalse(scope_review_candidate({}))
+        changed=copy.deepcopy(history);changed['attempts']*=2
+        self.assertFalse(scope_review_candidate(changed))
 
     def test_unavailability_and_arbitrary_tool_errors_are_not_denials(self):
         for status, response in [

@@ -83,11 +83,23 @@ def fenced_outcomes(targets,control):
         summary[name]={'completed':completed,'pendingDelivery':pending,'otherStates':len(rows)-completed}
     return ready,summary
 
+def scope_review_candidate(history):
+    """Only a complete, successful owned attempt with resolved effects can be witnessed."""
+    operation=history.get('operation',{})
+    attempts=history.get('attempts',[])
+    return (operation.get('state')=='OUTCOME_UNKNOWN' and operation.get('journalComplete') is True
+        and operation.get('unresolvedEffectCount')==0 and operation.get('unsettledAttemptCount')==1
+        and not history.get('truncated') and not history.get('next') and len(attempts)==1
+        and attempts[0].get('state')=='SUCCEEDED' and attempts[0].get('consumed') is True
+        and attempts[0].get('scope')=='LEGACY_UNKNOWN' and attempts[0].get('manifestSealed') is True
+        and attempts[0].get('settled') is False)
+
+
 class Stack:
     def __init__(self, image):
         self.source_before=source_digest(ROOT);self.artifacts_before={}
         self.image=image;self.name='olo-qualification-'+secrets.token_hex(6)
-        self.containers=[];self.model_volumes=[];self.backpressure_events=[];self.volume=self.name+'-control';self.network=self.name+'-network';self.trust_volume=self.name+'-trust'
+        self.containers=[];self.model_volumes=[];self.backpressure_events=[];self.attempt_scope_reviews=[];self.volume=self.name+'-control';self.network=self.name+'-network';self.trust_volume=self.name+'-trust'
         runtime=ROOT/'build/qualification/runtime'
         if runtime.is_symlink() or not runtime.resolve().is_relative_to(ROOT.resolve()):
             raise ValueError('Qualification runtime must stay inside the component')
@@ -418,6 +430,37 @@ print(tag['digest'])
         kind='conversationId' if operation.startswith('memory.') else 'kbId'
         status,response=self.mcp(user,params={'name':'olo.'+operation.replace('.','/'),'arguments':{kind:resource,'request':json.dumps(request,separators=(',',':'))}},operation=logical_id)
         return status,response
+    def review_owned_attempt(self,user,invocation_id,frame):
+        # This fixture owns the fixed forwarding packages, processes and source image.
+        # HOST_NATIVE is not qualified broker-only scope: use the actual independent
+        # two-reviewer API, never reinterpret an unknown outcome as a successful write.
+        history=self.api('/access/invocations/'+invocation_id+'/history')
+        if not scope_review_candidate(history):return False
+        invocation=self.api('/access/invocations/'+invocation_id)
+        if invocation.get('state')!='SUCCEEDED' or not invocation.get('resultDigest'):return False
+        reviewers=[name for name in ['admin','reviewer-1','reviewer-2'] if name!=user]
+        if len(reviewers)!=2:return False
+        evidence=hashlib.sha256(json.dumps(dict(fixtureSource=self.source_before,history=history,
+            observedResult=frame),sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        proposal=self.api('/access/invocations/'+invocation_id+'/reconciliation',
+            dict(expectedRevision=invocation['revision'],state='SUCCEEDED',
+                completedResources=invocation['evaluation']['resources'],evidenceDigest=evidence,
+                resultDigest=invocation['resultDigest'],
+                attemptSettlement=dict(expectedOutcomeRevision=history['operation']['revision'],
+                    attemptIds=[history['attempts'][0]['attemptId']],noFurtherEffects=True)),
+            'POST',reviewers[0])
+        approved=self.api('/access/reconciliations/'+proposal['id']+'/decision',
+            dict(expectedRevision=proposal['revision'],approve=True),'POST',reviewers[1])
+        self.require(approved['state']=='APPLIED','Independent attempt review was not applied')
+        refreshed=self.api('/access/invocations/'+invocation_id+'/history')
+        self.require(refreshed['operation']['state']=='SUCCEEDED'
+            and refreshed['operation']['grade']=='REVIEWER_CONFIRMED'
+            and refreshed['operation']['finalized'] is True,'Reviewed operation did not finalize')
+        self.attempt_scope_reviews.append(dict(operationId=invocation_id,reviewId=proposal['id'],
+            reviewers=reviewers,evidenceDigest=evidence,grade='REVIEWER_CONFIRMED'))
+        self.artifact('attempt-scope-reviews.json',json.dumps(self.attempt_scope_reviews,indent=2)+'\n')
+        return True
+
     def result(self,user,operation,resource,request,logical_id=None):
         logical_id=logical_id or str(uuid.uuid4())
         end=time.monotonic()+45
@@ -433,7 +476,14 @@ print(tag['digest'])
             result=response['result'];structured=result.get('structuredContent',{})
             if structured.get('state') in ['QUEUED','ADMITTED','EXECUTING']:
                 time.sleep(.25);continue
-            if result.get('isError'):return status,response
+            if result.get('isError'):
+                meta=result.get('_meta',{})
+                if (meta.get('io.ololabs.toolgate/operationOutcome',{}).get('state')=='OUTCOME_UNKNOWN'
+                        and self.review_owned_attempt(user,meta.get('io.ololabs.toolgate/invocationId'),result)):
+                    # Re-read the same logical operation only after authoritative review;
+                    # no ambiguous effect is re-executed or assigned a new operation ID.
+                    continue
+                return status,response
             if 'json' in structured:return 200,json.loads(structured['json'])
             if 'content' in result:
                 for block in result['content']:
@@ -567,6 +617,7 @@ with sqlite3.connect('file:/data/state/control.sqlite?mode=ro',uri=True,timeout=
         self.require(installed_artifacts()==self.artifacts_before,'Installed application artifacts changed during qualification')
         tested_image=json.loads(docker('image','inspect',self.image_id))[0]
         report={'passed':True,'gates':gates,'timings':timings,'perUserQuotas':user_quotas,
+            'attemptScopeReviews':self.attempt_scope_reviews,
             'fencedEffects':fencing,'knowledgeSourceSha256':self.source_before,'installedArtifacts':self.artifacts_before,
             'serviceImageIds':{name:json.loads(docker('inspect',identifier))[0]['Image'] for name,identifier in self.services.items()},
             'embeddingDigest':self.vectors['EMBEDDING_DIGEST'],

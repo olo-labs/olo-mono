@@ -355,3 +355,13 @@ outcomes after crashes or lost replies. APPLYING remains uncertain without
 conclusive evidence. Neither an HTTP 409 status nor a queued/acknowledged outcome
 permits retrying a business action. Legacy claims with unknown expiry are not
 automatically abandoned. See the qualification evidence for the tested scope.
+
+
+The owned Control/Gateway stack fixture preserves native-attempt finalization:
+a completed target mutation alone does not prove that a HOST_NATIVE Java worker
+performed no other effects. For the fixture's fixed forwarding packages, two
+independent fixture reviewers now use Control's revision-bound attempt-scope
+review API after all target effects resolve. Reports retain those reviews and
+the REVIEWER_CONFIRMED grade. Missing, failed, unsealed or ambiguous evidence
+never triggers review or execution retry. This is an explicit owned-fixture
+witness, not automatic native containment or a production finality guarantee.
