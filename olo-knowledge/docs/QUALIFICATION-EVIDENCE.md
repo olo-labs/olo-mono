@@ -244,3 +244,63 @@ source binding and final refreshed image evidence are recorded in ToolGate's
 authoritative issue-230 status document. These are owned development-fixture
 observations; production native containment, CNI and full phase acceptance remain
 outside this qualification.
+
+## S20 current-only change under qualification
+
+The fresh-build scope removes the additive claim-table upgrade, requires the
+current schema identity and positive expiry, and gives each packaged write an
+explicit stable effect key. Earlier evidence below/above describes its tested
+revision; these S20 changes still require fresh component and governed-stack
+qualification before delivery. No new qualification acceptance is claimed here.
+
+The S20 current-only update also adjusts the memory/RAG HTTPS rejection fixtures.
+They now construct current typed claims and deliberately remove mandatory
+transport fields only from the signed malformed wire payload. This preserves
+denial/no-consumption coverage without relying on removed compatibility
+constructors. Requalification against the coordinated SDK and owned stack is
+still pending; no new passing result is asserted here.
+
+
+## S20 delivered current-only qualification — 2026-11-05
+
+The S20 changes above are now qualified against the coordinated current ToolGate
+SDK/contracts and fresh source-bound stack. No database upgrades, old schema
+support, default write-key aliases or compatibility constructors are provided.
+The fresh target schema requires toolgate-target-claims-v1 and positive expiry.
+Memory and RAG packages give every logical write an explicit stable effect key.
+Current signed malformed-payload fixtures still prove transport-binding refusal
+before consumption.
+
+Executed component qualification passed all **32 tests with zero skips**:
+service-core 5, memory 10 and RAG 17, with PostgreSQL, TLS, vectors and retrieval
+evaluation enabled. The actual owned Control/Gateway/Tool Host/memory/RAG stack
+passed **13 gates** and confirmed **three memory and four RAG committed writes**
+against the exact Control generations, with zero pending outcome delivery.
+Original-operation replay, caller/tenant/ACL isolation, filtered retrieval,
+versioned citations, deletion freshness, per-user quotas and live revocation are
+exercised. Native fixture scope uses independent Control reviewers and retains
+its REVIEWER_CONFIRMED grade; it does not establish native containment.
+
+The first joined S20 run found a ToolGate broker placeholder refusing explicit
+OLO keys. The coordinated broker fix removes that refusal while preserving
+same-key/digest/handler single-use binding. The successful stack was rerun
+after the fix; the 32 component cases were already passed on the unchanged
+component source and SDK. ToolGate's verifier rechecked actual component source,
+SDK/contracts, installed artifacts and runtime image against those executed
+reports. No unexecuted component rerun is asserted.
+
+Known knowledge parent: 63de7b94bbf2837aca570b124427cea5639a36ab.
+Tested component code digest:
+b6aa87dc556d03357bc4f015b8810b2854ef692221dd942b24ad189dc2ef6067.
+Known ToolGate parent: 8da2b98d11bbba224f13b27bee85d2cfde4f9588.
+ToolGate owned runtime-source digest:
+2292274a0cb1515d215daff4267d3a52a418b5274eb6d086aa050707ea7e0620.
+Owned stack image ID:
+sha256:bf34b3ecc968f2500d9e51a40c87a7456b07aecd0a81c2ae0c21f367eec8029f.
+
+Detailed reports remain in build/qualification/service-components.json and
+build/qualification/real-stack.json, including installed artifact/service image
+digests and target/Control evidence. Final documentation follows the tested code
+checkpoint. The full issue-230 roadmap, generalized target fencing, production
+SLOs and complete partition/crash/kill catalogs remain outstanding in ToolGate's
+authoritative status document. This is one bounded stage delivery.

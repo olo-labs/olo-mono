@@ -118,6 +118,7 @@ public final class MemoryPackage {
         var response =
                 context.http()
                         .route("append")
+                        .effectKey("memory-append")
                         .body(Map.of("conversationId", conversationId, "request", request))
                         .sendRaw();
         if (response.status() != 200)
@@ -155,6 +156,7 @@ public final class MemoryPackage {
         var response =
                 context.http()
                         .route("delete")
+                        .effectKey("memory-delete")
                         .body(Map.of("conversationId", conversationId, "request", request))
                         .sendRaw();
         if (response.status() != 200)
@@ -191,6 +193,7 @@ public final class MemoryPackage {
         var response =
                 context.http()
                         .route("share")
+                        .effectKey("memory-share")
                         .body(Map.of("conversationId", conversationId, "request", request))
                         .sendRaw();
         if (response.status() != 200)
@@ -227,6 +230,7 @@ public final class MemoryPackage {
         var response =
                 context.http()
                         .route("export")
+                        .effectKey("memory-export")
                         .body(Map.of("conversationId", conversationId, "request", request))
                         .sendRaw();
         if (response.status() != 200)

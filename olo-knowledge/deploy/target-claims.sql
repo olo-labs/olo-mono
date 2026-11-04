@@ -1,6 +1,7 @@
 -- Copyright 2026 OLO Labs; SPDX-License-Identifier: Apache-2.0
--- Additive migration, run as schema owner after common.sql and before granting runtime privileges.
-CREATE TABLE IF NOT EXISTS toolgate_target_claims (
+-- Fresh current schema: run as owner after common.sql in an empty target store.
+-- Existing target tables are rejected; there is no upgrade or conversion path.
+CREATE TABLE toolgate_target_claims (
  tenant_id varchar(128) NOT NULL, effect_id varchar(128) NOT NULL,
  authorization_generation bigint NOT NULL CHECK(authorization_generation>0),
  auth_nonce varchar(128) NOT NULL, request_digest varchar(71) NOT NULL,
@@ -8,13 +9,12 @@ CREATE TABLE IF NOT EXISTS toolgate_target_claims (
  claim_token varchar(64) NOT NULL,
  state varchar(16) NOT NULL CHECK(state IN ('CLAIMED','APPLYING','DONE','FAILED','ABANDONED')),
  result_digest varchar(71),
- authorization_expires_at bigint NOT NULL DEFAULT 0 CHECK(authorization_expires_at>=0),
+ authorization_expires_at bigint NOT NULL CHECK(authorization_expires_at>0),
  PRIMARY KEY(tenant_id,effect_id), UNIQUE(tenant_id,auth_nonce),
  CHECK((state IN ('DONE','FAILED') AND result_digest IS NOT NULL)
     OR (state NOT IN ('DONE','FAILED') AND result_digest IS NULL))
 );
-ALTER TABLE toolgate_target_claims ADD COLUMN IF NOT EXISTS authorization_expires_at bigint NOT NULL DEFAULT 0 CHECK(authorization_expires_at>=0);
-CREATE TABLE IF NOT EXISTS toolgate_target_outcomes (
+CREATE TABLE toolgate_target_outcomes (
  tenant_id varchar(128) NOT NULL, effect_id varchar(128) NOT NULL,
  auth_nonce varchar(128) NOT NULL, claim_token varchar(64) NOT NULL,
  outcome varchar(16) NOT NULL CHECK(outcome IN ('COMPLETED','FAILED')),
@@ -22,6 +22,10 @@ CREATE TABLE IF NOT EXISTS toolgate_target_outcomes (
  PRIMARY KEY(tenant_id,effect_id),
  FOREIGN KEY(tenant_id,effect_id) REFERENCES toolgate_target_claims(tenant_id,effect_id)
 );
+CREATE TABLE toolgate_target_schema (
+ format varchar(64) PRIMARY KEY CHECK(format='toolgate-target-claims-v1')
+);
+INSERT INTO toolgate_target_schema(format) VALUES('toolgate-target-claims-v1');
 DO $$ DECLARE t text; BEGIN
  FOREACH t IN ARRAY ARRAY['toolgate_target_claims','toolgate_target_outcomes'] LOOP
   EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY',t);
@@ -31,7 +35,7 @@ DO $$ DECLARE t text; BEGIN
   END IF;
  END LOOP;
 END $$;
-CREATE OR REPLACE FUNCTION toolgate_target_claim_transition() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION toolgate_target_claim_transition() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
  IF NEW.tenant_id<>OLD.tenant_id OR NEW.effect_id<>OLD.effect_id OR NEW.authorization_generation<>OLD.authorization_generation
     OR NEW.auth_nonce<>OLD.auth_nonce OR NEW.request_digest<>OLD.request_digest OR NEW.claim_token<>OLD.claim_token
@@ -45,7 +49,6 @@ BEGIN
  ) THEN RAISE EXCEPTION 'invalid target claim transition'; END IF;
  RETURN NEW;
 END $$;
-DROP TRIGGER IF EXISTS toolgate_target_claim_transition ON toolgate_target_claims;
 CREATE TRIGGER toolgate_target_claim_transition BEFORE UPDATE ON toolgate_target_claims FOR EACH ROW EXECUTE FUNCTION toolgate_target_claim_transition();
 -- After the ordinary service grants, revoke table-wide UPDATE/DELETE on these two tables.
 -- Grant UPDATE(state,result_digest,ownership_generation) on claims and UPDATE(delivered) on outcomes only.

@@ -265,8 +265,8 @@ class RagHttpsTest {
             assertEquals(403,http.send(changedAccept,HttpResponse.BodyHandlers.ofString()).statusCode());
             assertEquals(0,consumed.size(),"Changed semantic header must not consume a write capability");
 
-            String legacy=permit("alice","rag.ingest",append,tenant,System.currentTimeMillis(),false);
-            assertEquals(403,send(http,endpoint,"rag.ingest",append,legacy).statusCode());
+            String unbound=permit("alice","rag.ingest",append,tenant,System.currentTimeMillis(),false);
+            assertEquals(403,send(http,endpoint,"rag.ingest",append,unbound).statusCode());
             assertEquals(0,consumed.size(),"Unbound downgrade must not consume a write capability");
             claimControl.consumptionAvailable=false;
             String unavailable=permit("alice","rag.ingest",append,tenant,System.currentTimeMillis());
@@ -453,8 +453,12 @@ class RagHttpsTest {
                         issued,
                         issued + 15000,
                         "execution-fixture",
-                        bound?fingerprint(operation,body):null,
+                        fingerprint(operation,body),
                         effect?"effect-"+authNonce:null,effect?1L:null);
+        var payload=(com.fasterxml.jackson.databind.node.ObjectNode)Json.MAPPER.valueToTree(claims);
+        // Deliberately malformed wire input must be rejected; current model constructors
+        // cannot manufacture a permit without its mandatory transport binding.
+        if(!bound)payload.remove(List.of("httpRequestDigest","effectId","generation"));
         String message =
                 B64.encodeToString(
                                 Json.MAPPER.writeValueAsBytes(
@@ -466,7 +470,7 @@ class RagHttpsTest {
                                                 "alg",
                                                 "RS256")))
                         + "."
-                        + B64.encodeToString(Json.MAPPER.writeValueAsBytes(claims));
+                        + B64.encodeToString(Json.MAPPER.writeValueAsBytes(payload));
         var signature = Signature.getInstance("SHA256withRSA");
         signature.initSign(signing.getPrivate());
         signature.update(message.getBytes(java.nio.charset.StandardCharsets.US_ASCII));

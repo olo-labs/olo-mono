@@ -23,6 +23,9 @@ public final class FencedEffects implements AutoCloseable {
     }
     private void verifySchema()throws Exception{
         try(var c=db.open(tenant)){
+            var identity=Database.rows(c,"SELECT format FROM toolgate_target_schema");
+            if(identity.size()!=1||!"toolgate-target-claims-v1".equals(identity.getFirst().get("format")))
+                throw new IllegalStateException("Fresh current target claim schema required");
             var guarded=Database.rows(c,"SELECT count(*) AS guarded FROM pg_class WHERE oid IN ('toolgate_target_claims'::regclass,'toolgate_target_outcomes'::regclass) AND relrowsecurity AND relforcerowsecurity");
             if(((Number)guarded.getFirst().get("guarded")).intValue()!=2)throw new IllegalStateException("Tenant fencing schema required");
             var unsafe=Database.rows(c,"""

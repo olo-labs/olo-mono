@@ -114,6 +114,7 @@ public final class RagPackage {
         var response =
                 context.http()
                         .route("ingest")
+                        .effectKey("rag-ingest")
                         .body(Map.of("kbId", kbId, "request", request))
                         .sendRaw();
         if (response.status() != 200)
@@ -147,6 +148,7 @@ public final class RagPackage {
         var response =
                 context.http()
                         .route("update")
+                        .effectKey("rag-update")
                         .body(Map.of("kbId", kbId, "request", request))
                         .sendRaw();
         if (response.status() != 200)
@@ -182,6 +184,7 @@ public final class RagPackage {
         var response =
                 context.http()
                         .route("delete")
+                        .effectKey("rag-delete")
                         .body(Map.of("kbId", kbId, "request", request))
                         .sendRaw();
         if (response.status() != 200)
@@ -216,6 +219,7 @@ public final class RagPackage {
         var response =
                 context.http()
                         .route("share")
+                        .effectKey("rag-share")
                         .body(Map.of("kbId", kbId, "request", request))
                         .sendRaw();
         if (response.status() != 200)

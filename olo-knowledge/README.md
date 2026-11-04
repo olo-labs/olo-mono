@@ -353,8 +353,8 @@ permissions or absent transition permissions. There is no one-shot write fallbac
 The reporter recovers expired CLAIMED ownership by CAS and delivers durable
 outcomes after crashes or lost replies. APPLYING remains uncertain without
 conclusive evidence. Neither an HTTP 409 status nor a queued/acknowledged outcome
-permits retrying a business action. Legacy claims with unknown expiry are not
-automatically abandoned. See the qualification evidence for the tested scope.
+permits retrying a business action. Current claims require a positive expiry. Older target stores and packages are
+unsupported; initialization does not upgrade them. See the qualification evidence for the tested scope.
 
 
 The owned Control/Gateway stack fixture preserves native-attempt finalization:

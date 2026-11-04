@@ -53,13 +53,13 @@ private keys and credentials. Shared dependency/model caches and sanitized repor
 an unowned environment. An incomplete cleanup retains ownership records for a retry. Do not prune unrelated
 Docker resources. Save sanitized evidence outside generated `build/` before removing a workstation.
 
-## Shared effect claims upgrade
+## Fresh shared effect claims
 
-Apply deploy/target-claims.sql as the schema owner after common.sql for fresh
-installations, and additively for existing service schemas. Deploy it before the
-new service SDK/application. Old claims receive expiry 0, which is unknown and
-never an automatic recovery deadline. Do not fabricate historical claim rows.
-Retain and reconcile old one-shot writes through their original protected receipts.
+Apply deploy/target-claims.sql as the schema owner after common.sql to an empty
+target store. It installs the current schema identity and requires positive
+authorization expiry for every claim. Existing target tables are rejected;
+there is no migration, historical backfill or unknown-expiry compatibility.
+Deploy the current service SDK/application and freshly built packages together.
 
 After ordinary service grants, restrict the target tables for the actual service
 role (memory_app or rag_app in the qualification deployment):
@@ -72,9 +72,9 @@ GRANT UPDATE(delivered) ON toolgate_target_outcomes TO memory_app;
 
 Use the corresponding role for each separate service database. SELECT and INSERT
 remain required. Never run the application as schema owner or superuser. The
-migration forces tenant RLS and guards immutable bindings and state transitions.
+fresh schema forces tenant RLS and guards immutable bindings and state transitions.
 Startup verifies schema/RLS and runtime permissions before listening; unsafe or
-missing configuration has no legacy write fallback.
+missing configuration has no write fallback.
 
 Every replica must share claims, outcome records and business state. The target
 first verifies accepted TLS/HTTP facts, commits its unique local claim, consumes
